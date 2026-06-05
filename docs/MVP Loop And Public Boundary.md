@@ -62,6 +62,8 @@ surfaces are:
   manifest payload and member artifact digests.
 - Verify generated report bundles with a dependency-free `verify-bundle` command
   that checks manifest shape, member digests, and the bundle fingerprint.
+- Emit `verify-bundle` results as JSON by default, with a concise text format
+  for terminal checks.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -127,11 +129,11 @@ python -B -m src.cli report --input tests/fixtures/advisory-report.json --output
 python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json --output /tmp/edgp-npm-diagnostics-report.html
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
+python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
 ## Next Vertical Options
 
-- Add a `verify-bundle --format text` option for concise terminal checks while
-  keeping JSON as the default automation surface.
 - Add graph report edge filtering controls for large static snapshots.
+- Add explicit schema documentation for `edgp.report.bundle.verification.v1`.

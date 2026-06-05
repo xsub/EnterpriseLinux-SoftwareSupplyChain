@@ -4,7 +4,8 @@ EDGP static report bundles include a machine-readable `manifest.json` beside
 their `index.html`. The JSON Schema for the manifest is maintained at
 [`docs/schemas/edgp.report.bundle.v1.schema.json`](schemas/edgp.report.bundle.v1.schema.json).
 Run `edgp verify-bundle --path <bundle-dir>` to check the manifest shape,
-member source and HTML digests, and top-level bundle fingerprint.
+member source and HTML digests, and top-level bundle fingerprint. JSON output
+is the default; use `--format text` for a concise terminal summary.
 
 ## Top-Level Fields
 

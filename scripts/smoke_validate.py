@@ -152,6 +152,25 @@ def _assert_verify_bundle_command(output_dir: Path) -> None:
         ),
         "failures": 0,
     }
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "verify-bundle",
+            "--path",
+            str(output_dir),
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.startswith("OK reports=")
+    assert " failures=0 " in completed.stdout
 
 
 def _assert_verify_bundle_fixture(output_dir: Path) -> None:

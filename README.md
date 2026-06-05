@@ -156,6 +156,7 @@ edgp report --input advisory.json --output advisory-report.html
 edgp report --input npm-diagnostics.json --output npm-diagnostics-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports
 edgp verify-bundle --path reports
+edgp verify-bundle --path reports --format text
 ```
 
 Run a synthetic CSR traversal benchmark:
@@ -492,7 +493,8 @@ documented in
 with the machine-readable JSON Schema at
 [`docs/schemas/edgp.report.bundle.v1.schema.json`](docs/schemas/edgp.report.bundle.v1.schema.json).
 `edgp verify-bundle` checks that manifest shape, member artifact digests, and
-the top-level bundle fingerprint still match the generated directory.
+the top-level bundle fingerprint still match the generated directory. It emits
+JSON by default and supports `--format text` for concise terminal checks.
 [`tests/fixtures/report-bundle-verification.json`](tests/fixtures/report-bundle-verification.json)
 provides a normalized machine-readable example of the verification report.
 The bundle `index.html` also includes a compact verification summary showing

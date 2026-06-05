@@ -141,6 +141,9 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
         )
     )
     assert _normalize_verification_report(verification) == fixture
+    assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
+    text = capsys.readouterr().out.strip()
+    assert text.startswith("OK reports=2 failures=0 bundleSha256=")
 
 
 def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
@@ -169,6 +172,10 @@ def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     assert verification["ok"] is False
     assert verification["summary"]["failures"] == 1
     assert verification["failures"][0]["code"] == "htmlDigestMismatch"
+    assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 1
+    text = capsys.readouterr().out.strip()
+    assert text.startswith("FAIL reports=1 failures=1 bundleSha256=")
+    assert "firstFailure=htmlDigestMismatch" in text
 
 
 def _normalize_verification_report(payload: dict[str, object]) -> dict[str, object]:

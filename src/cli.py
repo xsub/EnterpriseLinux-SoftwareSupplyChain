@@ -86,6 +86,27 @@ def _json(payload: dict[str, Any]) -> str:
     return json.dumps(payload, indent=2, sort_keys=True)
 
 
+def _format_verification_report(report: dict[str, Any]) -> str:
+    status = "OK" if report.get("ok") else "FAIL"
+    summary = report.get("summary", {})
+    reports = summary.get("reports", 0) if isinstance(summary, dict) else 0
+    failures = summary.get("failures", 0) if isinstance(summary, dict) else 0
+    parts = [
+        status,
+        f"reports={reports}",
+        f"failures={failures}",
+    ]
+    bundle_sha = report.get("bundleSha256")
+    if isinstance(bundle_sha, str) and bundle_sha:
+        parts.append(f"bundleSha256={bundle_sha}")
+    failure_list = report.get("failures", [])
+    if isinstance(failure_list, list) and failure_list:
+        first_failure = failure_list[0]
+        if isinstance(first_failure, dict):
+            parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
+    return " ".join(parts)
+
+
 def _command_string(argv: list[str]) -> str:
     return shlex.join(["edgp", *argv])
 
@@ -527,6 +548,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     verify_bundle.add_argument("--path", type=Path, required=True)
     verify_bundle.add_argument("--manifest-name", default="manifest.json")
+    verify_bundle.add_argument("--format", choices=["json", "text"], default="json")
 
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
@@ -757,7 +779,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "verify-bundle":
         report = verify_report_bundle(args.path, manifest_name=args.manifest_name)
-        print(_json(report))
+        if args.format == "text":
+            print(_format_verification_report(report))
+        else:
+            print(_json(report))
         return 0 if report["ok"] else 1
 
     if args.command == "benchmark":
