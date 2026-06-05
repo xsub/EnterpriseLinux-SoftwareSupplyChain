@@ -1,3 +1,5 @@
+"""Neo4j Cypher exporter for CSR-backed dependency graphs."""
+
 from __future__ import annotations
 
 import json

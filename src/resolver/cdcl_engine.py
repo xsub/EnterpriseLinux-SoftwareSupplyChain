@@ -1,3 +1,5 @@
+"""PubGrub/CDCL-inspired dependency resolver that builds CSR graph output."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,3 +1,5 @@
+"""CSR graph tests for row pointers, neighbor traversal, and duplicate edges."""
+
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 
 

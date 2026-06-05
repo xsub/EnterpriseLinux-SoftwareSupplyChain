@@ -1,3 +1,5 @@
+"""Poetry pyproject parser for direct dependency manifest extraction."""
+
 from __future__ import annotations
 
 import tomllib

@@ -1,3 +1,5 @@
+"""CycloneDX SBOM exporter for security ingestion workflows."""
+
 from __future__ import annotations
 
 import json

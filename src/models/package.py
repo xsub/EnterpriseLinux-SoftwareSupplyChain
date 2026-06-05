@@ -1,3 +1,5 @@
+"""Package release and dependency requirement models for registry metadata."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -1,3 +1,5 @@
+"""Constraint and version-range models used by the CDCL resolver."""
+
 from __future__ import annotations
 
 import re

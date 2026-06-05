@@ -1,3 +1,5 @@
+"""Compressed Sparse Row graph storage for resolved dependency topology."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

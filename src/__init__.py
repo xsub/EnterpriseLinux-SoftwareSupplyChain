@@ -1,4 +1,4 @@
-"""Enterprise Dependency Graph Pipeline prototype."""
+"""Top-level package metadata for the Enterprise Dependency Graph Pipeline."""
 
 __all__ = ["__version__"]
 

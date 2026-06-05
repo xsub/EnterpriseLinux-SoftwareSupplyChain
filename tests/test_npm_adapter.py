@@ -1,3 +1,5 @@
+"""npm adapter tests for building CSR graphs from package-lock fixtures."""
+
 from pathlib import Path
 
 from src.adapters.npm import NpmAdapter

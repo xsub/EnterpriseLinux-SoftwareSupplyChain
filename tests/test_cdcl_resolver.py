@@ -1,3 +1,5 @@
+"""Behavior tests for conflict learning and unsatisfiable dependency graphs."""
+
 import pytest
 
 from src.resolver.cdcl_engine import CDCLResolver, ResolutionError

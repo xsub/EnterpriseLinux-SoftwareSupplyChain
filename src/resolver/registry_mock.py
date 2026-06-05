@@ -1,3 +1,5 @@
+"""In-memory package registry used for solver demos and deterministic tests."""
+
 from __future__ import annotations
 
 import json

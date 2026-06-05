@@ -1,3 +1,5 @@
+"""Shared adapter contracts for project manifests and resolved graph imports."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

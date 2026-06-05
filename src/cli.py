@@ -1,3 +1,5 @@
+"""Command-line entry points for resolving and exporting dependency graphs."""
+
 from __future__ import annotations
 
 import argparse

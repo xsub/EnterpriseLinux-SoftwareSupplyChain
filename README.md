@@ -54,6 +54,89 @@ edgp lockfile --path package-lock.json --format cyclonedx
 
 ## Architecture
 
+### Architecture UML
+
+```mermaid
+classDiagram
+direction LR
+class CLI {
+  +demo()
+  +resolve()
+  +lockfile()
+}
+class LockfileAdapter {
+  <<interface>>
+  +parse(path) ProjectManifest
+}
+class NpmAdapter {
+  +parse_lockfile_graph(path) ResolvedProjectGraph
+}
+class RegistryMock {
+  +matching_versions(name, constraint)
+}
+class CDCLResolver {
+  +solve(root, version) CSRDependencyGraph
+}
+class CSRDependencyGraph {
+  +add_vertex(package_id)
+  +add_dependency_edge(source, target)
+  +get_dependencies(package_id)
+  +edges()
+}
+class CypherExporter {
+  +export_to_cypher(graph) str
+}
+class CycloneDXExporter {
+  +export_to_json(graph, root) str
+}
+class ConstraintModels {
+  Term
+  Incompatibility
+  VersionRange
+  PackageVersion
+}
+CLI --> CDCLResolver : resolve registry
+CLI --> NpmAdapter : ingest lockfile
+NpmAdapter --|> LockfileAdapter
+CDCLResolver --> RegistryMock : query versions
+CDCLResolver --> ConstraintModels : encode clauses
+CDCLResolver --> CSRDependencyGraph : build graph
+NpmAdapter --> CSRDependencyGraph : build graph
+CLI --> CypherExporter : export Cypher
+CLI --> CycloneDXExporter : export SBOM
+CypherExporter --> CSRDependencyGraph : traverse edges
+CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
+```
+
+### Graph Build And Traversal UML
+
+```mermaid
+sequenceDiagram
+actor User
+participant CLI
+participant Input as Registry or Lockfile
+participant Builder as Resolver or Adapter
+participant CSR as CSRDependencyGraph
+participant Exporter
+
+User->>CLI: Run edgp resolve or edgp lockfile
+CLI->>Input: Load package metadata
+alt Registry resolution
+  CLI->>Builder: solve(root, version)
+  Builder->>Builder: Unit propagation, decisions, conflict learning
+  Builder->>CSR: Add selected package vertices
+  Builder->>CSR: Add resolved dependency edges
+else Resolved lockfile ingestion
+  CLI->>Builder: parse_lockfile_graph(path)
+  Builder->>CSR: Add lockfile package vertices
+  Builder->>CSR: Add edges via node_modules lookup
+end
+CLI->>Exporter: Export graph
+Exporter->>CSR: Request edges or dependency row slices
+CSR-->>Exporter: Return contiguous CSR traversal results
+Exporter-->>User: Emit Cypher or CycloneDX
+```
+
 ### CSR Graph Core
 
 `CSRDependencyGraph` stores nodes in integer maps and materializes directed

@@ -1,3 +1,5 @@
+"""Exporter tests for Cypher and CycloneDX graph serialization."""
+
 import json
 
 from src.core_graph.sparse_matrix import CSRDependencyGraph

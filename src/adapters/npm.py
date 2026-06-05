@@ -1,3 +1,5 @@
+"""npm manifest and package-lock ingestion for dependency graph construction."""
+
 from __future__ import annotations
 
 import json
