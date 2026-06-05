@@ -155,6 +155,7 @@ edgp report --input impact.json --output impact-report.html
 edgp report --input advisory.json --output advisory-report.html
 edgp report --input npm-diagnostics.json --output npm-diagnostics-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports
+edgp verify-bundle --path reports
 ```
 
 Run a synthetic CSR traversal benchmark:
@@ -242,6 +243,7 @@ class HtmlReportExporter {
 }
 class ReportBundleExporter {
   +write_report_bundle(inputs, output_dir) Path
+  +verify_report_bundle(output_dir) dict
   +render_bundle_index(entries) str
   +render_bundle_manifest(entries, metadata) dict
 }
@@ -483,6 +485,8 @@ documented in
 [`docs/Report Bundle Manifest Schema.md`](docs/Report%20Bundle%20Manifest%20Schema.md),
 with the machine-readable JSON Schema at
 [`docs/schemas/edgp.report.bundle.v1.schema.json`](docs/schemas/edgp.report.bundle.v1.schema.json).
+`edgp verify-bundle` checks that manifest shape, member artifact digests, and
+the top-level bundle fingerprint still match the generated directory.
 
 ## Roadmap
 

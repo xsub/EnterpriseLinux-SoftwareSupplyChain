@@ -127,3 +127,37 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert manifest["bundle"]["sourceKind"] == "edgp-json"
     assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
     assert manifest["reports"][1]["schema"] == "edgp.npm.diagnostics.v1"
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["schema"] == "edgp.report.bundle.verification.v1"
+    assert verification["ok"] is True
+    assert verification["summary"] == {"reports": 2, "failures": 0}
+
+
+def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "bundle"
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    (output_dir / "001-snapshot-right.html").write_text(
+        "<!doctype html><title>tampered</title>",
+        encoding="utf-8",
+    )
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 1
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is False
+    assert verification["summary"]["failures"] == 1
+    assert verification["failures"][0]["code"] == "htmlDigestMismatch"

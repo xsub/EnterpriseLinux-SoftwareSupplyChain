@@ -53,6 +53,8 @@ surfaces are:
   HTML artifacts.
 - Include a top-level report bundle fingerprint derived from the canonical
   manifest payload and member artifact digests.
+- Verify generated report bundles with a dependency-free `verify-bundle` command
+  that checks manifest shape, member digests, and the bundle fingerprint.
 - Use a shared graph bundle writer for npm, Maven, DOT, CycloneDX SBOM, and
   installed RPM bundle commands.
 - Run deterministic synthetic CSR traversal benchmarks.
@@ -112,6 +114,7 @@ python -B -m src.cli report --input tests/fixtures/impact-report.json --output /
 python -B -m src.cli report --input tests/fixtures/advisory-report.json --output /tmp/edgp-advisory-report.html
 python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json --output /tmp/edgp-npm-diagnostics-report.html
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle
+python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
@@ -119,5 +122,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 - Add Maven optional/excluded dependency markers if dependency-tree output
   exposes them in public fixtures.
-- Add a `verify-bundle` command that checks manifest schema, member digests, and
-  the top-level bundle fingerprint for a generated report directory.
+- Add a machine-readable verification report fixture for RAG/workbench ingestion
+  and golden-output regression tests.

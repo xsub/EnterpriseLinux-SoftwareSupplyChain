@@ -25,7 +25,7 @@ from src.output.cypher_export import CypherExporter
 from src.output.graph_bundle import write_graph_report_bundle
 from src.output.html_report import write_report_file
 from src.output.json_export import GraphJsonExporter
-from src.output.report_bundle import write_report_bundle
+from src.output.report_bundle import verify_report_bundle, write_report_bundle
 from src.output.sbom_security import CycloneDXExporter
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
@@ -521,6 +521,13 @@ def build_parser() -> argparse.ArgumentParser:
     report_bundle.add_argument("--index-name", default="index.html")
     report_bundle.add_argument("--manifest-name", default="manifest.json")
 
+    verify_bundle = subparsers.add_parser(
+        "verify-bundle",
+        help="Verify a static report bundle manifest and member digests",
+    )
+    verify_bundle.add_argument("--path", type=Path, required=True)
+    verify_bundle.add_argument("--manifest-name", default="manifest.json")
+
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
     benchmark.add_argument("--fanout", type=int, default=3)
@@ -747,6 +754,11 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(index_path)
         return 0
+
+    if args.command == "verify-bundle":
+        report = verify_report_bundle(args.path, manifest_name=args.manifest_name)
+        print(_json(report))
+        return 0 if report["ok"] else 1
 
     if args.command == "benchmark":
         print(_json(run_synthetic_benchmark(nodes=args.nodes, fanout=args.fanout)))

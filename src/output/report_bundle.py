@@ -13,6 +13,35 @@ from typing import Any, Mapping, Sequence
 from src.output.html_report import render_report
 
 BUNDLE_SHA256_KEY = "bundleSha256"
+MANIFEST_SCHEMA = "edgp.report.bundle.v1"
+VERIFICATION_SCHEMA = "edgp.report.bundle.verification.v1"
+SOURCE_KINDS = {
+    "cyclonedx-sbom",
+    "dot",
+    "edgp-json",
+    "maven-dependency-tree",
+    "npm-lockfile",
+    "rpm-installed",
+}
+
+_MANIFEST_REQUIRED_KEYS = {
+    "schema",
+    BUNDLE_SHA256_KEY,
+    "index",
+    "reportCount",
+    "reports",
+}
+_MANIFEST_ALLOWED_KEYS = _MANIFEST_REQUIRED_KEYS | {"bundle"}
+_REPORT_REQUIRED_KEYS = {
+    "href",
+    "htmlSha256",
+    "schema",
+    "source",
+    "sourceSha256",
+    "summary",
+    "title",
+}
+_REPORT_ALLOWED_KEYS = _REPORT_REQUIRED_KEYS
 
 
 @dataclass(frozen=True)
@@ -83,7 +112,7 @@ def render_bundle_manifest(
     bundle_metadata: Mapping[str, object] | None = None,
 ) -> dict[str, Any]:
     manifest: dict[str, Any] = {
-        "schema": "edgp.report.bundle.v1",
+        "schema": MANIFEST_SCHEMA,
         "index": index_name,
         "reportCount": len(entries),
         "reports": [
@@ -109,6 +138,317 @@ def render_bundle_manifest(
     return manifest
 
 
+def verify_report_bundle(
+    bundle_dir: Path,
+    *,
+    manifest_name: str = "manifest.json",
+) -> dict[str, Any]:
+    bundle_dir = bundle_dir.resolve()
+    manifest_path = bundle_dir / manifest_name
+    failures: list[dict[str, str]] = []
+    manifest: dict[str, Any] = {}
+
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if isinstance(payload, dict):
+            manifest = payload
+        else:
+            _add_failure(
+                failures,
+                "manifestInvalid",
+                "Manifest must be a JSON object",
+                manifest_path,
+            )
+    except FileNotFoundError:
+        _add_failure(failures, "manifestMissing", f"Missing {manifest_name}", manifest_path)
+    except json.JSONDecodeError as error:
+        _add_failure(failures, "manifestInvalidJson", str(error), manifest_path)
+
+    if manifest:
+        _verify_manifest_shape(manifest, failures, manifest_path)
+        _verify_manifest_fingerprint(manifest, failures, manifest_path)
+        _verify_manifest_files(manifest, failures, bundle_dir)
+
+    return {
+        "schema": VERIFICATION_SCHEMA,
+        "bundleDir": str(bundle_dir),
+        "manifest": manifest_name,
+        "ok": not failures,
+        "bundleSha256": manifest.get(BUNDLE_SHA256_KEY),
+        "summary": {
+            "reports": len(manifest.get("reports", []))
+            if isinstance(manifest.get("reports"), list)
+            else 0,
+            "failures": len(failures),
+        },
+        "failures": failures,
+    }
+
+
+def _verify_manifest_shape(
+    manifest: Mapping[str, Any],
+    failures: list[dict[str, str]],
+    manifest_path: Path,
+) -> None:
+    missing_keys = sorted(_MANIFEST_REQUIRED_KEYS - set(manifest))
+    for key in missing_keys:
+        _add_failure(
+            failures,
+            "manifestMissingField",
+            f"Missing top-level field: {key}",
+            manifest_path,
+        )
+    extra_keys = sorted(set(manifest) - _MANIFEST_ALLOWED_KEYS)
+    for key in extra_keys:
+        _add_failure(
+            failures,
+            "manifestUnknownField",
+            f"Unsupported top-level field: {key}",
+            manifest_path,
+        )
+
+    if manifest.get("schema") != MANIFEST_SCHEMA:
+        _add_failure(
+            failures,
+            "manifestSchemaMismatch",
+            f"Expected schema {MANIFEST_SCHEMA}",
+            manifest_path,
+        )
+    if not _is_sha256(manifest.get(BUNDLE_SHA256_KEY)):
+        _add_failure(
+            failures,
+            "bundleDigestInvalid",
+            f"{BUNDLE_SHA256_KEY} must be a SHA-256 hex digest",
+            manifest_path,
+        )
+    if not isinstance(manifest.get("index"), str) or not manifest.get("index"):
+        _add_failure(
+            failures,
+            "indexInvalid",
+            "index must be a non-empty string",
+            manifest_path,
+        )
+    elif _bundle_member_path(bundle_dir=manifest_path.parent, label=manifest["index"]) is None:
+        _add_failure(
+            failures,
+            "indexInvalid",
+            "index must be a bundle-local relative path",
+            manifest_path,
+        )
+    bundle = manifest.get("bundle")
+    if bundle is not None:
+        if not isinstance(bundle, dict):
+            _add_failure(
+                failures,
+                "bundleInvalid",
+                "bundle must be an object when present",
+                manifest_path,
+            )
+        elif not all(isinstance(value, str) for value in bundle.values()):
+            _add_failure(
+                failures,
+                "bundleInvalid",
+                "bundle metadata values must be strings",
+                manifest_path,
+            )
+        elif "sourceKind" in bundle and bundle["sourceKind"] not in SOURCE_KINDS:
+            _add_failure(
+                failures,
+                "bundleSourceKindInvalid",
+                "bundle.sourceKind is not a supported public source kind",
+                manifest_path,
+            )
+
+    reports = manifest.get("reports")
+    if not isinstance(reports, list) or not reports:
+        _add_failure(
+            failures,
+            "reportsInvalid",
+            "reports must be a non-empty list",
+            manifest_path,
+        )
+        return
+
+    if manifest.get("reportCount") != len(reports):
+        _add_failure(
+            failures,
+            "reportCountMismatch",
+            "reportCount must equal the number of reports",
+            manifest_path,
+        )
+
+    for index, report in enumerate(reports, start=1):
+        if not isinstance(report, dict):
+            _add_failure(
+                failures,
+                "reportInvalid",
+                f"reports[{index}] must be an object",
+                manifest_path,
+            )
+            continue
+        missing_report_keys = sorted(_REPORT_REQUIRED_KEYS - set(report))
+        extra_report_keys = sorted(set(report) - _REPORT_ALLOWED_KEYS)
+        for key in missing_report_keys:
+            _add_failure(
+                failures,
+                "reportMissingField",
+                f"reports[{index}] missing field: {key}",
+                manifest_path,
+            )
+        for key in extra_report_keys:
+            _add_failure(
+                failures,
+                "reportUnknownField",
+                f"reports[{index}] has unsupported field: {key}",
+                manifest_path,
+            )
+        for key in ("href", "schema", "source", "title"):
+            if not isinstance(report.get(key), str) or not report.get(key):
+                _add_failure(
+                    failures,
+                    "reportFieldInvalid",
+                    f"reports[{index}].{key} must be a non-empty string",
+                    manifest_path,
+                )
+        if isinstance(report.get("href"), str) and _bundle_member_path(
+            bundle_dir=manifest_path.parent,
+            label=report["href"],
+        ) is None:
+            _add_failure(
+                failures,
+                "reportHrefInvalid",
+                f"reports[{index}].href must be a bundle-local relative path",
+                manifest_path,
+            )
+        for key in ("htmlSha256", "sourceSha256"):
+            if not _is_sha256(report.get(key)):
+                _add_failure(
+                    failures,
+                    "reportDigestInvalid",
+                    f"reports[{index}].{key} must be a SHA-256 hex digest",
+                    manifest_path,
+                )
+        if not isinstance(report.get("summary"), dict):
+            _add_failure(
+                failures,
+                "reportSummaryInvalid",
+                f"reports[{index}].summary must be an object",
+                manifest_path,
+            )
+
+
+def _verify_manifest_fingerprint(
+    manifest: Mapping[str, Any],
+    failures: list[dict[str, str]],
+    manifest_path: Path,
+) -> None:
+    if not _is_sha256(manifest.get(BUNDLE_SHA256_KEY)):
+        return
+    actual = _manifest_sha256(manifest)
+    if manifest.get(BUNDLE_SHA256_KEY) != actual:
+        _add_failure(
+            failures,
+            "bundleDigestMismatch",
+            f"{BUNDLE_SHA256_KEY} does not match canonical manifest payload",
+            manifest_path,
+        )
+
+
+def _verify_manifest_files(
+    manifest: Mapping[str, Any],
+    failures: list[dict[str, str]],
+    bundle_dir: Path,
+) -> None:
+    index_path = _bundle_member_path(bundle_dir, str(manifest.get("index", "")))
+    if index_path is not None and not index_path.exists():
+        _add_failure(failures, "indexMissing", "Index HTML is missing", index_path)
+
+    reports = manifest.get("reports")
+    if not isinstance(reports, list):
+        return
+    for index, report in enumerate(reports, start=1):
+        if not isinstance(report, dict):
+            continue
+        html_path = _bundle_member_path(bundle_dir, str(report.get("href", "")))
+        if html_path is None:
+            continue
+        _verify_file_digest(
+            failures,
+            code_prefix="html",
+            expected=report.get("htmlSha256"),
+            path=html_path,
+            report_index=index,
+        )
+        source_path = _resolve_manifest_source(bundle_dir, str(report.get("source", "")))
+        _verify_file_digest(
+            failures,
+            code_prefix="source",
+            expected=report.get("sourceSha256"),
+            path=source_path,
+            report_index=index,
+        )
+
+
+def _verify_file_digest(
+    failures: list[dict[str, str]],
+    *,
+    code_prefix: str,
+    expected: object,
+    path: Path,
+    report_index: int,
+) -> None:
+    if not path.exists():
+        _add_failure(
+            failures,
+            f"{code_prefix}Missing",
+            f"reports[{report_index}] referenced file is missing",
+            path,
+        )
+        return
+    if not _is_sha256(expected):
+        return
+    actual = _sha256(path.read_bytes())
+    if expected != actual:
+        _add_failure(
+            failures,
+            f"{code_prefix}DigestMismatch",
+            f"reports[{report_index}] digest mismatch",
+            path,
+        )
+
+
+def _resolve_manifest_source(bundle_dir: Path, source_label: str) -> Path:
+    source_path = Path(source_label)
+    if source_path.is_absolute():
+        return source_path
+    for candidate in (bundle_dir / source_path, Path.cwd() / source_path):
+        if candidate.exists():
+            return candidate
+    return bundle_dir / source_path
+
+
+def _bundle_member_path(bundle_dir: Path, label: str) -> Path | None:
+    member_path = Path(label)
+    if member_path.is_absolute() or ".." in member_path.parts:
+        return None
+    return bundle_dir / member_path
+
+
+def _add_failure(
+    failures: list[dict[str, str]],
+    code: str,
+    message: str,
+    path: Path,
+) -> None:
+    failures.append(
+        {
+            "code": code,
+            "message": message,
+            "path": str(path),
+        }
+    )
+
+
 def _source_label(entry: BundleEntry) -> str:
     try:
         return str(entry.source_path.relative_to(entry.output_path.parent))
@@ -118,6 +458,14 @@ def _source_label(entry: BundleEntry) -> str:
 
 def _sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+def _is_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def _manifest_sha256(manifest: Mapping[str, Any]) -> str:

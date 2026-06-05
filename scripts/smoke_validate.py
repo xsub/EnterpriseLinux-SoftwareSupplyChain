@@ -140,6 +140,20 @@ def _assert_report_bundle_manifest_contract(
             assert bundle["command"]
 
 
+def _assert_verify_bundle_command(output_dir: Path) -> None:
+    payload = _run_cli(["verify-bundle", "--path", str(output_dir)])
+    assert payload["schema"] == "edgp.report.bundle.verification.v1"
+    assert payload["ok"] is True
+    assert payload["summary"] == {
+        "reports": len(
+            json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))[
+                "reports"
+            ]
+        ),
+        "failures": 0,
+    }
+
+
 def _is_sha256(value: object) -> bool:
     return (
         isinstance(value, str)
@@ -356,6 +370,7 @@ def _assert_maven_bundle() -> None:
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "maven-dependency-tree"
         assert manifest["bundle"]["command"].startswith("edgp maven-bundle ")
         assert manifest["reports"][0]["href"] == "001-maven-graph.html"
@@ -405,6 +420,7 @@ def _assert_dot_bundle() -> None:
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "dot"
         assert manifest["bundle"]["command"].startswith("edgp dot-bundle ")
         assert manifest["reports"][0]["href"] == "001-dot-graph.html"
@@ -458,6 +474,7 @@ def _assert_sbom_bundle() -> None:
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "cyclonedx-sbom"
         assert manifest["bundle"]["command"].startswith("edgp sbom-bundle ")
         assert manifest["reports"][0]["href"] == "001-sbom-graph.html"
@@ -673,6 +690,7 @@ def _assert_report_bundle() -> None:
         assert "002-npm-diagnostics-report.html" in index_html
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
         assert manifest["schema"] == "edgp.report.bundle.v1"
         assert manifest["bundle"]["sourceKind"] == "edgp-json"
         assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
@@ -681,6 +699,51 @@ def _assert_report_bundle() -> None:
             encoding="utf-8"
         )
         assert 'data-testid="npm-unresolved-panel"' in npm_html
+
+
+def _assert_verify_bundle_detects_tampering() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "bundle"
+        subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        (output_dir / "001-snapshot-right.html").write_text(
+            "<!doctype html><title>tampered</title>",
+            encoding="utf-8",
+        )
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "verify-bundle",
+                "--path",
+                str(output_dir),
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        payload = json.loads(completed.stdout)
+        assert completed.returncode == 1
+        assert payload["ok"] is False
+        assert payload["failures"][0]["code"] == "htmlDigestMismatch"
 
 
 def _assert_npm_bundle() -> None:
@@ -712,6 +775,7 @@ def _assert_npm_bundle() -> None:
         assert graph["schema"] == "edgp.graph.snapshot.v1"
         assert diagnostics["schema"] == "edgp.npm.diagnostics.v1"
         _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
         assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics.html"
@@ -752,6 +816,7 @@ def _assert_npm_bundle_with_impact_and_advisory() -> None:
         assert impact["schema"] == "edgp.impact.report.v1"
         assert advisory["schema"] == "edgp.advisory.report.v1"
         _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
         assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
         assert manifest["reports"][2]["href"] == "003-impact-left-pad-1.3.0.html"
@@ -803,6 +868,7 @@ def _assert_rpm_installed_bundle() -> None:
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "rpm-installed"
         assert manifest["bundle"]["command"].startswith("edgp rpm-installed-bundle ")
         assert manifest["reports"][0]["href"] == "001-rpm-installed-graph.html"
@@ -853,6 +919,7 @@ def main(argv: list[str] | None = None) -> int:
         ("advisory html report", _assert_advisory_html_report),
         ("npm diagnostics html report", _assert_npm_diagnostics_html_report),
         ("report bundle", _assert_report_bundle),
+        ("verify bundle tamper detection", _assert_verify_bundle_detects_tampering),
         ("npm bundle", _assert_npm_bundle),
         ("npm bundle impact advisory", _assert_npm_bundle_with_impact_and_advisory),
         ("synthetic benchmark", _assert_benchmark),
