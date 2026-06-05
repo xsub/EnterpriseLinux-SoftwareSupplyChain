@@ -70,6 +70,13 @@ edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc==unknown
 ```
 
+Export a bounded graph from the local RPM database on AlmaLinux:
+
+```bash
+edgp rpm-installed --limit 100 --max-requirements 40 --format json
+edgp rpm-installed --limit 100 --max-requirements 40 --format cyclonedx
+```
+
 ## Architecture
 
 ### Architecture UML
@@ -91,6 +98,9 @@ class NpmAdapter {
 }
 class DotAdapter {
   +parse_graph(path) ResolvedProjectGraph
+}
+class InstalledRpmAdapter {
+  +parse_installed(limit) ResolvedProjectGraph
 }
 class RegistryMock {
   +matching_versions(name, constraint)
@@ -125,12 +135,14 @@ class ConstraintModels {
 CLI --> CDCLResolver : resolve registry
 CLI --> NpmAdapter : ingest lockfile
 CLI --> DotAdapter : ingest DOT
+CLI --> InstalledRpmAdapter : ingest RPM DB
 NpmAdapter --|> LockfileAdapter
 CDCLResolver --> RegistryMock : query versions
 CDCLResolver --> ConstraintModels : encode clauses
 CDCLResolver --> CSRDependencyGraph : build graph
 NpmAdapter --> CSRDependencyGraph : build graph
 DotAdapter --> CSRDependencyGraph : build graph
+InstalledRpmAdapter --> CSRDependencyGraph : build graph
 CLI --> CypherExporter : export Cypher
 CLI --> CycloneDXExporter : export SBOM
 CLI --> GraphJsonExporter : export snapshot

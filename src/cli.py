@@ -9,6 +9,7 @@ from typing import Any
 
 from src.adapters.dot import DotAdapter
 from src.adapters.npm import NpmAdapter
+from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.output.cypher_export import CypherExporter
 from src.output.json_export import GraphJsonExporter
@@ -168,6 +169,15 @@ def build_parser() -> argparse.ArgumentParser:
     dot.add_argument("--ecosystem", default="rpm")
     dot.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="json")
 
+    rpm_installed = subparsers.add_parser(
+        "rpm-installed", help="Export a graph from the local RPM database"
+    )
+    rpm_installed.add_argument("--limit", type=int, default=100)
+    rpm_installed.add_argument("--max-requirements", type=int, default=40)
+    rpm_installed.add_argument(
+        "--format", choices=["cypher", "cyclonedx", "json"], default="json"
+    )
+
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument("--source", choices=["lockfile", "dot"], default="lockfile")
     query.add_argument("--path", type=Path, required=True)
@@ -201,6 +211,21 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "dot":
         resolved = DotAdapter().parse_graph(args.path, ecosystem=args.ecosystem)
+        print(
+            _export(
+                args.format,
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "rpm-installed":
+        resolved = InstalledRpmAdapter().parse_installed(
+            limit=args.limit,
+            max_requirements=args.max_requirements,
+        )
         print(
             _export(
                 args.format,
