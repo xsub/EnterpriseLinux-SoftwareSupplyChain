@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.advisory_overlay import build_advisory_report_from_file
 from src.adapters.cyclonedx import CycloneDXAdapter
 from src.adapters.dot import DotAdapter
 from src.adapters.npm import NpmAdapter
@@ -270,6 +271,19 @@ def build_parser() -> argparse.ArgumentParser:
     impact.add_argument("--rpm-limit", type=int, default=100)
     impact.add_argument("--max-requirements", type=int, default=40)
 
+    advisory = subparsers.add_parser("advisory", help="Overlay local advisories on a graph")
+    advisory.add_argument(
+        "--source",
+        choices=["lockfile", "dot", "sbom", "rpm-installed"],
+        default="lockfile",
+    )
+    advisory.add_argument("--path", type=Path)
+    advisory.add_argument("--ecosystem", default="npm")
+    advisory.add_argument("--advisories", type=Path, required=True)
+    advisory.add_argument("--limit", type=int, default=20)
+    advisory.add_argument("--rpm-limit", type=int, default=100)
+    advisory.add_argument("--max-requirements", type=int, default=40)
+
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument(
         "--source",
@@ -364,6 +378,27 @@ def main(argv: list[str] | None = None) -> int:
                 build_impact_report(
                     graph,
                     node=node,
+                    root=root_identifier,
+                    ecosystem=resolved_ecosystem,
+                    max_paths=args.limit,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "advisory":
+        root_identifier, graph, resolved_ecosystem = _load_source_project_graph(
+            args.source,
+            args.path,
+            args.ecosystem,
+            rpm_limit=args.rpm_limit,
+            max_requirements=args.max_requirements,
+        )
+        print(
+            _json(
+                build_advisory_report_from_file(
+                    args.advisories,
+                    graph,
                     root=root_identifier,
                     ecosystem=resolved_ecosystem,
                     max_paths=args.limit,

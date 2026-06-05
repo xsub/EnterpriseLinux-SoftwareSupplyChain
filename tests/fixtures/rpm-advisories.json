@@ -1,0 +1,12 @@
+{
+  "schema": "edgp.advisory.overlay.v1",
+  "advisories": [
+    {
+      "id": "ADV-RPM-LOCAL-0001",
+      "ecosystem": "rpm",
+      "package": "glibc",
+      "severity": "medium",
+      "summary": "Demo RPM advisory used to validate AlmaLinux impact overlays."
+    }
+  ]
+}

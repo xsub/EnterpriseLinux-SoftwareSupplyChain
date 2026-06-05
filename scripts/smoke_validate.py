@@ -109,6 +109,42 @@ def _assert_impact_report() -> None:
     assert payload["summary"]["affectedDependents"] == 2
 
 
+def _assert_advisory_overlay() -> None:
+    payload = _run_cli(
+        [
+            "advisory",
+            "--path",
+            "tests/fixtures/package-lock.json",
+            "--advisories",
+            "tests/fixtures/advisories.json",
+        ]
+    )
+    assert payload["schema"] == "edgp.advisory.report.v1"
+    assert payload["summary"]["advisories"] == 2
+    assert payload["summary"]["findings"] == 1
+    assert payload["findings"][0]["package"] == "left-pad==1.3.0"
+
+
+def _assert_rpm_advisory_overlay() -> None:
+    payload = _run_cli(
+        [
+            "advisory",
+            "--source",
+            "dot",
+            "--path",
+            "tests/fixtures/repograph.dot",
+            "--ecosystem",
+            "rpm",
+            "--advisories",
+            "tests/fixtures/rpm-advisories.json",
+        ]
+    )
+    assert payload["schema"] == "edgp.advisory.report.v1"
+    assert payload["ecosystem"] == "rpm"
+    assert payload["summary"]["findings"] == 1
+    assert payload["findings"][0]["package"] == "glibc==unknown"
+
+
 def _assert_rpm_installed() -> None:
     payload = _run_cli(
         ["rpm-installed", "--limit", "5", "--max-requirements", "10", "--format", "json"]
@@ -138,6 +174,8 @@ def main(argv: list[str] | None = None) -> int:
         ("sbom query", _assert_sbom_query),
         ("snapshot diff", _assert_snapshot_diff),
         ("impact report", _assert_impact_report),
+        ("advisory overlay", _assert_advisory_overlay),
+        ("rpm advisory overlay", _assert_rpm_advisory_overlay),
     ]
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))

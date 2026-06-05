@@ -1,0 +1,22 @@
+{
+  "schema": "edgp.advisory.overlay.v1",
+  "advisories": [
+    {
+      "id": "ADV-LOCAL-0001",
+      "ecosystem": "npm",
+      "package": "left-pad",
+      "versions": ["1.3.0"],
+      "severity": "high",
+      "summary": "Demo advisory for validating local dependency impact reports.",
+      "references": ["https://example.invalid/advisories/ADV-LOCAL-0001"]
+    },
+    {
+      "id": "ADV-LOCAL-0002",
+      "ecosystem": "npm",
+      "package": "not-installed",
+      "versions": ["9.9.9"],
+      "severity": "low",
+      "summary": "Non-matching advisory used to verify filtering."
+    }
+  ]
+}

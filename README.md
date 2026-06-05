@@ -76,6 +76,13 @@ edgp impact --source dot --path repograph.dot --ecosystem rpm --node glibc
 edgp impact --source rpm-installed --node glibc --rpm-limit 100 --max-requirements 40
 ```
 
+Overlay local advisory JSON and include impact for matched packages:
+
+```bash
+edgp advisory --path package-lock.json --advisories advisories.json
+edgp advisory --source rpm-installed --advisories advisories.json --rpm-limit 100
+```
+
 Export an AlmaLinux/RPM universe graph from DOT:
 
 ```bash
@@ -162,6 +169,9 @@ class GraphJsonExporter {
 class ImpactReporter {
   +build_impact_report(graph, node) dict
 }
+class AdvisoryOverlay {
+  +build_advisory_report(advisories, graph) dict
+}
 class ConstraintModels {
   Term
   Incompatibility
@@ -186,10 +196,12 @@ CLI --> CycloneDXExporter : export SBOM
 CLI --> GraphJsonExporter : export snapshot
 CLI --> CSRDependencyGraph : query traversal
 CLI --> ImpactReporter : report reverse impact
+CLI --> AdvisoryOverlay : overlay local advisories
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
 GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
 ImpactReporter --> CSRDependencyGraph : traverse dependents and paths
+AdvisoryOverlay --> ImpactReporter : attach package impact
 ```
 
 ### Graph Build And Traversal UML
@@ -280,6 +292,11 @@ report. For a selected node it returns direct dependents, all transitive
 affected dependents, and shortest dependency chains back to the selected
 component. This is the public AlmaLinux-friendly stand-in for future advisory or
 CloudLinux-specific risk feeds.
+
+`edgp advisory` accepts a small local JSON overlay with `id`, `package`,
+optional `versions`, `severity`, `summary`, and `references` fields. It matches
+those records against graph nodes and embeds an `edgp.impact.report.v1` result
+for every matched package.
 
 ### JSON Snapshot
 
