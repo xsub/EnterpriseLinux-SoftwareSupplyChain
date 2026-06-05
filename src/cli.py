@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -84,6 +86,10 @@ def _json(payload: dict[str, Any]) -> str:
     return json.dumps(payload, indent=2, sort_keys=True)
 
 
+def _command_string(argv: list[str]) -> str:
+    return shlex.join(["edgp", *argv])
+
+
 def _write_npm_bundle(
     path: Path,
     output_dir: Path,
@@ -91,6 +97,7 @@ def _write_npm_bundle(
     impact_nodes: list[str] | None = None,
     advisory_path: Path | None = None,
     max_paths: int = 20,
+    command: str | None = None,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     adapter = NpmAdapter()
@@ -125,6 +132,7 @@ def _write_npm_bundle(
         max_paths=max_paths,
         extra_reports_after_graph=[diagnostics_path],
         extra_reports=final_reports,
+        bundle_metadata={"sourceKind": "npm-lockfile", "command": command},
     )
 
 
@@ -134,6 +142,7 @@ def _write_maven_bundle(
     *,
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
+    command: str | None = None,
 ) -> Path:
     resolved = MavenTreeAdapter().parse_tree(path)
     return write_graph_report_bundle(
@@ -143,6 +152,7 @@ def _write_maven_bundle(
         impact_nodes=impact_nodes,
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
+        bundle_metadata={"sourceKind": "maven-dependency-tree", "command": command},
     )
 
 
@@ -153,6 +163,7 @@ def _write_dot_bundle(
     ecosystem: str = "rpm",
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
+    command: str | None = None,
 ) -> Path:
     resolved = DotAdapter().parse_graph(path, ecosystem=ecosystem)
     return write_graph_report_bundle(
@@ -162,6 +173,7 @@ def _write_dot_bundle(
         impact_nodes=impact_nodes,
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
+        bundle_metadata={"sourceKind": "dot", "command": command},
     )
 
 
@@ -171,6 +183,7 @@ def _write_sbom_bundle(
     *,
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
+    command: str | None = None,
 ) -> Path:
     resolved = CycloneDXAdapter().parse_graph(path)
     return write_graph_report_bundle(
@@ -180,6 +193,7 @@ def _write_sbom_bundle(
         impact_nodes=impact_nodes,
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
+        bundle_metadata={"sourceKind": "cyclonedx-sbom", "command": command},
     )
 
 
@@ -190,6 +204,7 @@ def _write_rpm_installed_bundle(
     max_requirements: int = 40,
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
+    command: str | None = None,
 ) -> Path:
     resolved = InstalledRpmAdapter().parse_installed(
         limit=limit,
@@ -202,6 +217,7 @@ def _write_rpm_installed_bundle(
         impact_nodes=impact_nodes,
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
+        bundle_metadata={"sourceKind": "rpm-installed", "command": command},
     )
 
 
@@ -539,7 +555,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    actual_argv = sys.argv[1:] if argv is None else argv
+    command = _command_string(actual_argv)
+    args = build_parser().parse_args(actual_argv)
 
     if args.command == "lockfile":
         root_identifier, graph, resolved_ecosystem = _load_lockfile_project_graph(
@@ -561,6 +579,7 @@ def main(argv: list[str] | None = None) -> int:
                 impact_nodes=args.impact_node,
                 advisory_path=args.advisories,
                 max_paths=args.limit,
+                command=command,
             )
         )
         return 0
@@ -585,6 +604,7 @@ def main(argv: list[str] | None = None) -> int:
                 ecosystem=args.ecosystem,
                 impact_nodes=args.impact_node,
                 max_paths=args.limit,
+                command=command,
             )
         )
         return 0
@@ -608,6 +628,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 impact_nodes=args.impact_node,
                 max_paths=args.limit,
+                command=command,
             )
         )
         return 0
@@ -631,6 +652,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 impact_nodes=args.impact_node,
                 max_paths=args.limit,
+                command=command,
             )
         )
         return 0
@@ -658,6 +680,7 @@ def main(argv: list[str] | None = None) -> int:
                 max_requirements=args.max_requirements,
                 impact_nodes=args.impact_node,
                 max_paths=args.report_limit,
+                command=command,
             )
         )
         return 0
@@ -720,6 +743,7 @@ def main(argv: list[str] | None = None) -> int:
             args.output_dir,
             index_name=args.index_name,
             manifest_name=args.manifest_name,
+            bundle_metadata={"sourceKind": "edgp-json", "command": command},
         )
         print(index_path)
         return 0

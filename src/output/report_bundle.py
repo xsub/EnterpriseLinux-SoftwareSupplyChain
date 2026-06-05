@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from src.output.html_report import render_report
 
@@ -27,6 +27,7 @@ def write_report_bundle(
     *,
     index_name: str = "index.html",
     manifest_name: str = "manifest.json",
+    bundle_metadata: Mapping[str, object] | None = None,
 ) -> Path:
     if not input_paths:
         raise ValueError("At least one --input is required for a report bundle")
@@ -53,7 +54,11 @@ def write_report_bundle(
     manifest_path = output_dir / manifest_name
     manifest_path.write_text(
         json.dumps(
-            render_bundle_manifest(entries, index_name=index_name),
+            render_bundle_manifest(
+                entries,
+                index_name=index_name,
+                bundle_metadata=bundle_metadata,
+            ),
             indent=2,
             sort_keys=True,
         ),
@@ -66,8 +71,9 @@ def render_bundle_manifest(
     entries: Sequence[BundleEntry],
     *,
     index_name: str = "index.html",
+    bundle_metadata: Mapping[str, object] | None = None,
 ) -> dict[str, Any]:
-    return {
+    manifest: dict[str, Any] = {
         "schema": "edgp.report.bundle.v1",
         "index": index_name,
         "reportCount": len(entries),
@@ -81,7 +87,14 @@ def render_bundle_manifest(
             }
             for entry in entries
         ],
-}
+    }
+    if bundle_metadata:
+        manifest["bundle"] = {
+            str(key): str(value)
+            for key, value in sorted(bundle_metadata.items())
+            if value is not None
+        }
+    return manifest
 
 
 def _source_label(entry: BundleEntry) -> str:

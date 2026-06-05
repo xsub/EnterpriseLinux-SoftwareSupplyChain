@@ -238,6 +238,8 @@ def _assert_maven_bundle() -> None:
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["bundle"]["sourceKind"] == "maven-dependency-tree"
+        assert manifest["bundle"]["command"].startswith("edgp maven-bundle ")
         assert manifest["reports"][0]["href"] == "001-maven-graph.html"
         assert (
             manifest["reports"][1]["href"]
@@ -284,6 +286,8 @@ def _assert_dot_bundle() -> None:
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["bundle"]["sourceKind"] == "dot"
+        assert manifest["bundle"]["command"].startswith("edgp dot-bundle ")
         assert manifest["reports"][0]["href"] == "001-dot-graph.html"
         assert manifest["reports"][1]["href"] == "002-impact-glibc-unknown.html"
         impact = json.loads(
@@ -334,6 +338,8 @@ def _assert_sbom_bundle() -> None:
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["bundle"]["sourceKind"] == "cyclonedx-sbom"
+        assert manifest["bundle"]["command"].startswith("edgp sbom-bundle ")
         assert manifest["reports"][0]["href"] == "001-sbom-graph.html"
         assert manifest["reports"][1]["href"] == "002-impact-left-pad-1.3.0.html"
         impact = json.loads(
@@ -547,6 +553,8 @@ def _assert_report_bundle() -> None:
         assert "002-npm-diagnostics-report.html" in index_html
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         assert manifest["schema"] == "edgp.report.bundle.v1"
+        assert manifest["bundle"]["sourceKind"] == "edgp-json"
+        assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics-report.html"
         npm_html = (output_dir / "002-npm-diagnostics-report.html").read_text(
             encoding="utf-8"
@@ -582,6 +590,8 @@ def _assert_npm_bundle() -> None:
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         assert graph["schema"] == "edgp.graph.snapshot.v1"
         assert diagnostics["schema"] == "edgp.npm.diagnostics.v1"
+        assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
+        assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics.html"
 
 
@@ -619,6 +629,8 @@ def _assert_npm_bundle_with_impact_and_advisory() -> None:
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         assert impact["schema"] == "edgp.impact.report.v1"
         assert advisory["schema"] == "edgp.advisory.report.v1"
+        assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
+        assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
         assert manifest["reports"][2]["href"] == "003-impact-left-pad-1.3.0.html"
         assert manifest["reports"][3]["href"] == "004-advisory-report.html"
 
@@ -667,6 +679,8 @@ def _assert_rpm_installed_bundle() -> None:
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["bundle"]["sourceKind"] == "rpm-installed"
+        assert manifest["bundle"]["command"].startswith("edgp rpm-installed-bundle ")
         assert manifest["reports"][0]["href"] == "001-rpm-installed-graph.html"
         assert manifest["reports"][1]["href"] == "002-impact-rpm-installed-local.html"
         graph = json.loads(

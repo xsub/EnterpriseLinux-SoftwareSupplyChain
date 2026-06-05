@@ -33,6 +33,8 @@ def test_cli_npm_bundle_writes_json_html_index_and_manifest(tmp_path, capsys) ->
     assert graph["schema"] == "edgp.graph.snapshot.v1"
     assert diagnostics["schema"] == "edgp.npm.diagnostics.v1"
     assert manifest["schema"] == "edgp.report.bundle.v1"
+    assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
+    assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.npm.diagnostics.v1",
@@ -83,6 +85,7 @@ def test_cli_npm_bundle_can_include_impact_and_advisory_reports(
     assert impact["node"] == "left-pad==1.3.0"
     assert advisory["schema"] == "edgp.advisory.report.v1"
     assert advisory["summary"]["findings"] == 1
+    assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.npm.diagnostics.v1",

@@ -45,7 +45,8 @@ surfaces are:
 - Render deterministic static HTML report bundles with an index for multiple
   EDGP JSON reports.
 - Emit a machine-readable `manifest.json` for report bundles so future
-  workbench and RAG integrations can ingest generated artifacts directly.
+  workbench and RAG integrations can ingest generated artifacts directly,
+  including bundle-level source kind and generating command metadata.
 - Use a shared graph bundle writer for npm, Maven, DOT, CycloneDX SBOM, and
   installed RPM bundle commands.
 - Run deterministic synthetic CSR traversal benchmarks.
@@ -112,5 +113,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 - Add Maven optional/excluded dependency markers if dependency-tree output
   exposes them in public fixtures.
-- Add bundle-level metadata that records the CLI command and source kind used to
-  generate each static report bundle.
+- Add JSON schema documentation for report bundle manifests so RAG/workbench
+  integrations can validate generated artifact indexes without inspecting code.

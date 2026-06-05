@@ -70,6 +70,8 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
     assert graph["ecosystem"] == "rpm"
     assert impact["node"] == "glibc==2.39-1.el10"
     assert impact["summary"]["affectedDependents"] == 2
+    assert manifest["bundle"]["sourceKind"] == "rpm-installed"
+    assert manifest["bundle"]["command"].startswith("edgp rpm-installed-bundle ")
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",

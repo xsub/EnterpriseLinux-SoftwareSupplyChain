@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Callable, Sequence
 
@@ -26,6 +27,7 @@ def write_graph_report_bundle(
     max_paths: int = 20,
     extra_reports_after_graph: Sequence[Path] = (),
     extra_reports: Sequence[Path] = (),
+    bundle_metadata: Mapping[str, object] | None = None,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     report_paths = []
@@ -60,7 +62,11 @@ def write_graph_report_bundle(
         report_paths.append(impact_path)
 
     report_paths.extend(extra_reports)
-    return write_report_bundle(report_paths, output_dir)
+    return write_report_bundle(
+        report_paths,
+        output_dir,
+        bundle_metadata=bundle_metadata,
+    )
 
 
 def safe_artifact_stem(value: str) -> str:

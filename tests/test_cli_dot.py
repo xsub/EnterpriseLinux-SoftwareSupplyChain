@@ -88,6 +88,8 @@ def test_cli_dot_bundle_writes_graph_and_impact_reports(tmp_path, capsys) -> Non
     assert graph["ecosystem"] == "rpm"
     assert impact["schema"] == "edgp.impact.report.v1"
     assert impact["node"] == "glibc==unknown"
+    assert manifest["bundle"]["sourceKind"] == "dot"
+    assert manifest["bundle"]["command"].startswith("edgp dot-bundle ")
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",

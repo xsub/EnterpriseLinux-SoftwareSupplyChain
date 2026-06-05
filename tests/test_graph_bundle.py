@@ -24,10 +24,15 @@ def test_write_graph_report_bundle_writes_graph_impact_and_manifest(tmp_path) ->
         graph_name="generic-graph",
         impact_nodes=["lib"],
         node_resolver=lambda graph, selector: "lib==2.0.0",
+        bundle_metadata={"sourceKind": "test-graph", "command": "edgp test"},
     )
 
     assert index_path == tmp_path / "index.html"
     manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"] == {
+        "command": "edgp test",
+        "sourceKind": "test-graph",
+    }
     assert [report["href"] for report in manifest["reports"]] == [
         "001-generic-graph.html",
         "002-impact-lib-2.0.0.html",

@@ -134,6 +134,8 @@ def test_cli_maven_bundle_writes_graph_and_impact_reports(tmp_path, capsys) -> N
 
     assert graph["schema"] == "edgp.graph.snapshot.v1"
     assert "com.example:native-lib:linux-x86_64==1.0.0" == impact["node"]
+    assert manifest["bundle"]["sourceKind"] == "maven-dependency-tree"
+    assert manifest["bundle"]["command"].startswith("edgp maven-bundle ")
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",

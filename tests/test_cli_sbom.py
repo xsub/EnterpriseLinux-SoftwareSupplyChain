@@ -70,6 +70,8 @@ def test_cli_sbom_bundle_writes_graph_and_impact_reports(tmp_path, capsys) -> No
     assert graph["ecosystem"] == "npm"
     assert impact["schema"] == "edgp.impact.report.v1"
     assert impact["node"] == "left-pad==1.3.0"
+    assert manifest["bundle"]["sourceKind"] == "cyclonedx-sbom"
+    assert manifest["bundle"]["command"].startswith("edgp sbom-bundle ")
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",

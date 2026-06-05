@@ -124,4 +124,6 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert (output_dir / "002-npm-diagnostics-report.html").exists()
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["schema"] == "edgp.report.bundle.v1"
+    assert manifest["bundle"]["sourceKind"] == "edgp-json"
+    assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
     assert manifest["reports"][1]["schema"] == "edgp.npm.diagnostics.v1"

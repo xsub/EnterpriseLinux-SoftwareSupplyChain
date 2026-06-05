@@ -243,7 +243,7 @@ class HtmlReportExporter {
 class ReportBundleExporter {
   +write_report_bundle(inputs, output_dir) Path
   +render_bundle_index(entries) str
-  +render_bundle_manifest(entries) dict
+  +render_bundle_manifest(entries, metadata) dict
 }
 class GraphBundleExporter {
   +write_graph_report_bundle(graph, output_dir) Path
@@ -384,19 +384,24 @@ disambiguated in EDGP node ids, for example
 
 `edgp maven-bundle` renders a Maven dependency-tree graph into a static local
 bundle with `maven-graph.json`, optional impact reports, HTML, `index.html`, and
-`manifest.json`.
+`manifest.json`. The manifest records `bundle.sourceKind` as
+`maven-dependency-tree` and includes the generating command.
 
 `edgp dot-bundle` renders DOT graphs, including `dnf repograph`-style RPM
 graphs, into static local bundles with `dot-graph.json`, optional impact reports,
-HTML, `index.html`, and `manifest.json`.
+HTML, `index.html`, and `manifest.json`. The manifest records `bundle.sourceKind`
+as `dot` and includes the generating command.
 
 `edgp sbom-bundle` renders CycloneDX JSON SBOMs into static local bundles with
 `sbom-graph.json`, optional impact reports, HTML, `index.html`, and
-`manifest.json`.
+`manifest.json`. The manifest records `bundle.sourceKind` as `cyclonedx-sbom`
+and includes the generating command.
 
 `edgp rpm-installed-bundle` renders a bounded local RPM database graph on
 AlmaLinux-compatible hosts into a static bundle with `rpm-installed-graph.json`,
-optional impact reports, HTML, `index.html`, and `manifest.json`.
+optional impact reports, HTML, `index.html`, and `manifest.json`. The manifest
+records `bundle.sourceKind` as `rpm-installed` and includes the generating
+command.
 
 ### Graph and Security Egress
 
@@ -431,7 +436,8 @@ of the same package through nested `node_modules` paths.
 folder containing `npm-graph.json`, `npm-diagnostics.json`, optional impact and
 advisory JSON reports, HTML reports, `index.html`, and `manifest.json`. It is
 the fastest public-resource path from an npm lockfile to a browser-friendly
-graph, diagnostics, and local advisory view.
+graph, diagnostics, and local advisory view. The manifest records
+`bundle.sourceKind` as `npm-lockfile` and includes the generating command.
 
 `edgp impact` turns reverse reachability into a vulnerability-style impact
 report. For a selected node it returns direct dependents, all transitive
@@ -469,6 +475,8 @@ directory with deterministic member report filenames, an `index.html` summary,
 and a machine-readable `manifest.json`. This is a local, public-resource triage
 surface for handing a graph snapshot plus related impact, advisory, or npm
 diagnostic reports to a browser, RAG context builder, or future workbench UI.
+The manifest records `bundle.sourceKind` as `edgp-json` and includes the
+generating command.
 
 ## Roadmap
 
