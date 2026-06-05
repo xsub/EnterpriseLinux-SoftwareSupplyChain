@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from src.adapters.npm import NpmAdapter
 from src.output.cypher_export import CypherExporter
 from src.output.sbom_security import CycloneDXExporter
 from src.resolver.cdcl_engine import CDCLResolver
@@ -67,11 +68,23 @@ def build_parser() -> argparse.ArgumentParser:
     resolve.add_argument("--version", required=True)
     resolve.add_argument("--format", choices=["cypher", "cyclonedx"], default="cypher")
 
+    lockfile = subparsers.add_parser("lockfile", help="Export a resolved lockfile graph")
+    lockfile.add_argument("--path", type=Path, required=True)
+    lockfile.add_argument("--ecosystem", choices=["npm"], default="npm")
+    lockfile.add_argument("--format", choices=["cypher", "cyclonedx"], default="cypher")
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+
+    if args.command == "lockfile":
+        if args.ecosystem != "npm":
+            raise ValueError(f"Unsupported lockfile ecosystem: {args.ecosystem}")
+        resolved = NpmAdapter().parse_lockfile_graph(args.path)
+        print(_export(args.format, resolved.graph, root=resolved.root_identifier))
+        return 0
 
     if args.command == "demo":
         registry = _demo_registry()

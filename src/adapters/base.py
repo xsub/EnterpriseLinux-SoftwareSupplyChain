@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.models.package import DependencyRequirement
 
 
@@ -12,6 +13,13 @@ class ProjectManifest:
     root_name: str
     root_version: str = "0.0.0"
     direct_dependencies: tuple[DependencyRequirement, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class ResolvedProjectGraph:
+    root_identifier: str
+    graph: CSRDependencyGraph
+    ecosystem: str
 
 
 class LockfileAdapter(ABC):

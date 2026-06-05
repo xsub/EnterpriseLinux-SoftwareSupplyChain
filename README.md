@@ -45,6 +45,13 @@ edgp demo --format cypher
 edgp demo --format cyclonedx
 ```
 
+Export an already-resolved npm lockfile:
+
+```bash
+edgp lockfile --path package-lock.json --format cypher
+edgp lockfile --path package-lock.json --format cyclonedx
+```
+
 ## Architecture
 
 ### CSR Graph Core
@@ -71,6 +78,14 @@ The operational loop performs unit propagation, makes dependency decisions,
 learns a blocking incompatibility from conflicts, and backtracks before trying
 the next viable package version.
 
+### Lockfile Ingestion
+
+`NpmAdapter.parse_lockfile_graph` turns npm `package-lock.json` files into the
+same CSR graph used by the resolver. For lockfile v2/v3 it walks the `packages`
+map, derives package names from `node_modules` paths when metadata omits them,
+and resolves dependencies through npm's nested `node_modules` lookup rules.
+Legacy v1 dependency trees are supported with recursive edge extraction.
+
 ### Graph and Security Egress
 
 `CypherExporter` emits deterministic Neo4j statements for package nodes and
@@ -81,8 +96,7 @@ Dependency-Track or similar security ingestion paths.
 ## Roadmap
 
 - replace the prototype learner with full PubGrub conflict explanation;
-- add native lockfile graph extraction for npm, Poetry, Cargo, and Maven;
+- add native lockfile graph extraction for Poetry, Cargo, and Maven;
 - support vulnerability annotations and reachability queries;
 - add GraphBLAS or GPU-backed traversal adapters for very large static graphs;
 - add batch Cypher and SBOM submission clients for automated DevSecOps flows.
-# EnterpriseLinux-SoftwareSupplyChain
