@@ -1,4 +1,4 @@
-"""Static HTML report exporter for EDGP JSON graph snapshots."""
+"""Static HTML report exporter for EDGP graph, impact, and advisory JSON."""
 
 from __future__ import annotations
 
@@ -9,10 +9,25 @@ from pathlib import Path
 from typing import Any
 
 
-def write_snapshot_report_file(snapshot_path: Path, output_path: Path) -> Path:
-    payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
-    output_path.write_text(render_snapshot_report(payload), encoding="utf-8")
+def write_report_file(input_path: Path, output_path: Path) -> Path:
+    payload = json.loads(input_path.read_text(encoding="utf-8"))
+    output_path.write_text(render_report(payload), encoding="utf-8")
     return output_path
+
+
+def write_snapshot_report_file(snapshot_path: Path, output_path: Path) -> Path:
+    return write_report_file(snapshot_path, output_path)
+
+
+def render_report(payload: dict[str, Any]) -> str:
+    schema = payload.get("schema")
+    if schema == "edgp.graph.snapshot.v1":
+        return render_snapshot_report(payload)
+    if schema == "edgp.impact.report.v1":
+        return render_impact_report(payload)
+    if schema == "edgp.advisory.report.v1":
+        return render_advisory_report(payload)
+    raise ValueError(f"Unsupported HTML report schema: {schema}")
 
 
 def render_snapshot_report(snapshot: dict[str, Any]) -> str:
@@ -48,6 +63,80 @@ def render_snapshot_report(snapshot: dict[str, Any]) -> str:
     )
 
 
+def render_impact_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.impact.report.v1":
+        raise ValueError("HTML impact report input must be an EDGP impact report")
+
+    summary = report.get("summary", {})
+    title = f"EDGP Impact Report - {report.get('node') or 'package'}"
+    return _document(
+        title,
+        [
+            _generic_hero(
+                eyebrow=str(report.get("ecosystem", "generic")),
+                heading=str(report.get("node") or "Dependency impact"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Direct Dependents", summary.get("directDependents", 0)),
+                    ("Affected Dependents", summary.get("affectedDependents", 0)),
+                    ("Rendered Chains", summary.get("renderedChains", 0)),
+                ],
+            ),
+            _package_list_panel(
+                "Direct Dependents",
+                report.get("directDependents", []),
+                test_id="direct-dependents-panel",
+            ),
+            _impact_chains_panel(report.get("dependencyChainsToNode", [])),
+        ],
+    )
+
+
+def render_advisory_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.advisory.report.v1":
+        raise ValueError("HTML advisory report input must be an EDGP advisory report")
+
+    summary = report.get("summary", {})
+    title = f"EDGP Advisory Report - {report.get('root') or 'graph'}"
+    return _document(
+        title,
+        [
+            _generic_hero(
+                eyebrow=str(report.get("ecosystem", "generic")),
+                heading=str(report.get("root") or "Advisory overlay"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Advisories", summary.get("advisories", 0)),
+                    ("Findings", summary.get("findings", 0)),
+                    ("Affected", summary.get("affectedDependents", 0)),
+                ],
+            ),
+            _advisory_findings_panel(report.get("findings", [])),
+        ],
+    )
+
+
+def _document(title: str, sections: list[str]) -> str:
+    return "\n".join(
+        [
+            "<!doctype html>",
+            '<html lang="en">',
+            "<head>",
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>{escape(title)}</title>",
+            f"<style>{_styles()}</style>",
+            "</head>",
+            "<body>",
+            '<main class="report-shell">',
+            *sections,
+            "</main>",
+            "</body>",
+            "</html>",
+        ]
+    )
+
+
 def _hero(snapshot: dict[str, Any], stats: dict[str, Any]) -> str:
     return f"""
 <section class="hero" data-testid="report-hero">
@@ -60,6 +149,118 @@ def _hero(snapshot: dict[str, Any], stats: dict[str, Any]) -> str:
     <div><dt>Edges</dt><dd>{escape(str(stats.get("edges", 0)))}</dd></div>
     <div><dt>Schema</dt><dd>{escape(str(snapshot.get("schema")))}</dd></div>
   </dl>
+</section>""".strip()
+
+
+def _generic_hero(
+    *,
+    eyebrow: str,
+    heading: str,
+    schema: str,
+    metrics: list[tuple[str, object]],
+) -> str:
+    metric_markup = "\n".join(
+        "<div>"
+        f"<dt>{escape(label)}</dt>"
+        f"<dd>{escape(str(value))}</dd>"
+        "</div>"
+        for label, value in [*metrics, ("Schema", schema)]
+    )
+    return f"""
+<section class="hero" data-testid="report-hero">
+  <div>
+    <p class="eyebrow">{escape(eyebrow)}</p>
+    <h1>{escape(heading)}</h1>
+  </div>
+  <dl class="metrics">{metric_markup}</dl>
+</section>""".strip()
+
+
+def _package_list_panel(title: str, packages: object, *, test_id: str) -> str:
+    if isinstance(packages, list):
+        rows = "".join(f"<li>{escape(str(package))}</li>" for package in packages)
+    else:
+        rows = ""
+    body = f'<ul class="plain-list">{rows}</ul>' if rows else '<p class="empty">No packages.</p>'
+    return f"""
+<section class="panel" data-testid="{escape(test_id)}">
+  <div class="section-head">
+    <h2>{escape(title)}</h2>
+    <span>{len(packages) if isinstance(packages, list) else 0} total</span>
+  </div>
+  {body}
+</section>""".strip()
+
+
+def _impact_chains_panel(chains: object) -> str:
+    rows = []
+    if isinstance(chains, list):
+        for chain in chains:
+            if not isinstance(chain, dict):
+                continue
+            path = chain.get("path", [])
+            if isinstance(path, list):
+                rendered_path = " -> ".join(str(item) for item in path)
+            else:
+                rendered_path = ""
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(chain.get('package', '')))}</td>"
+                f"<td>{escape(str(chain.get('distance', '')))}</td>"
+                f"<td>{escape(rendered_path)}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="3">No dependency chains.</td></tr>'
+    return f"""
+<section class="panel" data-testid="impact-chains-panel">
+  <div class="section-head">
+    <h2>Dependency Chains To Node</h2>
+    <span>{len(rows)} shown</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Package</th><th>Distance</th><th>Path</th></tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _advisory_findings_panel(findings: object) -> str:
+    rows = []
+    if isinstance(findings, list):
+        for finding in findings:
+            if not isinstance(finding, dict):
+                continue
+            advisory = finding.get("advisory", {})
+            if not isinstance(advisory, dict):
+                advisory = {}
+            impact = finding.get("impact", {})
+            impact_summary = impact.get("summary", {}) if isinstance(impact, dict) else {}
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(advisory.get('id', '')))}</td>"
+                f"<td>{escape(str(advisory.get('severity', '')))}</td>"
+                f"<td>{escape(str(finding.get('package', '')))}</td>"
+                f"<td>{escape(str(impact_summary.get('affectedDependents', 0)))}</td>"
+                f"<td>{escape(str(advisory.get('summary', '')))}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="5">No advisory findings.</td></tr>'
+    return f"""
+<section class="panel" data-testid="advisory-findings-panel">
+  <div class="section-head">
+    <h2>Advisory Findings</h2>
+    <span>{len(rows)} findings</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Advisory</th><th>Severity</th><th>Package</th><th>Affected</th><th>Summary</th></tr>
+      </thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
 </section>""".strip()
 
 
@@ -295,6 +496,19 @@ text {
   border-radius: 8px;
 }
 .ranking span, .ranking b { position: relative; z-index: 1; overflow-wrap: anywhere; }
+.plain-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.plain-list li {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
 .ranking i {
   position: absolute;
   left: 0;

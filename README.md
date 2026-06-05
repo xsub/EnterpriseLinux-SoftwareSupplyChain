@@ -139,6 +139,8 @@ Render a static HTML report from an EDGP JSON snapshot:
 
 ```bash
 edgp report --snapshot graph.json --output graph-report.html
+edgp report --input impact.json --output impact-report.html
+edgp report --input advisory.json --output advisory-report.html
 ```
 
 Run a synthetic CSR traversal benchmark:
@@ -216,7 +218,10 @@ class AdvisoryOverlay {
   +build_advisory_report(advisories, graph) dict
 }
 class HtmlReportExporter {
+  +render_report(payload) str
   +render_snapshot_report(snapshot) str
+  +render_impact_report(report) str
+  +render_advisory_report(report) str
 }
 class Benchmark {
   +run_synthetic_benchmark(nodes, fanout) dict
@@ -260,7 +265,7 @@ CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
 GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
 ImpactReporter --> CSRDependencyGraph : traverse dependents and paths
 AdvisoryOverlay --> ImpactReporter : attach package impact
-HtmlReportExporter --> GraphJsonExporter : consume snapshot JSON
+HtmlReportExporter --> GraphJsonExporter : consume EDGP JSON
 Benchmark --> CSRDependencyGraph : generate and traverse graph
 ```
 
@@ -388,9 +393,11 @@ dependents, edge records, graph stats, and most-depended-upon rankings. This is
 the plain interchange format for notebooks, local workbench panels, and RAG
 context generation.
 
-`edgp report` renders that snapshot into a dependency-free HTML file with graph
-metrics, a compact SVG preview, most-depended-upon rankings, and a node metadata
-table.
+`edgp report` renders graph snapshots, impact reports, and advisory reports into
+dependency-free HTML files. Snapshot reports include graph metrics, a compact SVG
+preview, most-depended-upon rankings, and a node metadata table. Impact and
+advisory reports render affected package lists, dependency chains, advisory
+metadata, and affected dependent counts for browser-friendly triage.
 
 ## Roadmap
 

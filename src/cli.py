@@ -20,7 +20,7 @@ from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
 from src.output.cypher_export import CypherExporter
-from src.output.html_report import write_snapshot_report_file
+from src.output.html_report import write_report_file
 from src.output.json_export import GraphJsonExporter
 from src.output.sbom_security import CycloneDXExporter
 from src.resolver.cdcl_engine import CDCLResolver
@@ -315,8 +315,10 @@ def build_parser() -> argparse.ArgumentParser:
     advisory.add_argument("--rpm-limit", type=int, default=100)
     advisory.add_argument("--max-requirements", type=int, default=40)
 
-    report = subparsers.add_parser("report", help="Render a local HTML snapshot report")
-    report.add_argument("--snapshot", type=Path, required=True)
+    report = subparsers.add_parser("report", help="Render a local HTML JSON report")
+    report_input = report.add_mutually_exclusive_group(required=True)
+    report_input.add_argument("--snapshot", type=Path)
+    report_input.add_argument("--input", type=Path)
     report.add_argument("--output", type=Path, required=True)
 
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
@@ -462,7 +464,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "report":
-        output_path = write_snapshot_report_file(args.snapshot, args.output)
+        output_path = write_report_file(args.snapshot or args.input, args.output)
         print(output_path)
         return 0
 

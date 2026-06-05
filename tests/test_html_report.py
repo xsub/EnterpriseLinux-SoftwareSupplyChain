@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from src.output.html_report import render_snapshot_report, write_snapshot_report_file
+from src.output.html_report import render_report, render_snapshot_report, write_report_file
 
 
 def test_render_snapshot_report_includes_summary_graph_and_tables() -> None:
@@ -21,10 +21,30 @@ def test_render_snapshot_report_includes_summary_graph_and_tables() -> None:
 def test_write_snapshot_report_file_writes_html(tmp_path) -> None:
     output_path = tmp_path / "report.html"
 
-    returned = write_snapshot_report_file(
+    returned = write_report_file(
         Path("tests/fixtures/snapshot-right.json"),
         output_path,
     )
 
     assert returned == output_path
     assert output_path.read_text(encoding="utf-8").startswith("<!doctype html>")
+
+
+def test_render_report_supports_impact_json() -> None:
+    report = json.loads(Path("tests/fixtures/impact-report.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP Impact Report - left-pad==1.3.0" in html
+    assert 'data-testid="impact-chains-panel"' in html
+    assert "@scope/tool==2.1.0 -&gt; left-pad==1.3.0" in html
+
+
+def test_render_report_supports_advisory_json() -> None:
+    report = json.loads(Path("tests/fixtures/advisory-report.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP Advisory Report - demo-app==1.0.0" in html
+    assert 'data-testid="advisory-findings-panel"' in html
+    assert "ADV-LOCAL-0001" in html
