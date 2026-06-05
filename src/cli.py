@@ -83,6 +83,24 @@ def _json(payload: dict[str, Any]) -> str:
     return json.dumps(payload, indent=2, sort_keys=True)
 
 
+def _write_npm_bundle(path: Path, output_dir: Path) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    adapter = NpmAdapter()
+    resolved = adapter.parse_lockfile_graph(path)
+    graph_path = output_dir / "npm-graph.json"
+    graph_path.write_text(
+        GraphJsonExporter.export_to_json(
+            resolved.graph,
+            root=resolved.root_identifier,
+            ecosystem=resolved.ecosystem,
+        ),
+        encoding="utf-8",
+    )
+    diagnostics_path = output_dir / "npm-diagnostics.json"
+    diagnostics_path.write_text(_json(adapter.diagnose_lockfile(path)), encoding="utf-8")
+    return write_report_bundle([graph_path, diagnostics_path], output_dir)
+
+
 def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependencyGraph]:
     root, graph, _ = _load_lockfile_project_graph(path, ecosystem)
     return root, graph
@@ -265,6 +283,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     npm_diagnostics.add_argument("--path", type=Path, required=True)
 
+    npm_bundle = subparsers.add_parser(
+        "npm-bundle", help="Render npm graph and diagnostics bundle from package-lock"
+    )
+    npm_bundle.add_argument("--path", type=Path, required=True)
+    npm_bundle.add_argument("--output-dir", type=Path, required=True)
+
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
     dot.add_argument("--path", type=Path, required=True)
     dot.add_argument("--ecosystem", default="rpm")
@@ -381,6 +405,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "npm-diagnostics":
         print(_json(NpmAdapter().diagnose_lockfile(args.path)))
+        return 0
+
+    if args.command == "npm-bundle":
+        print(_write_npm_bundle(args.path, args.output_dir))
         return 0
 
     if args.command == "dot":

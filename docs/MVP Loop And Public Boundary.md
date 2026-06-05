@@ -47,6 +47,8 @@ surfaces are:
   most-depended-upon rankings.
 - Diagnose npm package-lock duplicate package names, nested version conflicts,
   and unresolved dependency declarations.
+- Generate npm graph and diagnostics bundle directories directly from
+  `package-lock.json` inputs.
 - Report reverse dependency impact for a selected package.
 - Use human-friendly node selectors where a package name resolves to one graph
   node.
@@ -75,6 +77,7 @@ Manual examples:
 ```bash
 python -B -m src.cli lockfile --path tests/fixtures/package-lock.json --format json
 python -B -m src.cli npm-diagnostics --path tests/fixtures/package-lock-conflict.json
+python -B -m src.cli npm-bundle --path tests/fixtures/package-lock-conflict.json --output-dir /tmp/edgp-npm-bundle
 python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-classifier.txt --format json
 python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-packaging.txt --format json
 python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
@@ -93,7 +96,6 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add report bundle inputs generated directly from CLI subcommands, reducing
-  manual intermediate JSON steps.
+- Add optional impact/advisory artifacts to generated npm bundles.
 - Add Maven optional/excluded dependency markers if dependency-tree output
   exposes them in public fixtures.

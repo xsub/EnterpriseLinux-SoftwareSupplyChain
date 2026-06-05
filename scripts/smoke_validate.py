@@ -455,6 +455,37 @@ def _assert_report_bundle() -> None:
         assert 'data-testid="npm-unresolved-panel"' in npm_html
 
 
+def _assert_npm_bundle() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "npm-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "npm-bundle",
+                "--path",
+                "tests/fixtures/package-lock-conflict.json",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        graph = json.loads((output_dir / "npm-graph.json").read_text(encoding="utf-8"))
+        diagnostics = json.loads(
+            (output_dir / "npm-diagnostics.json").read_text(encoding="utf-8")
+        )
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert graph["schema"] == "edgp.graph.snapshot.v1"
+        assert diagnostics["schema"] == "edgp.npm.diagnostics.v1"
+        assert manifest["reports"][1]["href"] == "002-npm-diagnostics.html"
+
+
 def _assert_benchmark() -> None:
     payload = _run_cli(["benchmark", "--nodes", "64", "--fanout", "3"])
     assert payload["schema"] == "edgp.benchmark.v1"
@@ -508,6 +539,7 @@ def main(argv: list[str] | None = None) -> int:
         ("advisory html report", _assert_advisory_html_report),
         ("npm diagnostics html report", _assert_npm_diagnostics_html_report),
         ("report bundle", _assert_report_bundle),
+        ("npm bundle", _assert_npm_bundle),
         ("synthetic benchmark", _assert_benchmark),
     ]
     if args.include_rpm_installed:

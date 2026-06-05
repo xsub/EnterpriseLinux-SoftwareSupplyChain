@@ -75,13 +75,20 @@ def render_bundle_manifest(
             {
                 "href": entry.output_path.name,
                 "schema": entry.schema,
-                "source": str(entry.source_path),
+                "source": _source_label(entry),
                 "summary": entry.summary,
                 "title": entry.title,
             }
             for entry in entries
         ],
-    }
+}
+
+
+def _source_label(entry: BundleEntry) -> str:
+    try:
+        return str(entry.source_path.relative_to(entry.output_path.parent))
+    except ValueError:
+        return str(entry.source_path)
 
 
 def render_bundle_index(entries: Sequence[BundleEntry]) -> str:
