@@ -7,9 +7,15 @@ def test_installed_rpm_adapter_builds_provider_graph() -> None:
     responses = {
         ("rpm", "-qa", "--qf", RPM_QUERY_FORMAT): (
             "bash\t0\t5.2.26-6.el10\tx86_64\tAlmaLinux\tGPL-3.0-or-later\t"
-            "bash-5.2.26-6.el10.src.rpm\t1770000001\n"
+            "bash-5.2.26-6.el10.src.rpm\t1770000001\tAlmaLinux\t"
+            "AlmaLinux Packaging Team <packager@almalinux.org>\t"
+            "https://www.gnu.org/software/bash/\tx64-builder01.almalinux.org\t"
+            "(none)\t(none)\t(none)\n"
             "glibc\t0\t2.39-1.el10\tx86_64\tAlmaLinux\tLGPL-2.1-or-later\t"
-            "glibc-2.39-1.el10.src.rpm\t1770000002\n"
+            "glibc-2.39-1.el10.src.rpm\t1770000002\tAlmaLinux\t"
+            "AlmaLinux Packaging Team <packager@almalinux.org>\t"
+            "https://www.gnu.org/software/glibc/\tx64-builder01.almalinux.org\t"
+            "(none)\t(none)\t(none)\n"
         ),
         ("rpm", "-q", "--requires", "bash"): (
             "libc.so.6()(64bit)\n"
@@ -26,7 +32,10 @@ def test_installed_rpm_adapter_builds_provider_graph() -> None:
             RPM_QUERY_FORMAT,
         ): (
             "glibc\t0\t2.39-1.el10\tx86_64\tAlmaLinux\tLGPL-2.1-or-later\t"
-            "glibc-2.39-1.el10.src.rpm\t1770000002\n"
+            "glibc-2.39-1.el10.src.rpm\t1770000002\tAlmaLinux\t"
+            "AlmaLinux Packaging Team <packager@almalinux.org>\t"
+            "https://www.gnu.org/software/glibc/\tx64-builder01.almalinux.org\t"
+            "(none)\t(none)\t(none)\n"
         ),
     }
 
@@ -51,4 +60,8 @@ def test_installed_rpm_adapter_builds_provider_graph() -> None:
         "license": "GPL-3.0-or-later",
         "source_rpm": "bash-5.2.26-6.el10.src.rpm",
         "install_time": "1770000001",
+        "distribution": "AlmaLinux",
+        "packager": "AlmaLinux Packaging Team <packager@almalinux.org>",
+        "upstream_url": "https://www.gnu.org/software/bash/",
+        "build_host": "x64-builder01.almalinux.org",
     }

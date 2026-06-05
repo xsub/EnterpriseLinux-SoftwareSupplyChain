@@ -307,7 +307,8 @@ and package paths as CycloneDX fields or properties. RPM/DOT exports use RPM
 Package URLs such as `pkg:rpm/glibc@unknown` and can include RPM qualifiers when
 metadata such as `arch`, `distro`, or non-zero `epoch` is available. Live
 `rpm-installed` ingestion also records public RPM metadata such as vendor,
-license, source RPM, install time, and architecture.
+license, source RPM, install time, architecture, distribution, packager,
+upstream URL, and build host when those fields are present in the RPM database.
 
 ### Query Layer
 

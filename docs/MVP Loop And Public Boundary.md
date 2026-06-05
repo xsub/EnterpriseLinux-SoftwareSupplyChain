@@ -40,6 +40,8 @@ surfaces are:
 - Produce ecosystem-aware Package URLs for npm and RPM components.
 - Preserve public RPM metadata including vendor, license, source RPM, install
   time, architecture, and non-zero epoch.
+- Preserve public RPM origin/build hints including distribution, packager,
+  upstream URL, and build host when present.
 
 ## Validation Commands
 
@@ -70,5 +72,4 @@ python -B -m src.cli report --snapshot tests/fixtures/snapshot-right.json --outp
 
 ## Next Vertical Options
 
-- Add repository metadata hints when available from public RPM query output.
 - Add larger-graph performance fixtures and benchmark smoke checks.

@@ -11,7 +11,9 @@ from src.core_graph.sparse_matrix import CSRDependencyGraph
 CommandRunner = Callable[[list[str]], str]
 RPM_QUERY_FORMAT = (
     "%{NAME}\t%{EPOCHNUM}\t%{VERSION}-%{RELEASE}\t%{ARCH}\t"
-    "%{VENDOR}\t%{LICENSE}\t%{SOURCERPM}\t%{INSTALLTIME}\n"
+    "%{VENDOR}\t%{LICENSE}\t%{SOURCERPM}\t%{INSTALLTIME}\t"
+    "%{DISTRIBUTION}\t%{PACKAGER}\t%{URL}\t%{BUILDHOST}\t"
+    "%{DISTTAG}\t%{DISTURL}\t%{BUGURL}\n"
 )
 
 
@@ -131,6 +133,13 @@ class _RpmPackage:
         license_name: str = "",
         source_rpm: str = "",
         install_time: str = "",
+        distribution: str = "",
+        packager: str = "",
+        upstream_url: str = "",
+        build_host: str = "",
+        dist_tag: str = "",
+        dist_url: str = "",
+        bug_url: str = "",
     ) -> None:
         self.name = name
         self.epoch = epoch
@@ -140,10 +149,19 @@ class _RpmPackage:
         self.license_name = license_name
         self.source_rpm = source_rpm
         self.install_time = install_time
+        self.distribution = distribution
+        self.packager = packager
+        self.upstream_url = upstream_url
+        self.build_host = build_host
+        self.dist_tag = dist_tag
+        self.dist_url = dist_url
+        self.bug_url = bug_url
 
     @classmethod
     def from_query_line(cls, line: str) -> "_RpmPackage | None":
         parts = line.split("\t")
+        if len(parts) == 15:
+            return cls(*parts)
         if len(parts) == 8:
             return cls(*parts)
         if len(parts) == 3:
@@ -168,6 +186,13 @@ class _RpmPackage:
             "license": self.license_name,
             "source_rpm": self.source_rpm,
             "install_time": self.install_time,
+            "distribution": self.distribution,
+            "packager": self.packager,
+            "upstream_url": self.upstream_url,
+            "build_host": self.build_host,
+            "dist_tag": self.dist_tag,
+            "dist_url": self.dist_url,
+            "bug_url": self.bug_url,
         }
         for key, value in optional_fields.items():
             if value and value != "(none)":
