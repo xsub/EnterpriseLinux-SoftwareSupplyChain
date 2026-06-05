@@ -16,6 +16,7 @@ from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
 from src.output.cypher_export import CypherExporter
+from src.output.html_report import write_snapshot_report_file
 from src.output.json_export import GraphJsonExporter
 from src.output.sbom_security import CycloneDXExporter
 from src.resolver.cdcl_engine import CDCLResolver
@@ -284,6 +285,10 @@ def build_parser() -> argparse.ArgumentParser:
     advisory.add_argument("--rpm-limit", type=int, default=100)
     advisory.add_argument("--max-requirements", type=int, default=40)
 
+    report = subparsers.add_parser("report", help="Render a local HTML snapshot report")
+    report.add_argument("--snapshot", type=Path, required=True)
+    report.add_argument("--output", type=Path, required=True)
+
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument(
         "--source",
@@ -405,6 +410,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
         )
+        return 0
+
+    if args.command == "report":
+        output_path = write_snapshot_report_file(args.snapshot, args.output)
+        print(output_path)
         return 0
 
     if args.command == "query":

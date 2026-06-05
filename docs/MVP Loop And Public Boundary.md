@@ -28,6 +28,7 @@ surfaces are:
 - Build CSR dependency graphs from mock registries, npm lockfiles, DOT graphs,
   CycloneDX SBOMs, and installed RPM metadata.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
+- Render local HTML reports from EDGP JSON snapshots.
 - Diff two EDGP JSON snapshots.
 - Overlay local advisory JSON onto graph nodes.
 - Query dependencies, dependents, reachability, shortest paths, and
@@ -63,9 +64,9 @@ python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ec
 python -B -m src.cli impact --path tests/fixtures/package-lock.json --node left-pad
 python -B -m src.cli advisory --path tests/fixtures/package-lock.json --advisories tests/fixtures/advisories.json
 python -B -m src.cli diff --left tests/fixtures/snapshot-left.json --right tests/fixtures/snapshot-right.json
+python -B -m src.cli report --snapshot tests/fixtures/snapshot-right.json --output /tmp/edgp-report.html
 ```
 
 ## Next Vertical Options
 
-- Add a local HTML report for JSON snapshots.
 - Add Poetry lockfile graph ingestion.

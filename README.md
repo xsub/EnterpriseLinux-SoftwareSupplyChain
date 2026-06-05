@@ -113,6 +113,12 @@ Diff two EDGP JSON snapshots:
 edgp diff --left before.json --right after.json
 ```
 
+Render a static HTML report from an EDGP JSON snapshot:
+
+```bash
+edgp report --snapshot graph.json --output graph-report.html
+```
+
 ## Architecture
 
 ### Architecture UML
@@ -172,6 +178,9 @@ class ImpactReporter {
 class AdvisoryOverlay {
   +build_advisory_report(advisories, graph) dict
 }
+class HtmlReportExporter {
+  +render_snapshot_report(snapshot) str
+}
 class ConstraintModels {
   Term
   Incompatibility
@@ -197,11 +206,13 @@ CLI --> GraphJsonExporter : export snapshot
 CLI --> CSRDependencyGraph : query traversal
 CLI --> ImpactReporter : report reverse impact
 CLI --> AdvisoryOverlay : overlay local advisories
+CLI --> HtmlReportExporter : render local report
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
 GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
 ImpactReporter --> CSRDependencyGraph : traverse dependents and paths
 AdvisoryOverlay --> ImpactReporter : attach package impact
+HtmlReportExporter --> GraphJsonExporter : consume snapshot JSON
 ```
 
 ### Graph Build And Traversal UML
@@ -307,6 +318,10 @@ document with root, ecosystem, node metadata, direct dependencies, direct
 dependents, edge records, graph stats, and most-depended-upon rankings. This is
 the plain interchange format for notebooks, local workbench panels, and RAG
 context generation.
+
+`edgp report` renders that snapshot into a dependency-free HTML file with graph
+metrics, a compact SVG preview, most-depended-upon rankings, and a node metadata
+table.
 
 ## Roadmap
 

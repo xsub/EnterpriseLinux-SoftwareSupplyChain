@@ -7,6 +7,7 @@ import compileall
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -145,6 +146,32 @@ def _assert_rpm_advisory_overlay() -> None:
     assert payload["findings"][0]["package"] == "glibc==unknown"
 
 
+def _assert_html_report() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "snapshot-report.html"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--snapshot",
+                "tests/fixtures/snapshot-right.json",
+                "--output",
+                str(output_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_path)
+        html = output_path.read_text(encoding="utf-8")
+        assert 'data-testid="report-hero"' in html
+        assert "EDGP Snapshot Report - app==1.0.0" in html
+
+
 def _assert_rpm_installed() -> None:
     payload = _run_cli(
         ["rpm-installed", "--limit", "5", "--max-requirements", "10", "--format", "json"]
@@ -176,6 +203,7 @@ def main(argv: list[str] | None = None) -> int:
         ("impact report", _assert_impact_report),
         ("advisory overlay", _assert_advisory_overlay),
         ("rpm advisory overlay", _assert_rpm_advisory_overlay),
+        ("html report", _assert_html_report),
     ]
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))
