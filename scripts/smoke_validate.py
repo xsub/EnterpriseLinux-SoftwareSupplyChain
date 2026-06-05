@@ -214,6 +214,39 @@ def _assert_maven_tree_packaging_snapshot() -> None:
     assert "com.example:platform:pom==1.0.0" in node_ids
 
 
+def _assert_maven_bundle() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "maven-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "maven-bundle",
+                "--path",
+                "tests/fixtures/maven-tree-classifier.txt",
+                "--impact-node",
+                "com.example:native-lib:linux-x86_64",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["reports"][0]["href"] == "001-maven-graph.html"
+        assert (
+            manifest["reports"][1]["href"]
+            == "002-impact-com.example-native-lib-linux-x86_64-1.0.0.html"
+        )
+        graph_html = (output_dir / "001-maven-graph.html").read_text(encoding="utf-8")
+        assert "com.example:native-lib:linux-x86_64==1.0.0" in graph_html
+
+
 def _assert_dot_snapshot() -> None:
     payload = _run_cli(["dot", "--path", "tests/fixtures/repograph.dot", "--format", "json"])
     assert payload["schema"] == "edgp.graph.snapshot.v1"
@@ -566,6 +599,7 @@ def main(argv: list[str] | None = None) -> int:
         ("maven tree query", _assert_maven_tree_query),
         ("maven classifier snapshot", _assert_maven_tree_classifier_snapshot),
         ("maven packaging snapshot", _assert_maven_tree_packaging_snapshot),
+        ("maven bundle", _assert_maven_bundle),
         ("dot snapshot", _assert_dot_snapshot),
         ("sbom query", _assert_sbom_query),
         ("snapshot diff", _assert_snapshot_diff),

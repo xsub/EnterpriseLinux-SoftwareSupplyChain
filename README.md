@@ -80,6 +80,7 @@ Export a Maven dependency tree:
 mvn dependency:tree -DoutputFile=maven-tree.txt
 edgp maven-tree --path maven-tree.txt --format json
 edgp maven-tree --path maven-tree.txt --format cyclonedx
+edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
 ```
 
 Query an already-resolved npm lockfile:
@@ -369,6 +370,10 @@ disambiguated in EDGP node ids, for example
 `com.example:native-lib:linux-x86_64==1.0.0` or
 `com.example:platform:pom==1.0.0`, while standard jar artifacts keep the compact
 `group:artifact==version` form.
+
+`edgp maven-bundle` renders a Maven dependency-tree graph into a static local
+bundle with `maven-graph.json`, optional impact reports, HTML, `index.html`, and
+`manifest.json`.
 
 ### Graph and Security Egress
 

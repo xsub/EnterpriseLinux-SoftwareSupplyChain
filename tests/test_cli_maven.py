@@ -1,6 +1,7 @@
 """CLI tests for Maven dependency tree ingestion."""
 
 import json
+from pathlib import Path
 
 from src.cli import main
 
@@ -101,3 +102,44 @@ def test_cli_maven_tree_disambiguates_non_jar_artifacts(capsys) -> None:
     assert payload["stats"] == {"edges": 2, "nodes": 3}
     assert "com.example:platform==1.0.0" in node_ids
     assert "com.example:platform:pom==1.0.0" in node_ids
+
+
+def test_cli_maven_bundle_writes_graph_and_impact_reports(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "maven-bundle"
+
+    assert (
+        main(
+            [
+                "maven-bundle",
+                "--path",
+                "tests/fixtures/maven-tree-classifier.txt",
+                "--impact-node",
+                "com.example:native-lib:linux-x86_64",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    graph = json.loads((output_dir / "maven-graph.json").read_text(encoding="utf-8"))
+    impact = json.loads(
+        (
+            output_dir
+            / "impact-com.example-native-lib-linux-x86_64-1.0.0.json"
+        ).read_text(encoding="utf-8")
+    )
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+
+    assert graph["schema"] == "edgp.graph.snapshot.v1"
+    assert "com.example:native-lib:linux-x86_64==1.0.0" == impact["node"]
+    assert [report["schema"] for report in manifest["reports"]] == [
+        "edgp.graph.snapshot.v1",
+        "edgp.impact.report.v1",
+    ]
+    graph_html = (output_dir / "001-maven-graph.html").read_text(encoding="utf-8")
+    assert "com.example:native-lib:linux-x86_64==1.0.0" in graph_html
+    assert (
+        output_dir / "002-impact-com.example-native-lib-linux-x86_64-1.0.0.html"
+    ).exists()

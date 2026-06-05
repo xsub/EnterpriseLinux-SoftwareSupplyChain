@@ -148,6 +148,48 @@ def _write_npm_bundle(
     return write_report_bundle(report_paths, output_dir)
 
 
+def _write_maven_bundle(
+    path: Path,
+    output_dir: Path,
+    *,
+    impact_nodes: list[str] | None = None,
+    max_paths: int = 20,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    resolved = MavenTreeAdapter().parse_tree(path)
+    report_paths = []
+
+    graph_path = output_dir / "maven-graph.json"
+    graph_path.write_text(
+        GraphJsonExporter.export_to_json(
+            resolved.graph,
+            root=resolved.root_identifier,
+            ecosystem=resolved.ecosystem,
+        ),
+        encoding="utf-8",
+    )
+    report_paths.append(graph_path)
+
+    for selector in impact_nodes or []:
+        node = _resolve_node_selector(resolved.graph, selector, role="impact node")
+        impact_path = output_dir / f"impact-{_safe_artifact_stem(node)}.json"
+        impact_path.write_text(
+            _json(
+                build_impact_report(
+                    resolved.graph,
+                    node=node,
+                    root=resolved.root_identifier,
+                    ecosystem=resolved.ecosystem,
+                    max_paths=max_paths,
+                )
+            ),
+            encoding="utf-8",
+        )
+        report_paths.append(impact_path)
+
+    return write_report_bundle(report_paths, output_dir)
+
+
 def _safe_artifact_stem(value: str) -> str:
     stem = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip(".-_")
     return stem or "report"
@@ -361,6 +403,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--format", choices=["cypher", "cyclonedx", "json"], default="json"
     )
 
+    maven_bundle = subparsers.add_parser(
+        "maven-bundle", help="Render Maven dependency-tree graph bundle"
+    )
+    maven_bundle.add_argument("--path", type=Path, required=True)
+    maven_bundle.add_argument("--output-dir", type=Path, required=True)
+    maven_bundle.add_argument("--impact-node", action="append", default=[])
+    maven_bundle.add_argument("--limit", type=int, default=20)
+
     rpm_installed = subparsers.add_parser(
         "rpm-installed", help="Export a graph from the local RPM database"
     )
@@ -506,6 +556,17 @@ def main(argv: list[str] | None = None) -> int:
                 resolved.graph,
                 root=resolved.root_identifier,
                 ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "maven-bundle":
+        print(
+            _write_maven_bundle(
+                args.path,
+                args.output_dir,
+                impact_nodes=args.impact_node,
+                max_paths=args.limit,
             )
         )
         return 0
