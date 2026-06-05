@@ -24,5 +24,31 @@ def test_maven_tree_adapter_builds_resolved_graph() -> None:
         "group": "junit",
         "artifact": "junit",
         "packaging": "jar",
+        "coordinate": "junit:junit:jar:4.13.2:test",
         "scope": "test",
+    }
+
+
+def test_maven_tree_adapter_disambiguates_classifier_artifacts() -> None:
+    resolved = MavenTreeAdapter().parse_tree(
+        Path("tests/fixtures/maven-tree-classifier.txt")
+    )
+
+    assert resolved.root_identifier == "com.example:classifier-app==1.0.0"
+    assert resolved.graph.get_dependencies("com.example:classifier-app==1.0.0") == [
+        "com.example:native-lib==1.0.0",
+        "com.example:native-lib:linux-x86_64==1.0.0",
+        "com.example:toolkit:test-fixtures==2.0.0",
+    ]
+    assert resolved.graph.get_vertex_metadata(
+        "com.example:native-lib:linux-x86_64==1.0.0"
+    ) == {
+        "ecosystem": "maven",
+        "source": "maven-dependency-tree",
+        "group": "com.example",
+        "artifact": "native-lib",
+        "packaging": "jar",
+        "coordinate": "com.example:native-lib:jar:linux-x86_64:1.0.0:runtime",
+        "scope": "runtime",
+        "classifier": "linux-x86_64",
     }

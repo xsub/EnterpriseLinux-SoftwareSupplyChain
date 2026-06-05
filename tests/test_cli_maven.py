@@ -53,3 +53,30 @@ def test_cli_query_maven_tree_path(capsys) -> None:
         "junit:junit==4.13.2",
         "org.hamcrest:hamcrest-core==1.3",
     ]
+
+
+def test_cli_maven_tree_disambiguates_classifier_artifacts(capsys) -> None:
+    assert (
+        main(
+            [
+                "maven-tree",
+                "--path",
+                "tests/fixtures/maven-tree-classifier.txt",
+                "--format",
+                "json",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    node_ids = {node["id"] for node in payload["nodes"]}
+    assert payload["stats"] == {"edges": 3, "nodes": 4}
+    assert "com.example:native-lib==1.0.0" in node_ids
+    assert "com.example:native-lib:linux-x86_64==1.0.0" in node_ids
+    classifier_node = next(
+        node
+        for node in payload["nodes"]
+        if node["id"] == "com.example:native-lib:linux-x86_64==1.0.0"
+    )
+    assert classifier_node["metadata"]["classifier"] == "linux-x86_64"

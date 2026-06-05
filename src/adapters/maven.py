@@ -112,7 +112,20 @@ class _MavenCoordinate:
 
     @property
     def identifier(self) -> str:
-        return f"{self.group}:{self.artifact}=={self.version}"
+        name = f"{self.group}:{self.artifact}"
+        if self.classifier:
+            name = f"{name}:{self.classifier}"
+        return f"{name}=={self.version}"
+
+    @property
+    def coordinate(self) -> str:
+        coordinate_parts = [self.group, self.artifact, self.packaging]
+        if self.classifier:
+            coordinate_parts.append(self.classifier)
+        coordinate_parts.append(self.version)
+        if self.scope:
+            coordinate_parts.append(self.scope)
+        return ":".join(coordinate_parts)
 
     @property
     def metadata(self) -> dict[str, str]:
@@ -122,6 +135,7 @@ class _MavenCoordinate:
             "group": self.group,
             "artifact": self.artifact,
             "packaging": self.packaging,
+            "coordinate": self.coordinate,
         }
         if self.scope:
             metadata["scope"] = self.scope

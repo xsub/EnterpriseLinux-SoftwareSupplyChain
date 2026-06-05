@@ -1,0 +1,4 @@
+[INFO] com.example:classifier-app:jar:1.0.0
+[INFO] +- com.example:native-lib:jar:1.0.0:compile
+[INFO] +- com.example:native-lib:jar:linux-x86_64:1.0.0:runtime
+[INFO] \- com.example:toolkit:jar:test-fixtures:2.0.0:test
