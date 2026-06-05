@@ -1,0 +1,114 @@
+"""Run dependency graph smoke checks without external test dependencies."""
+
+from __future__ import annotations
+
+import argparse
+import compileall
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _run_cli(args: list[str]) -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, "-B", "-m", "src.cli", *args],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(completed.stdout)
+
+
+def _assert_compile() -> None:
+    ok = compileall.compile_dir(REPO_ROOT / "src", quiet=1)
+    ok = compileall.compile_dir(REPO_ROOT / "tests", quiet=1) and ok
+    if not ok:
+        raise AssertionError("compileall failed")
+
+
+def _assert_lockfile_snapshot() -> None:
+    payload = _run_cli(
+        ["lockfile", "--path", "tests/fixtures/package-lock.json", "--format", "json"]
+    )
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["ecosystem"] == "npm"
+    assert payload["stats"] == {"edges": 4, "nodes": 4}
+    assert payload["rankings"]["mostDependedUpon"][0] == {
+        "package": "left-pad==1.3.0",
+        "dependents": 2,
+    }
+
+
+def _assert_dot_snapshot() -> None:
+    payload = _run_cli(["dot", "--path", "tests/fixtures/repograph.dot", "--format", "json"])
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["ecosystem"] == "rpm"
+    assert payload["stats"] == {"edges": 5, "nodes": 4}
+    assert payload["rankings"]["mostDependedUpon"][0] == {
+        "package": "glibc==unknown",
+        "dependents": 3,
+    }
+
+
+def _assert_sbom_query() -> None:
+    payload = _run_cli(
+        [
+            "query",
+            "--source",
+            "sbom",
+            "--path",
+            "tests/fixtures/sample-bom.json",
+            "--operation",
+            "reachable",
+            "--node",
+            "demo-app",
+        ]
+    )
+    assert payload["node"] == "demo-app==1.0.0"
+    assert payload["result"] == ["left-pad==1.3.0"]
+
+
+def _assert_rpm_installed() -> None:
+    payload = _run_cli(
+        ["rpm-installed", "--limit", "5", "--max-requirements", "10", "--format", "json"]
+    )
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["ecosystem"] == "rpm"
+    assert payload["root"] == "rpm-installed==local"
+    assert payload["stats"]["nodes"] >= 1
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--include-rpm-installed",
+        action="store_true",
+        help="also validate live rpmdb ingestion on an RPM-based host",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    checks = [
+        ("compile", _assert_compile),
+        ("lockfile snapshot", _assert_lockfile_snapshot),
+        ("dot snapshot", _assert_dot_snapshot),
+        ("sbom query", _assert_sbom_query),
+    ]
+    if args.include_rpm_installed:
+        checks.append(("installed rpm graph", _assert_rpm_installed))
+
+    for label, check in checks:
+        check()
+        print(f"ok - {label}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

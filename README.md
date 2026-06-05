@@ -38,6 +38,13 @@ python -m pip install -e ".[dev]"
 pytest
 ```
 
+Run dependency-free smoke validation:
+
+```bash
+python -B scripts/smoke_validate.py
+python -B scripts/smoke_validate.py --include-rpm-installed
+```
+
 Run the demo resolver and export the result:
 
 ```bash
