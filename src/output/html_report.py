@@ -423,7 +423,43 @@ def _graph_panel(nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> st
     <span>{len(nodes)} nodes / {len(edges)} edges</span>
   </div>
   {_svg_preview(nodes, edges)}
+  {_edge_relationship_summary(edges)}
 </section>""".strip()
+
+
+def _edge_relationship_summary(edges: list[dict[str, Any]]) -> str:
+    if not edges:
+        return '<p class="empty">No edge relationships.</p>'
+    counts: dict[int, int] = {}
+    for edge in edges:
+        try:
+            relationship_type = int(edge.get("relationshipType", 1))
+        except (TypeError, ValueError):
+            relationship_type = 1
+        counts[relationship_type] = counts.get(relationship_type, 0) + 1
+
+    rows = "\n".join(
+        "<li>"
+        f"<span>{escape(_relationship_label(relationship_type))}</span>"
+        f"<strong>{count}</strong>"
+        "</li>"
+        for relationship_type, count in sorted(counts.items())
+    )
+    return f"""
+<div class="edge-types" data-testid="edge-relationship-panel">
+  <h3>Edge Relationships</h3>
+  <ul>{rows}</ul>
+</div>""".strip()
+
+
+def _relationship_label(relationship_type: int) -> str:
+    labels = {
+        1: "1 - Ordinary Dependency",
+        2: "2 - Maven Optional",
+        3: "3 - Maven Omitted",
+        4: "4 - Maven Excluded",
+    }
+    return labels.get(relationship_type, f"{relationship_type} - Custom Relationship")
 
 
 def _ranking_panel(rankings: list[dict[str, Any]]) -> str:
@@ -629,6 +665,42 @@ text {
   stroke: #ffffff;
   stroke-width: 3px;
 }
+.edge-types {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.edge-types h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.25;
+}
+.edge-types ul {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.edge-types li {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.edge-types span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.edge-types strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+}
 .ranking {
   list-style: none;
   display: grid;
@@ -683,6 +755,7 @@ tr:last-child td { border-bottom: 0; }
   .report-shell { width: min(100vw - 20px, 1120px); padding-top: 10px; }
   .hero { grid-template-columns: 1fr; padding: 18px; }
   .metrics { grid-template-columns: 1fr; }
+  .edge-types ul { grid-template-columns: 1fr; }
   h1 { font-size: 24px; }
 }
 """.strip()

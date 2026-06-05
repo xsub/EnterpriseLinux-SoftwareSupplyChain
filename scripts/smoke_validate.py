@@ -386,6 +386,44 @@ def _assert_maven_tree_marker_snapshot() -> None:
     assert edge_types["org.example:conflict-lib==1.0.0"] == 3
 
 
+def _assert_maven_tree_marker_html_report() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        snapshot_path = Path(temp_dir) / "maven-marker-graph.json"
+        output_path = Path(temp_dir) / "maven-marker-report.html"
+        payload = _run_cli(
+            [
+                "maven-tree",
+                "--path",
+                "tests/fixtures/maven-tree-markers.txt",
+                "--format",
+                "json",
+            ]
+        )
+        snapshot_path.write_text(json.dumps(payload), encoding="utf-8")
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--snapshot",
+                str(snapshot_path),
+                "--output",
+                str(output_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_path)
+        html = output_path.read_text(encoding="utf-8")
+        assert 'data-testid="edge-relationship-panel"' in html
+        assert "2 - Maven Optional" in html
+        assert "3 - Maven Omitted" in html
+
+
 def _assert_maven_bundle() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "maven-bundle"
@@ -950,6 +988,7 @@ def main(argv: list[str] | None = None) -> int:
         ("maven classifier snapshot", _assert_maven_tree_classifier_snapshot),
         ("maven packaging snapshot", _assert_maven_tree_packaging_snapshot),
         ("maven marker snapshot", _assert_maven_tree_marker_snapshot),
+        ("maven marker html report", _assert_maven_tree_marker_html_report),
         ("maven bundle", _assert_maven_bundle),
         ("dot snapshot", _assert_dot_snapshot),
         ("dot bundle", _assert_dot_bundle),

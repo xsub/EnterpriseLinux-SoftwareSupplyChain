@@ -47,6 +47,8 @@ surfaces are:
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
+- Label Maven optional, omitted, and excluded relationship types in graph
+  snapshot HTML reports.
 - Render deterministic static HTML report bundles with an index for multiple
   EDGP JSON reports.
 - Emit a machine-readable `manifest.json` for report bundles so future
@@ -130,7 +132,6 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add Maven relationship type labels to HTML graph reports so numeric edge types
-  are easier to inspect visually.
 - Add a `verify-bundle --format text` option for concise terminal checks while
   keeping JSON as the default automation surface.
+- Add graph report edge filtering controls for large static snapshots.

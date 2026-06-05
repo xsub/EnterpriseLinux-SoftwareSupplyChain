@@ -18,6 +18,49 @@ def test_render_snapshot_report_includes_summary_graph_and_tables() -> None:
     assert "Most Depended Upon" in html
 
 
+def test_render_snapshot_report_labels_maven_relationship_types() -> None:
+    snapshot = {
+        "schema": "edgp.graph.snapshot.v1",
+        "ecosystem": "maven",
+        "root": "app==1.0.0",
+        "stats": {"nodes": 3, "edges": 2},
+        "nodes": [
+            {"id": "app==1.0.0", "dependencies": [], "dependents": [], "metadata": {}},
+            {
+                "id": "optional==1.0.0",
+                "dependencies": [],
+                "dependents": [],
+                "metadata": {"optional": "true"},
+            },
+            {
+                "id": "omitted==1.0.0",
+                "dependencies": [],
+                "dependents": [],
+                "metadata": {"omitted": "true"},
+            },
+        ],
+        "edges": [
+            {
+                "source": "app==1.0.0",
+                "target": "optional==1.0.0",
+                "relationshipType": 2,
+            },
+            {
+                "source": "app==1.0.0",
+                "target": "omitted==1.0.0",
+                "relationshipType": 3,
+            },
+        ],
+        "rankings": {"mostDependedUpon": []},
+    }
+
+    html = render_snapshot_report(snapshot)
+
+    assert 'data-testid="edge-relationship-panel"' in html
+    assert "2 - Maven Optional" in html
+    assert "3 - Maven Omitted" in html
+
+
 def test_write_snapshot_report_file_writes_html(tmp_path) -> None:
     output_path = tmp_path / "report.html"
 
