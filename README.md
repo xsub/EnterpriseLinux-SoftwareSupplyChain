@@ -147,6 +147,7 @@ Render a static HTML report from an EDGP JSON snapshot:
 edgp report --snapshot graph.json --output graph-report.html
 edgp report --input impact.json --output impact-report.html
 edgp report --input advisory.json --output advisory-report.html
+edgp report --input npm-diagnostics.json --output npm-diagnostics-report.html
 ```
 
 Run a synthetic CSR traversal benchmark:
@@ -229,6 +230,7 @@ class HtmlReportExporter {
   +render_snapshot_report(snapshot) str
   +render_impact_report(report) str
   +render_advisory_report(report) str
+  +render_npm_diagnostics_report(report) str
 }
 class Benchmark {
   +run_synthetic_benchmark(nodes, fanout) dict
@@ -405,11 +407,13 @@ dependents, edge records, graph stats, and most-depended-upon rankings. This is
 the plain interchange format for notebooks, local workbench panels, and RAG
 context generation.
 
-`edgp report` renders graph snapshots, impact reports, and advisory reports into
-dependency-free HTML files. Snapshot reports include graph metrics, a compact SVG
-preview, most-depended-upon rankings, and a node metadata table. Impact and
-advisory reports render affected package lists, dependency chains, advisory
-metadata, and affected dependent counts for browser-friendly triage.
+`edgp report` renders graph snapshots, impact reports, advisory reports, and npm
+diagnostics into dependency-free HTML files. Snapshot reports include graph
+metrics, a compact SVG preview, most-depended-upon rankings, and a node metadata
+table. Impact and advisory reports render affected package lists, dependency
+chains, advisory metadata, and affected dependent counts for browser-friendly
+triage. npm diagnostics reports render duplicate package names, nested
+resolution conflicts, and unresolved dependency declarations.
 
 ## Roadmap
 

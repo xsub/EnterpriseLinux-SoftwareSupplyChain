@@ -359,6 +359,32 @@ def _assert_advisory_html_report() -> None:
         assert "ADV-LOCAL-0001" in html
 
 
+def _assert_npm_diagnostics_html_report() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "npm-diagnostics-report.html"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output",
+                str(output_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_path)
+        html = output_path.read_text(encoding="utf-8")
+        assert 'data-testid="npm-conflicts-panel"' in html
+        assert "EDGP npm Diagnostics - conflict-app==1.0.0" in html
+
+
 def _assert_benchmark() -> None:
     payload = _run_cli(["benchmark", "--nodes", "64", "--fanout", "3"])
     assert payload["schema"] == "edgp.benchmark.v1"
@@ -408,6 +434,7 @@ def main(argv: list[str] | None = None) -> int:
         ("html report", _assert_html_report),
         ("impact html report", _assert_impact_html_report),
         ("advisory html report", _assert_advisory_html_report),
+        ("npm diagnostics html report", _assert_npm_diagnostics_html_report),
         ("synthetic benchmark", _assert_benchmark),
     ]
     if args.include_rpm_installed:

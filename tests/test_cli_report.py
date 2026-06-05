@@ -1,4 +1,4 @@
-"""CLI tests for local HTML graph snapshot reports."""
+"""CLI tests for local HTML EDGP JSON reports."""
 
 from pathlib import Path
 
@@ -69,3 +69,28 @@ def test_cli_report_writes_html_advisory_report_from_input(tmp_path, capsys) -> 
     html = output_path.read_text(encoding="utf-8")
     assert 'data-testid="advisory-findings-panel"' in html
     assert "ADV-LOCAL-0001" in html
+
+
+def test_cli_report_writes_html_npm_diagnostics_report_from_input(
+    tmp_path, capsys
+) -> None:
+    output_path = tmp_path / "npm-diagnostics-report.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="npm-conflicts-panel"' in html
+    assert 'data-testid="npm-unresolved-panel"' in html
+    assert "missing" in html

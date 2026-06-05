@@ -1,4 +1,4 @@
-"""HTML report tests for EDGP graph snapshots."""
+"""HTML report tests for EDGP JSON analysis documents."""
 
 import json
 from pathlib import Path
@@ -48,3 +48,15 @@ def test_render_report_supports_advisory_json() -> None:
     assert "EDGP Advisory Report - demo-app==1.0.0" in html
     assert 'data-testid="advisory-findings-panel"' in html
     assert "ADV-LOCAL-0001" in html
+
+
+def test_render_report_supports_npm_diagnostics_json() -> None:
+    report = json.loads(Path("tests/fixtures/npm-diagnostics-report.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP npm Diagnostics - conflict-app==1.0.0" in html
+    assert 'data-testid="npm-conflicts-panel"' in html
+    assert "shared==2.0.0" in html
+    assert "node_modules/tool/node_modules/shared" in html
+    assert "missing" in html

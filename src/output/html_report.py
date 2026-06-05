@@ -1,4 +1,4 @@
-"""Static HTML report exporter for EDGP graph, impact, and advisory JSON."""
+"""Static HTML report exporter for EDGP JSON analysis documents."""
 
 from __future__ import annotations
 
@@ -27,6 +27,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_impact_report(payload)
     if schema == "edgp.advisory.report.v1":
         return render_advisory_report(payload)
+    if schema == "edgp.npm.diagnostics.v1":
+        return render_npm_diagnostics_report(payload)
     raise ValueError(f"Unsupported HTML report schema: {schema}")
 
 
@@ -112,6 +114,32 @@ def render_advisory_report(report: dict[str, Any]) -> str:
                 ],
             ),
             _advisory_findings_panel(report.get("findings", [])),
+        ],
+    )
+
+
+def render_npm_diagnostics_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.npm.diagnostics.v1":
+        raise ValueError("HTML npm diagnostics input must be an EDGP npm report")
+
+    summary = report.get("summary", {})
+    title = f"EDGP npm Diagnostics - {report.get('root') or 'package-lock'}"
+    return _document(
+        title,
+        [
+            _generic_hero(
+                eyebrow=str(report.get("ecosystem", "npm")),
+                heading=str(report.get("root") or "npm diagnostics"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Packages", summary.get("packages", 0)),
+                    ("Nested Conflicts", summary.get("nestedResolutionConflicts", 0)),
+                    ("Unresolved", summary.get("unresolvedDependencies", 0)),
+                ],
+            ),
+            _npm_conflicts_panel(report.get("nestedResolutionConflicts", [])),
+            _npm_duplicates_panel(report.get("duplicatePackageNames", [])),
+            _npm_unresolved_panel(report.get("unresolvedDependencies", [])),
         ],
     )
 
@@ -257,6 +285,129 @@ def _advisory_findings_panel(findings: object) -> str:
     <table>
       <thead>
         <tr><th>Advisory</th><th>Severity</th><th>Package</th><th>Affected</th><th>Summary</th></tr>
+      </thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _npm_conflicts_panel(conflicts: object) -> str:
+    rows = []
+    if isinstance(conflicts, list):
+        for conflict in conflicts:
+            if not isinstance(conflict, dict):
+                continue
+            versions = conflict.get("versions", [])
+            version_text = (
+                ", ".join(str(version) for version in versions)
+                if isinstance(versions, list)
+                else ""
+            )
+            consumers = conflict.get("consumers", [])
+            if isinstance(consumers, list):
+                consumer_text = "; ".join(
+                    f"{consumer.get('source', '')} -> {consumer.get('resolved', '')}"
+                    for consumer in consumers
+                    if isinstance(consumer, dict)
+                )
+            else:
+                consumer_text = ""
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(conflict.get('dependency', '')))}</td>"
+                f"<td>{escape(version_text)}</td>"
+                f"<td>{escape(consumer_text)}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="3">No nested resolution conflicts.</td></tr>'
+    return f"""
+<section class="panel" data-testid="npm-conflicts-panel">
+  <div class="section-head">
+    <h2>Nested Resolution Conflicts</h2>
+    <span>{len(rows)} conflicts</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dependency</th><th>Versions</th><th>Consumers</th></tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _npm_duplicates_panel(duplicates: object) -> str:
+    rows = []
+    if isinstance(duplicates, list):
+        for duplicate in duplicates:
+            if not isinstance(duplicate, dict):
+                continue
+            versions = duplicate.get("versions", [])
+            version_text = []
+            if isinstance(versions, list):
+                for version in versions:
+                    if not isinstance(version, dict):
+                        continue
+                    paths = version.get("paths", [])
+                    path_text = (
+                        ", ".join(str(path) for path in paths)
+                        if isinstance(paths, list)
+                        else ""
+                    )
+                    version_text.append(f"{version.get('version', '')}: {path_text}")
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(duplicate.get('package', '')))}</td>"
+                f"<td>{escape('; '.join(version_text))}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="2">No duplicate package names.</td></tr>'
+    return f"""
+<section class="panel" data-testid="npm-duplicates-panel">
+  <div class="section-head">
+    <h2>Duplicate Package Names</h2>
+    <span>{len(rows)} packages</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Package</th><th>Versions And Paths</th></tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _npm_unresolved_panel(unresolved: object) -> str:
+    rows = []
+    if isinstance(unresolved, list):
+        for item in unresolved:
+            if not isinstance(item, dict):
+                continue
+            searched_paths = item.get("searchedPaths", [])
+            searched_text = (
+                ", ".join(str(path) for path in searched_paths)
+                if isinstance(searched_paths, list)
+                else ""
+            )
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(item.get('source', '')))}</td>"
+                f"<td>{escape(str(item.get('dependency', '')))}</td>"
+                f"<td>{escape(str(item.get('requested', '')))}</td>"
+                f"<td>{escape(searched_text)}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="4">No unresolved dependencies.</td></tr>'
+    return f"""
+<section class="panel" data-testid="npm-unresolved-panel">
+  <div class="section-head">
+    <h2>Unresolved Dependencies</h2>
+    <span>{len(rows)} declarations</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Source</th><th>Dependency</th><th>Requested</th><th>Searched Paths</th></tr>
       </thead>
       <tbody>{body}</tbody>
     </table>

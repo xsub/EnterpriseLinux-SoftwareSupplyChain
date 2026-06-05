@@ -1,0 +1,59 @@
+{
+  "schema": "edgp.npm.diagnostics.v1",
+  "ecosystem": "npm",
+  "root": "conflict-app==1.0.0",
+  "summary": {
+    "packages": 4,
+    "duplicatePackageNames": 1,
+    "nestedResolutionConflicts": 1,
+    "unresolvedDependencies": 1
+  },
+  "duplicatePackageNames": [
+    {
+      "package": "shared",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "paths": ["node_modules/shared"]
+        },
+        {
+          "version": "2.0.0",
+          "paths": ["node_modules/tool/node_modules/shared"]
+        }
+      ]
+    }
+  ],
+  "nestedResolutionConflicts": [
+    {
+      "dependency": "shared",
+      "versions": ["1.0.0", "2.0.0"],
+      "consumers": [
+        {
+          "dependency": "shared",
+          "requested": "^1.0.0",
+          "resolved": "shared==1.0.0",
+          "resolvedPath": "node_modules/shared",
+          "source": "conflict-app==1.0.0",
+          "sourcePath": ""
+        },
+        {
+          "dependency": "shared",
+          "requested": "^2.0.0",
+          "resolved": "shared==2.0.0",
+          "resolvedPath": "node_modules/tool/node_modules/shared",
+          "source": "tool==1.0.0",
+          "sourcePath": "node_modules/tool"
+        }
+      ]
+    }
+  ],
+  "unresolvedDependencies": [
+    {
+      "dependency": "missing",
+      "requested": "^9.0.0",
+      "source": "conflict-app==1.0.0",
+      "sourcePath": "",
+      "searchedPaths": ["node_modules/missing"]
+    }
+  ]
+}
