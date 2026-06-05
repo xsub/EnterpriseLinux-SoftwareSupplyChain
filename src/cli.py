@@ -10,6 +10,7 @@ from typing import Any
 from src.adapters.npm import NpmAdapter
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.output.cypher_export import CypherExporter
+from src.output.json_export import GraphJsonExporter
 from src.output.sbom_security import CycloneDXExporter
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
@@ -61,6 +62,8 @@ def _export(
         return CypherExporter.export_to_cypher(graph)
     if format_name == "cyclonedx":
         return CycloneDXExporter.export_to_json(graph, root=root, ecosystem=ecosystem)
+    if format_name == "json":
+        return GraphJsonExporter.export_to_json(graph, root=root, ecosystem=ecosystem)
     raise ValueError(f"Unsupported output format: {format_name}")
 
 
@@ -129,18 +132,18 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     demo = subparsers.add_parser("demo", help="Resolve a built-in demo registry")
-    demo.add_argument("--format", choices=["cypher", "cyclonedx"], default="cypher")
+    demo.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
 
     resolve = subparsers.add_parser("resolve", help="Resolve a JSON registry")
     resolve.add_argument("--registry", type=Path, required=True)
     resolve.add_argument("--root", required=True)
     resolve.add_argument("--version", required=True)
-    resolve.add_argument("--format", choices=["cypher", "cyclonedx"], default="cypher")
+    resolve.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
 
     lockfile = subparsers.add_parser("lockfile", help="Export a resolved lockfile graph")
     lockfile.add_argument("--path", type=Path, required=True)
     lockfile.add_argument("--ecosystem", choices=["npm"], default="npm")
-    lockfile.add_argument("--format", choices=["cypher", "cyclonedx"], default="cypher")
+    lockfile.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
 
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument("--source", choices=["lockfile"], default="lockfile")

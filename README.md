@@ -50,6 +50,7 @@ Export an already-resolved npm lockfile:
 ```bash
 edgp lockfile --path package-lock.json --format cypher
 edgp lockfile --path package-lock.json --format cyclonedx
+edgp lockfile --path package-lock.json --format json
 ```
 
 Query an already-resolved npm lockfile:
@@ -100,6 +101,9 @@ class CypherExporter {
 class CycloneDXExporter {
   +export_to_json(graph, root) str
 }
+class GraphJsonExporter {
+  +export_to_json(graph, root) str
+}
 class ConstraintModels {
   Term
   Incompatibility
@@ -115,9 +119,11 @@ CDCLResolver --> CSRDependencyGraph : build graph
 NpmAdapter --> CSRDependencyGraph : build graph
 CLI --> CypherExporter : export Cypher
 CLI --> CycloneDXExporter : export SBOM
+CLI --> GraphJsonExporter : export snapshot
 CLI --> CSRDependencyGraph : query traversal
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
+GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
 ```
 
 ### Graph Build And Traversal UML
@@ -199,6 +205,14 @@ reverse reachability, shortest dependency paths, and most-depended-upon ranking.
 The CLI exposes these operations as JSON through `edgp query`, which makes the
 same graph useful for terminal investigation, future UI panels, and RAG context
 generation.
+
+### JSON Snapshot
+
+`GraphJsonExporter` emits `edgp.graph.snapshot.v1`, a deterministic graph JSON
+document with root, ecosystem, node metadata, direct dependencies, direct
+dependents, edge records, graph stats, and most-depended-upon rankings. This is
+the plain interchange format for notebooks, local workbench panels, and RAG
+context generation.
 
 ## Roadmap
 

@@ -4,6 +4,7 @@ import json
 
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.output.cypher_export import CypherExporter
+from src.output.json_export import GraphJsonExporter
 from src.output.sbom_security import CycloneDXExporter
 
 
@@ -61,3 +62,35 @@ def test_cyclonedx_export_uses_npm_purls_for_scoped_packages() -> None:
     ]
     assert component["licenses"] == [{"license": {"name": "MIT"}}]
     assert {"name": "edgp:integrity", "value": "sha512-demo"} in component["properties"]
+
+
+def test_graph_json_export_contains_nodes_edges_and_rankings() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_vertex("app==1.0.0", metadata={"ecosystem": "npm"})
+    graph.add_vertex("lib==1.0.0", metadata={"ecosystem": "npm"})
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+
+    payload = json.loads(
+        GraphJsonExporter.export_to_json(
+            graph,
+            root="app==1.0.0",
+            ecosystem="npm",
+        )
+    )
+
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["stats"] == {"edges": 1, "nodes": 2}
+    assert {"source": "app==1.0.0", "target": "lib==1.0.0", "relationshipType": 1} in payload[
+        "edges"
+    ]
+    assert {
+        "id": "lib==1.0.0",
+        "name": "lib",
+        "version": "1.0.0",
+        "dependencies": [],
+        "dependents": ["app==1.0.0"],
+        "metadata": {"ecosystem": "npm"},
+    } in payload["nodes"]
+    assert payload["rankings"]["mostDependedUpon"] == [
+        {"package": "lib==1.0.0", "dependents": 1}
+    ]
