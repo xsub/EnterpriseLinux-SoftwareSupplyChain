@@ -8,6 +8,8 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
+EDGE_EXPLORER_PAGE_SIZE = 250
+
 
 def write_report_file(input_path: Path, output_path: Path) -> Path:
     payload = json.loads(input_path.read_text(encoding="utf-8"))
@@ -462,8 +464,9 @@ def _edge_explorer_panel(edges: list[dict[str, Any]]) -> str:
     )
     rows = "\n".join(_edge_row(edge) for edge in edges)
     body = rows or '<tr><td colspan="3">No edges in snapshot.</td></tr>'
+    more_hidden = " hidden" if len(edges) <= EDGE_EXPLORER_PAGE_SIZE else ""
     return f"""
-<section class="panel" data-testid="edge-filter-panel" data-edge-filter-panel>
+<section class="panel" data-testid="edge-filter-panel" data-edge-filter-panel data-edge-page-size="{EDGE_EXPLORER_PAGE_SIZE}">
   <div class="section-head">
     <h2>Edge Explorer</h2>
     <span data-edge-filter-count>{len(edges)} shown</span>
@@ -477,7 +480,10 @@ def _edge_explorer_panel(edges: list[dict[str, Any]]) -> str:
       <span>Relationship</span>
       <select data-edge-filter-type aria-label="Filter edges by relationship type">{"".join(options)}</select>
     </label>
-    <button type="button" data-edge-filter-reset>Reset</button>
+    <div class="edge-filter-actions">
+      <button type="button" data-edge-filter-reset>Reset</button>
+      <button type="button" data-edge-filter-more{more_hidden}>More</button>
+    </div>
   </div>
   <div class="table-wrap">
     <table class="edge-table">
@@ -528,28 +534,40 @@ def _edge_filter_script() -> str:
     const search = panel.querySelector("[data-edge-filter-search]");
     const type = panel.querySelector("[data-edge-filter-type]");
     const reset = panel.querySelector("[data-edge-filter-reset]");
+    const more = panel.querySelector("[data-edge-filter-more]");
     const count = panel.querySelector("[data-edge-filter-count]");
     const rows = Array.from(panel.querySelectorAll("[data-edge-row]"));
-    const apply = () => {
+    const pageSize = Number(panel.dataset.edgePageSize || "250");
+    let visibleLimit = pageSize;
+    const apply = (resetLimit = false) => {
+      if (resetLimit) visibleLimit = pageSize;
       const query = (search.value || "").trim().toLowerCase();
       const selectedType = type.value;
+      let matched = 0;
       let shown = 0;
       for (const row of rows) {
         const edgeText = `${row.dataset.edgeSource || ""} ${row.dataset.edgeTarget || ""}`;
         const textMatches = !query || edgeText.includes(query);
         const typeMatches = !selectedType || row.dataset.edgeType === selectedType;
-        const visible = textMatches && typeMatches;
+        const matches = textMatches && typeMatches;
+        if (matches) matched += 1;
+        const visible = matches && matched <= visibleLimit;
         row.hidden = !visible;
         if (visible) shown += 1;
       }
-      count.textContent = `${shown} shown`;
+      count.textContent = matched > pageSize ? `${shown} of ${matched} shown` : `${shown} shown`;
+      more.hidden = shown >= matched;
     };
-    search.addEventListener("input", apply);
-    type.addEventListener("change", apply);
+    search.addEventListener("input", () => apply(true));
+    type.addEventListener("change", () => apply(true));
+    more.addEventListener("click", () => {
+      visibleLimit += pageSize;
+      apply();
+    });
     reset.addEventListener("click", () => {
       search.value = "";
       type.value = "";
-      apply();
+      apply(true);
       search.focus();
     });
     apply();
@@ -834,6 +852,16 @@ text {
   font: inherit;
   cursor: pointer;
 }
+.edge-filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+}
+.edge-filter-actions button[data-edge-filter-more] {
+  background: #ffffff;
+  color: var(--ink);
+}
+.edge-filter-actions button[hidden] { display: none; }
 .edge-table td:nth-child(3) { white-space: nowrap; }
 tr[hidden] { display: none; }
 .ranking {

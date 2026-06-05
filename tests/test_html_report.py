@@ -17,6 +17,7 @@ def test_render_snapshot_report_includes_summary_graph_and_tables() -> None:
     assert 'data-testid="edge-filter-panel"' in html
     assert 'data-edge-filter-search' in html
     assert 'data-edge-filter-count' in html
+    assert 'data-edge-filter-more' in html
     assert 'data-edge-type="1"' in html
     assert "lib==2.0.0" in html
     assert "Most Depended Upon" in html
@@ -66,6 +67,33 @@ def test_render_snapshot_report_labels_maven_relationship_types() -> None:
     assert 'data-edge-type="3"' in html
     assert "2 - Maven Optional" in html
     assert "3 - Maven Omitted" in html
+
+
+def test_render_snapshot_report_adds_edge_windowing_for_large_graphs() -> None:
+    edges = [
+        {
+            "source": f"package-{index}==1.0.0",
+            "target": f"package-{index + 1}==1.0.0",
+            "relationshipType": 1,
+        }
+        for index in range(260)
+    ]
+    snapshot = {
+        "schema": "edgp.graph.snapshot.v1",
+        "ecosystem": "generic",
+        "root": "large-graph",
+        "stats": {"nodes": 261, "edges": len(edges)},
+        "nodes": [],
+        "edges": edges,
+        "rankings": {"mostDependedUpon": []},
+    }
+
+    html = render_snapshot_report(snapshot)
+
+    assert 'data-edge-page-size="250"' in html
+    assert 'data-edge-filter-more' in html
+    assert "${shown} of ${matched} shown" in html
+    assert html.count("<tr data-edge-row") == 260
 
 
 def test_write_snapshot_report_file_writes_html(tmp_path) -> None:

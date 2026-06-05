@@ -786,6 +786,8 @@ def _assert_html_report() -> None:
         assert 'data-testid="edge-filter-panel"' in html
         assert 'data-edge-filter-search' in html
         assert 'data-edge-filter-count' in html
+        assert 'data-edge-filter-more' in html
+        assert 'data-edge-page-size="250"' in html
         assert "EDGP Snapshot Report - app==1.0.0" in html
 
 
