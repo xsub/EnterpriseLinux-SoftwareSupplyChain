@@ -141,13 +141,14 @@ Diff two EDGP JSON snapshots:
 edgp diff --left before.json --right after.json
 ```
 
-Render a static HTML report from an EDGP JSON snapshot:
+Render static HTML reports from EDGP JSON documents:
 
 ```bash
 edgp report --snapshot graph.json --output graph-report.html
 edgp report --input impact.json --output impact-report.html
 edgp report --input advisory.json --output advisory-report.html
 edgp report --input npm-diagnostics.json --output npm-diagnostics-report.html
+edgp report-bundle --input graph.json --input impact.json --output-dir reports
 ```
 
 Run a synthetic CSR traversal benchmark:
@@ -232,6 +233,10 @@ class HtmlReportExporter {
   +render_advisory_report(report) str
   +render_npm_diagnostics_report(report) str
 }
+class ReportBundleExporter {
+  +write_report_bundle(inputs, output_dir) Path
+  +render_bundle_index(entries) str
+}
 class Benchmark {
   +run_synthetic_benchmark(nodes, fanout) dict
 }
@@ -268,6 +273,7 @@ CLI --> CSRDependencyGraph : query traversal
 CLI --> ImpactReporter : report reverse impact
 CLI --> AdvisoryOverlay : overlay local advisories
 CLI --> HtmlReportExporter : render local report
+CLI --> ReportBundleExporter : render report bundle
 CLI --> Benchmark : run synthetic traversal
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
@@ -275,6 +281,7 @@ GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
 ImpactReporter --> CSRDependencyGraph : traverse dependents and paths
 AdvisoryOverlay --> ImpactReporter : attach package impact
 HtmlReportExporter --> GraphJsonExporter : consume EDGP JSON
+ReportBundleExporter --> HtmlReportExporter : render member reports
 Benchmark --> CSRDependencyGraph : generate and traverse graph
 ```
 
@@ -414,6 +421,12 @@ table. Impact and advisory reports render affected package lists, dependency
 chains, advisory metadata, and affected dependent counts for browser-friendly
 triage. npm diagnostics reports render duplicate package names, nested
 resolution conflicts, and unresolved dependency declarations.
+
+`edgp report-bundle` renders multiple EDGP JSON documents into one static
+directory with deterministic member report filenames and an `index.html` summary.
+This is a local, public-resource triage surface for handing a graph snapshot plus
+related impact, advisory, or npm diagnostic reports to a browser or future
+workbench UI.
 
 ## Roadmap
 

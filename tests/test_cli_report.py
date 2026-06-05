@@ -94,3 +94,30 @@ def test_cli_report_writes_html_npm_diagnostics_report_from_input(
     assert 'data-testid="npm-conflicts-panel"' in html
     assert 'data-testid="npm-unresolved-panel"' in html
     assert "missing" in html
+
+
+def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "bundle"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+
+    index_path = output_dir / "index.html"
+    assert Path(capsys.readouterr().out.strip()) == index_path
+    html = index_path.read_text(encoding="utf-8")
+    assert 'data-testid="report-bundle-index"' in html
+    assert "001-snapshot-right.html" in html
+    assert "002-npm-diagnostics-report.html" in html
+    assert (output_dir / "002-npm-diagnostics-report.html").exists()

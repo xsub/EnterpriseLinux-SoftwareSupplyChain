@@ -22,6 +22,7 @@ from src.impact_report import build_impact_report
 from src.output.cypher_export import CypherExporter
 from src.output.html_report import write_report_file
 from src.output.json_export import GraphJsonExporter
+from src.output.report_bundle import write_report_bundle
 from src.output.sbom_security import CycloneDXExporter
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
@@ -326,6 +327,13 @@ def build_parser() -> argparse.ArgumentParser:
     report_input.add_argument("--input", type=Path)
     report.add_argument("--output", type=Path, required=True)
 
+    report_bundle = subparsers.add_parser(
+        "report-bundle", help="Render multiple local HTML JSON reports with an index"
+    )
+    report_bundle.add_argument("--input", type=Path, action="append", required=True)
+    report_bundle.add_argument("--output-dir", type=Path, required=True)
+    report_bundle.add_argument("--index-name", default="index.html")
+
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
     benchmark.add_argument("--fanout", type=int, default=3)
@@ -475,6 +483,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "report":
         output_path = write_report_file(args.snapshot or args.input, args.output)
         print(output_path)
+        return 0
+
+    if args.command == "report-bundle":
+        index_path = write_report_bundle(
+            args.input,
+            args.output_dir,
+            index_name=args.index_name,
+        )
+        print(index_path)
         return 0
 
     if args.command == "benchmark":

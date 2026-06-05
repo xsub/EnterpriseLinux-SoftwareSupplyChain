@@ -34,6 +34,8 @@ surfaces are:
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
+- Render deterministic static HTML report bundles with an index for multiple
+  EDGP JSON reports.
 - Run deterministic synthetic CSR traversal benchmarks.
 - Diff two EDGP JSON snapshots.
 - Overlay local advisory JSON onto graph nodes.
@@ -79,11 +81,12 @@ python -B -m src.cli report --snapshot tests/fixtures/snapshot-right.json --outp
 python -B -m src.cli report --input tests/fixtures/impact-report.json --output /tmp/edgp-impact-report.html
 python -B -m src.cli report --input tests/fixtures/advisory-report.json --output /tmp/edgp-advisory-report.html
 python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json --output /tmp/edgp-npm-diagnostics-report.html
+python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
 ## Next Vertical Options
 
 - Add richer Maven classifier/version disambiguation fixtures.
-- Add deterministic report bundles that render graph, impact, advisory, and npm
-  diagnostics artifacts together.
+- Add a machine-readable manifest for report bundles so a future workbench can
+  ingest generated reports without scraping HTML.
