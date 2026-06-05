@@ -64,6 +64,9 @@ surfaces are:
   that checks manifest shape, member digests, and the bundle fingerprint.
 - Emit `verify-bundle` results as JSON by default, with a concise text format
   for terminal checks.
+- Document `edgp.report.bundle.verification.v1` with a Draft 2020-12 JSON
+  Schema and dependency-free smoke validation against generated verifier
+  output.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -136,4 +139,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ## Next Vertical Options
 
 - Add graph report edge filtering controls for large static snapshots.
-- Add explicit schema documentation for `edgp.report.bundle.verification.v1`.
+- Add a generated schema index for report, manifest, and verification
+  contracts.

@@ -494,7 +494,12 @@ with the machine-readable JSON Schema at
 [`docs/schemas/edgp.report.bundle.v1.schema.json`](docs/schemas/edgp.report.bundle.v1.schema.json).
 `edgp verify-bundle` checks that manifest shape, member artifact digests, and
 the top-level bundle fingerprint still match the generated directory. It emits
-JSON by default and supports `--format text` for concise terminal checks.
+JSON by default using the documented
+`edgp.report.bundle.verification.v1` contract and supports `--format text` for
+concise terminal checks. The verification report contract is documented in
+[`docs/Report Bundle Verification Schema.md`](docs/Report%20Bundle%20Verification%20Schema.md),
+with the machine-readable JSON Schema at
+[`docs/schemas/edgp.report.bundle.verification.v1.schema.json`](docs/schemas/edgp.report.bundle.verification.v1.schema.json).
 [`tests/fixtures/report-bundle-verification.json`](tests/fixtures/report-bundle-verification.json)
 provides a normalized machine-readable example of the verification report.
 The bundle `index.html` also includes a compact verification summary showing

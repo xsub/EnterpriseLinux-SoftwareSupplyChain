@@ -5,7 +5,9 @@ their `index.html`. The JSON Schema for the manifest is maintained at
 [`docs/schemas/edgp.report.bundle.v1.schema.json`](schemas/edgp.report.bundle.v1.schema.json).
 Run `edgp verify-bundle --path <bundle-dir>` to check the manifest shape,
 member source and HTML digests, and top-level bundle fingerprint. JSON output
-is the default; use `--format text` for a concise terminal summary.
+is the default and is documented in
+[`docs/Report Bundle Verification Schema.md`](Report%20Bundle%20Verification%20Schema.md);
+use `--format text` for a concise terminal summary.
 
 ## Top-Level Fields
 

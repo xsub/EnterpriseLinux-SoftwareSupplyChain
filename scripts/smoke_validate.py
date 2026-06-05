@@ -16,6 +16,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 REPORT_BUNDLE_SCHEMA_PATH = (
     REPO_ROOT / "docs" / "schemas" / "edgp.report.bundle.v1.schema.json"
 )
+REPORT_BUNDLE_VERIFICATION_SCHEMA_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.report.bundle.verification.v1.schema.json"
+)
 
 
 def _run_cli(args: list[str]) -> dict[str, Any]:
@@ -70,6 +76,12 @@ def _load_report_bundle_manifest_schema() -> dict[str, Any]:
     return json.loads(REPORT_BUNDLE_SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
+def _load_report_bundle_verification_schema() -> dict[str, Any]:
+    return json.loads(
+        REPORT_BUNDLE_VERIFICATION_SCHEMA_PATH.read_text(encoding="utf-8")
+    )
+
+
 def _assert_report_bundle_manifest_schema_document() -> None:
     schema = _load_report_bundle_manifest_schema()
     assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
@@ -92,6 +104,33 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "maven-dependency-tree",
         "npm-lockfile",
         "rpm-installed",
+    }
+
+
+def _assert_report_bundle_verification_schema_document() -> None:
+    schema = _load_report_bundle_verification_schema()
+    assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+    assert (
+        schema["properties"]["schema"]["const"]
+        == "edgp.report.bundle.verification.v1"
+    )
+    assert set(schema["required"]) == {
+        "schema",
+        "bundleDir",
+        "manifest",
+        "ok",
+        "bundleSha256",
+        "summary",
+        "failures",
+    }
+    assert set(schema["properties"]["summary"]["required"]) == {
+        "reports",
+        "failures",
+    }
+    assert set(schema["properties"]["failures"]["items"]["required"]) == {
+        "code",
+        "message",
+        "path",
     }
 
 
@@ -140,8 +179,43 @@ def _assert_report_bundle_manifest_contract(
             assert bundle["command"]
 
 
+def _assert_report_bundle_verification_contract(payload: dict[str, Any]) -> None:
+    schema = _load_report_bundle_verification_schema()
+    required_keys = set(schema["required"])
+    allowed_keys = set(schema["properties"])
+    summary_schema = schema["properties"]["summary"]
+    failure_schema = schema["properties"]["failures"]["items"]
+
+    assert required_keys <= set(payload)
+    assert set(payload) <= allowed_keys
+    assert payload["schema"] == schema["properties"]["schema"]["const"]
+    assert isinstance(payload["bundleDir"], str) and payload["bundleDir"]
+    assert isinstance(payload["manifest"], str) and payload["manifest"]
+    assert isinstance(payload["ok"], bool)
+    assert payload["bundleSha256"] is None or _is_sha256(payload["bundleSha256"])
+
+    summary = payload["summary"]
+    assert isinstance(summary, dict)
+    assert set(summary) == set(summary_schema["required"])
+    assert set(summary) <= set(summary_schema["properties"])
+    assert isinstance(summary["reports"], int) and summary["reports"] >= 0
+    assert isinstance(summary["failures"], int) and summary["failures"] >= 0
+
+    failures = payload["failures"]
+    assert isinstance(failures, list)
+    assert summary["failures"] == len(failures)
+    for failure in failures:
+        assert isinstance(failure, dict)
+        assert set(failure_schema["required"]) <= set(failure)
+        assert set(failure) <= set(failure_schema["properties"])
+        assert isinstance(failure["code"], str) and failure["code"]
+        assert isinstance(failure["message"], str) and failure["message"]
+        assert isinstance(failure["path"], str) and failure["path"]
+
+
 def _assert_verify_bundle_command(output_dir: Path) -> None:
     payload = _run_cli(["verify-bundle", "--path", str(output_dir)])
+    _assert_report_bundle_verification_contract(payload)
     assert payload["schema"] == "edgp.report.bundle.verification.v1"
     assert payload["ok"] is True
     assert payload["summary"] == {
@@ -175,6 +249,7 @@ def _assert_verify_bundle_command(output_dir: Path) -> None:
 
 def _assert_verify_bundle_fixture(output_dir: Path) -> None:
     payload = _run_cli(["verify-bundle", "--path", str(output_dir)])
+    _assert_report_bundle_verification_contract(payload)
     fixture = json.loads(
         (REPO_ROOT / "tests/fixtures/report-bundle-verification.json").read_text(
             encoding="utf-8"
@@ -843,6 +918,7 @@ def _assert_verify_bundle_detects_tampering() -> None:
         )
         payload = json.loads(completed.stdout)
         assert completed.returncode == 1
+        _assert_report_bundle_verification_contract(payload)
         assert payload["ok"] is False
         assert payload["failures"][0]["code"] == "htmlDigestMismatch"
 
@@ -998,6 +1074,10 @@ def main(argv: list[str] | None = None) -> int:
         ("lockfile snapshot", _assert_lockfile_snapshot),
         ("npm diagnostics", _assert_npm_diagnostics),
         ("report bundle manifest schema", _assert_report_bundle_manifest_schema_document),
+        (
+            "report bundle verification schema",
+            _assert_report_bundle_verification_schema_document,
+        ),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
         ("cargo lockfile snapshot", _assert_cargo_lockfile_snapshot),
