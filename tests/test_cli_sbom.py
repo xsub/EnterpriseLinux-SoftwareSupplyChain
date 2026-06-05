@@ -1,6 +1,7 @@
 """CLI tests for CycloneDX SBOM graph ingestion."""
 
 import json
+from pathlib import Path
 
 from src.cli import main
 
@@ -38,3 +39,41 @@ def test_cli_query_sbom_uses_name_selector(capsys) -> None:
     payload = json.loads(capsys.readouterr().out)
     assert payload["node"] == "demo-app==1.0.0"
     assert payload["result"] == ["left-pad==1.3.0"]
+
+
+def test_cli_sbom_bundle_writes_graph_and_impact_reports(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "sbom-bundle"
+
+    assert (
+        main(
+            [
+                "sbom-bundle",
+                "--path",
+                "tests/fixtures/sample-bom.json",
+                "--impact-node",
+                "left-pad",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    graph = json.loads((output_dir / "sbom-graph.json").read_text(encoding="utf-8"))
+    impact = json.loads(
+        (output_dir / "impact-left-pad-1.3.0.json").read_text(encoding="utf-8")
+    )
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+
+    assert graph["schema"] == "edgp.graph.snapshot.v1"
+    assert graph["ecosystem"] == "npm"
+    assert impact["schema"] == "edgp.impact.report.v1"
+    assert impact["node"] == "left-pad==1.3.0"
+    assert [report["schema"] for report in manifest["reports"]] == [
+        "edgp.graph.snapshot.v1",
+        "edgp.impact.report.v1",
+    ]
+    graph_html = (output_dir / "001-sbom-graph.html").read_text(encoding="utf-8")
+    assert "left-pad==1.3.0" in graph_html
+    assert (output_dir / "002-impact-left-pad-1.3.0.html").exists()

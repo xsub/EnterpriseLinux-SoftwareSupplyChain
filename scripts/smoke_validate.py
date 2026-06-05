@@ -310,6 +310,38 @@ def _assert_sbom_query() -> None:
     assert payload["result"] == ["left-pad==1.3.0"]
 
 
+def _assert_sbom_bundle() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "sbom-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "sbom-bundle",
+                "--path",
+                "tests/fixtures/sample-bom.json",
+                "--impact-node",
+                "left-pad",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["reports"][0]["href"] == "001-sbom-graph.html"
+        assert manifest["reports"][1]["href"] == "002-impact-left-pad-1.3.0.html"
+        impact = json.loads(
+            (output_dir / "impact-left-pad-1.3.0.json").read_text(encoding="utf-8")
+        )
+        assert impact["node"] == "left-pad==1.3.0"
+
+
 def _assert_snapshot_diff() -> None:
     payload = _run_cli(
         [
@@ -637,6 +669,7 @@ def main(argv: list[str] | None = None) -> int:
         ("dot snapshot", _assert_dot_snapshot),
         ("dot bundle", _assert_dot_bundle),
         ("sbom query", _assert_sbom_query),
+        ("sbom bundle", _assert_sbom_bundle),
         ("snapshot diff", _assert_snapshot_diff),
         ("impact report", _assert_impact_report),
         ("advisory overlay", _assert_advisory_overlay),

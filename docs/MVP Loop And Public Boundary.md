@@ -36,6 +36,7 @@ surfaces are:
 - Generate Maven dependency-tree graph bundle directories with optional impact
   reports.
 - Generate DOT/RPM graph bundle directories with optional impact reports.
+- Generate CycloneDX SBOM graph bundle directories with optional impact reports.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
@@ -89,6 +90,7 @@ python -B -m src.cli maven-bundle --path tests/fixtures/maven-tree-classifier.tx
 python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli dot-bundle --path tests/fixtures/repograph.dot --ecosystem rpm --impact-node glibc --output-dir /tmp/edgp-dot-bundle
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
+python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-node left-pad --output-dir /tmp/edgp-sbom-bundle
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
 python -B -m src.cli impact --path tests/fixtures/package-lock.json --node left-pad
 python -B -m src.cli advisory --path tests/fixtures/package-lock.json --advisories tests/fixtures/advisories.json
@@ -105,5 +107,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 - Add Maven optional/excluded dependency markers if dependency-tree output
   exposes them in public fixtures.
-- Add static bundle generation for CycloneDX SBOM graph snapshots with impact
+- Add static bundle generation for live installed RPM snapshots with impact
   reports.

@@ -137,6 +137,7 @@ Import and re-export a CycloneDX JSON SBOM:
 ```bash
 edgp sbom --path bom.json --format json
 edgp query --source sbom --path bom.json --operation reachable --node app
+edgp sbom-bundle --path bom.json --impact-node left-pad --output-dir reports/sbom
 ```
 
 Diff two EDGP JSON snapshots:
@@ -379,6 +380,10 @@ bundle with `maven-graph.json`, optional impact reports, HTML, `index.html`, and
 `edgp dot-bundle` renders DOT graphs, including `dnf repograph`-style RPM
 graphs, into static local bundles with `dot-graph.json`, optional impact reports,
 HTML, `index.html`, and `manifest.json`.
+
+`edgp sbom-bundle` renders CycloneDX JSON SBOMs into static local bundles with
+`sbom-graph.json`, optional impact reports, HTML, `index.html`, and
+`manifest.json`.
 
 ### Graph and Security Egress
 
