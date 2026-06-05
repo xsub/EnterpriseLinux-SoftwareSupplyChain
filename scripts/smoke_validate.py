@@ -728,6 +728,7 @@ def _assert_report_bundle() -> None:
         assert completed.stdout.strip() == str(index_path)
         index_html = index_path.read_text(encoding="utf-8")
         assert 'data-testid="report-bundle-index"' in index_html
+        assert 'data-testid="report-bundle-verification"' in index_html
         assert "002-npm-diagnostics-report.html" in index_html
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
@@ -736,6 +737,7 @@ def _assert_report_bundle() -> None:
         assert manifest["schema"] == "edgp.report.bundle.v1"
         assert manifest["bundle"]["sourceKind"] == "edgp-json"
         assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
+        assert manifest["bundleSha256"][:12] in index_html
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics-report.html"
         npm_html = (output_dir / "002-npm-diagnostics-report.html").read_text(
             encoding="utf-8"

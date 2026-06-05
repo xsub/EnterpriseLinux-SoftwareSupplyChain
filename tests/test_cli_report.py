@@ -119,6 +119,7 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert Path(capsys.readouterr().out.strip()) == index_path
     html = index_path.read_text(encoding="utf-8")
     assert 'data-testid="report-bundle-index"' in html
+    assert 'data-testid="report-bundle-verification"' in html
     assert "001-snapshot-right.html" in html
     assert "002-npm-diagnostics-report.html" in html
     assert (output_dir / "002-npm-diagnostics-report.html").exists()
@@ -126,6 +127,7 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert manifest["schema"] == "edgp.report.bundle.v1"
     assert manifest["bundle"]["sourceKind"] == "edgp-json"
     assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
+    assert manifest["bundleSha256"][:12] in html
     assert manifest["reports"][1]["schema"] == "edgp.npm.diagnostics.v1"
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0

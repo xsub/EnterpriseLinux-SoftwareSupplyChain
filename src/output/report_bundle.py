@@ -87,19 +87,19 @@ def write_report_bundle(
             )
         )
 
+    manifest = render_bundle_manifest(
+        entries,
+        index_name=index_name,
+        bundle_metadata=bundle_metadata,
+    )
     index_path = output_dir / index_name
-    index_path.write_text(render_bundle_index(entries), encoding="utf-8")
+    index_path.write_text(
+        render_bundle_index(entries, manifest=manifest),
+        encoding="utf-8",
+    )
     manifest_path = output_dir / manifest_name
     manifest_path.write_text(
-        json.dumps(
-            render_bundle_manifest(
-                entries,
-                index_name=index_name,
-                bundle_metadata=bundle_metadata,
-            ),
-            indent=2,
-            sort_keys=True,
-        ),
+        json.dumps(manifest, indent=2, sort_keys=True),
         encoding="utf-8",
     )
     return index_path
@@ -480,8 +480,13 @@ def _manifest_sha256(manifest: Mapping[str, Any]) -> str:
     return _sha256(canonical.encode("utf-8"))
 
 
-def render_bundle_index(entries: Sequence[BundleEntry]) -> str:
+def render_bundle_index(
+    entries: Sequence[BundleEntry],
+    *,
+    manifest: Mapping[str, Any],
+) -> str:
     cards = "\n".join(_entry_card(entry) for entry in entries)
+    verification = _verification_summary(manifest)
     return "\n".join(
         [
             "<!doctype html>",
@@ -501,6 +506,7 @@ def render_bundle_index(entries: Sequence[BundleEntry]) -> str:
             "</div>",
             f"<p>{len(entries)} reports rendered for local dependency triage.</p>",
             "</section>",
+            verification,
             '<section class="reports">',
             cards,
             "</section>",
@@ -509,6 +515,28 @@ def render_bundle_index(entries: Sequence[BundleEntry]) -> str:
             "</html>",
         ]
     )
+
+
+def _verification_summary(manifest: Mapping[str, Any]) -> str:
+    bundle_sha = str(manifest.get(BUNDLE_SHA256_KEY, ""))
+    bundle_sha_short = f"{bundle_sha[:12]}..." if bundle_sha else "n/a"
+    report_count = escape(str(manifest.get("reportCount", 0)))
+    schema = escape(str(manifest.get("schema", "")))
+    return f"""
+<section class="verification" data-testid="report-bundle-verification">
+  <div>
+    <span>Reports</span>
+    <strong>{report_count}</strong>
+  </div>
+  <div>
+    <span>Manifest</span>
+    <strong>{schema}</strong>
+  </div>
+  <div>
+    <span>Bundle SHA-256</span>
+    <strong title="{escape(bundle_sha)}">{escape(bundle_sha_short)}</strong>
+  </div>
+</section>""".strip()
 
 
 def _safe_stem(path: Path) -> str:
@@ -589,7 +617,7 @@ body {
   margin: 0 auto;
   padding: 28px 0 40px;
 }
-.hero, .report-card {
+.hero, .verification, .report-card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -614,6 +642,29 @@ h1, h2, p { margin-top: 0; letter-spacing: 0; }
 h1 { margin-bottom: 0; font-size: 30px; line-height: 1.15; overflow-wrap: anywhere; }
 h2 { margin-bottom: 8px; font-size: 18px; line-height: 1.25; overflow-wrap: anywhere; }
 a { color: var(--blue); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.verification {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 14px;
+  overflow: hidden;
+}
+.verification div {
+  min-width: 0;
+  padding: 14px 16px;
+  border-left: 1px solid var(--line);
+}
+.verification div:first-child { border-left: 0; }
+.verification span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.verification strong {
+  display: block;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
 .reports { display: grid; gap: 14px; margin-top: 18px; }
 .report-card {
   display: grid;
@@ -641,6 +692,9 @@ li strong { display: block; margin-top: 2px; font-size: 18px; overflow-wrap: any
 @media (max-width: 760px) {
   .bundle-shell { width: min(100vw - 20px, 1120px); padding-top: 10px; }
   .hero, .report-card { grid-template-columns: 1fr; display: grid; }
+  .verification { grid-template-columns: 1fr; }
+  .verification div { border-left: 0; border-top: 1px solid var(--line); }
+  .verification div:first-child { border-top: 0; }
   ul { grid-template-columns: 1fr; }
 }
 """.strip()

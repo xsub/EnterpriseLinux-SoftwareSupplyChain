@@ -493,6 +493,8 @@ with the machine-readable JSON Schema at
 the top-level bundle fingerprint still match the generated directory.
 [`tests/fixtures/report-bundle-verification.json`](tests/fixtures/report-bundle-verification.json)
 provides a normalized machine-readable example of the verification report.
+The bundle `index.html` also includes a compact verification summary showing
+report count, manifest schema, and a shortened bundle fingerprint.
 
 ## Roadmap
 

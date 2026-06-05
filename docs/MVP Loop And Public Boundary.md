@@ -62,6 +62,8 @@ surfaces are:
   that checks manifest shape, member digests, and the bundle fingerprint.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
+- Render a compact verification summary on static bundle indexes with report
+  count, manifest schema, and shortened bundle fingerprint.
 - Use a shared graph bundle writer for npm, Maven, DOT, CycloneDX SBOM, and
   installed RPM bundle commands.
 - Run deterministic synthetic CSR traversal benchmarks.
@@ -128,6 +130,7 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add a compact verification summary block to static report bundle indexes.
 - Add Maven relationship type labels to HTML graph reports so numeric edge types
   are easier to inspect visually.
+- Add a `verify-bundle --format text` option for concise terminal checks while
+  keeping JSON as the default automation surface.

@@ -22,6 +22,7 @@ def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
     index_html = index_path.read_text(encoding="utf-8")
     assert index_html.startswith("<!doctype html>")
     assert 'data-testid="report-bundle-index"' in index_html
+    assert 'data-testid="report-bundle-verification"' in index_html
     assert "001-snapshot-right.html" in index_html
     assert "004-npm-diagnostics-report.html" in index_html
     assert "edgp.npm.diagnostics.v1" in index_html
@@ -32,6 +33,7 @@ def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
     assert manifest["bundleSha256"] == _manifest_sha256(manifest)
     assert manifest["index"] == "index.html"
     assert manifest["reportCount"] == 4
+    assert manifest["bundleSha256"][:12] in index_html
     assert manifest["reports"][3]["href"] == "004-npm-diagnostics-report.html"
     assert manifest["reports"][3]["summary"]["unresolvedDependencies"] == 1
     assert manifest["reports"][3]["htmlSha256"] == hashlib.sha256(
