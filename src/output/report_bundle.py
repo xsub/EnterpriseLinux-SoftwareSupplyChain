@@ -12,6 +12,8 @@ from typing import Any, Mapping, Sequence
 
 from src.output.html_report import render_report
 
+BUNDLE_SHA256_KEY = "bundleSha256"
+
 
 @dataclass(frozen=True)
 class BundleEntry:
@@ -103,6 +105,7 @@ def render_bundle_manifest(
             for key, value in sorted(bundle_metadata.items())
             if value is not None
         }
+    manifest[BUNDLE_SHA256_KEY] = _manifest_sha256(manifest)
     return manifest
 
 
@@ -115,6 +118,18 @@ def _source_label(entry: BundleEntry) -> str:
 
 def _sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+def _manifest_sha256(manifest: Mapping[str, Any]) -> str:
+    digest_payload = {
+        key: value for key, value in manifest.items() if key != BUNDLE_SHA256_KEY
+    }
+    canonical = json.dumps(
+        digest_payload,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return _sha256(canonical.encode("utf-8"))
 
 
 def render_bundle_index(entries: Sequence[BundleEntry]) -> str:

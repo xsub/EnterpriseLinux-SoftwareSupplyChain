@@ -29,6 +29,7 @@ def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
 
     manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["schema"] == "edgp.report.bundle.v1"
+    assert manifest["bundleSha256"] == _manifest_sha256(manifest)
     assert manifest["index"] == "index.html"
     assert manifest["reportCount"] == 4
     assert manifest["reports"][3]["href"] == "004-npm-diagnostics-report.html"
@@ -45,3 +46,15 @@ def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
     )
     assert 'data-testid="npm-conflicts-panel"' in npm_html
     assert "missing" in npm_html
+
+
+def _manifest_sha256(manifest: dict[str, object]) -> str:
+    digest_payload = {
+        key: value for key, value in manifest.items() if key != "bundleSha256"
+    }
+    canonical = json.dumps(
+        digest_payload,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

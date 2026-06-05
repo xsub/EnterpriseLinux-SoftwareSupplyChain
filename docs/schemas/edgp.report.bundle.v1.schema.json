@@ -30,6 +30,11 @@
       },
       "type": "object"
     },
+    "bundleSha256": {
+      "description": "SHA-256 digest of the canonical manifest payload excluding this field. Because report entries include member source and HTML digests, this is a portable bundle fingerprint.",
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
     "index": {
       "description": "Bundle index HTML file path relative to the bundle directory.",
       "minLength": 1,
@@ -101,6 +106,7 @@
   },
   "required": [
     "schema",
+    "bundleSha256",
     "index",
     "reportCount",
     "reports"

@@ -7,6 +7,9 @@ their `index.html`. The JSON Schema for the manifest is maintained at
 ## Top-Level Fields
 
 - `schema`: always `edgp.report.bundle.v1`.
+- `bundleSha256`: SHA-256 digest of the canonical manifest payload excluding
+  this field. Because each report entry includes source and HTML digests, this
+  value is a portable fingerprint for the bundle contents.
 - `index`: local bundle index HTML path, usually `index.html`.
 - `reportCount`: number of generated report entries. EDGP smoke validation
   enforces that this equals the length of `reports`.
@@ -36,6 +39,7 @@ The public source-kind values are:
     "command": "edgp npm-bundle --path package-lock.json --output-dir reports/npm",
     "sourceKind": "npm-lockfile"
   },
+  "bundleSha256": "0a42ea7dbb2dfbdf3c0a47f15e9c0d130aa9d99b6a9703bdbd6d0da7042f1987",
   "index": "index.html",
   "reportCount": 2,
   "reports": [

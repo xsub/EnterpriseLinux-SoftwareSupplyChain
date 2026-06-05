@@ -51,6 +51,8 @@ surfaces are:
   dependency-free smoke validation against generated bundle manifests.
 - Include per-report SHA-256 digests for report bundle source JSON and rendered
   HTML artifacts.
+- Include a top-level report bundle fingerprint derived from the canonical
+  manifest payload and member artifact digests.
 - Use a shared graph bundle writer for npm, Maven, DOT, CycloneDX SBOM, and
   installed RPM bundle commands.
 - Run deterministic synthetic CSR traversal benchmarks.
@@ -117,5 +119,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 - Add Maven optional/excluded dependency markers if dependency-tree output
   exposes them in public fixtures.
-- Add a bundle-level digest over the manifest and member artifacts for a single
-  portable integrity fingerprint.
+- Add a `verify-bundle` command that checks manifest schema, member digests, and
+  the top-level bundle fingerprint for a generated report directory.

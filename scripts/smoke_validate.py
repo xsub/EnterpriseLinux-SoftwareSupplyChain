@@ -74,7 +74,13 @@ def _assert_report_bundle_manifest_schema_document() -> None:
     schema = _load_report_bundle_manifest_schema()
     assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
     assert schema["properties"]["schema"]["const"] == "edgp.report.bundle.v1"
-    assert set(schema["required"]) == {"schema", "index", "reportCount", "reports"}
+    assert set(schema["required"]) == {
+        "schema",
+        "bundleSha256",
+        "index",
+        "reportCount",
+        "reports",
+    }
     assert {
         "htmlSha256",
         "sourceSha256",
@@ -100,6 +106,8 @@ def _assert_report_bundle_manifest_contract(
 
     assert manifest["schema"] == schema["properties"]["schema"]["const"]
     assert isinstance(manifest["index"], str) and manifest["index"]
+    assert _is_sha256(manifest["bundleSha256"])
+    assert manifest["bundleSha256"] == _manifest_sha256(manifest)
     assert isinstance(manifest["reportCount"], int)
     assert isinstance(manifest["reports"], list) and manifest["reports"]
     assert manifest["reportCount"] == len(manifest["reports"])
@@ -142,6 +150,18 @@ def _is_sha256(value: object) -> bool:
 
 def _sha256_path(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _manifest_sha256(manifest: dict[str, Any]) -> str:
+    digest_payload = {
+        key: value for key, value in manifest.items() if key != "bundleSha256"
+    }
+    canonical = json.dumps(
+        digest_payload,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _resolve_manifest_source(bundle_dir: Path, source_label: str) -> Path:

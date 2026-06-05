@@ -477,7 +477,9 @@ surface for handing a graph snapshot plus related impact, advisory, or npm
 diagnostic reports to a browser, RAG context builder, or future workbench UI.
 The manifest records `bundle.sourceKind` as `edgp-json` and includes the
 generating command. Each member report entry also records SHA-256 digests for
-the source JSON and rendered HTML bytes. The manifest contract is documented in
+the source JSON and rendered HTML bytes, plus a top-level `bundleSha256`
+fingerprint for the canonical manifest payload. The manifest contract is
+documented in
 [`docs/Report Bundle Manifest Schema.md`](docs/Report%20Bundle%20Manifest%20Schema.md),
 with the machine-readable JSON Schema at
 [`docs/schemas/edgp.report.bundle.v1.schema.json`](docs/schemas/edgp.report.bundle.v1.schema.json).
