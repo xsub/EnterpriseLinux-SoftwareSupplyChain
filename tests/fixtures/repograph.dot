@@ -1,0 +1,11 @@
+digraph packages {
+"nginx-core" -> {
+"openssl-libs"
+"glibc"
+}
+"openssl-libs" -> {
+"glibc"
+}
+"curl" -> "openssl-libs"
+"curl" -> "glibc"
+}

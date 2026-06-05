@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.adapters.dot import DotAdapter
 from src.adapters.npm import NpmAdapter
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.output.cypher_export import CypherExporter
@@ -78,6 +79,19 @@ def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependency
     return resolved.root_identifier, resolved.graph
 
 
+def _load_source_graph(
+    source: str,
+    path: Path,
+    ecosystem: str,
+) -> tuple[str, CSRDependencyGraph]:
+    if source == "lockfile":
+        return _load_lockfile_graph(path, ecosystem)
+    if source == "dot":
+        resolved = DotAdapter().parse_graph(path, ecosystem=ecosystem)
+        return resolved.root_identifier, resolved.graph
+    raise ValueError(f"Unsupported graph source: {source}")
+
+
 def _query_graph(
     graph: CSRDependencyGraph,
     *,
@@ -101,13 +115,16 @@ def _query_graph(
 
     if operation == "dependencies":
         result = graph.get_dependencies(node)
+        output_direction = "dependencies"
     elif operation == "dependents":
         result = graph.get_dependents(node)
+        output_direction = "dependents"
     elif operation == "reachable":
         if direction == "dependents":
             result = graph.reachable_dependents(node)
         else:
             result = graph.reachable_dependencies(node)
+        output_direction = direction
     elif operation == "path":
         if target is None:
             raise ValueError("--target is required for path")
@@ -116,11 +133,12 @@ def _query_graph(
             target,
             reverse=direction == "dependents",
         )
+        output_direction = direction
     else:
         raise ValueError(f"Unsupported query operation: {operation}")
 
     return {
-        "direction": direction,
+        "direction": output_direction,
         "node": node,
         "operation": operation,
         "result": result,
@@ -145,10 +163,15 @@ def build_parser() -> argparse.ArgumentParser:
     lockfile.add_argument("--ecosystem", choices=["npm"], default="npm")
     lockfile.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
 
+    dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
+    dot.add_argument("--path", type=Path, required=True)
+    dot.add_argument("--ecosystem", default="rpm")
+    dot.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="json")
+
     query = subparsers.add_parser("query", help="Query a resolved graph")
-    query.add_argument("--source", choices=["lockfile"], default="lockfile")
+    query.add_argument("--source", choices=["lockfile", "dot"], default="lockfile")
     query.add_argument("--path", type=Path, required=True)
-    query.add_argument("--ecosystem", choices=["npm"], default="npm")
+    query.add_argument("--ecosystem", default="npm")
     query.add_argument(
         "--operation",
         choices=[
@@ -176,8 +199,20 @@ def main(argv: list[str] | None = None) -> int:
         print(_export(args.format, graph, root=root_identifier, ecosystem=args.ecosystem))
         return 0
 
+    if args.command == "dot":
+        resolved = DotAdapter().parse_graph(args.path, ecosystem=args.ecosystem)
+        print(
+            _export(
+                args.format,
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
     if args.command == "query":
-        _, graph = _load_lockfile_graph(args.path, args.ecosystem)
+        _, graph = _load_source_graph(args.source, args.path, args.ecosystem)
         print(
             _json(
                 _query_graph(

@@ -61,6 +61,14 @@ edgp query --path package-lock.json --operation path --node app==1.0.0 --target 
 edgp query --path package-lock.json --operation most-depended-upon --limit 20
 ```
 
+Export an AlmaLinux/RPM universe graph from DOT:
+
+```bash
+edgp dot --path repograph.dot --ecosystem rpm --format json
+edgp dot --path repograph.dot --ecosystem rpm --format cypher
+edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc==unknown
+```
+
 ## Architecture
 
 ### Architecture UML
@@ -79,6 +87,9 @@ class LockfileAdapter {
 }
 class NpmAdapter {
   +parse_lockfile_graph(path) ResolvedProjectGraph
+}
+class DotAdapter {
+  +parse_graph(path) ResolvedProjectGraph
 }
 class RegistryMock {
   +matching_versions(name, constraint)
@@ -112,11 +123,13 @@ class ConstraintModels {
 }
 CLI --> CDCLResolver : resolve registry
 CLI --> NpmAdapter : ingest lockfile
+CLI --> DotAdapter : ingest DOT
 NpmAdapter --|> LockfileAdapter
 CDCLResolver --> RegistryMock : query versions
 CDCLResolver --> ConstraintModels : encode clauses
 CDCLResolver --> CSRDependencyGraph : build graph
 NpmAdapter --> CSRDependencyGraph : build graph
+DotAdapter --> CSRDependencyGraph : build graph
 CLI --> CypherExporter : export Cypher
 CLI --> CycloneDXExporter : export SBOM
 CLI --> GraphJsonExporter : export snapshot
