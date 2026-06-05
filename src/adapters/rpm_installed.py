@@ -9,6 +9,10 @@ from src.adapters.base import ResolvedProjectGraph
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 
 CommandRunner = Callable[[list[str]], str]
+RPM_QUERY_FORMAT = (
+    "%{NAME}\t%{EPOCHNUM}\t%{VERSION}-%{RELEASE}\t%{ARCH}\t"
+    "%{VENDOR}\t%{LICENSE}\t%{SOURCERPM}\t%{INSTALLTIME}\n"
+)
 
 
 class InstalledRpmAdapter:
@@ -27,7 +31,7 @@ class InstalledRpmAdapter:
     ) -> ResolvedProjectGraph:
         graph = CSRDependencyGraph()
         packages = self._installed_packages(limit)
-        provider_cache: dict[str, str | None] = {}
+        provider_cache: dict[str, _RpmPackage | None] = {}
         root_identifier = "rpm-installed==local"
         graph.add_vertex(
             root_identifier,
@@ -46,16 +50,13 @@ class InstalledRpmAdapter:
                 provider_id = provider_cache.setdefault(
                     requirement, self._provider_identifier(requirement)
                 )
-                if provider_id is None or provider_id == package.identifier:
+                if provider_id is None or provider_id.identifier == package.identifier:
                     continue
                 graph.add_vertex(
-                    provider_id,
-                    metadata={
-                        "ecosystem": self.ecosystem,
-                        "source": "rpmdb",
-                    },
+                    provider_id.identifier,
+                    metadata=provider_id.metadata,
                 )
-                graph.add_dependency_edge(package.identifier, provider_id)
+                graph.add_dependency_edge(package.identifier, provider_id.identifier)
 
         return ResolvedProjectGraph(
             root_identifier=root_identifier,
@@ -64,15 +65,13 @@ class InstalledRpmAdapter:
         )
 
     def _installed_packages(self, limit: int) -> list["_RpmPackage"]:
-        output = self._command_runner(
-            ["rpm", "-qa", "--qf", "%{NAME}\t%{VERSION}-%{RELEASE}\t%{ARCH}\n"]
-        )
+        output = self._command_runner(["rpm", "-qa", "--qf", RPM_QUERY_FORMAT])
         packages: list[_RpmPackage] = []
         for line in output.splitlines():
-            parts = line.split("\t")
-            if len(parts) != 3:
+            package = _RpmPackage.from_query_line(line)
+            if package is None:
                 continue
-            packages.append(_RpmPackage(parts[0], parts[1], parts[2]))
+            packages.append(package)
             if len(packages) >= limit:
                 break
         return packages
@@ -89,7 +88,7 @@ class InstalledRpmAdapter:
                 break
         return requirements
 
-    def _provider_identifier(self, requirement: str) -> str | None:
+    def _provider_identifier(self, requirement: str) -> "_RpmPackage | None":
         output = self._command_runner(
             [
                 "rpm",
@@ -97,13 +96,13 @@ class InstalledRpmAdapter:
                 "--whatprovides",
                 requirement,
                 "--qf",
-                "%{NAME}\t%{VERSION}-%{RELEASE}\t%{ARCH}\n",
+                RPM_QUERY_FORMAT,
             ]
         )
         for line in output.splitlines():
-            parts = line.split("\t")
-            if len(parts) == 3:
-                return _RpmPackage(parts[0], parts[1], parts[2]).identifier
+            package = _RpmPackage.from_query_line(line)
+            if package is not None:
+                return package
         return None
 
     def _skip_requirement(self, requirement: str) -> bool:
@@ -122,10 +121,34 @@ class InstalledRpmAdapter:
 
 
 class _RpmPackage:
-    def __init__(self, name: str, version_release: str, arch: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        epoch: str,
+        version_release: str,
+        arch: str,
+        vendor: str = "",
+        license_name: str = "",
+        source_rpm: str = "",
+        install_time: str = "",
+    ) -> None:
         self.name = name
+        self.epoch = epoch
         self.version_release = version_release
         self.arch = arch
+        self.vendor = vendor
+        self.license_name = license_name
+        self.source_rpm = source_rpm
+        self.install_time = install_time
+
+    @classmethod
+    def from_query_line(cls, line: str) -> "_RpmPackage | None":
+        parts = line.split("\t")
+        if len(parts) == 8:
+            return cls(*parts)
+        if len(parts) == 3:
+            return cls(parts[0], "0", parts[1], parts[2])
+        return None
 
     @property
     def identifier(self) -> str:
@@ -133,8 +156,20 @@ class _RpmPackage:
 
     @property
     def metadata(self) -> dict[str, str]:
-        return {
+        metadata = {
             "ecosystem": "rpm",
             "source": "rpmdb",
             "arch": self.arch,
         }
+        if self.epoch and self.epoch not in ("0", "(none)"):
+            metadata["epoch"] = self.epoch
+        optional_fields = {
+            "vendor": self.vendor,
+            "license": self.license_name,
+            "source_rpm": self.source_rpm,
+            "install_time": self.install_time,
+        }
+        for key, value in optional_fields.items():
+            if value and value != "(none)":
+                metadata[key] = value
+        return metadata

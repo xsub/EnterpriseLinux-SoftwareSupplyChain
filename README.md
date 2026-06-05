@@ -276,7 +276,9 @@ ecosystem-aware Package URLs, such as `pkg:npm/%40scope/tool@2.1.0`, and carry
 lockfile metadata like resolved tarball URLs, integrity strings, license names,
 and package paths as CycloneDX fields or properties. RPM/DOT exports use RPM
 Package URLs such as `pkg:rpm/glibc@unknown` and can include RPM qualifiers when
-metadata such as `arch`, `distro`, or `epoch` is available.
+metadata such as `arch`, `distro`, or non-zero `epoch` is available. Live
+`rpm-installed` ingestion also records public RPM metadata such as vendor,
+license, source RPM, install time, and architecture.
 
 ### Query Layer
 

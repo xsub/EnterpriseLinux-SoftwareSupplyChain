@@ -36,6 +36,8 @@ surfaces are:
 - Use human-friendly node selectors where a package name resolves to one graph
   node.
 - Produce ecosystem-aware Package URLs for npm and RPM components.
+- Preserve public RPM metadata including vendor, license, source RPM, install
+  time, architecture, and non-zero epoch.
 
 ## Validation Commands
 
@@ -66,6 +68,4 @@ python -B -m src.cli diff --left tests/fixtures/snapshot-left.json --right tests
 ## Next Vertical Options
 
 - Add a local HTML report for JSON snapshots.
-- Add richer RPM metadata extraction, including vendor, epoch, and repository
-  hints when available from public RPM query output.
 - Add Poetry lockfile graph ingestion.
