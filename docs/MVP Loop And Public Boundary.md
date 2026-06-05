@@ -76,6 +76,8 @@ surfaces are:
   output.
 - Generate a deterministic schema index for documented EDGP JSON Schema
   contracts and validate that it stays current in the smoke suite.
+- Validate local EDGP JSON report files and report bundle directories with a
+  dependency-free `edgp validate` command.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -142,12 +144,13 @@ python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json -
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/snapshot-right.json
+python -B -m src.cli validate --path /tmp/edgp-report-bundle --format text
 python -B scripts/generate_schema_index.py --check
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
 ## Next Vertical Options
 
-- Add a schema-aware `edgp validate` command for local report and bundle
-  contract checks.
 - Add browser smoke coverage for static report sorting behavior.
+- Add richer validation failure examples for common malformed report payloads.

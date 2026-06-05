@@ -178,6 +178,55 @@ def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     assert "firstFailure=htmlDigestMismatch" in text
 
 
+def test_cli_validate_reports_json_contract(capsys) -> None:
+    assert main(["validate", "--path", "tests/fixtures/snapshot-right.json"]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["schema"] == "edgp.validation.report.v1"
+    assert report["ok"] is True
+    assert report["targetType"] == "json-file"
+    assert report["contract"] == "edgp.graph.snapshot.v1"
+
+    assert (
+        main(
+            [
+                "validate",
+                "--path",
+                "tests/fixtures/snapshot-right.json",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    text = capsys.readouterr().out.strip()
+    assert text == (
+        "OK targetType=json-file failures=0 contract=edgp.graph.snapshot.v1"
+    )
+
+
+def test_cli_validate_reports_bundle_contract(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "bundle"
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(["validate", "--path", str(output_dir)]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["ok"] is True
+    assert report["targetType"] == "report-bundle"
+    assert report["bundleVerification"]["ok"] is True
+
+
 def _normalize_verification_report(payload: dict[str, object]) -> dict[str, object]:
     normalized = dict(payload)
     normalized["bundleDir"] = "<bundle-dir>"

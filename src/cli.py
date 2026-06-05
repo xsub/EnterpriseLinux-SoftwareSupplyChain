@@ -29,6 +29,7 @@ from src.output.report_bundle import verify_report_bundle, write_report_bundle
 from src.output.sbom_security import CycloneDXExporter
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
+from src.schema_validation import validate_target
 
 
 def _demo_registry() -> RegistryMock:
@@ -99,6 +100,26 @@ def _format_verification_report(report: dict[str, Any]) -> str:
     bundle_sha = report.get("bundleSha256")
     if isinstance(bundle_sha, str) and bundle_sha:
         parts.append(f"bundleSha256={bundle_sha}")
+    failure_list = report.get("failures", [])
+    if isinstance(failure_list, list) and failure_list:
+        first_failure = failure_list[0]
+        if isinstance(first_failure, dict):
+            parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
+    return " ".join(parts)
+
+
+def _format_validation_report(report: dict[str, Any]) -> str:
+    status = "OK" if report.get("ok") else "FAIL"
+    summary = report.get("summary", {})
+    failures = summary.get("failures", 0) if isinstance(summary, dict) else 0
+    parts = [
+        status,
+        f"targetType={report.get('targetType', 'unknown')}",
+        f"failures={failures}",
+    ]
+    contract = report.get("contract")
+    if isinstance(contract, str) and contract:
+        parts.append(f"contract={contract}")
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
@@ -550,6 +571,14 @@ def build_parser() -> argparse.ArgumentParser:
     verify_bundle.add_argument("--manifest-name", default="manifest.json")
     verify_bundle.add_argument("--format", choices=["json", "text"], default="json")
 
+    validate = subparsers.add_parser(
+        "validate",
+        help="Validate a local EDGP JSON report file or static report bundle",
+    )
+    validate.add_argument("--path", type=Path, required=True)
+    validate.add_argument("--manifest-name", default="manifest.json")
+    validate.add_argument("--format", choices=["json", "text"], default="json")
+
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
     benchmark.add_argument("--fanout", type=int, default=3)
@@ -781,6 +810,14 @@ def main(argv: list[str] | None = None) -> int:
         report = verify_report_bundle(args.path, manifest_name=args.manifest_name)
         if args.format == "text":
             print(_format_verification_report(report))
+        else:
+            print(_json(report))
+        return 0 if report["ok"] else 1
+
+    if args.command == "validate":
+        report = validate_target(args.path, manifest_name=args.manifest_name)
+        if args.format == "text":
+            print(_format_validation_report(report))
         else:
             print(_json(report))
         return 0 if report["ok"] else 1

@@ -157,6 +157,8 @@ edgp report --input npm-diagnostics.json --output npm-diagnostics-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports
 edgp verify-bundle --path reports
 edgp verify-bundle --path reports --format text
+edgp validate --path graph.json
+edgp validate --path reports --format text
 ```
 
 Run a synthetic CSR traversal benchmark:
@@ -472,6 +474,8 @@ Report JSON contracts for graph snapshots, impact reports, advisory reports,
 and npm diagnostics are documented in
 [`docs/Report JSON Schemas.md`](docs/Report%20JSON%20Schemas.md), with
 machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
+`edgp validate` checks a local EDGP JSON report file against the documented
+schema subset or validates a report bundle directory with the bundle verifier.
 
 `edgp report` renders graph snapshots, impact reports, advisory reports, and npm
 diagnostics into dependency-free HTML files. Snapshot reports include graph

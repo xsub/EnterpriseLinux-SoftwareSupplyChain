@@ -103,6 +103,36 @@ def _assert_npm_diagnostics() -> None:
     }
 
 
+def _assert_validate_command() -> None:
+    payload = _run_cli(["validate", "--path", "tests/fixtures/snapshot-right.json"])
+    assert payload["schema"] == "edgp.validation.report.v1"
+    assert payload["ok"] is True
+    assert payload["targetType"] == "json-file"
+    assert payload["contract"] == "edgp.graph.snapshot.v1"
+    assert payload["summary"] == {"failures": 0}
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "validate",
+            "--path",
+            "tests/fixtures/snapshot-right.json",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.strip() == (
+        "OK targetType=json-file failures=0 contract=edgp.graph.snapshot.v1"
+    )
+
+
 def _load_report_bundle_manifest_schema() -> dict[str, Any]:
     return json.loads(REPORT_BUNDLE_SCHEMA_PATH.read_text(encoding="utf-8"))
 
@@ -984,6 +1014,11 @@ def _assert_report_bundle() -> None:
         _assert_report_bundle_manifest_contract(manifest, output_dir)
         _assert_verify_bundle_command(output_dir)
         _assert_verify_bundle_fixture(output_dir)
+        validation = _run_cli(["validate", "--path", str(output_dir)])
+        assert validation["schema"] == "edgp.validation.report.v1"
+        assert validation["ok"] is True
+        assert validation["targetType"] == "report-bundle"
+        assert validation["bundleVerification"]["ok"] is True
         assert manifest["schema"] == "edgp.report.bundle.v1"
         assert manifest["bundle"]["sourceKind"] == "edgp-json"
         assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
@@ -1191,6 +1226,7 @@ def main(argv: list[str] | None = None) -> int:
         ("compile", _assert_compile),
         ("lockfile snapshot", _assert_lockfile_snapshot),
         ("npm diagnostics", _assert_npm_diagnostics),
+        ("validate command", _assert_validate_command),
         ("report bundle manifest schema", _assert_report_bundle_manifest_schema_document),
         (
             "report bundle verification schema",
