@@ -1,0 +1,25 @@
+"""Schema index tests for documented EDGP JSON Schema contracts."""
+
+import json
+from pathlib import Path
+
+from scripts.generate_schema_index import build_schema_index
+
+
+INDEX_PATH = Path("docs/schemas/index.json")
+
+
+def test_schema_index_matches_generated_schema_contracts() -> None:
+    index = json.loads(INDEX_PATH.read_text(encoding="utf-8"))
+
+    assert index == build_schema_index()
+    assert index["schema"] == "edgp.schema.index.v1"
+    assert index["schemaCount"] == len(index["schemas"])
+    assert {
+        entry["contract"]
+        for entry in index["schemas"]
+        if "contract" in entry
+    } == {
+        "edgp.report.bundle.v1",
+        "edgp.report.bundle.verification.v1",
+    }

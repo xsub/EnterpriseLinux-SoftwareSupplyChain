@@ -70,6 +70,8 @@ surfaces are:
 - Document `edgp.report.bundle.verification.v1` with a Draft 2020-12 JSON
   Schema and dependency-free smoke validation against generated verifier
   output.
+- Generate a deterministic schema index for documented EDGP JSON Schema
+  contracts and validate that it stays current in the smoke suite.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -136,11 +138,12 @@ python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json -
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
+python -B scripts/generate_schema_index.py --check
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
 ## Next Vertical Options
 
-- Add a generated schema index for report, manifest, and verification
-  contracts.
 - Add edge-table pagination or row-windowing for very large static snapshots.
+- Add Draft 2020-12 schemas for graph snapshot, impact, advisory, and npm
+  diagnostics reports.

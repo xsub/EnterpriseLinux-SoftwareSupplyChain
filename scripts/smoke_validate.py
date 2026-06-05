@@ -22,6 +22,7 @@ REPORT_BUNDLE_VERIFICATION_SCHEMA_PATH = (
     / "schemas"
     / "edgp.report.bundle.verification.v1.schema.json"
 )
+SCHEMA_INDEX_PATH = REPO_ROOT / "docs" / "schemas" / "index.json"
 
 
 def _run_cli(args: list[str]) -> dict[str, Any]:
@@ -132,6 +133,35 @@ def _assert_report_bundle_verification_schema_document() -> None:
         "message",
         "path",
     }
+
+
+def _assert_schema_index_document() -> None:
+    subprocess.run(
+        [sys.executable, "-B", "scripts/generate_schema_index.py", "--check"],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    index = json.loads(SCHEMA_INDEX_PATH.read_text(encoding="utf-8"))
+    assert index["schema"] == "edgp.schema.index.v1"
+    assert index["generatedBy"] == "scripts/generate_schema_index.py"
+    assert index["schemaCount"] == len(index["schemas"])
+    contracts = {
+        schema["contract"]
+        for schema in index["schemas"]
+        if isinstance(schema, dict) and "contract" in schema
+    }
+    assert {
+        "edgp.report.bundle.v1",
+        "edgp.report.bundle.verification.v1",
+    } <= contracts
+    for schema in index["schemas"]:
+        assert schema["file"].endswith(".schema.json")
+        assert schema["id"].startswith("urn:edgp:schema:")
+        assert schema["jsonSchema"] == "https://json-schema.org/draft/2020-12/schema"
+        assert schema["title"]
+        assert schema["description"]
 
 
 def _assert_report_bundle_manifest_contract(
@@ -1081,6 +1111,7 @@ def main(argv: list[str] | None = None) -> int:
             "report bundle verification schema",
             _assert_report_bundle_verification_schema_document,
         ),
+        ("schema index", _assert_schema_index_document),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
         ("cargo lockfile snapshot", _assert_cargo_lockfile_snapshot),

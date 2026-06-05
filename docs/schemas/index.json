@@ -1,0 +1,23 @@
+{
+  "generatedBy": "scripts/generate_schema_index.py",
+  "schema": "edgp.schema.index.v1",
+  "schemaCount": 2,
+  "schemas": [
+    {
+      "contract": "edgp.report.bundle.v1",
+      "description": "Manifest written beside EDGP static report bundle indexes.",
+      "file": "edgp.report.bundle.v1.schema.json",
+      "id": "urn:edgp:schema:report-bundle-manifest:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Report Bundle Manifest v1"
+    },
+    {
+      "contract": "edgp.report.bundle.verification.v1",
+      "description": "Verification report emitted by edgp verify-bundle for EDGP static report bundles.",
+      "file": "edgp.report.bundle.verification.v1.schema.json",
+      "id": "urn:edgp:schema:report-bundle-verification:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Report Bundle Verification v1"
+    }
+  ]
+}
