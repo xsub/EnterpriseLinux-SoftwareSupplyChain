@@ -126,6 +126,12 @@ Render a static HTML report from an EDGP JSON snapshot:
 edgp report --snapshot graph.json --output graph-report.html
 ```
 
+Run a synthetic CSR traversal benchmark:
+
+```bash
+edgp benchmark --nodes 1000 --fanout 3
+```
+
 ## Architecture
 
 ### Architecture UML
@@ -191,6 +197,9 @@ class AdvisoryOverlay {
 class HtmlReportExporter {
   +render_snapshot_report(snapshot) str
 }
+class Benchmark {
+  +run_synthetic_benchmark(nodes, fanout) dict
+}
 class ConstraintModels {
   Term
   Incompatibility
@@ -220,12 +229,14 @@ CLI --> CSRDependencyGraph : query traversal
 CLI --> ImpactReporter : report reverse impact
 CLI --> AdvisoryOverlay : overlay local advisories
 CLI --> HtmlReportExporter : render local report
+CLI --> Benchmark : run synthetic traversal
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
 GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
 ImpactReporter --> CSRDependencyGraph : traverse dependents and paths
 AdvisoryOverlay --> ImpactReporter : attach package impact
 HtmlReportExporter --> GraphJsonExporter : consume snapshot JSON
+Benchmark --> CSRDependencyGraph : generate and traverse graph
 ```
 
 ### Graph Build And Traversal UML
@@ -329,6 +340,10 @@ CloudLinux-specific risk feeds.
 optional `versions`, `severity`, `summary`, and `references` fields. It matches
 those records against graph nodes and embeds an `edgp.impact.report.v1` result
 for every matched package.
+
+`edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
+reachable traversal, and most-depended-upon timings. It is intended as a
+dependency-free smoke benchmark for comparing local and AlmaLinux behavior.
 
 ### JSON Snapshot
 

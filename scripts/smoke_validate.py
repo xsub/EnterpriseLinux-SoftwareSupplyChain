@@ -212,6 +212,14 @@ def _assert_html_report() -> None:
         assert "EDGP Snapshot Report - app==1.0.0" in html
 
 
+def _assert_benchmark() -> None:
+    payload = _run_cli(["benchmark", "--nodes", "64", "--fanout", "3"])
+    assert payload["schema"] == "edgp.benchmark.v1"
+    assert payload["stats"]["nodes"] == 64
+    assert payload["stats"]["edges"] == 186
+    assert payload["stats"]["reachableFromRoot"] == 63
+
+
 def _assert_rpm_installed() -> None:
     payload = _run_cli(
         ["rpm-installed", "--limit", "5", "--max-requirements", "10", "--format", "json"]
@@ -246,6 +254,7 @@ def main(argv: list[str] | None = None) -> int:
         ("advisory overlay", _assert_advisory_overlay),
         ("rpm advisory overlay", _assert_rpm_advisory_overlay),
         ("html report", _assert_html_report),
+        ("synthetic benchmark", _assert_benchmark),
     ]
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))

@@ -1,0 +1,18 @@
+"""Synthetic benchmark tests for CSR graph traversal."""
+
+from src.benchmark import run_synthetic_benchmark
+
+
+def test_synthetic_benchmark_reports_graph_shape_and_timings() -> None:
+    payload = run_synthetic_benchmark(nodes=6, fanout=2)
+
+    assert payload["schema"] == "edgp.benchmark.v1"
+    assert payload["parameters"] == {"nodes": 6, "fanout": 2}
+    assert payload["stats"] == {
+        "nodes": 6,
+        "edges": 9,
+        "reachableFromRoot": 5,
+    }
+    assert payload["timingsMs"]["build"] >= 0
+    assert payload["timingsMs"]["reachable"] >= 0
+    assert payload["timingsMs"]["mostDependedUpon"] >= 0

@@ -30,6 +30,7 @@ surfaces are:
   Poetry lockfiles, CycloneDX SBOMs, and installed RPM metadata.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP JSON snapshots.
+- Run deterministic synthetic CSR traversal benchmarks.
 - Diff two EDGP JSON snapshots.
 - Overlay local advisory JSON onto graph nodes.
 - Query dependencies, dependents, reachability, shortest paths, and
@@ -68,8 +69,11 @@ python -B -m src.cli impact --path tests/fixtures/package-lock.json --node left-
 python -B -m src.cli advisory --path tests/fixtures/package-lock.json --advisories tests/fixtures/advisories.json
 python -B -m src.cli diff --left tests/fixtures/snapshot-left.json --right tests/fixtures/snapshot-right.json
 python -B -m src.cli report --snapshot tests/fixtures/snapshot-right.json --output /tmp/edgp-report.html
+python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
 ## Next Vertical Options
 
-- Add larger-graph performance fixtures and benchmark smoke checks.
+- Add Cargo lockfile ingestion.
+- Add Maven dependency tree ingestion.
+- Add snapshot-to-report bundling for advisory and impact outputs.

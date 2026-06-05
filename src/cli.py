@@ -13,6 +13,7 @@ from src.adapters.dot import DotAdapter
 from src.adapters.npm import NpmAdapter
 from src.adapters.poetry import PoetryAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
+from src.benchmark import run_synthetic_benchmark
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
@@ -299,6 +300,10 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--snapshot", type=Path, required=True)
     report.add_argument("--output", type=Path, required=True)
 
+    benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
+    benchmark.add_argument("--nodes", type=int, default=1000)
+    benchmark.add_argument("--fanout", type=int, default=3)
+
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument(
         "--source",
@@ -428,6 +433,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "report":
         output_path = write_snapshot_report_file(args.snapshot, args.output)
         print(output_path)
+        return 0
+
+    if args.command == "benchmark":
+        print(_json(run_synthetic_benchmark(nodes=args.nodes, fanout=args.fanout)))
         return 0
 
     if args.command == "query":
