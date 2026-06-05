@@ -66,6 +66,7 @@ Export an AlmaLinux/RPM universe graph from DOT:
 ```bash
 edgp dot --path repograph.dot --ecosystem rpm --format json
 edgp dot --path repograph.dot --ecosystem rpm --format cypher
+edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc==unknown
 ```
 
@@ -209,7 +210,9 @@ JSON SBOM with dependency references, suitable as the foundation for
 Dependency-Track or similar security ingestion paths. npm lockfile exports use
 ecosystem-aware Package URLs, such as `pkg:npm/%40scope/tool@2.1.0`, and carry
 lockfile metadata like resolved tarball URLs, integrity strings, license names,
-and package paths as CycloneDX fields or properties.
+and package paths as CycloneDX fields or properties. RPM/DOT exports use RPM
+Package URLs such as `pkg:rpm/glibc@unknown` and can include RPM qualifiers when
+metadata such as `arch`, `distro`, or `epoch` is available.
 
 ### Query Layer
 

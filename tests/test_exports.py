@@ -94,3 +94,28 @@ def test_graph_json_export_contains_nodes_edges_and_rankings() -> None:
     assert payload["rankings"]["mostDependedUpon"] == [
         {"package": "lib==1.0.0", "dependents": 1}
     ]
+
+
+def test_cyclonedx_export_uses_rpm_purls_with_qualifiers() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_vertex(
+        "curl==7.50.3-1.fc25",
+        metadata={
+            "ecosystem": "rpm",
+            "vendor": "Fedora",
+            "arch": "i386",
+            "distro": "fedora-25",
+        },
+    )
+
+    payload = json.loads(
+        CycloneDXExporter.export_to_json(
+            graph,
+            root="curl==7.50.3-1.fc25",
+            ecosystem="rpm",
+        )
+    )
+
+    assert payload["components"][0]["purl"] == (
+        "pkg:rpm/fedora/curl@7.50.3-1.fc25?arch=i386&distro=fedora-25"
+    )
