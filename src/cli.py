@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.adapters.cyclonedx import CycloneDXAdapter
 from src.adapters.dot import DotAdapter
 from src.adapters.npm import NpmAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
@@ -89,6 +90,9 @@ def _load_source_graph(
         return _load_lockfile_graph(path, ecosystem)
     if source == "dot":
         resolved = DotAdapter().parse_graph(path, ecosystem=ecosystem)
+        return resolved.root_identifier, resolved.graph
+    if source == "sbom":
+        resolved = CycloneDXAdapter().parse_graph(path)
         return resolved.root_identifier, resolved.graph
     raise ValueError(f"Unsupported graph source: {source}")
 
@@ -200,6 +204,10 @@ def build_parser() -> argparse.ArgumentParser:
     dot.add_argument("--ecosystem", default="rpm")
     dot.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="json")
 
+    sbom = subparsers.add_parser("sbom", help="Export a graph from a CycloneDX JSON SBOM")
+    sbom.add_argument("--path", type=Path, required=True)
+    sbom.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="json")
+
     rpm_installed = subparsers.add_parser(
         "rpm-installed", help="Export a graph from the local RPM database"
     )
@@ -210,7 +218,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     query = subparsers.add_parser("query", help="Query a resolved graph")
-    query.add_argument("--source", choices=["lockfile", "dot"], default="lockfile")
+    query.add_argument("--source", choices=["lockfile", "dot", "sbom"], default="lockfile")
     query.add_argument("--path", type=Path, required=True)
     query.add_argument("--ecosystem", default="npm")
     query.add_argument(
@@ -242,6 +250,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "dot":
         resolved = DotAdapter().parse_graph(args.path, ecosystem=args.ecosystem)
+        print(
+            _export(
+                args.format,
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "sbom":
+        resolved = CycloneDXAdapter().parse_graph(args.path)
         print(
             _export(
                 args.format,

@@ -54,6 +54,7 @@ def test_cyclonedx_export_uses_npm_purls_for_scoped_packages() -> None:
     component = payload["components"][0]
 
     assert component["purl"] == "pkg:npm/%40scope/tool@2.1.0"
+    assert component["type"] == "library"
     assert component["externalReferences"] == [
         {
             "type": "distribution",
@@ -62,6 +63,9 @@ def test_cyclonedx_export_uses_npm_purls_for_scoped_packages() -> None:
     ]
     assert component["licenses"] == [{"license": {"name": "MIT"}}]
     assert {"name": "edgp:integrity", "value": "sha512-demo"} in component["properties"]
+    assert {"name": "edgp:purl", "value": "pkg:npm/%40scope/tool@2.1.0"} not in component[
+        "properties"
+    ]
 
 
 def test_graph_json_export_contains_nodes_edges_and_rankings() -> None:

@@ -77,6 +77,13 @@ edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-installed --limit 100 --max-requirements 40 --format cyclonedx
 ```
 
+Import and re-export a CycloneDX JSON SBOM:
+
+```bash
+edgp sbom --path bom.json --format json
+edgp query --source sbom --path bom.json --operation reachable --node app
+```
+
 ## Architecture
 
 ### Architecture UML
@@ -97,6 +104,9 @@ class NpmAdapter {
   +parse_lockfile_graph(path) ResolvedProjectGraph
 }
 class DotAdapter {
+  +parse_graph(path) ResolvedProjectGraph
+}
+class CycloneDXAdapter {
   +parse_graph(path) ResolvedProjectGraph
 }
 class InstalledRpmAdapter {
@@ -135,6 +145,7 @@ class ConstraintModels {
 CLI --> CDCLResolver : resolve registry
 CLI --> NpmAdapter : ingest lockfile
 CLI --> DotAdapter : ingest DOT
+CLI --> CycloneDXAdapter : ingest SBOM
 CLI --> InstalledRpmAdapter : ingest RPM DB
 NpmAdapter --|> LockfileAdapter
 CDCLResolver --> RegistryMock : query versions
@@ -142,6 +153,7 @@ CDCLResolver --> ConstraintModels : encode clauses
 CDCLResolver --> CSRDependencyGraph : build graph
 NpmAdapter --> CSRDependencyGraph : build graph
 DotAdapter --> CSRDependencyGraph : build graph
+CycloneDXAdapter --> CSRDependencyGraph : build graph
 InstalledRpmAdapter --> CSRDependencyGraph : build graph
 CLI --> CypherExporter : export Cypher
 CLI --> CycloneDXExporter : export SBOM

@@ -1,0 +1,49 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "library",
+      "bom-ref": "demo-app==1.0.0",
+      "name": "demo-app",
+      "version": "1.0.0",
+      "purl": "pkg:npm/demo-app@1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "demo-app==1.0.0",
+      "name": "demo-app",
+      "version": "1.0.0",
+      "purl": "pkg:npm/demo-app@1.0.0"
+    },
+    {
+      "type": "library",
+      "bom-ref": "left-pad==1.3.0",
+      "name": "left-pad",
+      "version": "1.3.0",
+      "purl": "pkg:npm/left-pad@1.3.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "WTFPL"
+          }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "demo-app==1.0.0",
+      "dependsOn": [
+        "left-pad==1.3.0"
+      ]
+    },
+    {
+      "ref": "left-pad==1.3.0",
+      "dependsOn": []
+    }
+  ]
+}

@@ -63,13 +63,13 @@ class CycloneDXExporter:
         metadata = metadata or {}
         name, separator, version = package_id.partition("==")
         component: dict[str, object] = {
-            "type": "library",
+            "type": metadata.get("component_type", "library"),
             "name": name,
             "bom-ref": package_id,
         }
         if separator:
             component["version"] = version
-            component["purl"] = CycloneDXExporter._purl(
+            component["purl"] = metadata.get("purl") or CycloneDXExporter._purl(
                 metadata.get("ecosystem", ecosystem),
                 name,
                 version,
@@ -85,7 +85,7 @@ class CycloneDXExporter:
         properties = [
             {"name": f"edgp:{key}", "value": value}
             for key, value in sorted(metadata.items())
-            if key not in {"license", "resolved"}
+            if key not in {"component_type", "license", "purl", "resolved"}
         ]
         if properties:
             component["properties"] = properties
