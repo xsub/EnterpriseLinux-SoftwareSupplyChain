@@ -23,9 +23,10 @@ class _TrailEntry:
 class CDCLResolver:
     """Small PubGrub/CDCL-inspired dependency resolver.
 
-    The implementation encodes dependency metadata as CNF clauses, performs unit
-    propagation, chooses package versions only when an active dependency clause
-    requires a decision, and learns unary blocking clauses from conflicts.
+    The implementation encodes dependency metadata as Conjunctive Normal Form
+    (CNF) clauses, performs unit propagation, chooses package versions only when
+    an active dependency clause requires a decision, and learns unary blocking
+    clauses from conflicts.
     """
 
     def __init__(self, registry: RegistryMock) -> None:

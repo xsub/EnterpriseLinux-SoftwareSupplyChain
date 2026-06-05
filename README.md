@@ -163,7 +163,8 @@ of nested Python object graphs.
 
 ### CDCL-Inspired Resolution
 
-The resolver translates registry metadata into CNF-style incompatibilities:
+The resolver translates registry metadata into Conjunctive Normal Form
+(CNF)-style incompatibilities for SAT-style propagation:
 
 - a root package clause requiring the selected root;
 - at-most-one-version clauses per package;

@@ -137,7 +137,7 @@ class Term:
 
 @dataclass(frozen=True)
 class Incompatibility:
-    """A CNF clause generated from package constraints or learned conflicts."""
+    """A Conjunctive Normal Form (CNF) clause from package constraints."""
 
     terms: tuple[Term, ...]
     cause: str = "derived"
