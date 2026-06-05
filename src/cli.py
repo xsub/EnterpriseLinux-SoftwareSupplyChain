@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from src.advisory_overlay import build_advisory_report_from_file
+from src.adapters.cargo import CargoAdapter
 from src.adapters.cyclonedx import CycloneDXAdapter
 from src.adapters.dot import DotAdapter
 from src.adapters.npm import NpmAdapter
@@ -89,10 +90,14 @@ def _load_lockfile_project_graph(
     path: Path, ecosystem: str
 ) -> tuple[str, CSRDependencyGraph, str]:
     if ecosystem != "npm":
-        if ecosystem != "poetry":
+        if ecosystem == "poetry":
+            resolved = PoetryAdapter().parse_lockfile_graph(path)
+            return resolved.root_identifier, resolved.graph, resolved.ecosystem
+        if ecosystem == "cargo":
+            resolved = CargoAdapter().parse_lockfile_graph(path)
+            return resolved.root_identifier, resolved.graph, resolved.ecosystem
+        else:
             raise ValueError(f"Unsupported lockfile ecosystem: {ecosystem}")
-        resolved = PoetryAdapter().parse_lockfile_graph(path)
-        return resolved.root_identifier, resolved.graph, resolved.ecosystem
     resolved = NpmAdapter().parse_lockfile_graph(path)
     return resolved.root_identifier, resolved.graph, resolved.ecosystem
 
@@ -245,7 +250,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     lockfile = subparsers.add_parser("lockfile", help="Export a resolved lockfile graph")
     lockfile.add_argument("--path", type=Path, required=True)
-    lockfile.add_argument("--ecosystem", choices=["npm", "poetry"], default="npm")
+    lockfile.add_argument("--ecosystem", choices=["npm", "poetry", "cargo"], default="npm")
     lockfile.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
 
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")

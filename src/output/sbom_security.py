@@ -111,6 +111,8 @@ class CycloneDXExporter:
             return f"pkg:npm/{quote(name, safe='')}@{quote(version, safe='')}"
         if ecosystem == "pypi":
             return f"pkg:pypi/{quote(name.lower(), safe='')}@{quote(version, safe='')}"
+        if ecosystem == "cargo":
+            return f"pkg:cargo/{quote(name.lower(), safe='')}@{quote(version, safe='')}"
         if ecosystem == "rpm":
             vendor = metadata.get("vendor")
             if vendor:

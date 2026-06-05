@@ -138,3 +138,18 @@ def test_cyclonedx_export_uses_pypi_purls() -> None:
     )
 
     assert payload["components"][0]["purl"] == "pkg:pypi/requests@2.31.0"
+
+
+def test_cyclonedx_export_uses_cargo_purls() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_vertex("Serde==1.0.197", metadata={"ecosystem": "cargo"})
+
+    payload = json.loads(
+        CycloneDXExporter.export_to_json(
+            graph,
+            root="Serde==1.0.197",
+            ecosystem="cargo",
+        )
+    )
+
+    assert payload["components"][0]["purl"] == "pkg:cargo/serde@1.0.197"

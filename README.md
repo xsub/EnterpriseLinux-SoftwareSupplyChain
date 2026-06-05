@@ -67,6 +67,13 @@ edgp lockfile --ecosystem poetry --path poetry.lock --format json
 edgp lockfile --ecosystem poetry --path poetry.lock --format cyclonedx
 ```
 
+Export an already-resolved Cargo lockfile:
+
+```bash
+edgp lockfile --ecosystem cargo --path Cargo.lock --format json
+edgp lockfile --ecosystem cargo --path Cargo.lock --format cyclonedx
+```
+
 Query an already-resolved npm lockfile:
 
 ```bash
@@ -155,6 +162,9 @@ class NpmAdapter {
 class PoetryAdapter {
   +parse_lockfile_graph(path) ResolvedProjectGraph
 }
+class CargoAdapter {
+  +parse_lockfile_graph(path) ResolvedProjectGraph
+}
 class DotAdapter {
   +parse_graph(path) ResolvedProjectGraph
 }
@@ -209,6 +219,7 @@ class ConstraintModels {
 CLI --> CDCLResolver : resolve registry
 CLI --> NpmAdapter : ingest lockfile
 CLI --> PoetryAdapter : ingest lockfile
+CLI --> CargoAdapter : ingest lockfile
 CLI --> DotAdapter : ingest DOT
 CLI --> CycloneDXAdapter : ingest SBOM
 CLI --> InstalledRpmAdapter : ingest RPM DB
@@ -219,6 +230,7 @@ CDCLResolver --> ConstraintModels : encode clauses
 CDCLResolver --> CSRDependencyGraph : build graph
 NpmAdapter --> CSRDependencyGraph : build graph
 PoetryAdapter --> CSRDependencyGraph : build graph
+CargoAdapter --> CSRDependencyGraph : build graph
 DotAdapter --> CSRDependencyGraph : build graph
 CycloneDXAdapter --> CSRDependencyGraph : build graph
 InstalledRpmAdapter --> CSRDependencyGraph : build graph
@@ -305,6 +317,11 @@ Legacy v1 dependency trees are supported with recursive edge extraction.
 PyPI CSR graph. It links package dependency tables to locked package versions,
 adds a synthetic `poetry-lock==resolved` root for top-level packages, and carries
 Poetry metadata such as groups, optional flags, and Python version constraints.
+
+`CargoAdapter.parse_lockfile_graph` turns `Cargo.lock` package sections into a
+Rust crate CSR graph. It resolves dependency strings by package name and version
+when present, adds a synthetic `cargo-lock==resolved` root, and carries Cargo
+metadata such as registry source and checksum.
 
 ### Graph and Security Egress
 

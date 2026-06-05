@@ -85,6 +85,46 @@ def _assert_poetry_query() -> None:
     ]
 
 
+def _assert_cargo_lockfile_snapshot() -> None:
+    payload = _run_cli(
+        [
+            "lockfile",
+            "--ecosystem",
+            "cargo",
+            "--path",
+            "tests/fixtures/Cargo.lock",
+            "--format",
+            "json",
+        ]
+    )
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["ecosystem"] == "cargo"
+    assert payload["stats"] == {"edges": 4, "nodes": 5}
+
+
+def _assert_cargo_query() -> None:
+    payload = _run_cli(
+        [
+            "query",
+            "--ecosystem",
+            "cargo",
+            "--path",
+            "tests/fixtures/Cargo.lock",
+            "--operation",
+            "path",
+            "--node",
+            "demo-crate",
+            "--target",
+            "pin-project-lite",
+        ]
+    )
+    assert payload["result"] == [
+        "demo-crate==0.1.0",
+        "tokio==1.36.0",
+        "pin-project-lite==0.2.13",
+    ]
+
+
 def _assert_dot_snapshot() -> None:
     payload = _run_cli(["dot", "--path", "tests/fixtures/repograph.dot", "--format", "json"])
     assert payload["schema"] == "edgp.graph.snapshot.v1"
@@ -247,6 +287,8 @@ def main(argv: list[str] | None = None) -> int:
         ("lockfile snapshot", _assert_lockfile_snapshot),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
+        ("cargo lockfile snapshot", _assert_cargo_lockfile_snapshot),
+        ("cargo query", _assert_cargo_query),
         ("dot snapshot", _assert_dot_snapshot),
         ("sbom query", _assert_sbom_query),
         ("snapshot diff", _assert_snapshot_diff),
