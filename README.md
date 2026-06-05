@@ -475,9 +475,9 @@ machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 
 `edgp report` renders graph snapshots, impact reports, advisory reports, and npm
 diagnostics into dependency-free HTML files. Snapshot reports include graph
-metrics, a compact SVG preview, a filterable and windowed edge explorer,
-most-depended-upon rankings, and a node metadata table. Graph snapshot reports
-also summarize edge
+metrics, a compact SVG preview, a filterable, windowed, and sortable edge
+explorer, a sortable node metadata table, and most-depended-upon rankings. Graph
+snapshot reports also summarize edge
 relationship types, including Maven optional, omitted, and excluded
 dependency-tree markers. Impact and
 advisory reports render affected package lists, dependency

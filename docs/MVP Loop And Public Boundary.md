@@ -52,9 +52,10 @@ surfaces are:
   diagnostics JSON.
 - Label Maven optional, omitted, and excluded relationship types in graph
   snapshot HTML reports.
-- Render filterable, windowed graph snapshot edge explorer controls for static
-  HTML reports so source/target text and relationship type can be narrowed in
-  the browser without showing every matching row at once.
+- Render filterable, windowed, and sortable graph snapshot edge explorer
+  controls for static HTML reports so source/target text and relationship type
+  can be narrowed in the browser without showing every matching row at once.
+- Render sortable graph snapshot node metadata tables for static HTML reports.
 - Render deterministic static HTML report bundles with an index for multiple
   EDGP JSON reports.
 - Emit a machine-readable `manifest.json` for report bundles so future
@@ -147,6 +148,6 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add client-side sorting for graph snapshot edge and node tables.
 - Add a schema-aware `edgp validate` command for local report and bundle
   contract checks.
+- Add browser smoke coverage for static report sorting behavior.

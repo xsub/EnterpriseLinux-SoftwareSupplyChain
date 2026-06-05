@@ -19,6 +19,9 @@ def test_render_snapshot_report_includes_summary_graph_and_tables() -> None:
     assert 'data-edge-filter-count' in html
     assert 'data-edge-filter-more' in html
     assert 'data-edge-type="1"' in html
+    assert "data-sortable-table" in html
+    assert 'data-sort-index="0"' in html
+    assert 'data-sort-type="number"' in html
     assert "lib==2.0.0" in html
     assert "Most Depended Upon" in html
 

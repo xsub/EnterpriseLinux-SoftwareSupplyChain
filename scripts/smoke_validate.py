@@ -869,6 +869,8 @@ def _assert_html_report() -> None:
         assert 'data-edge-filter-count' in html
         assert 'data-edge-filter-more' in html
         assert 'data-edge-page-size="250"' in html
+        assert "data-sortable-table" in html
+        assert 'data-sort-type="number"' in html
         assert "EDGP Snapshot Report - app==1.0.0" in html
 
 

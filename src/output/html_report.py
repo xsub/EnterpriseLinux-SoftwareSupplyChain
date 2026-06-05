@@ -63,6 +63,7 @@ def render_snapshot_report(snapshot: dict[str, Any]) -> str:
             _node_table(nodes),
             "</main>",
             f"<script>{_edge_filter_script()}</script>",
+            f"<script>{_table_sort_script()}</script>",
             "</body>",
             "</html>",
         ]
@@ -486,8 +487,14 @@ def _edge_explorer_panel(edges: list[dict[str, Any]]) -> str:
     </div>
   </div>
   <div class="table-wrap">
-    <table class="edge-table">
-      <thead><tr><th>Source</th><th>Target</th><th>Relationship</th></tr></thead>
+    <table class="edge-table" data-sortable-table>
+      <thead>
+        <tr>
+          <th><button type="button" data-sort-index="0">Source</button></th>
+          <th><button type="button" data-sort-index="1">Target</button></th>
+          <th><button type="button" data-sort-index="2">Relationship</button></th>
+        </tr>
+      </thead>
       <tbody data-edge-filter-body>{body}</tbody>
     </table>
   </div>
@@ -536,7 +543,7 @@ def _edge_filter_script() -> str:
     const reset = panel.querySelector("[data-edge-filter-reset]");
     const more = panel.querySelector("[data-edge-filter-more]");
     const count = panel.querySelector("[data-edge-filter-count]");
-    const rows = Array.from(panel.querySelectorAll("[data-edge-row]"));
+    const currentRows = () => Array.from(panel.querySelectorAll("[data-edge-row]"));
     const pageSize = Number(panel.dataset.edgePageSize || "250");
     let visibleLimit = pageSize;
     const apply = (resetLimit = false) => {
@@ -545,7 +552,7 @@ def _edge_filter_script() -> str:
       const selectedType = type.value;
       let matched = 0;
       let shown = 0;
-      for (const row of rows) {
+      for (const row of currentRows()) {
         const edgeText = `${row.dataset.edgeSource || ""} ${row.dataset.edgeTarget || ""}`;
         const textMatches = !query || edgeText.includes(query);
         const typeMatches = !selectedType || row.dataset.edgeType === selectedType;
@@ -571,6 +578,47 @@ def _edge_filter_script() -> str:
       search.focus();
     });
     apply();
+  }
+})();
+""".strip()
+
+
+def _table_sort_script() -> str:
+    return """
+(() => {
+  const valueFor = (row, index, type) => {
+    const text = (row.cells[index]?.textContent || "").trim();
+    if (type === "number") {
+      const parsed = Number(text);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return text.toLowerCase();
+  };
+  for (const table of document.querySelectorAll("[data-sortable-table]")) {
+    for (const button of table.querySelectorAll("[data-sort-index]")) {
+      button.addEventListener("click", () => {
+        const index = Number(button.dataset.sortIndex || "0");
+        const type = button.dataset.sortType || "text";
+        const direction = button.dataset.sortDirection === "asc" ? "desc" : "asc";
+        for (const other of table.querySelectorAll("[data-sort-index]")) {
+          other.removeAttribute("data-sort-direction");
+          other.removeAttribute("aria-sort");
+        }
+        button.dataset.sortDirection = direction;
+        button.setAttribute("aria-sort", direction === "asc" ? "ascending" : "descending");
+        const body = table.tBodies[0];
+        const rows = Array.from(body.rows);
+        rows.sort((left, right) => {
+          const leftValue = valueFor(left, index, type);
+          const rightValue = valueFor(right, index, type);
+          if (leftValue < rightValue) return direction === "asc" ? -1 : 1;
+          if (leftValue > rightValue) return direction === "asc" ? 1 : -1;
+          return 0;
+        });
+        body.append(...rows);
+        table.dispatchEvent(new CustomEvent("edgp:table-sorted", { bubbles: true }));
+      });
+    }
   }
 })();
 """.strip()
@@ -622,9 +670,14 @@ def _node_table(nodes: list[dict[str, Any]]) -> str:
     <span>{len(nodes)} total</span>
   </div>
   <div class="table-wrap">
-    <table>
+    <table data-sortable-table>
       <thead>
-        <tr><th>Package</th><th>Deps</th><th>Dependents</th><th>Metadata</th></tr>
+        <tr>
+          <th><button type="button" data-sort-index="0">Package</button></th>
+          <th><button type="button" data-sort-index="1" data-sort-type="number">Deps</button></th>
+          <th><button type="button" data-sort-index="2" data-sort-type="number">Dependents</button></th>
+          <th><button type="button" data-sort-index="3">Metadata</button></th>
+        </tr>
       </thead>
       <tbody>{"".join(rows)}</tbody>
     </table>
@@ -911,6 +964,27 @@ th, td {
   vertical-align: top;
 }
 th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+th button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-transform: inherit;
+  cursor: pointer;
+}
+th button::after {
+  content: "\\2195";
+  font-size: 11px;
+  line-height: 1;
+}
+th button[data-sort-direction="asc"]::after { content: "\\2191"; }
+th button[data-sort-direction="desc"]::after { content: "\\2193"; }
 td { overflow-wrap: anywhere; }
 tr:last-child td { border-bottom: 0; }
 .empty { color: var(--muted); margin: 0; }
