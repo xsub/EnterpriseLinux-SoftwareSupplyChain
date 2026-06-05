@@ -11,6 +11,7 @@ from src.advisory_overlay import build_advisory_report_from_file
 from src.adapters.cyclonedx import CycloneDXAdapter
 from src.adapters.dot import DotAdapter
 from src.adapters.npm import NpmAdapter
+from src.adapters.poetry import PoetryAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
@@ -79,10 +80,20 @@ def _json(payload: dict[str, Any]) -> str:
 
 
 def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependencyGraph]:
+    root, graph, _ = _load_lockfile_project_graph(path, ecosystem)
+    return root, graph
+
+
+def _load_lockfile_project_graph(
+    path: Path, ecosystem: str
+) -> tuple[str, CSRDependencyGraph, str]:
     if ecosystem != "npm":
-        raise ValueError(f"Unsupported lockfile ecosystem: {ecosystem}")
+        if ecosystem != "poetry":
+            raise ValueError(f"Unsupported lockfile ecosystem: {ecosystem}")
+        resolved = PoetryAdapter().parse_lockfile_graph(path)
+        return resolved.root_identifier, resolved.graph, resolved.ecosystem
     resolved = NpmAdapter().parse_lockfile_graph(path)
-    return resolved.root_identifier, resolved.graph
+    return resolved.root_identifier, resolved.graph, resolved.ecosystem
 
 
 def _load_source_graph(
@@ -114,8 +125,7 @@ def _load_source_project_graph(
     if source == "lockfile":
         if path is None:
             raise ValueError("--path is required for lockfile source")
-        root, graph = _load_lockfile_graph(path, ecosystem)
-        return root, graph, ecosystem
+        return _load_lockfile_project_graph(path, ecosystem)
     if source == "dot":
         if path is None:
             raise ValueError("--path is required for dot source")
@@ -234,7 +244,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     lockfile = subparsers.add_parser("lockfile", help="Export a resolved lockfile graph")
     lockfile.add_argument("--path", type=Path, required=True)
-    lockfile.add_argument("--ecosystem", choices=["npm"], default="npm")
+    lockfile.add_argument("--ecosystem", choices=["npm", "poetry"], default="npm")
     lockfile.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
 
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
@@ -322,8 +332,11 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     if args.command == "lockfile":
-        root_identifier, graph = _load_lockfile_graph(args.path, args.ecosystem)
-        print(_export(args.format, graph, root=root_identifier, ecosystem=args.ecosystem))
+        root_identifier, graph, resolved_ecosystem = _load_lockfile_project_graph(
+            args.path,
+            args.ecosystem,
+        )
+        print(_export(args.format, graph, root=root_identifier, ecosystem=resolved_ecosystem))
         return 0
 
     if args.command == "dot":

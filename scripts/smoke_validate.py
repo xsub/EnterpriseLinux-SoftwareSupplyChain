@@ -45,6 +45,46 @@ def _assert_lockfile_snapshot() -> None:
     }
 
 
+def _assert_poetry_lockfile_snapshot() -> None:
+    payload = _run_cli(
+        [
+            "lockfile",
+            "--ecosystem",
+            "poetry",
+            "--path",
+            "tests/fixtures/poetry.lock",
+            "--format",
+            "json",
+        ]
+    )
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["ecosystem"] == "pypi"
+    assert payload["stats"] == {"edges": 4, "nodes": 5}
+
+
+def _assert_poetry_query() -> None:
+    payload = _run_cli(
+        [
+            "query",
+            "--ecosystem",
+            "poetry",
+            "--path",
+            "tests/fixtures/poetry.lock",
+            "--operation",
+            "path",
+            "--node",
+            "demo-lib",
+            "--target",
+            "urllib3",
+        ]
+    )
+    assert payload["result"] == [
+        "demo-lib==1.0.0",
+        "requests==2.31.0",
+        "urllib3==2.2.1",
+    ]
+
+
 def _assert_dot_snapshot() -> None:
     payload = _run_cli(["dot", "--path", "tests/fixtures/repograph.dot", "--format", "json"])
     assert payload["schema"] == "edgp.graph.snapshot.v1"
@@ -197,6 +237,8 @@ def main(argv: list[str] | None = None) -> int:
     checks = [
         ("compile", _assert_compile),
         ("lockfile snapshot", _assert_lockfile_snapshot),
+        ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
+        ("poetry query", _assert_poetry_query),
         ("dot snapshot", _assert_dot_snapshot),
         ("sbom query", _assert_sbom_query),
         ("snapshot diff", _assert_snapshot_diff),

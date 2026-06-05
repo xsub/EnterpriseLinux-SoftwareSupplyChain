@@ -16,6 +16,7 @@ surfaces are:
 
 - local Python 3.12+ execution;
 - npm `package-lock.json` files;
+- Poetry `poetry.lock` files;
 - CycloneDX JSON SBOMs;
 - local advisory overlay JSON;
 - directed DOT graphs, including `dnf repograph`-style block edges;
@@ -26,7 +27,7 @@ surfaces are:
 ## Current Capabilities
 
 - Build CSR dependency graphs from mock registries, npm lockfiles, DOT graphs,
-  CycloneDX SBOMs, and installed RPM metadata.
+  Poetry lockfiles, CycloneDX SBOMs, and installed RPM metadata.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP JSON snapshots.
 - Diff two EDGP JSON snapshots.
@@ -69,4 +70,5 @@ python -B -m src.cli report --snapshot tests/fixtures/snapshot-right.json --outp
 
 ## Next Vertical Options
 
-- Add Poetry lockfile graph ingestion.
+- Add repository metadata hints when available from public RPM query output.
+- Add larger-graph performance fixtures and benchmark smoke checks.

@@ -123,3 +123,18 @@ def test_cyclonedx_export_uses_rpm_purls_with_qualifiers() -> None:
     assert payload["components"][0]["purl"] == (
         "pkg:rpm/fedora/curl@7.50.3-1.fc25?arch=i386&distro=fedora-25"
     )
+
+
+def test_cyclonedx_export_uses_pypi_purls() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_vertex("Requests==2.31.0", metadata={"ecosystem": "pypi"})
+
+    payload = json.loads(
+        CycloneDXExporter.export_to_json(
+            graph,
+            root="Requests==2.31.0",
+            ecosystem="pypi",
+        )
+    )
+
+    assert payload["components"][0]["purl"] == "pkg:pypi/requests@2.31.0"

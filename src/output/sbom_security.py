@@ -109,6 +109,8 @@ class CycloneDXExporter:
                     f"{quote(package_name, safe='')}@{quote(version, safe='')}"
                 )
             return f"pkg:npm/{quote(name, safe='')}@{quote(version, safe='')}"
+        if ecosystem == "pypi":
+            return f"pkg:pypi/{quote(name.lower(), safe='')}@{quote(version, safe='')}"
         if ecosystem == "rpm":
             vendor = metadata.get("vendor")
             if vendor:

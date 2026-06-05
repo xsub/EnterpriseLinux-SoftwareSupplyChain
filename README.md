@@ -60,6 +60,13 @@ edgp lockfile --path package-lock.json --format cyclonedx
 edgp lockfile --path package-lock.json --format json
 ```
 
+Export an already-resolved Poetry lockfile:
+
+```bash
+edgp lockfile --ecosystem poetry --path poetry.lock --format json
+edgp lockfile --ecosystem poetry --path poetry.lock --format cyclonedx
+```
+
 Query an already-resolved npm lockfile:
 
 ```bash
@@ -139,6 +146,9 @@ class LockfileAdapter {
 class NpmAdapter {
   +parse_lockfile_graph(path) ResolvedProjectGraph
 }
+class PoetryAdapter {
+  +parse_lockfile_graph(path) ResolvedProjectGraph
+}
 class DotAdapter {
   +parse_graph(path) ResolvedProjectGraph
 }
@@ -189,14 +199,17 @@ class ConstraintModels {
 }
 CLI --> CDCLResolver : resolve registry
 CLI --> NpmAdapter : ingest lockfile
+CLI --> PoetryAdapter : ingest lockfile
 CLI --> DotAdapter : ingest DOT
 CLI --> CycloneDXAdapter : ingest SBOM
 CLI --> InstalledRpmAdapter : ingest RPM DB
 NpmAdapter --|> LockfileAdapter
+PoetryAdapter --|> LockfileAdapter
 CDCLResolver --> RegistryMock : query versions
 CDCLResolver --> ConstraintModels : encode clauses
 CDCLResolver --> CSRDependencyGraph : build graph
 NpmAdapter --> CSRDependencyGraph : build graph
+PoetryAdapter --> CSRDependencyGraph : build graph
 DotAdapter --> CSRDependencyGraph : build graph
 CycloneDXAdapter --> CSRDependencyGraph : build graph
 InstalledRpmAdapter --> CSRDependencyGraph : build graph
@@ -276,6 +289,11 @@ same CSR graph used by the resolver. For lockfile v2/v3 it walks the `packages`
 map, derives package names from `node_modules` paths when metadata omits them,
 and resolves dependencies through npm's nested `node_modules` lookup rules.
 Legacy v1 dependency trees are supported with recursive edge extraction.
+
+`PoetryAdapter.parse_lockfile_graph` turns `poetry.lock` package sections into a
+PyPI CSR graph. It links package dependency tables to locked package versions,
+adds a synthetic `poetry-lock==resolved` root for top-level packages, and carries
+Poetry metadata such as groups, optional flags, and Python version constraints.
 
 ### Graph and Security Egress
 
