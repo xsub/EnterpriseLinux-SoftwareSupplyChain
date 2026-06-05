@@ -154,6 +154,23 @@ def _assert_verify_bundle_command(output_dir: Path) -> None:
     }
 
 
+def _assert_verify_bundle_fixture(output_dir: Path) -> None:
+    payload = _run_cli(["verify-bundle", "--path", str(output_dir)])
+    fixture = json.loads(
+        (REPO_ROOT / "tests/fixtures/report-bundle-verification.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert _normalize_verification_report(payload) == fixture
+
+
+def _normalize_verification_report(payload: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(payload)
+    normalized["bundleDir"] = "<bundle-dir>"
+    normalized["bundleSha256"] = "<bundleSha256>"
+    return normalized
+
+
 def _is_sha256(value: object) -> bool:
     return (
         isinstance(value, str)
@@ -712,6 +729,7 @@ def _assert_report_bundle() -> None:
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
         _assert_verify_bundle_command(output_dir)
+        _assert_verify_bundle_fixture(output_dir)
         assert manifest["schema"] == "edgp.report.bundle.v1"
         assert manifest["bundle"]["sourceKind"] == "edgp-json"
         assert manifest["bundle"]["command"].startswith("edgp report-bundle ")

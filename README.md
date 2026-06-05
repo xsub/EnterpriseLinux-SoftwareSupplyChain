@@ -489,6 +489,8 @@ with the machine-readable JSON Schema at
 [`docs/schemas/edgp.report.bundle.v1.schema.json`](docs/schemas/edgp.report.bundle.v1.schema.json).
 `edgp verify-bundle` checks that manifest shape, member artifact digests, and
 the top-level bundle fingerprint still match the generated directory.
+[`tests/fixtures/report-bundle-verification.json`](tests/fixtures/report-bundle-verification.json)
+provides a normalized machine-readable example of the verification report.
 
 ## Roadmap
 

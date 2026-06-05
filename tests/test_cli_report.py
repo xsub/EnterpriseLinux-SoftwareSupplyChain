@@ -133,6 +133,12 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert verification["schema"] == "edgp.report.bundle.verification.v1"
     assert verification["ok"] is True
     assert verification["summary"] == {"reports": 2, "failures": 0}
+    fixture = json.loads(
+        Path("tests/fixtures/report-bundle-verification.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert _normalize_verification_report(verification) == fixture
 
 
 def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
@@ -161,3 +167,10 @@ def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     assert verification["ok"] is False
     assert verification["summary"]["failures"] == 1
     assert verification["failures"][0]["code"] == "htmlDigestMismatch"
+
+
+def _normalize_verification_report(payload: dict[str, object]) -> dict[str, object]:
+    normalized = dict(payload)
+    normalized["bundleDir"] = "<bundle-dir>"
+    normalized["bundleSha256"] = "<bundleSha256>"
+    return normalized

@@ -1,0 +1,12 @@
+{
+  "bundleDir": "<bundle-dir>",
+  "bundleSha256": "<bundleSha256>",
+  "failures": [],
+  "manifest": "manifest.json",
+  "ok": true,
+  "schema": "edgp.report.bundle.verification.v1",
+  "summary": {
+    "failures": 0,
+    "reports": 2
+  }
+}

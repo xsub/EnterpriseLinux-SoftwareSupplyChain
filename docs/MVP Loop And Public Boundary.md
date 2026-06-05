@@ -57,6 +57,8 @@ surfaces are:
   manifest payload and member artifact digests.
 - Verify generated report bundles with a dependency-free `verify-bundle` command
   that checks manifest shape, member digests, and the bundle fingerprint.
+- Provide a normalized machine-readable `verify-bundle` report fixture for
+  RAG/workbench ingestion examples and regression checks.
 - Use a shared graph bundle writer for npm, Maven, DOT, CycloneDX SBOM, and
   installed RPM bundle commands.
 - Run deterministic synthetic CSR traversal benchmarks.
@@ -123,7 +125,6 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add a machine-readable verification report fixture for RAG/workbench ingestion
-  and golden-output regression tests.
 - Add Maven edge relationship typing for optional or omitted dependency-tree
   entries without changing existing node IDs.
+- Add a compact verification summary block to static report bundle indexes.
