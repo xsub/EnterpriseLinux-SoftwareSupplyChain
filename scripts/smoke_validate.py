@@ -486,6 +486,44 @@ def _assert_npm_bundle() -> None:
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics.html"
 
 
+def _assert_npm_bundle_with_impact_and_advisory() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "npm-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "npm-bundle",
+                "--path",
+                "tests/fixtures/package-lock.json",
+                "--impact-node",
+                "left-pad",
+                "--advisories",
+                "tests/fixtures/advisories.json",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        impact = json.loads(
+            (output_dir / "impact-left-pad-1.3.0.json").read_text(encoding="utf-8")
+        )
+        advisory = json.loads(
+            (output_dir / "advisory-report.json").read_text(encoding="utf-8")
+        )
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert impact["schema"] == "edgp.impact.report.v1"
+        assert advisory["schema"] == "edgp.advisory.report.v1"
+        assert manifest["reports"][2]["href"] == "003-impact-left-pad-1.3.0.html"
+        assert manifest["reports"][3]["href"] == "004-advisory-report.html"
+
+
 def _assert_benchmark() -> None:
     payload = _run_cli(["benchmark", "--nodes", "64", "--fanout", "3"])
     assert payload["schema"] == "edgp.benchmark.v1"
@@ -540,6 +578,7 @@ def main(argv: list[str] | None = None) -> int:
         ("npm diagnostics html report", _assert_npm_diagnostics_html_report),
         ("report bundle", _assert_report_bundle),
         ("npm bundle", _assert_npm_bundle),
+        ("npm bundle impact advisory", _assert_npm_bundle_with_impact_and_advisory),
         ("synthetic benchmark", _assert_benchmark),
     ]
     if args.include_rpm_installed:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -83,10 +84,19 @@ def _json(payload: dict[str, Any]) -> str:
     return json.dumps(payload, indent=2, sort_keys=True)
 
 
-def _write_npm_bundle(path: Path, output_dir: Path) -> Path:
+def _write_npm_bundle(
+    path: Path,
+    output_dir: Path,
+    *,
+    impact_nodes: list[str] | None = None,
+    advisory_path: Path | None = None,
+    max_paths: int = 20,
+) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     adapter = NpmAdapter()
     resolved = adapter.parse_lockfile_graph(path)
+    report_paths = []
+
     graph_path = output_dir / "npm-graph.json"
     graph_path.write_text(
         GraphJsonExporter.export_to_json(
@@ -96,9 +106,51 @@ def _write_npm_bundle(path: Path, output_dir: Path) -> Path:
         ),
         encoding="utf-8",
     )
+    report_paths.append(graph_path)
+
     diagnostics_path = output_dir / "npm-diagnostics.json"
     diagnostics_path.write_text(_json(adapter.diagnose_lockfile(path)), encoding="utf-8")
-    return write_report_bundle([graph_path, diagnostics_path], output_dir)
+    report_paths.append(diagnostics_path)
+
+    for selector in impact_nodes or []:
+        node = _resolve_node_selector(resolved.graph, selector, role="impact node")
+        impact_path = output_dir / f"impact-{_safe_artifact_stem(node)}.json"
+        impact_path.write_text(
+            _json(
+                build_impact_report(
+                    resolved.graph,
+                    node=node,
+                    root=resolved.root_identifier,
+                    ecosystem=resolved.ecosystem,
+                    max_paths=max_paths,
+                )
+            ),
+            encoding="utf-8",
+        )
+        report_paths.append(impact_path)
+
+    if advisory_path is not None:
+        advisory_report_path = output_dir / "advisory-report.json"
+        advisory_report_path.write_text(
+            _json(
+                build_advisory_report_from_file(
+                    advisory_path,
+                    resolved.graph,
+                    root=resolved.root_identifier,
+                    ecosystem=resolved.ecosystem,
+                    max_paths=max_paths,
+                )
+            ),
+            encoding="utf-8",
+        )
+        report_paths.append(advisory_report_path)
+
+    return write_report_bundle(report_paths, output_dir)
+
+
+def _safe_artifact_stem(value: str) -> str:
+    stem = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip(".-_")
+    return stem or "report"
 
 
 def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependencyGraph]:
@@ -288,6 +340,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     npm_bundle.add_argument("--path", type=Path, required=True)
     npm_bundle.add_argument("--output-dir", type=Path, required=True)
+    npm_bundle.add_argument("--impact-node", action="append", default=[])
+    npm_bundle.add_argument("--advisories", type=Path)
+    npm_bundle.add_argument("--limit", type=int, default=20)
 
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
     dot.add_argument("--path", type=Path, required=True)
@@ -408,7 +463,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "npm-bundle":
-        print(_write_npm_bundle(args.path, args.output_dir))
+        print(
+            _write_npm_bundle(
+                args.path,
+                args.output_dir,
+                impact_nodes=args.impact_node,
+                advisory_path=args.advisories,
+                max_paths=args.limit,
+            )
+        )
         return 0
 
     if args.command == "dot":

@@ -95,6 +95,7 @@ Diagnose npm dependency path conflicts:
 ```bash
 edgp npm-diagnostics --path package-lock.json
 edgp npm-bundle --path package-lock.json --output-dir reports/npm
+edgp npm-bundle --path package-lock.json --impact-node left-pad --advisories advisories.json --output-dir reports/npm
 ```
 
 Report reverse dependency impact for a package:
@@ -399,9 +400,10 @@ declarations. This helps explain why npm consumers may reach different versions
 of the same package through nested `node_modules` paths.
 
 `edgp npm-bundle` turns one `package-lock.json` into a local static triage
-folder containing `npm-graph.json`, `npm-diagnostics.json`, HTML reports,
-`index.html`, and `manifest.json`. It is the fastest public-resource path from
-an npm lockfile to a browser-friendly graph and diagnostics view.
+folder containing `npm-graph.json`, `npm-diagnostics.json`, optional impact and
+advisory JSON reports, HTML reports, `index.html`, and `manifest.json`. It is
+the fastest public-resource path from an npm lockfile to a browser-friendly
+graph, diagnostics, and local advisory view.
 
 `edgp impact` turns reverse reachability into a vulnerability-style impact
 report. For a selected node it returns direct dependents, all transitive
