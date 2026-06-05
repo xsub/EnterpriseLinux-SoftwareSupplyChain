@@ -47,6 +47,8 @@ surfaces are:
 - Emit a machine-readable `manifest.json` for report bundles so future
   workbench and RAG integrations can ingest generated artifacts directly,
   including bundle-level source kind and generating command metadata.
+- Document `edgp.report.bundle.v1` with a Draft 2020-12 JSON Schema and
+  dependency-free smoke validation against generated bundle manifests.
 - Use a shared graph bundle writer for npm, Maven, DOT, CycloneDX SBOM, and
   installed RPM bundle commands.
 - Run deterministic synthetic CSR traversal benchmarks.
@@ -113,5 +115,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 - Add Maven optional/excluded dependency markers if dependency-tree output
   exposes them in public fixtures.
-- Add JSON schema documentation for report bundle manifests so RAG/workbench
-  integrations can validate generated artifact indexes without inspecting code.
+- Add report bundle member digests so downstream RAG/workbench ingestion can
+  detect stale or modified HTML/JSON artifacts.

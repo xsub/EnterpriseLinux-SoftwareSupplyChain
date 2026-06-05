@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+REPORT_BUNDLE_SCHEMA_PATH = (
+    REPO_ROOT / "docs" / "schemas" / "edgp.report.bundle.v1.schema.json"
+)
 
 
 def _run_cli(args: list[str]) -> dict[str, Any]:
@@ -60,6 +63,58 @@ def _assert_npm_diagnostics() -> None:
         "nestedResolutionConflicts": 1,
         "unresolvedDependencies": 1,
     }
+
+
+def _load_report_bundle_manifest_schema() -> dict[str, Any]:
+    return json.loads(REPORT_BUNDLE_SCHEMA_PATH.read_text(encoding="utf-8"))
+
+
+def _assert_report_bundle_manifest_schema_document() -> None:
+    schema = _load_report_bundle_manifest_schema()
+    assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+    assert schema["properties"]["schema"]["const"] == "edgp.report.bundle.v1"
+    assert set(schema["required"]) == {"schema", "index", "reportCount", "reports"}
+    assert set(schema["properties"]["bundle"]["properties"]["sourceKind"]["enum"]) == {
+        "cyclonedx-sbom",
+        "dot",
+        "edgp-json",
+        "maven-dependency-tree",
+        "npm-lockfile",
+        "rpm-installed",
+    }
+
+
+def _assert_report_bundle_manifest_contract(manifest: dict[str, Any]) -> None:
+    schema = _load_report_bundle_manifest_schema()
+    report_schema = schema["properties"]["reports"]["items"]
+    required_report_keys = set(report_schema["required"])
+    allowed_report_keys = set(report_schema["properties"])
+
+    assert manifest["schema"] == schema["properties"]["schema"]["const"]
+    assert isinstance(manifest["index"], str) and manifest["index"]
+    assert isinstance(manifest["reportCount"], int)
+    assert isinstance(manifest["reports"], list) and manifest["reports"]
+    assert manifest["reportCount"] == len(manifest["reports"])
+    for report in manifest["reports"]:
+        assert required_report_keys <= set(report)
+        assert set(report) <= allowed_report_keys
+        assert isinstance(report["href"], str) and report["href"]
+        assert isinstance(report["schema"], str) and report["schema"]
+        assert isinstance(report["source"], str) and report["source"]
+        assert isinstance(report["summary"], dict)
+        assert isinstance(report["title"], str) and report["title"]
+
+    bundle = manifest.get("bundle")
+    if bundle is not None:
+        allowed_source_kinds = set(
+            schema["properties"]["bundle"]["properties"]["sourceKind"]["enum"]
+        )
+        assert isinstance(bundle, dict)
+        assert all(isinstance(value, str) for value in bundle.values())
+        if "sourceKind" in bundle:
+            assert bundle["sourceKind"] in allowed_source_kinds
+        if "command" in bundle:
+            assert bundle["command"]
 
 
 def _assert_poetry_lockfile_snapshot() -> None:
@@ -238,6 +293,7 @@ def _assert_maven_bundle() -> None:
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest)
         assert manifest["bundle"]["sourceKind"] == "maven-dependency-tree"
         assert manifest["bundle"]["command"].startswith("edgp maven-bundle ")
         assert manifest["reports"][0]["href"] == "001-maven-graph.html"
@@ -286,6 +342,7 @@ def _assert_dot_bundle() -> None:
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest)
         assert manifest["bundle"]["sourceKind"] == "dot"
         assert manifest["bundle"]["command"].startswith("edgp dot-bundle ")
         assert manifest["reports"][0]["href"] == "001-dot-graph.html"
@@ -338,6 +395,7 @@ def _assert_sbom_bundle() -> None:
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest)
         assert manifest["bundle"]["sourceKind"] == "cyclonedx-sbom"
         assert manifest["bundle"]["command"].startswith("edgp sbom-bundle ")
         assert manifest["reports"][0]["href"] == "001-sbom-graph.html"
@@ -552,6 +610,7 @@ def _assert_report_bundle() -> None:
         assert 'data-testid="report-bundle-index"' in index_html
         assert "002-npm-diagnostics-report.html" in index_html
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest)
         assert manifest["schema"] == "edgp.report.bundle.v1"
         assert manifest["bundle"]["sourceKind"] == "edgp-json"
         assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
@@ -590,6 +649,7 @@ def _assert_npm_bundle() -> None:
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         assert graph["schema"] == "edgp.graph.snapshot.v1"
         assert diagnostics["schema"] == "edgp.npm.diagnostics.v1"
+        _assert_report_bundle_manifest_contract(manifest)
         assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
         assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics.html"
@@ -629,6 +689,7 @@ def _assert_npm_bundle_with_impact_and_advisory() -> None:
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         assert impact["schema"] == "edgp.impact.report.v1"
         assert advisory["schema"] == "edgp.advisory.report.v1"
+        _assert_report_bundle_manifest_contract(manifest)
         assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
         assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
         assert manifest["reports"][2]["href"] == "003-impact-left-pad-1.3.0.html"
@@ -679,6 +740,7 @@ def _assert_rpm_installed_bundle() -> None:
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest)
         assert manifest["bundle"]["sourceKind"] == "rpm-installed"
         assert manifest["bundle"]["command"].startswith("edgp rpm-installed-bundle ")
         assert manifest["reports"][0]["href"] == "001-rpm-installed-graph.html"
@@ -706,6 +768,7 @@ def main(argv: list[str] | None = None) -> int:
         ("compile", _assert_compile),
         ("lockfile snapshot", _assert_lockfile_snapshot),
         ("npm diagnostics", _assert_npm_diagnostics),
+        ("report bundle manifest schema", _assert_report_bundle_manifest_schema_document),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
         ("cargo lockfile snapshot", _assert_cargo_lockfile_snapshot),

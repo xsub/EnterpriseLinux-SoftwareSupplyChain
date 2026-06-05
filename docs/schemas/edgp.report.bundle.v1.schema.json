@@ -1,0 +1,98 @@
+{
+  "$id": "urn:edgp:schema:report-bundle-manifest:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Manifest written beside EDGP static report bundle indexes.",
+  "properties": {
+    "bundle": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Optional metadata about the source and command that generated the bundle.",
+      "properties": {
+        "command": {
+          "description": "CLI-style command used to generate the bundle.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "sourceKind": {
+          "description": "Public input surface that produced the bundle.",
+          "enum": [
+            "cyclonedx-sbom",
+            "dot",
+            "edgp-json",
+            "maven-dependency-tree",
+            "npm-lockfile",
+            "rpm-installed"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "index": {
+      "description": "Bundle index HTML file path relative to the bundle directory.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "reportCount": {
+      "description": "Number of entries in the reports array.",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "reports": {
+      "description": "Ordered static reports rendered into the bundle.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "href": {
+            "description": "Member HTML report path relative to the bundle directory.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "schema": {
+            "description": "EDGP JSON schema identifier for the source report.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "source": {
+            "description": "Source JSON path label for this rendered report.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "summary": {
+            "description": "Report-specific summary metrics copied from summary or stats fields.",
+            "type": "object"
+          },
+          "title": {
+            "description": "Human-readable title rendered in the bundle index.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "href",
+          "schema",
+          "source",
+          "summary",
+          "title"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema": {
+      "const": "edgp.report.bundle.v1",
+      "description": "Manifest schema identifier."
+    }
+  },
+  "required": [
+    "schema",
+    "index",
+    "reportCount",
+    "reports"
+  ],
+  "title": "EDGP Report Bundle Manifest v1",
+  "type": "object"
+}
