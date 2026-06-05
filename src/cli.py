@@ -83,16 +83,31 @@ def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependency
 
 def _load_source_graph(
     source: str,
-    path: Path,
+    path: Path | None,
     ecosystem: str,
+    *,
+    rpm_limit: int = 100,
+    max_requirements: int = 40,
 ) -> tuple[str, CSRDependencyGraph]:
     if source == "lockfile":
+        if path is None:
+            raise ValueError("--path is required for lockfile source")
         return _load_lockfile_graph(path, ecosystem)
     if source == "dot":
+        if path is None:
+            raise ValueError("--path is required for dot source")
         resolved = DotAdapter().parse_graph(path, ecosystem=ecosystem)
         return resolved.root_identifier, resolved.graph
     if source == "sbom":
+        if path is None:
+            raise ValueError("--path is required for sbom source")
         resolved = CycloneDXAdapter().parse_graph(path)
+        return resolved.root_identifier, resolved.graph
+    if source == "rpm-installed":
+        resolved = InstalledRpmAdapter().parse_installed(
+            limit=rpm_limit,
+            max_requirements=max_requirements,
+        )
         return resolved.root_identifier, resolved.graph
     raise ValueError(f"Unsupported graph source: {source}")
 
@@ -218,8 +233,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     query = subparsers.add_parser("query", help="Query a resolved graph")
-    query.add_argument("--source", choices=["lockfile", "dot", "sbom"], default="lockfile")
-    query.add_argument("--path", type=Path, required=True)
+    query.add_argument(
+        "--source",
+        choices=["lockfile", "dot", "sbom", "rpm-installed"],
+        default="lockfile",
+    )
+    query.add_argument("--path", type=Path)
     query.add_argument("--ecosystem", default="npm")
     query.add_argument(
         "--operation",
@@ -236,6 +255,8 @@ def build_parser() -> argparse.ArgumentParser:
     query.add_argument("--target")
     query.add_argument("--direction", choices=["dependencies", "dependents"], default="dependencies")
     query.add_argument("--limit", type=int, default=10)
+    query.add_argument("--rpm-limit", type=int, default=100)
+    query.add_argument("--max-requirements", type=int, default=40)
 
     return parser
 
@@ -288,7 +309,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "query":
-        _, graph = _load_source_graph(args.source, args.path, args.ecosystem)
+        _, graph = _load_source_graph(
+            args.source,
+            args.path,
+            args.ecosystem,
+            rpm_limit=args.rpm_limit,
+            max_requirements=args.max_requirements,
+        )
         print(
             _json(
                 _query_graph(

@@ -82,6 +82,7 @@ Export a bounded graph from the local RPM database on AlmaLinux:
 ```bash
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-installed --limit 100 --max-requirements 40 --format cyclonedx
+edgp query --source rpm-installed --rpm-limit 100 --max-requirements 40 --operation most-depended-upon
 ```
 
 Import and re-export a CycloneDX JSON SBOM:
