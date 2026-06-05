@@ -1,8 +1,40 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 2,
+  "schemaCount": 6,
   "schemas": [
+    {
+      "contract": "edgp.advisory.report.v1",
+      "description": "Local advisory overlay report with matched packages and reverse dependency impact.",
+      "file": "edgp.advisory.report.v1.schema.json",
+      "id": "urn:edgp:schema:advisory-report:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Advisory Report v1"
+    },
+    {
+      "contract": "edgp.graph.snapshot.v1",
+      "description": "Deterministic EDGP graph snapshot exported from a CSR dependency graph.",
+      "file": "edgp.graph.snapshot.v1.schema.json",
+      "id": "urn:edgp:schema:graph-snapshot:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Graph Snapshot v1"
+    },
+    {
+      "contract": "edgp.impact.report.v1",
+      "description": "Reverse dependency impact report for a selected graph node.",
+      "file": "edgp.impact.report.v1.schema.json",
+      "id": "urn:edgp:schema:impact-report:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Impact Report v1"
+    },
+    {
+      "contract": "edgp.npm.diagnostics.v1",
+      "description": "npm package-lock diagnostics for duplicate names, nested version conflicts, and unresolved declarations.",
+      "file": "edgp.npm.diagnostics.v1.schema.json",
+      "id": "urn:edgp:schema:npm-diagnostics:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP npm Diagnostics v1"
+    },
     {
       "contract": "edgp.report.bundle.v1",
       "description": "Manifest written beside EDGP static report bundle indexes.",

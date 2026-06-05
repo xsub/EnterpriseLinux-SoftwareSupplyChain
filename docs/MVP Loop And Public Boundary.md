@@ -31,6 +31,9 @@ surfaces are:
 - Build CSR dependency graphs from mock registries, npm lockfiles, DOT graphs,
   Poetry lockfiles, Cargo lockfiles, Maven dependency trees, CycloneDX SBOMs,
   and installed RPM metadata.
+- Document `edgp.graph.snapshot.v1`, `edgp.impact.report.v1`,
+  `edgp.advisory.report.v1`, and `edgp.npm.diagnostics.v1` with Draft 2020-12
+  JSON Schemas and smoke validation against fixture payloads.
 - Disambiguate Maven classifier-bearing and non-jar artifacts in graph node
   identifiers while preserving full Maven coordinates in node metadata.
 - Preserve Maven dependency-tree optional and verbose omitted markers as node
@@ -144,6 +147,6 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add Draft 2020-12 schemas for graph snapshot, impact, advisory, and npm
-  diagnostics reports.
 - Add client-side sorting for graph snapshot edge and node tables.
+- Add a schema-aware `edgp validate` command for local report and bundle
+  contract checks.

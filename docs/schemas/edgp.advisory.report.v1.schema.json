@@ -1,0 +1,240 @@
+{
+  "$id": "urn:edgp:schema:advisory-report:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Local advisory overlay report with matched packages and reverse dependency impact.",
+  "properties": {
+    "ecosystem": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "findings": {
+      "description": "Matched advisory findings.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "advisory": {
+            "description": "Original advisory object from the local overlay.",
+            "type": "object"
+          },
+          "impact": {
+            "$ref": "#/$defs/impactReport"
+          },
+          "metadata": {
+            "description": "Metadata attached to the matched graph node.",
+            "type": "object"
+          },
+          "package": {
+            "description": "Matched graph node identifier.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "advisory",
+          "package",
+          "metadata",
+          "impact"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "root": {
+      "description": "Root package or graph label when known.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema": {
+      "const": "edgp.advisory.report.v1",
+      "description": "Advisory report schema identifier."
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "advisories": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "affectedDependents": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "findings": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "matchedPackages": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "advisories",
+        "findings",
+        "matchedPackages",
+        "affectedDependents"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "summary",
+    "findings"
+  ],
+  "title": "EDGP Advisory Report v1",
+  "type": "object",
+  "$defs": {
+    "impactReport": {
+      "additionalProperties": false,
+      "properties": {
+        "affectedDependents": {
+          "items": {
+            "$ref": "#/$defs/packageDistance"
+          },
+          "type": "array"
+        },
+        "dependencyChainsToNode": {
+          "items": {
+            "$ref": "#/$defs/packageChain"
+          },
+          "type": "array"
+        },
+        "directDependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "directDependents": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ecosystem": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "node": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "root": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schema": {
+          "const": "edgp.impact.report.v1"
+        },
+        "summary": {
+          "additionalProperties": false,
+          "properties": {
+            "affectedDependents": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "directDependencies": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "directDependents": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "renderedChains": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "truncatedChains": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "directDependents",
+            "affectedDependents",
+            "directDependencies",
+            "renderedChains",
+            "truncatedChains"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema",
+        "ecosystem",
+        "root",
+        "node",
+        "metadata",
+        "summary",
+        "directDependents",
+        "directDependencies",
+        "affectedDependents",
+        "dependencyChainsToNode"
+      ],
+      "type": "object"
+    },
+    "packageChain": {
+      "additionalProperties": false,
+      "properties": {
+        "distance": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "package": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "package",
+        "distance",
+        "path"
+      ],
+      "type": "object"
+    },
+    "packageDistance": {
+      "additionalProperties": false,
+      "properties": {
+        "distance": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "package": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "package",
+        "distance"
+      ],
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "$id": "urn:edgp:schema:graph-snapshot:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Deterministic EDGP graph snapshot exported from a CSR dependency graph.",
+  "properties": {
+    "ecosystem": {
+      "description": "Package ecosystem or graph source label.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "edges": {
+      "description": "Directed dependency edges.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "relationshipType": {
+            "description": "Numeric relationship type identifier.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "source": {
+            "description": "Source package identifier.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "target": {
+            "description": "Target package identifier.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "relationshipType"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "nodes": {
+      "description": "Graph nodes with dependency and dependent adjacency labels.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "dependents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dependencies",
+          "dependents",
+          "metadata"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "rankings": {
+      "additionalProperties": false,
+      "description": "Precomputed graph rankings for static reports and RAG summaries.",
+      "properties": {
+        "mostDependedUpon": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "dependents": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "package": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "package",
+              "dependents"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "mostDependedUpon"
+      ],
+      "type": "object"
+    },
+    "root": {
+      "description": "Root package or graph label when known.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema": {
+      "const": "edgp.graph.snapshot.v1",
+      "description": "Graph snapshot schema identifier."
+    },
+    "stats": {
+      "additionalProperties": false,
+      "description": "Graph size counters.",
+      "properties": {
+        "edges": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "nodes": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "nodes",
+        "edges"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "stats",
+    "nodes",
+    "edges",
+    "rankings"
+  ],
+  "title": "EDGP Graph Snapshot v1",
+  "type": "object"
+}

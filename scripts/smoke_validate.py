@@ -23,6 +23,36 @@ REPORT_BUNDLE_VERIFICATION_SCHEMA_PATH = (
     / "edgp.report.bundle.verification.v1.schema.json"
 )
 SCHEMA_INDEX_PATH = REPO_ROOT / "docs" / "schemas" / "index.json"
+REPORT_JSON_SCHEMA_CONTRACTS = {
+    "edgp.graph.snapshot.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.graph.snapshot.v1.schema.json",
+    "edgp.impact.report.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.impact.report.v1.schema.json",
+    "edgp.advisory.report.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.advisory.report.v1.schema.json",
+    "edgp.npm.diagnostics.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.npm.diagnostics.v1.schema.json",
+}
+REPORT_JSON_SCHEMA_FIXTURES = {
+    "edgp.graph.snapshot.v1": REPO_ROOT / "tests" / "fixtures" / "snapshot-right.json",
+    "edgp.impact.report.v1": REPO_ROOT / "tests" / "fixtures" / "impact-report.json",
+    "edgp.advisory.report.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "advisory-report.json",
+    "edgp.npm.diagnostics.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "npm-diagnostics-report.json",
+}
 
 
 def _run_cli(args: list[str]) -> dict[str, Any]:
@@ -135,6 +165,53 @@ def _assert_report_bundle_verification_schema_document() -> None:
     }
 
 
+def _assert_report_json_schemas_document() -> None:
+    for contract, schema_path in REPORT_JSON_SCHEMA_CONTRACTS.items():
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        payload = json.loads(
+            REPORT_JSON_SCHEMA_FIXTURES[contract].read_text(encoding="utf-8")
+        )
+        assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+        assert schema["properties"]["schema"]["const"] == contract
+        assert schema["title"]
+        assert schema["description"]
+        assert payload["schema"] == contract
+        assert set(schema["required"]) <= set(payload)
+        assert set(payload) <= set(schema["properties"])
+
+    graph_schema = json.loads(
+        REPORT_JSON_SCHEMA_CONTRACTS["edgp.graph.snapshot.v1"].read_text(
+            encoding="utf-8"
+        )
+    )
+    assert set(graph_schema["properties"]["nodes"]["items"]["required"]) == {
+        "id",
+        "name",
+        "dependencies",
+        "dependents",
+        "metadata",
+    }
+    assert set(graph_schema["properties"]["edges"]["items"]["required"]) == {
+        "source",
+        "target",
+        "relationshipType",
+    }
+
+    impact_schema = json.loads(
+        REPORT_JSON_SCHEMA_CONTRACTS["edgp.impact.report.v1"].read_text(
+            encoding="utf-8"
+        )
+    )
+    advisory_schema = json.loads(
+        REPORT_JSON_SCHEMA_CONTRACTS["edgp.advisory.report.v1"].read_text(
+            encoding="utf-8"
+        )
+    )
+    assert set(impact_schema["properties"]["summary"]["required"]) == set(
+        advisory_schema["$defs"]["impactReport"]["properties"]["summary"]["required"]
+    )
+
+
 def _assert_schema_index_document() -> None:
     subprocess.run(
         [sys.executable, "-B", "scripts/generate_schema_index.py", "--check"],
@@ -153,6 +230,10 @@ def _assert_schema_index_document() -> None:
         if isinstance(schema, dict) and "contract" in schema
     }
     assert {
+        "edgp.advisory.report.v1",
+        "edgp.graph.snapshot.v1",
+        "edgp.impact.report.v1",
+        "edgp.npm.diagnostics.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
     } <= contracts
@@ -1113,6 +1194,7 @@ def main(argv: list[str] | None = None) -> int:
             "report bundle verification schema",
             _assert_report_bundle_verification_schema_document,
         ),
+        ("report json schemas", _assert_report_json_schemas_document),
         ("schema index", _assert_schema_index_document),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),

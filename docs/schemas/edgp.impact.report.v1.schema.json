@@ -1,0 +1,155 @@
+{
+  "$id": "urn:edgp:schema:impact-report:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Reverse dependency impact report for a selected graph node.",
+  "properties": {
+    "affectedDependents": {
+      "description": "All reachable dependents with shortest reverse distance to the selected node.",
+      "items": {
+        "$ref": "#/$defs/packageDistance"
+      },
+      "type": "array"
+    },
+    "dependencyChainsToNode": {
+      "description": "Rendered shortest dependency chains from affected packages to the selected node.",
+      "items": {
+        "$ref": "#/$defs/packageChain"
+      },
+      "type": "array"
+    },
+    "directDependencies": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "directDependents": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "ecosystem": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Metadata attached to the selected graph node.",
+      "type": "object"
+    },
+    "node": {
+      "description": "Selected graph node identifier.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "root": {
+      "description": "Root package or graph label when known.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema": {
+      "const": "edgp.impact.report.v1",
+      "description": "Impact report schema identifier."
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "affectedDependents": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "directDependencies": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "directDependents": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "renderedChains": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "truncatedChains": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "directDependents",
+        "affectedDependents",
+        "directDependencies",
+        "renderedChains",
+        "truncatedChains"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "node",
+    "metadata",
+    "summary",
+    "directDependents",
+    "directDependencies",
+    "affectedDependents",
+    "dependencyChainsToNode"
+  ],
+  "title": "EDGP Impact Report v1",
+  "type": "object",
+  "$defs": {
+    "packageChain": {
+      "additionalProperties": false,
+      "properties": {
+        "distance": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "package": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "package",
+        "distance",
+        "path"
+      ],
+      "type": "object"
+    },
+    "packageDistance": {
+      "additionalProperties": false,
+      "properties": {
+        "distance": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "package": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "package",
+        "distance"
+      ],
+      "type": "object"
+    }
+  }
+}

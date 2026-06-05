@@ -1,0 +1,197 @@
+{
+  "$id": "urn:edgp:schema:npm-diagnostics:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "npm package-lock diagnostics for duplicate names, nested version conflicts, and unresolved declarations.",
+  "properties": {
+    "duplicatePackageNames": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "package": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "paths": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "version",
+                "paths"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "package",
+          "versions"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "ecosystem": {
+      "const": "npm",
+      "description": "Diagnostics source ecosystem."
+    },
+    "nestedResolutionConflicts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "consumers": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "dependency": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "requested": {
+                  "type": "string"
+                },
+                "resolved": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "resolvedPath": {
+                  "type": "string"
+                },
+                "source": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "sourcePath": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "dependency",
+                "requested",
+                "resolved",
+                "resolvedPath",
+                "source",
+                "sourcePath"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "dependency": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "dependency",
+          "versions",
+          "consumers"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "root": {
+      "description": "Root package-lock project identifier.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema": {
+      "const": "edgp.npm.diagnostics.v1",
+      "description": "npm diagnostics schema identifier."
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "duplicatePackageNames": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "nestedResolutionConflicts": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "packages": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "unresolvedDependencies": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "packages",
+        "duplicatePackageNames",
+        "nestedResolutionConflicts",
+        "unresolvedDependencies"
+      ],
+      "type": "object"
+    },
+    "unresolvedDependencies": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "dependency": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "requested": {
+            "type": "string"
+          },
+          "searchedPaths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "source": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sourcePath": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dependency",
+          "requested",
+          "source",
+          "sourcePath",
+          "searchedPaths"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "summary",
+    "duplicatePackageNames",
+    "nestedResolutionConflicts",
+    "unresolvedDependencies"
+  ],
+  "title": "EDGP npm Diagnostics v1",
+  "type": "object"
+}

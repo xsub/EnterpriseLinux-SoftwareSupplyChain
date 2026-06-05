@@ -468,6 +468,10 @@ document with root, ecosystem, node metadata, direct dependencies, direct
 dependents, edge records, graph stats, and most-depended-upon rankings. This is
 the plain interchange format for notebooks, local workbench panels, and RAG
 context generation.
+Report JSON contracts for graph snapshots, impact reports, advisory reports,
+and npm diagnostics are documented in
+[`docs/Report JSON Schemas.md`](docs/Report%20JSON%20Schemas.md), with
+machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 
 `edgp report` renders graph snapshots, impact reports, advisory reports, and npm
 diagnostics into dependency-free HTML files. Snapshot reports include graph

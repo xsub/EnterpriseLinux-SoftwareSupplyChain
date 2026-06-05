@@ -20,6 +20,10 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         for entry in index["schemas"]
         if "contract" in entry
     } == {
+        "edgp.advisory.report.v1",
+        "edgp.graph.snapshot.v1",
+        "edgp.impact.report.v1",
+        "edgp.npm.diagnostics.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
     }
