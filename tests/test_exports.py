@@ -153,3 +153,25 @@ def test_cyclonedx_export_uses_cargo_purls() -> None:
     )
 
     assert payload["components"][0]["purl"] == "pkg:cargo/serde@1.0.197"
+
+
+def test_cyclonedx_export_uses_maven_purls() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_vertex(
+        "org.slf4j:slf4j-api==1.7.36",
+        metadata={
+            "ecosystem": "maven",
+            "group": "org.slf4j",
+            "artifact": "slf4j-api",
+        },
+    )
+
+    payload = json.loads(
+        CycloneDXExporter.export_to_json(
+            graph,
+            root="org.slf4j:slf4j-api==1.7.36",
+            ecosystem="maven",
+        )
+    )
+
+    assert payload["components"][0]["purl"] == "pkg:maven/org.slf4j/slf4j-api@1.7.36"

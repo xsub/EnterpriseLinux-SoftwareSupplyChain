@@ -74,6 +74,14 @@ edgp lockfile --ecosystem cargo --path Cargo.lock --format json
 edgp lockfile --ecosystem cargo --path Cargo.lock --format cyclonedx
 ```
 
+Export a Maven dependency tree:
+
+```bash
+mvn dependency:tree -DoutputFile=maven-tree.txt
+edgp maven-tree --path maven-tree.txt --format json
+edgp maven-tree --path maven-tree.txt --format cyclonedx
+```
+
 Query an already-resolved npm lockfile:
 
 ```bash
@@ -165,6 +173,9 @@ class PoetryAdapter {
 class CargoAdapter {
   +parse_lockfile_graph(path) ResolvedProjectGraph
 }
+class MavenTreeAdapter {
+  +parse_tree(path) ResolvedProjectGraph
+}
 class DotAdapter {
   +parse_graph(path) ResolvedProjectGraph
 }
@@ -220,6 +231,7 @@ CLI --> CDCLResolver : resolve registry
 CLI --> NpmAdapter : ingest lockfile
 CLI --> PoetryAdapter : ingest lockfile
 CLI --> CargoAdapter : ingest lockfile
+CLI --> MavenTreeAdapter : ingest dependency tree
 CLI --> DotAdapter : ingest DOT
 CLI --> CycloneDXAdapter : ingest SBOM
 CLI --> InstalledRpmAdapter : ingest RPM DB
@@ -231,6 +243,7 @@ CDCLResolver --> CSRDependencyGraph : build graph
 NpmAdapter --> CSRDependencyGraph : build graph
 PoetryAdapter --> CSRDependencyGraph : build graph
 CargoAdapter --> CSRDependencyGraph : build graph
+MavenTreeAdapter --> CSRDependencyGraph : build graph
 DotAdapter --> CSRDependencyGraph : build graph
 CycloneDXAdapter --> CSRDependencyGraph : build graph
 InstalledRpmAdapter --> CSRDependencyGraph : build graph
@@ -322,6 +335,11 @@ Poetry metadata such as groups, optional flags, and Python version constraints.
 Rust crate CSR graph. It resolves dependency strings by package name and version
 when present, adds a synthetic `cargo-lock==resolved` root, and carries Cargo
 metadata such as registry source and checksum.
+
+`MavenTreeAdapter.parse_tree` turns `mvn dependency:tree` text output into a
+Maven CSR graph. It uses the visible tree prefixes to preserve parent-child
+relationships and stores group id, artifact id, packaging, classifier, and scope
+metadata when present.
 
 ### Graph and Security Egress
 

@@ -11,6 +11,7 @@ from src.advisory_overlay import build_advisory_report_from_file
 from src.adapters.cargo import CargoAdapter
 from src.adapters.cyclonedx import CycloneDXAdapter
 from src.adapters.dot import DotAdapter
+from src.adapters.maven import MavenTreeAdapter
 from src.adapters.npm import NpmAdapter
 from src.adapters.poetry import PoetryAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
@@ -142,6 +143,11 @@ def _load_source_project_graph(
             raise ValueError("--path is required for sbom source")
         resolved = CycloneDXAdapter().parse_graph(path)
         return resolved.root_identifier, resolved.graph, resolved.ecosystem
+    if source == "maven-tree":
+        if path is None:
+            raise ValueError("--path is required for maven-tree source")
+        resolved = MavenTreeAdapter().parse_tree(path)
+        return resolved.root_identifier, resolved.graph, resolved.ecosystem
     if source == "rpm-installed":
         resolved = InstalledRpmAdapter().parse_installed(
             limit=rpm_limit,
@@ -262,6 +268,14 @@ def build_parser() -> argparse.ArgumentParser:
     sbom.add_argument("--path", type=Path, required=True)
     sbom.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="json")
 
+    maven_tree = subparsers.add_parser(
+        "maven-tree", help="Export a graph from mvn dependency:tree text"
+    )
+    maven_tree.add_argument("--path", type=Path, required=True)
+    maven_tree.add_argument(
+        "--format", choices=["cypher", "cyclonedx", "json"], default="json"
+    )
+
     rpm_installed = subparsers.add_parser(
         "rpm-installed", help="Export a graph from the local RPM database"
     )
@@ -278,7 +292,7 @@ def build_parser() -> argparse.ArgumentParser:
     impact = subparsers.add_parser("impact", help="Report reverse dependency impact")
     impact.add_argument(
         "--source",
-        choices=["lockfile", "dot", "sbom", "rpm-installed"],
+        choices=["lockfile", "dot", "sbom", "maven-tree", "rpm-installed"],
         default="lockfile",
     )
     impact.add_argument("--path", type=Path)
@@ -291,7 +305,7 @@ def build_parser() -> argparse.ArgumentParser:
     advisory = subparsers.add_parser("advisory", help="Overlay local advisories on a graph")
     advisory.add_argument(
         "--source",
-        choices=["lockfile", "dot", "sbom", "rpm-installed"],
+        choices=["lockfile", "dot", "sbom", "maven-tree", "rpm-installed"],
         default="lockfile",
     )
     advisory.add_argument("--path", type=Path)
@@ -312,7 +326,7 @@ def build_parser() -> argparse.ArgumentParser:
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument(
         "--source",
-        choices=["lockfile", "dot", "sbom", "rpm-installed"],
+        choices=["lockfile", "dot", "sbom", "maven-tree", "rpm-installed"],
         default="lockfile",
     )
     query.add_argument("--path", type=Path)
@@ -363,6 +377,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "sbom":
         resolved = CycloneDXAdapter().parse_graph(args.path)
+        print(
+            _export(
+                args.format,
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "maven-tree":
+        resolved = MavenTreeAdapter().parse_tree(args.path)
         print(
             _export(
                 args.format,

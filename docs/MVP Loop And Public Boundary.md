@@ -18,6 +18,7 @@ surfaces are:
 - npm `package-lock.json` files;
 - Poetry `poetry.lock` files;
 - Cargo `Cargo.lock` files;
+- Maven `dependency:tree` text output;
 - CycloneDX JSON SBOMs;
 - local advisory overlay JSON;
 - directed DOT graphs, including `dnf repograph`-style block edges;
@@ -28,8 +29,8 @@ surfaces are:
 ## Current Capabilities
 
 - Build CSR dependency graphs from mock registries, npm lockfiles, DOT graphs,
-  Poetry lockfiles, Cargo lockfiles, CycloneDX SBOMs, and installed RPM
-  metadata.
+  Poetry lockfiles, Cargo lockfiles, Maven dependency trees, CycloneDX SBOMs,
+  and installed RPM metadata.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP JSON snapshots.
 - Run deterministic synthetic CSR traversal benchmarks.
@@ -76,5 +77,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add Maven dependency tree ingestion.
 - Add snapshot-to-report bundling for advisory and impact outputs.

@@ -125,6 +125,44 @@ def _assert_cargo_query() -> None:
     ]
 
 
+def _assert_maven_tree_snapshot() -> None:
+    payload = _run_cli(
+        [
+            "maven-tree",
+            "--path",
+            "tests/fixtures/maven-tree.txt",
+            "--format",
+            "json",
+        ]
+    )
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["ecosystem"] == "maven"
+    assert payload["stats"] == {"edges": 5, "nodes": 6}
+
+
+def _assert_maven_tree_query() -> None:
+    payload = _run_cli(
+        [
+            "query",
+            "--source",
+            "maven-tree",
+            "--path",
+            "tests/fixtures/maven-tree.txt",
+            "--operation",
+            "path",
+            "--node",
+            "com.example:demo-app",
+            "--target",
+            "org.hamcrest:hamcrest-core",
+        ]
+    )
+    assert payload["result"] == [
+        "com.example:demo-app==1.0.0",
+        "junit:junit==4.13.2",
+        "org.hamcrest:hamcrest-core==1.3",
+    ]
+
+
 def _assert_dot_snapshot() -> None:
     payload = _run_cli(["dot", "--path", "tests/fixtures/repograph.dot", "--format", "json"])
     assert payload["schema"] == "edgp.graph.snapshot.v1"
@@ -289,6 +327,8 @@ def main(argv: list[str] | None = None) -> int:
         ("poetry query", _assert_poetry_query),
         ("cargo lockfile snapshot", _assert_cargo_lockfile_snapshot),
         ("cargo query", _assert_cargo_query),
+        ("maven tree snapshot", _assert_maven_tree_snapshot),
+        ("maven tree query", _assert_maven_tree_query),
         ("dot snapshot", _assert_dot_snapshot),
         ("sbom query", _assert_sbom_query),
         ("snapshot diff", _assert_snapshot_diff),

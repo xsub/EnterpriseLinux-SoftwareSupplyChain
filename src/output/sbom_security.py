@@ -113,6 +113,15 @@ class CycloneDXExporter:
             return f"pkg:pypi/{quote(name.lower(), safe='')}@{quote(version, safe='')}"
         if ecosystem == "cargo":
             return f"pkg:cargo/{quote(name.lower(), safe='')}@{quote(version, safe='')}"
+        if ecosystem == "maven":
+            group = metadata.get("group")
+            artifact = metadata.get("artifact") or name.rsplit(":", 1)[-1]
+            if group:
+                return (
+                    f"pkg:maven/{quote(group, safe='')}/"
+                    f"{quote(artifact, safe='')}@{quote(version, safe='')}"
+                )
+            return f"pkg:maven/{quote(name, safe='')}@{quote(version, safe='')}"
         if ecosystem == "rpm":
             vendor = metadata.get("vendor")
             if vendor:

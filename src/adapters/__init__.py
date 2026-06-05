@@ -4,6 +4,7 @@ from src.adapters.base import LockfileAdapter, ProjectManifest, ResolvedProjectG
 from src.adapters.cargo import CargoAdapter
 from src.adapters.cyclonedx import CycloneDXAdapter
 from src.adapters.dot import DotAdapter
+from src.adapters.maven import MavenTreeAdapter
 from src.adapters.npm import NpmAdapter
 from src.adapters.poetry import PoetryAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
@@ -14,6 +15,7 @@ __all__ = [
     "CycloneDXAdapter",
     "InstalledRpmAdapter",
     "LockfileAdapter",
+    "MavenTreeAdapter",
     "NpmAdapter",
     "PoetryAdapter",
     "ProjectManifest",
