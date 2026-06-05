@@ -51,11 +51,16 @@ def _load_registry(path: Path | None) -> RegistryMock:
     return RegistryMock.from_mapping(payload)
 
 
-def _export(format_name: str, graph, root: str | None) -> str:
+def _export(
+    format_name: str,
+    graph,
+    root: str | None,
+    ecosystem: str = "generic",
+) -> str:
     if format_name == "cypher":
         return CypherExporter.export_to_cypher(graph)
     if format_name == "cyclonedx":
-        return CycloneDXExporter.export_to_json(graph, root=root)
+        return CycloneDXExporter.export_to_json(graph, root=root, ecosystem=ecosystem)
     raise ValueError(f"Unsupported output format: {format_name}")
 
 
@@ -165,7 +170,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "lockfile":
         root_identifier, graph = _load_lockfile_graph(args.path, args.ecosystem)
-        print(_export(args.format, graph, root=root_identifier))
+        print(_export(args.format, graph, root=root_identifier, ecosystem=args.ecosystem))
         return 0
 
     if args.command == "query":

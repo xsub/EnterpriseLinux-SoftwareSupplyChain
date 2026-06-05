@@ -18,3 +18,10 @@ def test_npm_package_lock_v3_builds_csr_graph() -> None:
         "left-pad==1.3.0",
     ]
     assert resolved.graph.get_dependencies("left-pad==1.3.0") == []
+    assert resolved.graph.get_vertex_metadata("@scope/tool==2.1.0") == {
+        "ecosystem": "npm",
+        "package_path": "node_modules/@scope/tool",
+        "resolved": "https://registry.npmjs.org/@scope/tool/-/tool-2.1.0.tgz",
+        "integrity": "sha512-demo-tool",
+        "license": "MIT",
+    }

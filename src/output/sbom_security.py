@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 
@@ -12,9 +13,17 @@ class CycloneDXExporter:
     """Build a CycloneDX JSON SBOM from a resolved CSR graph."""
 
     @staticmethod
-    def export_to_json(csr_graph: CSRDependencyGraph, root: str | None = None) -> str:
+    def export_to_json(
+        csr_graph: CSRDependencyGraph,
+        root: str | None = None,
+        ecosystem: str = "generic",
+    ) -> str:
         components = [
-            CycloneDXExporter._component(package_id)
+            CycloneDXExporter._component(
+                package_id,
+                metadata=csr_graph.get_vertex_metadata(package_id),
+                ecosystem=ecosystem,
+            )
             for package_id in sorted(csr_graph.vertex_map)
         ]
         dependencies = [
@@ -36,19 +45,58 @@ class CycloneDXExporter:
             "dependencies": dependencies,
         }
         if root is not None:
-            payload["metadata"]["component"] = CycloneDXExporter._component(root)
+            payload["metadata"]["component"] = CycloneDXExporter._component(
+                root,
+                metadata=csr_graph.get_vertex_metadata(root),
+                ecosystem=ecosystem,
+            )
 
         return json.dumps(payload, indent=2, sort_keys=True)
 
     @staticmethod
-    def _component(package_id: str) -> dict[str, str]:
+    def _component(
+        package_id: str,
+        *,
+        metadata: dict[str, str] | None = None,
+        ecosystem: str = "generic",
+    ) -> dict[str, object]:
+        metadata = metadata or {}
         name, separator, version = package_id.partition("==")
-        component = {
+        component: dict[str, object] = {
             "type": "library",
             "name": name,
             "bom-ref": package_id,
         }
         if separator:
             component["version"] = version
-            component["purl"] = f"pkg:generic/{name}@{version}"
+            component["purl"] = CycloneDXExporter._purl(
+                metadata.get("ecosystem", ecosystem), name, version
+            )
+        if "license" in metadata:
+            component["licenses"] = [{"license": {"name": metadata["license"]}}]
+        if "resolved" in metadata:
+            component["externalReferences"] = [
+                {"type": "distribution", "url": metadata["resolved"]}
+            ]
+
+        properties = [
+            {"name": f"edgp:{key}", "value": value}
+            for key, value in sorted(metadata.items())
+            if key not in {"license", "resolved"}
+        ]
+        if properties:
+            component["properties"] = properties
         return component
+
+    @staticmethod
+    def _purl(ecosystem: str, name: str, version: str) -> str:
+        if ecosystem == "npm":
+            if name.startswith("@") and "/" in name:
+                namespace, package_name = name.split("/", 1)
+                return (
+                    "pkg:npm/"
+                    f"{quote(namespace, safe='')}/"
+                    f"{quote(package_name, safe='')}@{quote(version, safe='')}"
+                )
+            return f"pkg:npm/{quote(name, safe='')}@{quote(version, safe='')}"
+        return f"pkg:generic/{quote(name, safe='')}@{quote(version, safe='')}"

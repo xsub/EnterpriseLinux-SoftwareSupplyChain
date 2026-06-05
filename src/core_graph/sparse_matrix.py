@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from collections import deque
 from dataclasses import dataclass
 from typing import Iterator
@@ -25,6 +26,7 @@ class CSRDependencyGraph:
         self.values: list[int] = []
         self.column_indices: list[int] = []
         self.row_pointers: list[int] = [0]
+        self.vertex_metadata: dict[str, dict[str, str]] = {}
 
         self._adjacency: dict[int, dict[int, int]] = {}
         self._dirty = False
@@ -32,15 +34,33 @@ class CSRDependencyGraph:
     def __len__(self) -> int:
         return self.next_vertex_id
 
-    def add_vertex(self, package_id: str) -> int:
+    def add_vertex(
+        self, package_id: str, metadata: Mapping[str, object] | None = None
+    ) -> int:
         if package_id not in self.vertex_map:
             vertex_id = self.next_vertex_id
             self.vertex_map[package_id] = vertex_id
             self.reverse_vertex_map[vertex_id] = package_id
+            self.vertex_metadata[package_id] = {}
             self._adjacency[vertex_id] = {}
             self.next_vertex_id += 1
             self._dirty = True
+        if metadata:
+            self.set_vertex_metadata(package_id, metadata)
         return self.vertex_map[package_id]
+
+    def set_vertex_metadata(
+        self, package_id: str, metadata: Mapping[str, object]
+    ) -> None:
+        self.add_vertex(package_id)
+        current = self.vertex_metadata.setdefault(package_id, {})
+        for key, value in metadata.items():
+            if value is None:
+                continue
+            current[str(key)] = str(value)
+
+    def get_vertex_metadata(self, package_id: str) -> dict[str, str]:
+        return dict(self.vertex_metadata.get(package_id, {}))
 
     def add_dependency_edge(
         self, source_id: str, target_id: str, relationship_type: int = 1

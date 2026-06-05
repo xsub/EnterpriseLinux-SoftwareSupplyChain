@@ -29,3 +29,35 @@ def test_cyclonedx_export_contains_dependency_references() -> None:
     assert {"ref": "app==1.0.0", "dependsOn": ["lib==1.0.0"]} in payload[
         "dependencies"
     ]
+
+
+def test_cyclonedx_export_uses_npm_purls_for_scoped_packages() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_vertex(
+        "@scope/tool==2.1.0",
+        metadata={
+            "ecosystem": "npm",
+            "resolved": "https://registry.npmjs.org/@scope/tool/-/tool-2.1.0.tgz",
+            "integrity": "sha512-demo",
+            "license": "MIT",
+        },
+    )
+
+    payload = json.loads(
+        CycloneDXExporter.export_to_json(
+            graph,
+            root="@scope/tool==2.1.0",
+            ecosystem="npm",
+        )
+    )
+    component = payload["components"][0]
+
+    assert component["purl"] == "pkg:npm/%40scope/tool@2.1.0"
+    assert component["externalReferences"] == [
+        {
+            "type": "distribution",
+            "url": "https://registry.npmjs.org/@scope/tool/-/tool-2.1.0.tgz",
+        }
+    ]
+    assert component["licenses"] == [{"license": {"name": "MIT"}}]
+    assert {"name": "edgp:integrity", "value": "sha512-demo"} in component["properties"]

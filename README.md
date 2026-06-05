@@ -187,7 +187,10 @@ Legacy v1 dependency trees are supported with recursive edge extraction.
 `CypherExporter` emits deterministic Neo4j statements for package nodes and
 `DEPENDS_ON` relationships. `CycloneDXExporter` emits a CycloneDX-compatible
 JSON SBOM with dependency references, suitable as the foundation for
-Dependency-Track or similar security ingestion paths.
+Dependency-Track or similar security ingestion paths. npm lockfile exports use
+ecosystem-aware Package URLs, such as `pkg:npm/%40scope/tool@2.1.0`, and carry
+lockfile metadata like resolved tarball URLs, integrity strings, license names,
+and package paths as CycloneDX fields or properties.
 
 ### Query Layer
 

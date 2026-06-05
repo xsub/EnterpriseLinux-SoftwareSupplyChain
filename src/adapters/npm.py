@@ -68,13 +68,16 @@ class NpmAdapter(LockfileAdapter):
             if package_id is None:
                 continue
             package_ids[str(package_path)] = package_id
-            graph.add_vertex(package_id)
+            graph.add_vertex(
+                package_id,
+                metadata=self._component_metadata(str(package_path), raw_record),
+            )
 
         root_identifier = package_ids.get(
             "",
             self._package_identifier("", {}, payload) or "npm-project==0.0.0",
         )
-        graph.add_vertex(root_identifier)
+        graph.add_vertex(root_identifier, metadata={"ecosystem": self.ecosystem})
 
         for package_path, raw_record in packages.items():
             if not isinstance(raw_record, Mapping):
@@ -104,7 +107,7 @@ class NpmAdapter(LockfileAdapter):
     ) -> ResolvedProjectGraph:
         graph = CSRDependencyGraph()
         root_identifier = self._package_identifier("", {}, payload) or "npm-project==0.0.0"
-        graph.add_vertex(root_identifier)
+        graph.add_vertex(root_identifier, metadata={"ecosystem": self.ecosystem})
 
         for name, raw_record in dependencies.items():
             if not isinstance(raw_record, Mapping):
@@ -126,6 +129,10 @@ class NpmAdapter(LockfileAdapter):
     ) -> str:
         version = str(record.get("version", "0.0.0"))
         package_id = f"{name}=={version}"
+        graph.add_vertex(
+            package_id,
+            metadata=self._component_metadata(f"legacy:{name}", record),
+        )
         graph.add_dependency_edge(parent_id, package_id)
 
         nested = record.get("dependencies", {})
@@ -215,3 +222,21 @@ class NpmAdapter(LockfileAdapter):
                 return f"{name}/{pieces[index + 2]}"
             return name
         return None
+
+    def _component_metadata(
+        self, package_path: str, record: Mapping[str, object]
+    ) -> dict[str, object]:
+        metadata: dict[str, object] = {"ecosystem": self.ecosystem}
+        if package_path:
+            metadata["package_path"] = package_path
+        for key in (
+            "resolved",
+            "integrity",
+            "license",
+            "dev",
+            "optional",
+            "inBundle",
+        ):
+            if key in record:
+                metadata[key] = record[key]
+        return metadata
