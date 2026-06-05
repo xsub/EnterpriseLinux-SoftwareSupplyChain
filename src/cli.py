@@ -13,6 +13,7 @@ from src.adapters.npm import NpmAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
+from src.impact_report import build_impact_report
 from src.output.cypher_export import CypherExporter
 from src.output.json_export import GraphJsonExporter
 from src.output.sbom_security import CycloneDXExporter
@@ -90,26 +91,45 @@ def _load_source_graph(
     rpm_limit: int = 100,
     max_requirements: int = 40,
 ) -> tuple[str, CSRDependencyGraph]:
+    root, graph, _ = _load_source_project_graph(
+        source,
+        path,
+        ecosystem,
+        rpm_limit=rpm_limit,
+        max_requirements=max_requirements,
+    )
+    return root, graph
+
+
+def _load_source_project_graph(
+    source: str,
+    path: Path | None,
+    ecosystem: str,
+    *,
+    rpm_limit: int = 100,
+    max_requirements: int = 40,
+) -> tuple[str, CSRDependencyGraph, str]:
     if source == "lockfile":
         if path is None:
             raise ValueError("--path is required for lockfile source")
-        return _load_lockfile_graph(path, ecosystem)
+        root, graph = _load_lockfile_graph(path, ecosystem)
+        return root, graph, ecosystem
     if source == "dot":
         if path is None:
             raise ValueError("--path is required for dot source")
         resolved = DotAdapter().parse_graph(path, ecosystem=ecosystem)
-        return resolved.root_identifier, resolved.graph
+        return resolved.root_identifier, resolved.graph, resolved.ecosystem
     if source == "sbom":
         if path is None:
             raise ValueError("--path is required for sbom source")
         resolved = CycloneDXAdapter().parse_graph(path)
-        return resolved.root_identifier, resolved.graph
+        return resolved.root_identifier, resolved.graph, resolved.ecosystem
     if source == "rpm-installed":
         resolved = InstalledRpmAdapter().parse_installed(
             limit=rpm_limit,
             max_requirements=max_requirements,
         )
-        return resolved.root_identifier, resolved.graph
+        return resolved.root_identifier, resolved.graph, resolved.ecosystem
     raise ValueError(f"Unsupported graph source: {source}")
 
 
@@ -237,6 +257,19 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
 
+    impact = subparsers.add_parser("impact", help="Report reverse dependency impact")
+    impact.add_argument(
+        "--source",
+        choices=["lockfile", "dot", "sbom", "rpm-installed"],
+        default="lockfile",
+    )
+    impact.add_argument("--path", type=Path)
+    impact.add_argument("--ecosystem", default="npm")
+    impact.add_argument("--node", required=True)
+    impact.add_argument("--limit", type=int, default=20)
+    impact.add_argument("--rpm-limit", type=int, default=100)
+    impact.add_argument("--max-requirements", type=int, default=40)
+
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument(
         "--source",
@@ -315,6 +348,28 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "diff":
         print(diff_snapshot_files(args.left, args.right))
+        return 0
+
+    if args.command == "impact":
+        root_identifier, graph, resolved_ecosystem = _load_source_project_graph(
+            args.source,
+            args.path,
+            args.ecosystem,
+            rpm_limit=args.rpm_limit,
+            max_requirements=args.max_requirements,
+        )
+        node = _resolve_node_selector(graph, args.node, role="node")
+        print(
+            _json(
+                build_impact_report(
+                    graph,
+                    node=node,
+                    root=root_identifier,
+                    ecosystem=resolved_ecosystem,
+                    max_paths=args.limit,
+                )
+            )
+        )
         return 0
 
     if args.command == "query":

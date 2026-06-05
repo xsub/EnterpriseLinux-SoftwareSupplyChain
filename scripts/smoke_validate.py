@@ -93,6 +93,22 @@ def _assert_snapshot_diff() -> None:
     }
 
 
+def _assert_impact_report() -> None:
+    payload = _run_cli(
+        [
+            "impact",
+            "--path",
+            "tests/fixtures/package-lock.json",
+            "--node",
+            "left-pad",
+        ]
+    )
+    assert payload["schema"] == "edgp.impact.report.v1"
+    assert payload["node"] == "left-pad==1.3.0"
+    assert payload["summary"]["directDependents"] == 2
+    assert payload["summary"]["affectedDependents"] == 2
+
+
 def _assert_rpm_installed() -> None:
     payload = _run_cli(
         ["rpm-installed", "--limit", "5", "--max-requirements", "10", "--format", "json"]
@@ -121,6 +137,7 @@ def main(argv: list[str] | None = None) -> int:
         ("dot snapshot", _assert_dot_snapshot),
         ("sbom query", _assert_sbom_query),
         ("snapshot diff", _assert_snapshot_diff),
+        ("impact report", _assert_impact_report),
     ]
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))

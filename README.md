@@ -68,6 +68,14 @@ edgp query --path package-lock.json --operation path --node app==1.0.0 --target 
 edgp query --path package-lock.json --operation most-depended-upon --limit 20
 ```
 
+Report reverse dependency impact for a package:
+
+```bash
+edgp impact --path package-lock.json --node left-pad
+edgp impact --source dot --path repograph.dot --ecosystem rpm --node glibc
+edgp impact --source rpm-installed --node glibc --rpm-limit 100 --max-requirements 40
+```
+
 Export an AlmaLinux/RPM universe graph from DOT:
 
 ```bash
@@ -109,6 +117,7 @@ class CLI {
   +demo()
   +resolve()
   +lockfile()
+  +impact()
 }
 class LockfileAdapter {
   <<interface>>
@@ -150,6 +159,9 @@ class CycloneDXExporter {
 class GraphJsonExporter {
   +export_to_json(graph, root) str
 }
+class ImpactReporter {
+  +build_impact_report(graph, node) dict
+}
 class ConstraintModels {
   Term
   Incompatibility
@@ -173,9 +185,11 @@ CLI --> CypherExporter : export Cypher
 CLI --> CycloneDXExporter : export SBOM
 CLI --> GraphJsonExporter : export snapshot
 CLI --> CSRDependencyGraph : query traversal
+CLI --> ImpactReporter : report reverse impact
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
 GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
+ImpactReporter --> CSRDependencyGraph : traverse dependents and paths
 ```
 
 ### Graph Build And Traversal UML
@@ -260,6 +274,12 @@ The CLI exposes these operations as JSON through `edgp query`, which makes the
 same graph useful for terminal investigation, future UI panels, and RAG context
 generation. Query selectors accept exact package IDs, such as
 `glibc==2.39-1.el10`, or unambiguous package names, such as `glibc`.
+
+`edgp impact` turns reverse reachability into a vulnerability-style impact
+report. For a selected node it returns direct dependents, all transitive
+affected dependents, and shortest dependency chains back to the selected
+component. This is the public AlmaLinux-friendly stand-in for future advisory or
+CloudLinux-specific risk feeds.
 
 ### JSON Snapshot
 

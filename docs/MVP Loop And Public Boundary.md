@@ -19,15 +19,18 @@ surfaces are:
 - CycloneDX JSON SBOMs;
 - directed DOT graphs, including `dnf repograph`-style block edges;
 - installed RPM database inspection on AlmaLinux via the public `rpm` command;
-- local graph traversal and JSON/Cypher/CycloneDX export.
+- local graph traversal, impact reporting, diffing, and JSON/Cypher/CycloneDX
+  export.
 
 ## Current Capabilities
 
 - Build CSR dependency graphs from mock registries, npm lockfiles, DOT graphs,
   CycloneDX SBOMs, and installed RPM metadata.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
+- Diff two EDGP JSON snapshots.
 - Query dependencies, dependents, reachability, shortest paths, and
   most-depended-upon rankings.
+- Report reverse dependency impact for a selected package.
 - Use human-friendly node selectors where a package name resolves to one graph
   node.
 - Produce ecosystem-aware Package URLs for npm and RPM components.
@@ -53,13 +56,13 @@ python -B -m src.cli lockfile --path tests/fixtures/package-lock.json --format j
 python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
+python -B -m src.cli impact --path tests/fixtures/package-lock.json --node left-pad
+python -B -m src.cli diff --left tests/fixtures/snapshot-left.json --right tests/fixtures/snapshot-right.json
 ```
 
 ## Next Vertical Options
 
-- Add a graph diff command for comparing two EDGP JSON snapshots.
 - Add advisory/vulnerability overlay ingestion from a small public JSON format.
-- Add reverse reachability reports for vulnerable or high-impact packages.
 - Add a local HTML report for JSON snapshots.
 - Add richer RPM metadata extraction, including vendor, epoch, and repository
   hints when available from public RPM query output.
