@@ -8,6 +8,11 @@ from pathlib import Path
 from src.adapters.base import ResolvedProjectGraph
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 
+MAVEN_RELATIONSHIP_DEPENDS_ON = 1
+MAVEN_RELATIONSHIP_OPTIONAL = 2
+MAVEN_RELATIONSHIP_OMITTED = 3
+MAVEN_RELATIONSHIP_EXCLUDED = 4
+
 
 class MavenTreeAdapter:
     """Build resolved CSR graphs from mvn dependency:tree text output."""
@@ -28,7 +33,11 @@ class MavenTreeAdapter:
                 root_identifier = parsed.identifier
 
             if parsed.depth > 0 and parsed.depth - 1 < len(stack):
-                graph.add_dependency_edge(stack[parsed.depth - 1], parsed.identifier)
+                graph.add_dependency_edge(
+                    stack[parsed.depth - 1],
+                    parsed.identifier,
+                    relationship_type=parsed.relationship_type,
+                )
 
             if len(stack) <= parsed.depth:
                 stack.extend([""] * (parsed.depth - len(stack) + 1))
@@ -153,6 +162,16 @@ class _MavenCoordinate:
     omitted_reason: str = ""
     excluded: str = ""
     excluded_reason: str = ""
+
+    @property
+    def relationship_type(self) -> int:
+        if self.excluded:
+            return MAVEN_RELATIONSHIP_EXCLUDED
+        if self.omitted:
+            return MAVEN_RELATIONSHIP_OMITTED
+        if self.optional:
+            return MAVEN_RELATIONSHIP_OPTIONAL
+        return MAVEN_RELATIONSHIP_DEPENDS_ON
 
     @property
     def identifier(self) -> str:

@@ -384,7 +384,9 @@ disambiguated in EDGP node ids, for example
 `com.example:platform:pom==1.0.0`, while standard jar artifacts keep the compact
 `group:artifact==version` form. When verbose dependency-tree output includes
 public markers such as `(optional)` or `- omitted for conflict with ...`, EDGP
-preserves them as Maven node metadata.
+preserves them as Maven node metadata and relationship types in exported edges:
+`1` for ordinary dependencies, `2` for optional entries, `3` for omitted
+entries, and `4` for excluded entries when present in text output.
 
 `edgp maven-bundle` renders a Maven dependency-tree graph into a static local
 bundle with `maven-graph.json`, optional impact reports, HTML, `index.html`, and

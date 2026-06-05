@@ -120,6 +120,7 @@ def test_cli_maven_tree_preserves_optional_and_omitted_markers(capsys) -> None:
 
     payload = json.loads(capsys.readouterr().out)
     nodes = {node["id"]: node for node in payload["nodes"]}
+    edge_types = {edge["target"]: edge["relationshipType"] for edge in payload["edges"]}
     assert payload["stats"] == {"edges": 3, "nodes": 4}
     assert nodes["org.example:optional-lib==1.2.3"]["metadata"]["optional"] == "true"
     assert nodes["org.example:conflict-lib==1.0.0"]["metadata"]["omitted"] == "true"
@@ -127,6 +128,8 @@ def test_cli_maven_tree_preserves_optional_and_omitted_markers(capsys) -> None:
         nodes["org.example:conflict-lib==1.0.0"]["metadata"]["omittedReason"]
         == "conflict with 2.0.0"
     )
+    assert edge_types["org.example:optional-lib==1.2.3"] == 2
+    assert edge_types["org.example:conflict-lib==1.0.0"] == 3
 
 
 def test_cli_maven_bundle_writes_graph_and_impact_reports(tmp_path, capsys) -> None:

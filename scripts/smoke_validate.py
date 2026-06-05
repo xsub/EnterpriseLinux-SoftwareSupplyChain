@@ -373,6 +373,7 @@ def _assert_maven_tree_marker_snapshot() -> None:
         ]
     )
     nodes = {node["id"]: node for node in payload["nodes"]}
+    edge_types = {edge["target"]: edge["relationshipType"] for edge in payload["edges"]}
     assert payload["schema"] == "edgp.graph.snapshot.v1"
     assert payload["stats"] == {"edges": 3, "nodes": 4}
     assert nodes["org.example:optional-lib==1.2.3"]["metadata"]["optional"] == "true"
@@ -381,6 +382,8 @@ def _assert_maven_tree_marker_snapshot() -> None:
         nodes["org.example:conflict-lib==1.0.0"]["metadata"]["omittedReason"]
         == "conflict with 2.0.0"
     )
+    assert edge_types["org.example:optional-lib==1.2.3"] == 2
+    assert edge_types["org.example:conflict-lib==1.0.0"] == 3
 
 
 def _assert_maven_bundle() -> None:

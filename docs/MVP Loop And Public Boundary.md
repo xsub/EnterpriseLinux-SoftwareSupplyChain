@@ -35,6 +35,9 @@ surfaces are:
   identifiers while preserving full Maven coordinates in node metadata.
 - Preserve Maven dependency-tree optional and verbose omitted markers as node
   metadata when those markers are present in public text output.
+- Emit Maven relationship types for dependency-tree edges: ordinary (`1`),
+  optional (`2`), omitted (`3`), and excluded (`4`) when visible in public text
+  output.
 - Generate Maven dependency-tree graph bundle directories with optional impact
   reports.
 - Generate DOT/RPM graph bundle directories with optional impact reports.
@@ -125,6 +128,6 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add Maven edge relationship typing for optional or omitted dependency-tree
-  entries without changing existing node IDs.
 - Add a compact verification summary block to static report bundle indexes.
+- Add Maven relationship type labels to HTML graph reports so numeric edge types
+  are easier to inspect visually.

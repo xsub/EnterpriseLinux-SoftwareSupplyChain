@@ -2,7 +2,11 @@
 
 from pathlib import Path
 
-from src.adapters.maven import MavenTreeAdapter
+from src.adapters.maven import (
+    MAVEN_RELATIONSHIP_OMITTED,
+    MAVEN_RELATIONSHIP_OPTIONAL,
+    MavenTreeAdapter,
+)
 
 
 def test_maven_tree_adapter_builds_resolved_graph() -> None:
@@ -105,3 +109,10 @@ def test_maven_tree_adapter_preserves_optional_and_omitted_markers() -> None:
         "omitted": "true",
         "omittedReason": "conflict with 2.0.0",
     }
+    edge_types = {
+        edge.target: edge.relationship_type
+        for edge in resolved.graph.edges()
+        if edge.source == "com.example:marker-app==1.0.0"
+    }
+    assert edge_types["org.example:optional-lib==1.2.3"] == MAVEN_RELATIONSHIP_OPTIONAL
+    assert edge_types["org.example:conflict-lib==1.0.0"] == MAVEN_RELATIONSHIP_OMITTED
