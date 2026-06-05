@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +20,7 @@ from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
 from src.output.cypher_export import CypherExporter
+from src.output.graph_bundle import write_graph_report_bundle
 from src.output.html_report import write_report_file
 from src.output.json_export import GraphJsonExporter
 from src.output.report_bundle import write_report_bundle
@@ -95,39 +95,10 @@ def _write_npm_bundle(
     output_dir.mkdir(parents=True, exist_ok=True)
     adapter = NpmAdapter()
     resolved = adapter.parse_lockfile_graph(path)
-    report_paths = []
-
-    graph_path = output_dir / "npm-graph.json"
-    graph_path.write_text(
-        GraphJsonExporter.export_to_json(
-            resolved.graph,
-            root=resolved.root_identifier,
-            ecosystem=resolved.ecosystem,
-        ),
-        encoding="utf-8",
-    )
-    report_paths.append(graph_path)
 
     diagnostics_path = output_dir / "npm-diagnostics.json"
     diagnostics_path.write_text(_json(adapter.diagnose_lockfile(path)), encoding="utf-8")
-    report_paths.append(diagnostics_path)
-
-    for selector in impact_nodes or []:
-        node = _resolve_node_selector(resolved.graph, selector, role="impact node")
-        impact_path = output_dir / f"impact-{_safe_artifact_stem(node)}.json"
-        impact_path.write_text(
-            _json(
-                build_impact_report(
-                    resolved.graph,
-                    node=node,
-                    root=resolved.root_identifier,
-                    ecosystem=resolved.ecosystem,
-                    max_paths=max_paths,
-                )
-            ),
-            encoding="utf-8",
-        )
-        report_paths.append(impact_path)
+    final_reports = []
 
     if advisory_path is not None:
         advisory_report_path = output_dir / "advisory-report.json"
@@ -143,9 +114,18 @@ def _write_npm_bundle(
             ),
             encoding="utf-8",
         )
-        report_paths.append(advisory_report_path)
+        final_reports.append(advisory_report_path)
 
-    return write_report_bundle(report_paths, output_dir)
+    return write_graph_report_bundle(
+        resolved,
+        output_dir,
+        graph_name="npm-graph",
+        impact_nodes=impact_nodes,
+        node_resolver=_resolve_impact_node,
+        max_paths=max_paths,
+        extra_reports_after_graph=[diagnostics_path],
+        extra_reports=final_reports,
+    )
 
 
 def _write_maven_bundle(
@@ -155,39 +135,15 @@ def _write_maven_bundle(
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
 ) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
     resolved = MavenTreeAdapter().parse_tree(path)
-    report_paths = []
-
-    graph_path = output_dir / "maven-graph.json"
-    graph_path.write_text(
-        GraphJsonExporter.export_to_json(
-            resolved.graph,
-            root=resolved.root_identifier,
-            ecosystem=resolved.ecosystem,
-        ),
-        encoding="utf-8",
+    return write_graph_report_bundle(
+        resolved,
+        output_dir,
+        graph_name="maven-graph",
+        impact_nodes=impact_nodes,
+        node_resolver=_resolve_impact_node,
+        max_paths=max_paths,
     )
-    report_paths.append(graph_path)
-
-    for selector in impact_nodes or []:
-        node = _resolve_node_selector(resolved.graph, selector, role="impact node")
-        impact_path = output_dir / f"impact-{_safe_artifact_stem(node)}.json"
-        impact_path.write_text(
-            _json(
-                build_impact_report(
-                    resolved.graph,
-                    node=node,
-                    root=resolved.root_identifier,
-                    ecosystem=resolved.ecosystem,
-                    max_paths=max_paths,
-                )
-            ),
-            encoding="utf-8",
-        )
-        report_paths.append(impact_path)
-
-    return write_report_bundle(report_paths, output_dir)
 
 
 def _write_dot_bundle(
@@ -198,39 +154,15 @@ def _write_dot_bundle(
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
 ) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
     resolved = DotAdapter().parse_graph(path, ecosystem=ecosystem)
-    report_paths = []
-
-    graph_path = output_dir / "dot-graph.json"
-    graph_path.write_text(
-        GraphJsonExporter.export_to_json(
-            resolved.graph,
-            root=resolved.root_identifier,
-            ecosystem=resolved.ecosystem,
-        ),
-        encoding="utf-8",
+    return write_graph_report_bundle(
+        resolved,
+        output_dir,
+        graph_name="dot-graph",
+        impact_nodes=impact_nodes,
+        node_resolver=_resolve_impact_node,
+        max_paths=max_paths,
     )
-    report_paths.append(graph_path)
-
-    for selector in impact_nodes or []:
-        node = _resolve_node_selector(resolved.graph, selector, role="impact node")
-        impact_path = output_dir / f"impact-{_safe_artifact_stem(node)}.json"
-        impact_path.write_text(
-            _json(
-                build_impact_report(
-                    resolved.graph,
-                    node=node,
-                    root=resolved.root_identifier,
-                    ecosystem=resolved.ecosystem,
-                    max_paths=max_paths,
-                )
-            ),
-            encoding="utf-8",
-        )
-        report_paths.append(impact_path)
-
-    return write_report_bundle(report_paths, output_dir)
 
 
 def _write_sbom_bundle(
@@ -240,39 +172,15 @@ def _write_sbom_bundle(
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
 ) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
     resolved = CycloneDXAdapter().parse_graph(path)
-    report_paths = []
-
-    graph_path = output_dir / "sbom-graph.json"
-    graph_path.write_text(
-        GraphJsonExporter.export_to_json(
-            resolved.graph,
-            root=resolved.root_identifier,
-            ecosystem=resolved.ecosystem,
-        ),
-        encoding="utf-8",
+    return write_graph_report_bundle(
+        resolved,
+        output_dir,
+        graph_name="sbom-graph",
+        impact_nodes=impact_nodes,
+        node_resolver=_resolve_impact_node,
+        max_paths=max_paths,
     )
-    report_paths.append(graph_path)
-
-    for selector in impact_nodes or []:
-        node = _resolve_node_selector(resolved.graph, selector, role="impact node")
-        impact_path = output_dir / f"impact-{_safe_artifact_stem(node)}.json"
-        impact_path.write_text(
-            _json(
-                build_impact_report(
-                    resolved.graph,
-                    node=node,
-                    root=resolved.root_identifier,
-                    ecosystem=resolved.ecosystem,
-                    max_paths=max_paths,
-                )
-            ),
-            encoding="utf-8",
-        )
-        report_paths.append(impact_path)
-
-    return write_report_bundle(report_paths, output_dir)
 
 
 def _write_rpm_installed_bundle(
@@ -283,47 +191,18 @@ def _write_rpm_installed_bundle(
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
 ) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
     resolved = InstalledRpmAdapter().parse_installed(
         limit=limit,
         max_requirements=max_requirements,
     )
-    report_paths = []
-
-    graph_path = output_dir / "rpm-installed-graph.json"
-    graph_path.write_text(
-        GraphJsonExporter.export_to_json(
-            resolved.graph,
-            root=resolved.root_identifier,
-            ecosystem=resolved.ecosystem,
-        ),
-        encoding="utf-8",
+    return write_graph_report_bundle(
+        resolved,
+        output_dir,
+        graph_name="rpm-installed-graph",
+        impact_nodes=impact_nodes,
+        node_resolver=_resolve_impact_node,
+        max_paths=max_paths,
     )
-    report_paths.append(graph_path)
-
-    for selector in impact_nodes or []:
-        node = _resolve_node_selector(resolved.graph, selector, role="impact node")
-        impact_path = output_dir / f"impact-{_safe_artifact_stem(node)}.json"
-        impact_path.write_text(
-            _json(
-                build_impact_report(
-                    resolved.graph,
-                    node=node,
-                    root=resolved.root_identifier,
-                    ecosystem=resolved.ecosystem,
-                    max_paths=max_paths,
-                )
-            ),
-            encoding="utf-8",
-        )
-        report_paths.append(impact_path)
-
-    return write_report_bundle(report_paths, output_dir)
-
-
-def _safe_artifact_stem(value: str) -> str:
-    stem = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip(".-_")
-    return stem or "report"
 
 
 def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependencyGraph]:
@@ -483,6 +362,10 @@ def _resolve_node_selector(graph: CSRDependencyGraph, selector: str, *, role: st
         rendered = ", ".join(matches)
         raise ValueError(f"Ambiguous {role} selector {selector!r}; candidates: {rendered}")
     return selector
+
+
+def _resolve_impact_node(graph: CSRDependencyGraph, selector: str) -> str:
+    return _resolve_node_selector(graph, selector, role="impact node")
 
 
 def build_parser() -> argparse.ArgumentParser:

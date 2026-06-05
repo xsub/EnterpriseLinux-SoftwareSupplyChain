@@ -245,6 +245,10 @@ class ReportBundleExporter {
   +render_bundle_index(entries) str
   +render_bundle_manifest(entries) dict
 }
+class GraphBundleExporter {
+  +write_graph_report_bundle(graph, output_dir) Path
+  +safe_artifact_stem(value) str
+}
 class Benchmark {
   +run_synthetic_benchmark(nodes, fanout) dict
 }
@@ -281,6 +285,7 @@ CLI --> CSRDependencyGraph : query traversal
 CLI --> ImpactReporter : report reverse impact
 CLI --> AdvisoryOverlay : overlay local advisories
 CLI --> HtmlReportExporter : render local report
+CLI --> GraphBundleExporter : render graph bundle
 CLI --> ReportBundleExporter : render report bundle
 CLI --> Benchmark : run synthetic traversal
 CypherExporter --> CSRDependencyGraph : traverse edges
@@ -289,6 +294,9 @@ GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
 ImpactReporter --> CSRDependencyGraph : traverse dependents and paths
 AdvisoryOverlay --> ImpactReporter : attach package impact
 HtmlReportExporter --> GraphJsonExporter : consume EDGP JSON
+GraphBundleExporter --> GraphJsonExporter : write graph JSON
+GraphBundleExporter --> ImpactReporter : write impact reports
+GraphBundleExporter --> ReportBundleExporter : render static bundle
 ReportBundleExporter --> HtmlReportExporter : render member reports
 Benchmark --> CSRDependencyGraph : generate and traverse graph
 ```

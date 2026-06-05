@@ -46,6 +46,8 @@ surfaces are:
   EDGP JSON reports.
 - Emit a machine-readable `manifest.json` for report bundles so future
   workbench and RAG integrations can ingest generated artifacts directly.
+- Use a shared graph bundle writer for npm, Maven, DOT, CycloneDX SBOM, and
+  installed RPM bundle commands.
 - Run deterministic synthetic CSR traversal benchmarks.
 - Diff two EDGP JSON snapshots.
 - Overlay local advisory JSON onto graph nodes.
@@ -110,5 +112,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 - Add Maven optional/excluded dependency markers if dependency-tree output
   exposes them in public fixtures.
-- Consolidate graph bundle generation helpers now that npm, Maven, DOT, SBOM,
-  and installed RPM paths all support bundle output.
+- Add bundle-level metadata that records the CLI command and source kind used to
+  generate each static report bundle.
