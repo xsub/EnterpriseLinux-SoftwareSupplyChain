@@ -333,6 +333,7 @@ def build_parser() -> argparse.ArgumentParser:
     report_bundle.add_argument("--input", type=Path, action="append", required=True)
     report_bundle.add_argument("--output-dir", type=Path, required=True)
     report_bundle.add_argument("--index-name", default="index.html")
+    report_bundle.add_argument("--manifest-name", default="manifest.json")
 
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
@@ -490,6 +491,7 @@ def main(argv: list[str] | None = None) -> int:
             args.input,
             args.output_dir,
             index_name=args.index_name,
+            manifest_name=args.manifest_name,
         )
         print(index_path)
         return 0

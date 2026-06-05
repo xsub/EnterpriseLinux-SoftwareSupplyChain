@@ -1,5 +1,6 @@
-"""Report bundle tests for static EDGP HTML indexes."""
+"""Report bundle tests for static EDGP HTML indexes and manifests."""
 
+import json
 from pathlib import Path
 
 from src.output.report_bundle import write_report_bundle
@@ -24,6 +25,13 @@ def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
     assert "004-npm-diagnostics-report.html" in index_html
     assert "edgp.npm.diagnostics.v1" in index_html
     assert "conflict-app==1.0.0" in index_html
+
+    manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["schema"] == "edgp.report.bundle.v1"
+    assert manifest["index"] == "index.html"
+    assert manifest["reportCount"] == 4
+    assert manifest["reports"][3]["href"] == "004-npm-diagnostics-report.html"
+    assert manifest["reports"][3]["summary"]["unresolvedDependencies"] == 1
 
     npm_html = (tmp_path / "004-npm-diagnostics-report.html").read_text(
         encoding="utf-8"

@@ -26,6 +26,7 @@ def write_report_bundle(
     output_dir: Path,
     *,
     index_name: str = "index.html",
+    manifest_name: str = "manifest.json",
 ) -> Path:
     if not input_paths:
         raise ValueError("At least one --input is required for a report bundle")
@@ -49,7 +50,38 @@ def write_report_bundle(
 
     index_path = output_dir / index_name
     index_path.write_text(render_bundle_index(entries), encoding="utf-8")
+    manifest_path = output_dir / manifest_name
+    manifest_path.write_text(
+        json.dumps(
+            render_bundle_manifest(entries, index_name=index_name),
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
     return index_path
+
+
+def render_bundle_manifest(
+    entries: Sequence[BundleEntry],
+    *,
+    index_name: str = "index.html",
+) -> dict[str, Any]:
+    return {
+        "schema": "edgp.report.bundle.v1",
+        "index": index_name,
+        "reportCount": len(entries),
+        "reports": [
+            {
+                "href": entry.output_path.name,
+                "schema": entry.schema,
+                "source": str(entry.source_path),
+                "summary": entry.summary,
+                "title": entry.title,
+            }
+            for entry in entries
+        ],
+    }
 
 
 def render_bundle_index(entries: Sequence[BundleEntry]) -> str:

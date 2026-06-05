@@ -1,5 +1,6 @@
 """CLI tests for local HTML EDGP JSON reports."""
 
+import json
 from pathlib import Path
 
 from src.cli import main
@@ -121,3 +122,6 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert "001-snapshot-right.html" in html
     assert "002-npm-diagnostics-report.html" in html
     assert (output_dir / "002-npm-diagnostics-report.html").exists()
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["schema"] == "edgp.report.bundle.v1"
+    assert manifest["reports"][1]["schema"] == "edgp.npm.diagnostics.v1"

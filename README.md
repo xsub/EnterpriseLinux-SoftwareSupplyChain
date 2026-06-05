@@ -236,6 +236,7 @@ class HtmlReportExporter {
 class ReportBundleExporter {
   +write_report_bundle(inputs, output_dir) Path
   +render_bundle_index(entries) str
+  +render_bundle_manifest(entries) dict
 }
 class Benchmark {
   +run_synthetic_benchmark(nodes, fanout) dict
@@ -423,10 +424,10 @@ triage. npm diagnostics reports render duplicate package names, nested
 resolution conflicts, and unresolved dependency declarations.
 
 `edgp report-bundle` renders multiple EDGP JSON documents into one static
-directory with deterministic member report filenames and an `index.html` summary.
-This is a local, public-resource triage surface for handing a graph snapshot plus
-related impact, advisory, or npm diagnostic reports to a browser or future
-workbench UI.
+directory with deterministic member report filenames, an `index.html` summary,
+and a machine-readable `manifest.json`. This is a local, public-resource triage
+surface for handing a graph snapshot plus related impact, advisory, or npm
+diagnostic reports to a browser, RAG context builder, or future workbench UI.
 
 ## Roadmap
 

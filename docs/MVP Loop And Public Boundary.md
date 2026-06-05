@@ -36,6 +36,8 @@ surfaces are:
   diagnostics JSON.
 - Render deterministic static HTML report bundles with an index for multiple
   EDGP JSON reports.
+- Emit a machine-readable `manifest.json` for report bundles so future
+  workbench and RAG integrations can ingest generated artifacts directly.
 - Run deterministic synthetic CSR traversal benchmarks.
 - Diff two EDGP JSON snapshots.
 - Overlay local advisory JSON onto graph nodes.
@@ -88,5 +90,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ## Next Vertical Options
 
 - Add richer Maven classifier/version disambiguation fixtures.
-- Add a machine-readable manifest for report bundles so a future workbench can
-  ingest generated reports without scraping HTML.
+- Add report bundle inputs generated directly from CLI subcommands, reducing
+  manual intermediate JSON steps.
