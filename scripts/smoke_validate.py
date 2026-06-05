@@ -641,6 +641,41 @@ def _assert_rpm_installed() -> None:
     assert payload["stats"]["nodes"] >= 1
 
 
+def _assert_rpm_installed_bundle() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "rpm-installed-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-installed-bundle",
+                "--limit",
+                "5",
+                "--max-requirements",
+                "10",
+                "--impact-node",
+                "rpm-installed==local",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert manifest["reports"][0]["href"] == "001-rpm-installed-graph.html"
+        assert manifest["reports"][1]["href"] == "002-impact-rpm-installed-local.html"
+        graph = json.loads(
+            (output_dir / "rpm-installed-graph.json").read_text(encoding="utf-8")
+        )
+        assert graph["schema"] == "edgp.graph.snapshot.v1"
+        assert graph["root"] == "rpm-installed==local"
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -685,6 +720,7 @@ def main(argv: list[str] | None = None) -> int:
     ]
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))
+        checks.append(("installed rpm bundle", _assert_rpm_installed_bundle))
 
     for label, check in checks:
         check()

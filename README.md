@@ -130,6 +130,7 @@ Export a bounded graph from the local RPM database on AlmaLinux:
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-installed --limit 100 --max-requirements 40 --format cyclonedx
 edgp query --source rpm-installed --rpm-limit 100 --max-requirements 40 --operation most-depended-upon
+edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --output-dir reports/rpm-installed
 ```
 
 Import and re-export a CycloneDX JSON SBOM:
@@ -384,6 +385,10 @@ HTML, `index.html`, and `manifest.json`.
 `edgp sbom-bundle` renders CycloneDX JSON SBOMs into static local bundles with
 `sbom-graph.json`, optional impact reports, HTML, `index.html`, and
 `manifest.json`.
+
+`edgp rpm-installed-bundle` renders a bounded local RPM database graph on
+AlmaLinux-compatible hosts into a static bundle with `rpm-installed-graph.json`,
+optional impact reports, HTML, `index.html`, and `manifest.json`.
 
 ### Graph and Security Egress
 

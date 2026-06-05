@@ -275,6 +275,52 @@ def _write_sbom_bundle(
     return write_report_bundle(report_paths, output_dir)
 
 
+def _write_rpm_installed_bundle(
+    output_dir: Path,
+    *,
+    limit: int = 100,
+    max_requirements: int = 40,
+    impact_nodes: list[str] | None = None,
+    max_paths: int = 20,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    resolved = InstalledRpmAdapter().parse_installed(
+        limit=limit,
+        max_requirements=max_requirements,
+    )
+    report_paths = []
+
+    graph_path = output_dir / "rpm-installed-graph.json"
+    graph_path.write_text(
+        GraphJsonExporter.export_to_json(
+            resolved.graph,
+            root=resolved.root_identifier,
+            ecosystem=resolved.ecosystem,
+        ),
+        encoding="utf-8",
+    )
+    report_paths.append(graph_path)
+
+    for selector in impact_nodes or []:
+        node = _resolve_node_selector(resolved.graph, selector, role="impact node")
+        impact_path = output_dir / f"impact-{_safe_artifact_stem(node)}.json"
+        impact_path.write_text(
+            _json(
+                build_impact_report(
+                    resolved.graph,
+                    node=node,
+                    root=resolved.root_identifier,
+                    ecosystem=resolved.ecosystem,
+                    max_paths=max_paths,
+                )
+            ),
+            encoding="utf-8",
+        )
+        report_paths.append(impact_path)
+
+    return write_report_bundle(report_paths, output_dir)
+
+
 def _safe_artifact_stem(value: str) -> str:
     stem = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip(".-_")
     return stem or "report"
@@ -522,6 +568,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--format", choices=["cypher", "cyclonedx", "json"], default="json"
     )
 
+    rpm_installed_bundle = subparsers.add_parser(
+        "rpm-installed-bundle",
+        help="Render installed RPM database graph bundle with optional impact reports",
+    )
+    rpm_installed_bundle.add_argument("--output-dir", type=Path, required=True)
+    rpm_installed_bundle.add_argument("--impact-node", action="append", default=[])
+    rpm_installed_bundle.add_argument("--limit", type=int, default=100)
+    rpm_installed_bundle.add_argument("--max-requirements", type=int, default=40)
+    rpm_installed_bundle.add_argument("--report-limit", type=int, default=20)
+
     diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
@@ -707,6 +763,18 @@ def main(argv: list[str] | None = None) -> int:
                 resolved.graph,
                 root=resolved.root_identifier,
                 ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "rpm-installed-bundle":
+        print(
+            _write_rpm_installed_bundle(
+                args.output_dir,
+                limit=args.limit,
+                max_requirements=args.max_requirements,
+                impact_nodes=args.impact_node,
+                max_paths=args.report_limit,
             )
         )
         return 0
