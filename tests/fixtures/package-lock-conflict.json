@@ -1,0 +1,29 @@
+{
+  "name": "conflict-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "conflict-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "shared": "^1.0.0",
+        "tool": "^1.0.0",
+        "missing": "^9.0.0"
+      }
+    },
+    "node_modules/shared": {
+      "version": "1.0.0"
+    },
+    "node_modules/tool": {
+      "version": "1.0.0",
+      "dependencies": {
+        "shared": "^2.0.0"
+      }
+    },
+    "node_modules/tool/node_modules/shared": {
+      "version": "2.0.0"
+    }
+  }
+}

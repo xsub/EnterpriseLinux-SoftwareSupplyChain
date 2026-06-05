@@ -90,6 +90,12 @@ edgp query --path package-lock.json --operation path --node app==1.0.0 --target 
 edgp query --path package-lock.json --operation most-depended-upon --limit 20
 ```
 
+Diagnose npm dependency path conflicts:
+
+```bash
+edgp npm-diagnostics --path package-lock.json
+```
+
 Report reverse dependency impact for a package:
 
 ```bash
@@ -168,6 +174,7 @@ class LockfileAdapter {
 }
 class NpmAdapter {
   +parse_lockfile_graph(path) ResolvedProjectGraph
+  +diagnose_lockfile(path) dict
 }
 class PoetryAdapter {
   +parse_lockfile_graph(path) ResolvedProjectGraph
@@ -369,6 +376,11 @@ The CLI exposes these operations as JSON through `edgp query`, which makes the
 same graph useful for terminal investigation, future UI panels, and RAG context
 generation. Query selectors accept exact package IDs, such as
 `glibc==2.39-1.el10`, or unambiguous package names, such as `glibc`.
+
+`edgp npm-diagnostics` inspects `package-lock.json` resolution paths and reports
+duplicate package names, nested version conflicts, and unresolved dependency
+declarations. This helps explain why npm consumers may reach different versions
+of the same package through nested `node_modules` paths.
 
 `edgp impact` turns reverse reachability into a vulnerability-style impact
 report. For a selected node it returns direct dependents, all transitive

@@ -259,6 +259,11 @@ def build_parser() -> argparse.ArgumentParser:
     lockfile.add_argument("--ecosystem", choices=["npm", "poetry", "cargo"], default="npm")
     lockfile.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
 
+    npm_diagnostics = subparsers.add_parser(
+        "npm-diagnostics", help="Diagnose npm package-lock dependency paths"
+    )
+    npm_diagnostics.add_argument("--path", type=Path, required=True)
+
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
     dot.add_argument("--path", type=Path, required=True)
     dot.add_argument("--ecosystem", default="rpm")
@@ -363,6 +368,10 @@ def main(argv: list[str] | None = None) -> int:
             args.ecosystem,
         )
         print(_export(args.format, graph, root=root_identifier, ecosystem=resolved_ecosystem))
+        return 0
+
+    if args.command == "npm-diagnostics":
+        print(_json(NpmAdapter().diagnose_lockfile(args.path)))
         return 0
 
     if args.command == "dot":

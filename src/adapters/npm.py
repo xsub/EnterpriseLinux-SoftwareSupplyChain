@@ -55,6 +55,79 @@ class NpmAdapter(LockfileAdapter):
 
         raise ValueError(f"Unsupported npm lockfile shape: {path}")
 
+    def diagnose_lockfile(self, path: Path) -> dict[str, object]:
+        with path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+
+        packages = payload.get("packages")
+        if not isinstance(packages, Mapping):
+            raise ValueError(f"Unsupported npm diagnostic lockfile shape: {path}")
+
+        package_records = self._package_records(payload, packages)
+        root_identifier = package_records.get("", {}).get("id") or "npm-project==0.0.0"
+        resolutions = []
+        unresolved = []
+
+        for package_path, raw_record in packages.items():
+            if not isinstance(raw_record, Mapping):
+                continue
+            source_record = package_records.get(str(package_path))
+            if source_record is None:
+                continue
+            for dependency_name in self._dependency_names(raw_record):
+                dependency_path = self._resolve_dependency_path(
+                    str(package_path), dependency_name, packages
+                )
+                requested = self._dependency_constraint(raw_record, dependency_name)
+                if dependency_path is None:
+                    unresolved.append(
+                        {
+                            "dependency": dependency_name,
+                            "requested": requested,
+                            "source": source_record["id"],
+                            "sourcePath": str(package_path),
+                            "searchedPaths": list(
+                                self._node_resolution_search_paths(
+                                    str(package_path), dependency_name
+                                )
+                            ),
+                        }
+                    )
+                    continue
+                target_record = package_records.get(dependency_path)
+                if target_record is None:
+                    continue
+                resolutions.append(
+                    {
+                        "dependency": dependency_name,
+                        "requested": requested,
+                        "resolved": target_record["id"],
+                        "resolvedPath": dependency_path,
+                        "source": source_record["id"],
+                        "sourcePath": str(package_path),
+                    }
+                )
+
+        duplicates = self._duplicate_package_names(package_records)
+        conflicts = self._nested_resolution_conflicts(resolutions)
+        return {
+            "schema": "edgp.npm.diagnostics.v1",
+            "ecosystem": self.ecosystem,
+            "root": root_identifier,
+            "summary": {
+                "packages": len(package_records),
+                "duplicatePackageNames": len(duplicates),
+                "nestedResolutionConflicts": len(conflicts),
+                "unresolvedDependencies": len(unresolved),
+            },
+            "duplicatePackageNames": duplicates,
+            "nestedResolutionConflicts": conflicts,
+            "unresolvedDependencies": sorted(
+                unresolved,
+                key=lambda item: (item["sourcePath"], item["dependency"]),
+            ),
+        }
+
     def _parse_packages_lockfile(
         self, payload: Mapping[str, object], packages: Mapping[str, object]
     ) -> ResolvedProjectGraph:
@@ -101,6 +174,80 @@ class NpmAdapter(LockfileAdapter):
             graph=graph,
             ecosystem=self.ecosystem,
         )
+
+    def _package_records(
+        self,
+        payload: Mapping[str, object],
+        packages: Mapping[str, object],
+    ) -> dict[str, dict[str, str]]:
+        records = {}
+        for package_path, raw_record in packages.items():
+            if not isinstance(raw_record, Mapping):
+                continue
+            package_id = self._package_identifier(str(package_path), raw_record, payload)
+            if package_id is None:
+                continue
+            name, _, version = package_id.partition("==")
+            records[str(package_path)] = {
+                "id": package_id,
+                "name": name,
+                "path": str(package_path),
+                "version": version,
+            }
+        return records
+
+    def _duplicate_package_names(
+        self, package_records: Mapping[str, Mapping[str, str]]
+    ) -> list[dict[str, object]]:
+        by_name: dict[str, dict[str, list[str]]] = {}
+        for record in package_records.values():
+            by_version = by_name.setdefault(record["name"], {})
+            by_version.setdefault(record["version"], []).append(record["path"])
+
+        duplicates = []
+        for name, versions in sorted(by_name.items()):
+            if len(versions) <= 1:
+                continue
+            duplicates.append(
+                {
+                    "package": name,
+                    "versions": [
+                        {"version": version, "paths": sorted(paths)}
+                        for version, paths in sorted(versions.items())
+                    ],
+                }
+            )
+        return duplicates
+
+    def _nested_resolution_conflicts(
+        self, resolutions: list[dict[str, str]]
+    ) -> list[dict[str, object]]:
+        by_dependency: dict[str, list[dict[str, str]]] = {}
+        for resolution in resolutions:
+            by_dependency.setdefault(resolution["dependency"], []).append(resolution)
+
+        conflicts = []
+        for dependency_name, entries in sorted(by_dependency.items()):
+            versions = sorted(
+                {
+                    entry["resolved"].partition("==")[2]
+                    for entry in entries
+                    if "==" in entry["resolved"]
+                }
+            )
+            if len(versions) <= 1:
+                continue
+            conflicts.append(
+                {
+                    "dependency": dependency_name,
+                    "versions": versions,
+                    "consumers": sorted(
+                        entries,
+                        key=lambda item: (item["sourcePath"], item["resolvedPath"]),
+                    ),
+                }
+            )
+        return conflicts
 
     def _parse_legacy_lockfile(
         self, payload: Mapping[str, object], dependencies: Mapping[str, object]
@@ -176,6 +323,20 @@ class NpmAdapter(LockfileAdapter):
             if isinstance(dependencies, Mapping):
                 names.update(str(name) for name in dependencies)
         return tuple(sorted(names))
+
+    def _dependency_constraint(
+        self, record: Mapping[str, object], dependency_name: str
+    ) -> str:
+        for key in (
+            "dependencies",
+            "optionalDependencies",
+            "peerDependencies",
+            "devDependencies",
+        ):
+            dependencies = record.get(key, {})
+            if isinstance(dependencies, Mapping) and dependency_name in dependencies:
+                return str(dependencies[dependency_name])
+        return ""
 
     def _resolve_dependency_path(
         self,

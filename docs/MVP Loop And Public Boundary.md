@@ -39,6 +39,8 @@ surfaces are:
 - Overlay local advisory JSON onto graph nodes.
 - Query dependencies, dependents, reachability, shortest paths, and
   most-depended-upon rankings.
+- Diagnose npm package-lock duplicate package names, nested version conflicts,
+  and unresolved dependency declarations.
 - Report reverse dependency impact for a selected package.
 - Use human-friendly node selectors where a package name resolves to one graph
   node.
@@ -66,6 +68,7 @@ Manual examples:
 
 ```bash
 python -B -m src.cli lockfile --path tests/fixtures/package-lock.json --format json
+python -B -m src.cli npm-diagnostics --path tests/fixtures/package-lock-conflict.json
 python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
@@ -80,5 +83,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add npm package-lock dependency path conflict diagnostics.
 - Add richer Maven classifier/version disambiguation fixtures.
+- Add npm diagnostics HTML report rendering.

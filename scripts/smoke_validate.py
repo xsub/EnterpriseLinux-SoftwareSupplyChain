@@ -45,6 +45,23 @@ def _assert_lockfile_snapshot() -> None:
     }
 
 
+def _assert_npm_diagnostics() -> None:
+    payload = _run_cli(
+        [
+            "npm-diagnostics",
+            "--path",
+            "tests/fixtures/package-lock-conflict.json",
+        ]
+    )
+    assert payload["schema"] == "edgp.npm.diagnostics.v1"
+    assert payload["summary"] == {
+        "packages": 4,
+        "duplicatePackageNames": 1,
+        "nestedResolutionConflicts": 1,
+        "unresolvedDependencies": 1,
+    }
+
+
 def _assert_poetry_lockfile_snapshot() -> None:
     payload = _run_cli(
         [
@@ -375,6 +392,7 @@ def main(argv: list[str] | None = None) -> int:
     checks = [
         ("compile", _assert_compile),
         ("lockfile snapshot", _assert_lockfile_snapshot),
+        ("npm diagnostics", _assert_npm_diagnostics),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
         ("cargo lockfile snapshot", _assert_cargo_lockfile_snapshot),
