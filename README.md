@@ -121,6 +121,7 @@ edgp dot --path repograph.dot --ecosystem rpm --format json
 edgp dot --path repograph.dot --ecosystem rpm --format cypher
 edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc
+edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
 ```
 
 Export a bounded graph from the local RPM database on AlmaLinux:
@@ -374,6 +375,10 @@ disambiguated in EDGP node ids, for example
 `edgp maven-bundle` renders a Maven dependency-tree graph into a static local
 bundle with `maven-graph.json`, optional impact reports, HTML, `index.html`, and
 `manifest.json`.
+
+`edgp dot-bundle` renders DOT graphs, including `dnf repograph`-style RPM
+graphs, into static local bundles with `dot-graph.json`, optional impact reports,
+HTML, `index.html`, and `manifest.json`.
 
 ### Graph and Security Egress
 
