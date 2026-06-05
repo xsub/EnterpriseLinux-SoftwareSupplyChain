@@ -39,7 +39,7 @@ def test_cli_query_dot_dependents(capsys) -> None:
                 "--operation",
                 "dependents",
                 "--node",
-                "glibc==unknown",
+                "glibc",
             ]
         )
         == 0
@@ -47,6 +47,8 @@ def test_cli_query_dot_dependents(capsys) -> None:
 
     payload = json.loads(capsys.readouterr().out)
     assert payload["direction"] == "dependents"
+    assert payload["node"] == "glibc==unknown"
+    assert payload["requestedNode"] == "glibc"
     assert payload["result"] == [
         "nginx-core==unknown",
         "openssl-libs==unknown",

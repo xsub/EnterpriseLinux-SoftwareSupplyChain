@@ -114,6 +114,12 @@ def _query_graph(
     if node is None:
         raise ValueError(f"--node is required for {operation}")
 
+    requested_node = node
+    node = _resolve_node_selector(graph, node, role="node")
+    requested_target = target
+    if target is not None:
+        target = _resolve_node_selector(graph, target, role="target")
+
     if operation == "dependencies":
         result = graph.get_dependencies(node)
         output_direction = "dependencies"
@@ -143,7 +149,32 @@ def _query_graph(
         "node": node,
         "operation": operation,
         "result": result,
+        **({"requestedNode": requested_node} if requested_node != node else {}),
+        **(
+            {"target": target, "requestedTarget": requested_target}
+            if operation == "path" and requested_target != target
+            else {"target": target}
+            if operation == "path"
+            else {}
+        ),
     }
+
+
+def _resolve_node_selector(graph: CSRDependencyGraph, selector: str, *, role: str) -> str:
+    if selector in graph.vertex_map:
+        return selector
+
+    matches = [
+        package_id
+        for package_id in sorted(graph.vertex_map)
+        if package_id.partition("==")[0] == selector
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        rendered = ", ".join(matches)
+        raise ValueError(f"Ambiguous {role} selector {selector!r}; candidates: {rendered}")
+    return selector
 
 
 def build_parser() -> argparse.ArgumentParser:

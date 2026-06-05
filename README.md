@@ -67,7 +67,7 @@ Export an AlmaLinux/RPM universe graph from DOT:
 edgp dot --path repograph.dot --ecosystem rpm --format json
 edgp dot --path repograph.dot --ecosystem rpm --format cypher
 edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
-edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc==unknown
+edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc
 ```
 
 Export a bounded graph from the local RPM database on AlmaLinux:
@@ -232,7 +232,8 @@ CSR traversal supports immediate dependencies, immediate dependents, forward and
 reverse reachability, shortest dependency paths, and most-depended-upon ranking.
 The CLI exposes these operations as JSON through `edgp query`, which makes the
 same graph useful for terminal investigation, future UI panels, and RAG context
-generation.
+generation. Query selectors accept exact package IDs, such as
+`glibc==2.39-1.el10`, or unambiguous package names, such as `glibc`.
 
 ### JSON Snapshot
 
