@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from typing import Iterator
 
@@ -58,6 +59,61 @@ class CSRDependencyGraph:
         end = self.row_pointers[vertex_id + 1]
         return [self.reverse_vertex_map[target] for target in self.column_indices[start:end]]
 
+    def get_dependents(self, package_id: str) -> list[str]:
+        self._materialize()
+        if package_id not in self.vertex_map:
+            return []
+
+        target_id = self.vertex_map[package_id]
+        dependents: list[str] = []
+        for source in range(self.next_vertex_id):
+            start = self.row_pointers[source]
+            end = self.row_pointers[source + 1]
+            if target_id in self.column_indices[start:end]:
+                dependents.append(self.reverse_vertex_map[source])
+        return dependents
+
+    def reachable_dependencies(self, package_id: str) -> list[str]:
+        return self._reachable(package_id, self.get_dependencies)
+
+    def reachable_dependents(self, package_id: str) -> list[str]:
+        return self._reachable(package_id, self.get_dependents)
+
+    def shortest_dependency_path(
+        self, source_id: str, target_id: str, *, reverse: bool = False
+    ) -> list[str]:
+        self._materialize()
+        if source_id not in self.vertex_map or target_id not in self.vertex_map:
+            return []
+
+        neighbors = self.get_dependents if reverse else self.get_dependencies
+        queue: deque[list[str]] = deque([[source_id]])
+        visited = {source_id}
+
+        while queue:
+            path = queue.popleft()
+            current = path[-1]
+            if current == target_id:
+                return path
+            for neighbor in neighbors(current):
+                if neighbor in visited:
+                    continue
+                visited.add(neighbor)
+                queue.append([*path, neighbor])
+
+        return []
+
+    def most_depended_upon(self, limit: int = 10) -> list[tuple[str, int]]:
+        self._materialize()
+        incoming_counts = {package_id: 0 for package_id in self.vertex_map}
+        for edge in self.edges():
+            incoming_counts[edge.target] += 1
+        ranked = sorted(
+            ((package_id, count) for package_id, count in incoming_counts.items() if count),
+            key=lambda item: (-item[1], item[0]),
+        )
+        return ranked[:limit]
+
     def edges(self) -> Iterator[DependencyEdge]:
         self._materialize()
         for source in range(self.next_vertex_id):
@@ -75,6 +131,25 @@ class CSRDependencyGraph:
             package_id: self.get_dependencies(package_id)
             for package_id in sorted(self.vertex_map)
         }
+
+    def _reachable(self, package_id: str, neighbor_fn) -> list[str]:
+        self._materialize()
+        if package_id not in self.vertex_map:
+            return []
+
+        queue: deque[str] = deque(neighbor_fn(package_id))
+        visited: set[str] = set()
+        reachable: list[str] = []
+
+        while queue:
+            current = queue.popleft()
+            if current in visited or current == package_id:
+                continue
+            visited.add(current)
+            reachable.append(current)
+            queue.extend(neighbor_fn(current))
+
+        return reachable
 
     def _materialize(self) -> None:
         if not self._dirty:

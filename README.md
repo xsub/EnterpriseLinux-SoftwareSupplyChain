@@ -52,6 +52,14 @@ edgp lockfile --path package-lock.json --format cypher
 edgp lockfile --path package-lock.json --format cyclonedx
 ```
 
+Query an already-resolved npm lockfile:
+
+```bash
+edgp query --path package-lock.json --operation reachable --node app==1.0.0
+edgp query --path package-lock.json --operation path --node app==1.0.0 --target library==2.0.0
+edgp query --path package-lock.json --operation most-depended-upon --limit 20
+```
+
 ## Architecture
 
 ### Architecture UML
@@ -81,6 +89,9 @@ class CSRDependencyGraph {
   +add_vertex(package_id)
   +add_dependency_edge(source, target)
   +get_dependencies(package_id)
+  +get_dependents(package_id)
+  +reachable_dependencies(package_id)
+  +shortest_dependency_path(source, target)
   +edges()
 }
 class CypherExporter {
@@ -104,6 +115,7 @@ CDCLResolver --> CSRDependencyGraph : build graph
 NpmAdapter --> CSRDependencyGraph : build graph
 CLI --> CypherExporter : export Cypher
 CLI --> CycloneDXExporter : export SBOM
+CLI --> CSRDependencyGraph : query traversal
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
 ```
@@ -175,6 +187,14 @@ Legacy v1 dependency trees are supported with recursive edge extraction.
 `DEPENDS_ON` relationships. `CycloneDXExporter` emits a CycloneDX-compatible
 JSON SBOM with dependency references, suitable as the foundation for
 Dependency-Track or similar security ingestion paths.
+
+### Query Layer
+
+CSR traversal supports immediate dependencies, immediate dependents, forward and
+reverse reachability, shortest dependency paths, and most-depended-upon ranking.
+The CLI exposes these operations as JSON through `edgp query`, which makes the
+same graph useful for terminal investigation, future UI panels, and RAG context
+generation.
 
 ## Roadmap
 
