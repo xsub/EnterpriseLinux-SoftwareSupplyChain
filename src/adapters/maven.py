@@ -113,6 +113,8 @@ class _MavenCoordinate:
     @property
     def identifier(self) -> str:
         name = f"{self.group}:{self.artifact}"
+        if self.packaging != "jar":
+            name = f"{name}:{self.packaging}"
         if self.classifier:
             name = f"{name}:{self.classifier}"
         return f"{name}=={self.version}"

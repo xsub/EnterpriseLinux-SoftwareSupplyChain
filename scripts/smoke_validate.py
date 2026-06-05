@@ -197,6 +197,23 @@ def _assert_maven_tree_classifier_snapshot() -> None:
     assert "com.example:native-lib:linux-x86_64==1.0.0" in node_ids
 
 
+def _assert_maven_tree_packaging_snapshot() -> None:
+    payload = _run_cli(
+        [
+            "maven-tree",
+            "--path",
+            "tests/fixtures/maven-tree-packaging.txt",
+            "--format",
+            "json",
+        ]
+    )
+    node_ids = {node["id"] for node in payload["nodes"]}
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["stats"] == {"edges": 2, "nodes": 3}
+    assert "com.example:platform==1.0.0" in node_ids
+    assert "com.example:platform:pom==1.0.0" in node_ids
+
+
 def _assert_dot_snapshot() -> None:
     payload = _run_cli(["dot", "--path", "tests/fixtures/repograph.dot", "--format", "json"])
     assert payload["schema"] == "edgp.graph.snapshot.v1"
@@ -479,6 +496,7 @@ def main(argv: list[str] | None = None) -> int:
         ("maven tree snapshot", _assert_maven_tree_snapshot),
         ("maven tree query", _assert_maven_tree_query),
         ("maven classifier snapshot", _assert_maven_tree_classifier_snapshot),
+        ("maven packaging snapshot", _assert_maven_tree_packaging_snapshot),
         ("dot snapshot", _assert_dot_snapshot),
         ("sbom query", _assert_sbom_query),
         ("snapshot diff", _assert_snapshot_diff),

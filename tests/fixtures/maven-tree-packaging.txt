@@ -1,0 +1,3 @@
+[INFO] com.example:packaging-app:jar:1.0.0
+[INFO] +- com.example:platform:jar:1.0.0:compile
+[INFO] \- com.example:platform:pom:1.0.0:import

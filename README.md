@@ -361,9 +361,11 @@ metadata such as registry source and checksum.
 `MavenTreeAdapter.parse_tree` turns `mvn dependency:tree` text output into a
 Maven CSR graph. It uses the visible tree prefixes to preserve parent-child
 relationships and stores group id, artifact id, packaging, classifier, and scope
-metadata when present. Classifier-bearing artifacts are disambiguated in EDGP
-node ids, for example `com.example:native-lib:linux-x86_64==1.0.0`, while
-standard jar artifacts keep the compact `group:artifact==version` form.
+metadata when present. Classifier-bearing and non-jar artifacts are
+disambiguated in EDGP node ids, for example
+`com.example:native-lib:linux-x86_64==1.0.0` or
+`com.example:platform:pom==1.0.0`, while standard jar artifacts keep the compact
+`group:artifact==version` form.
 
 ### Graph and Security Egress
 

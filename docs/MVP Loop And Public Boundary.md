@@ -31,8 +31,8 @@ surfaces are:
 - Build CSR dependency graphs from mock registries, npm lockfiles, DOT graphs,
   Poetry lockfiles, Cargo lockfiles, Maven dependency trees, CycloneDX SBOMs,
   and installed RPM metadata.
-- Disambiguate Maven classifier-bearing artifacts in graph node identifiers
-  while preserving full Maven coordinates in node metadata.
+- Disambiguate Maven classifier-bearing and non-jar artifacts in graph node
+  identifiers while preserving full Maven coordinates in node metadata.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
@@ -76,6 +76,7 @@ Manual examples:
 python -B -m src.cli lockfile --path tests/fixtures/package-lock.json --format json
 python -B -m src.cli npm-diagnostics --path tests/fixtures/package-lock-conflict.json
 python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-classifier.txt --format json
+python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-packaging.txt --format json
 python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
@@ -94,5 +95,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 - Add report bundle inputs generated directly from CLI subcommands, reducing
   manual intermediate JSON steps.
-- Add Maven packaging-aware node identifiers for non-jar artifacts if real-world
-  fixtures show collisions.
+- Add Maven optional/excluded dependency markers if dependency-tree output
+  exposes them in public fixtures.

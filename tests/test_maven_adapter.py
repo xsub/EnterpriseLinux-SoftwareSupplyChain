@@ -52,3 +52,24 @@ def test_maven_tree_adapter_disambiguates_classifier_artifacts() -> None:
         "scope": "runtime",
         "classifier": "linux-x86_64",
     }
+
+
+def test_maven_tree_adapter_disambiguates_non_jar_artifacts() -> None:
+    resolved = MavenTreeAdapter().parse_tree(
+        Path("tests/fixtures/maven-tree-packaging.txt")
+    )
+
+    assert resolved.root_identifier == "com.example:packaging-app==1.0.0"
+    assert resolved.graph.get_dependencies("com.example:packaging-app==1.0.0") == [
+        "com.example:platform==1.0.0",
+        "com.example:platform:pom==1.0.0",
+    ]
+    assert resolved.graph.get_vertex_metadata("com.example:platform:pom==1.0.0") == {
+        "ecosystem": "maven",
+        "source": "maven-dependency-tree",
+        "group": "com.example",
+        "artifact": "platform",
+        "packaging": "pom",
+        "coordinate": "com.example:platform:pom:1.0.0:import",
+        "scope": "import",
+    }

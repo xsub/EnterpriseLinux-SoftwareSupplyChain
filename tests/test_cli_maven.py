@@ -80,3 +80,24 @@ def test_cli_maven_tree_disambiguates_classifier_artifacts(capsys) -> None:
         if node["id"] == "com.example:native-lib:linux-x86_64==1.0.0"
     )
     assert classifier_node["metadata"]["classifier"] == "linux-x86_64"
+
+
+def test_cli_maven_tree_disambiguates_non_jar_artifacts(capsys) -> None:
+    assert (
+        main(
+            [
+                "maven-tree",
+                "--path",
+                "tests/fixtures/maven-tree-packaging.txt",
+                "--format",
+                "json",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    node_ids = {node["id"] for node in payload["nodes"]}
+    assert payload["stats"] == {"edges": 2, "nodes": 3}
+    assert "com.example:platform==1.0.0" in node_ids
+    assert "com.example:platform:pom==1.0.0" in node_ids
