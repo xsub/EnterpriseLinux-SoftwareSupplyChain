@@ -345,6 +345,27 @@ def _assert_maven_tree_packaging_snapshot() -> None:
     assert "com.example:platform:pom==1.0.0" in node_ids
 
 
+def _assert_maven_tree_marker_snapshot() -> None:
+    payload = _run_cli(
+        [
+            "maven-tree",
+            "--path",
+            "tests/fixtures/maven-tree-markers.txt",
+            "--format",
+            "json",
+        ]
+    )
+    nodes = {node["id"]: node for node in payload["nodes"]}
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["stats"] == {"edges": 3, "nodes": 4}
+    assert nodes["org.example:optional-lib==1.2.3"]["metadata"]["optional"] == "true"
+    assert nodes["org.example:conflict-lib==1.0.0"]["metadata"]["omitted"] == "true"
+    assert (
+        nodes["org.example:conflict-lib==1.0.0"]["metadata"]["omittedReason"]
+        == "conflict with 2.0.0"
+    )
+
+
 def _assert_maven_bundle() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "maven-bundle"
@@ -905,6 +926,7 @@ def main(argv: list[str] | None = None) -> int:
         ("maven tree query", _assert_maven_tree_query),
         ("maven classifier snapshot", _assert_maven_tree_classifier_snapshot),
         ("maven packaging snapshot", _assert_maven_tree_packaging_snapshot),
+        ("maven marker snapshot", _assert_maven_tree_marker_snapshot),
         ("maven bundle", _assert_maven_bundle),
         ("dot snapshot", _assert_dot_snapshot),
         ("dot bundle", _assert_dot_bundle),

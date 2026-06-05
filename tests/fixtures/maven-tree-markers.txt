@@ -1,0 +1,4 @@
+[INFO] com.example:marker-app:jar:1.0.0
+[INFO] +- org.example:optional-lib:jar:1.2.3:compile (optional)
+[INFO] +- (org.example:conflict-lib:jar:1.0.0:compile - omitted for conflict with 2.0.0)
+[INFO] \- org.example:runtime-lib:jar:2.0.0:runtime

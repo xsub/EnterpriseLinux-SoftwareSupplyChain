@@ -73,3 +73,35 @@ def test_maven_tree_adapter_disambiguates_non_jar_artifacts() -> None:
         "coordinate": "com.example:platform:pom:1.0.0:import",
         "scope": "import",
     }
+
+
+def test_maven_tree_adapter_preserves_optional_and_omitted_markers() -> None:
+    resolved = MavenTreeAdapter().parse_tree(Path("tests/fixtures/maven-tree-markers.txt"))
+
+    assert resolved.root_identifier == "com.example:marker-app==1.0.0"
+    assert resolved.graph.get_dependencies("com.example:marker-app==1.0.0") == [
+        "org.example:optional-lib==1.2.3",
+        "org.example:conflict-lib==1.0.0",
+        "org.example:runtime-lib==2.0.0",
+    ]
+    assert resolved.graph.get_vertex_metadata("org.example:optional-lib==1.2.3") == {
+        "ecosystem": "maven",
+        "source": "maven-dependency-tree",
+        "group": "org.example",
+        "artifact": "optional-lib",
+        "packaging": "jar",
+        "coordinate": "org.example:optional-lib:jar:1.2.3:compile",
+        "scope": "compile",
+        "optional": "true",
+    }
+    assert resolved.graph.get_vertex_metadata("org.example:conflict-lib==1.0.0") == {
+        "ecosystem": "maven",
+        "source": "maven-dependency-tree",
+        "group": "org.example",
+        "artifact": "conflict-lib",
+        "packaging": "jar",
+        "coordinate": "org.example:conflict-lib:jar:1.0.0:compile",
+        "scope": "compile",
+        "omitted": "true",
+        "omittedReason": "conflict with 2.0.0",
+    }

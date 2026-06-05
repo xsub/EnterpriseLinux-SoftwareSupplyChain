@@ -33,6 +33,8 @@ surfaces are:
   and installed RPM metadata.
 - Disambiguate Maven classifier-bearing and non-jar artifacts in graph node
   identifiers while preserving full Maven coordinates in node metadata.
+- Preserve Maven dependency-tree optional and verbose omitted markers as node
+  metadata when those markers are present in public text output.
 - Generate Maven dependency-tree graph bundle directories with optional impact
   reports.
 - Generate DOT/RPM graph bundle directories with optional impact reports.
@@ -99,6 +101,7 @@ python -B -m src.cli npm-bundle --path tests/fixtures/package-lock-conflict.json
 python -B -m src.cli npm-bundle --path tests/fixtures/package-lock.json --impact-node left-pad --advisories tests/fixtures/advisories.json --output-dir /tmp/edgp-npm-advisory-bundle
 python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-classifier.txt --format json
 python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-packaging.txt --format json
+python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-markers.txt --format json
 python -B -m src.cli maven-bundle --path tests/fixtures/maven-tree-classifier.txt --impact-node com.example:native-lib:linux-x86_64 --output-dir /tmp/edgp-maven-bundle
 python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli dot-bundle --path tests/fixtures/repograph.dot --ecosystem rpm --impact-node glibc --output-dir /tmp/edgp-dot-bundle
@@ -120,7 +123,7 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add Maven optional/excluded dependency markers if dependency-tree output
-  exposes them in public fixtures.
 - Add a machine-readable verification report fixture for RAG/workbench ingestion
   and golden-output regression tests.
+- Add Maven edge relationship typing for optional or omitted dependency-tree
+  entries without changing existing node IDs.

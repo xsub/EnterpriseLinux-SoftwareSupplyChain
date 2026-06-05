@@ -60,6 +60,7 @@ class MavenTreeAdapter:
             depth = marker_index // 3 + 1
             coordinate_text = line[marker_index + 3 :].strip()
 
+        coordinate_text, markers = self._extract_markers(coordinate_text)
         parts = coordinate_text.split(":")
         if len(parts) < 4:
             return None
@@ -87,6 +88,11 @@ class MavenTreeAdapter:
             version=version,
             scope=scope,
             classifier=classifier,
+            optional=markers["optional"],
+            omitted=markers["omitted"],
+            omitted_reason=markers["omittedReason"],
+            excluded=markers["excluded"],
+            excluded_reason=markers["excludedReason"],
         )
 
     def _marker_index(self, line: str) -> int | None:
@@ -99,6 +105,39 @@ class MavenTreeAdapter:
             return None
         return min(marker_positions)
 
+    def _extract_markers(self, coordinate_text: str) -> tuple[str, dict[str, str]]:
+        markers = {
+            "optional": "",
+            "omitted": "",
+            "omittedReason": "",
+            "excluded": "",
+            "excludedReason": "",
+        }
+        text = coordinate_text.strip()
+        if text.startswith("(") and text.endswith(")"):
+            text = text[1:-1].strip()
+
+        for suffix, key in (
+            (" (optional)", "optional"),
+            (" (excluded)", "excluded"),
+        ):
+            if text.endswith(suffix):
+                markers[key] = "true"
+                text = text[: -len(suffix)].strip()
+
+        for separator, key in (
+            (" - omitted for ", "omitted"),
+            (" - excluded by ", "excluded"),
+        ):
+            if separator in text:
+                text, reason = text.split(separator, 1)
+                markers[key] = "true"
+                reason_key = "omittedReason" if key == "omitted" else "excludedReason"
+                markers[reason_key] = reason.strip()
+                break
+
+        return text, markers
+
 
 @dataclass(frozen=True)
 class _MavenCoordinate:
@@ -109,6 +148,11 @@ class _MavenCoordinate:
     version: str
     scope: str
     classifier: str = ""
+    optional: str = ""
+    omitted: str = ""
+    omitted_reason: str = ""
+    excluded: str = ""
+    excluded_reason: str = ""
 
     @property
     def identifier(self) -> str:
@@ -143,4 +187,14 @@ class _MavenCoordinate:
             metadata["scope"] = self.scope
         if self.classifier:
             metadata["classifier"] = self.classifier
+        if self.optional:
+            metadata["optional"] = self.optional
+        if self.omitted:
+            metadata["omitted"] = self.omitted
+        if self.omitted_reason:
+            metadata["omittedReason"] = self.omitted_reason
+        if self.excluded:
+            metadata["excluded"] = self.excluded
+        if self.excluded_reason:
+            metadata["excludedReason"] = self.excluded_reason
         return metadata

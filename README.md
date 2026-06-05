@@ -382,7 +382,9 @@ metadata when present. Classifier-bearing and non-jar artifacts are
 disambiguated in EDGP node ids, for example
 `com.example:native-lib:linux-x86_64==1.0.0` or
 `com.example:platform:pom==1.0.0`, while standard jar artifacts keep the compact
-`group:artifact==version` form.
+`group:artifact==version` form. When verbose dependency-tree output includes
+public markers such as `(optional)` or `- omitted for conflict with ...`, EDGP
+preserves them as Maven node metadata.
 
 `edgp maven-bundle` renders a Maven dependency-tree graph into a static local
 bundle with `maven-graph.json`, optional impact reports, HTML, `index.html`, and
