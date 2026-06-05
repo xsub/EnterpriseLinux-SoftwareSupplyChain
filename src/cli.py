@@ -12,6 +12,7 @@ from src.adapters.dot import DotAdapter
 from src.adapters.npm import NpmAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.core_graph.sparse_matrix import CSRDependencyGraph
+from src.graph_diff import diff_snapshot_files
 from src.output.cypher_export import CypherExporter
 from src.output.json_export import GraphJsonExporter
 from src.output.sbom_security import CycloneDXExporter
@@ -232,6 +233,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--format", choices=["cypher", "cyclonedx", "json"], default="json"
     )
 
+    diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
+    diff.add_argument("--left", type=Path, required=True)
+    diff.add_argument("--right", type=Path, required=True)
+
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument(
         "--source",
@@ -306,6 +311,10 @@ def main(argv: list[str] | None = None) -> int:
                 ecosystem=resolved.ecosystem,
             )
         )
+        return 0
+
+    if args.command == "diff":
+        print(diff_snapshot_files(args.left, args.right))
         return 0
 
     if args.command == "query":

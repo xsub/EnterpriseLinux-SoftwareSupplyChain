@@ -73,6 +73,26 @@ def _assert_sbom_query() -> None:
     assert payload["result"] == ["left-pad==1.3.0"]
 
 
+def _assert_snapshot_diff() -> None:
+    payload = _run_cli(
+        [
+            "diff",
+            "--left",
+            "tests/fixtures/snapshot-left.json",
+            "--right",
+            "tests/fixtures/snapshot-right.json",
+        ]
+    )
+    assert payload["schema"] == "edgp.graph.diff.v1"
+    assert payload["summary"] == {
+        "addedNodes": 2,
+        "removedNodes": 1,
+        "addedEdges": 2,
+        "removedEdges": 1,
+        "metadataChangedNodes": 0,
+    }
+
+
 def _assert_rpm_installed() -> None:
     payload = _run_cli(
         ["rpm-installed", "--limit", "5", "--max-requirements", "10", "--format", "json"]
@@ -100,6 +120,7 @@ def main(argv: list[str] | None = None) -> int:
         ("lockfile snapshot", _assert_lockfile_snapshot),
         ("dot snapshot", _assert_dot_snapshot),
         ("sbom query", _assert_sbom_query),
+        ("snapshot diff", _assert_snapshot_diff),
     ]
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))

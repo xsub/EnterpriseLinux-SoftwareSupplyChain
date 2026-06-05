@@ -92,6 +92,12 @@ edgp sbom --path bom.json --format json
 edgp query --source sbom --path bom.json --operation reachable --node app
 ```
 
+Diff two EDGP JSON snapshots:
+
+```bash
+edgp diff --left before.json --right after.json
+```
+
 ## Architecture
 
 ### Architecture UML

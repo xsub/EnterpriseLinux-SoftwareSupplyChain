@@ -1,0 +1,50 @@
+{
+  "schema": "edgp.graph.snapshot.v1",
+  "root": "app==1.0.0",
+  "ecosystem": "npm",
+  "stats": {
+    "nodes": 2,
+    "edges": 1
+  },
+  "nodes": [
+    {
+      "id": "app==1.0.0",
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": [
+        "lib==1.0.0"
+      ],
+      "dependents": [],
+      "metadata": {
+        "ecosystem": "npm"
+      }
+    },
+    {
+      "id": "lib==1.0.0",
+      "name": "lib",
+      "version": "1.0.0",
+      "dependencies": [],
+      "dependents": [
+        "app==1.0.0"
+      ],
+      "metadata": {
+        "ecosystem": "npm"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "app==1.0.0",
+      "target": "lib==1.0.0",
+      "relationshipType": 1
+    }
+  ],
+  "rankings": {
+    "mostDependedUpon": [
+      {
+        "package": "lib==1.0.0",
+        "dependents": 1
+      }
+    ]
+  }
+}
