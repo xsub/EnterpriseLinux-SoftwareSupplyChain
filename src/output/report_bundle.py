@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -19,6 +20,8 @@ class BundleEntry:
     schema: str
     title: str
     summary: dict[str, Any]
+    source_sha256: str
+    html_sha256: str
 
 
 def write_report_bundle(
@@ -35,10 +38,12 @@ def write_report_bundle(
     output_dir.mkdir(parents=True, exist_ok=True)
     entries = []
     for index, input_path in enumerate(input_paths, start=1):
-        payload = json.loads(input_path.read_text(encoding="utf-8"))
+        source_bytes = input_path.read_bytes()
+        payload = json.loads(source_bytes.decode("utf-8"))
         html = render_report(payload)
+        html_bytes = html.encode("utf-8")
         output_path = output_dir / f"{index:03d}-{_safe_stem(input_path)}.html"
-        output_path.write_text(html, encoding="utf-8")
+        output_path.write_bytes(html_bytes)
         entries.append(
             BundleEntry(
                 source_path=input_path,
@@ -46,6 +51,8 @@ def write_report_bundle(
                 schema=str(payload.get("schema", "")),
                 title=_report_title(payload),
                 summary=_report_summary(payload),
+                source_sha256=_sha256(source_bytes),
+                html_sha256=_sha256(html_bytes),
             )
         )
 
@@ -80,8 +87,10 @@ def render_bundle_manifest(
         "reports": [
             {
                 "href": entry.output_path.name,
+                "htmlSha256": entry.html_sha256,
                 "schema": entry.schema,
                 "source": _source_label(entry),
+                "sourceSha256": entry.source_sha256,
                 "summary": entry.summary,
                 "title": entry.title,
             }
@@ -102,6 +111,10 @@ def _source_label(entry: BundleEntry) -> str:
         return str(entry.source_path.relative_to(entry.output_path.parent))
     except ValueError:
         return str(entry.source_path)
+
+
+def _sha256(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
 
 
 def render_bundle_index(entries: Sequence[BundleEntry]) -> str:

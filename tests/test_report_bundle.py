@@ -1,5 +1,6 @@
 """Report bundle tests for static EDGP HTML indexes and manifests."""
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -32,6 +33,12 @@ def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
     assert manifest["reportCount"] == 4
     assert manifest["reports"][3]["href"] == "004-npm-diagnostics-report.html"
     assert manifest["reports"][3]["summary"]["unresolvedDependencies"] == 1
+    assert manifest["reports"][3]["htmlSha256"] == hashlib.sha256(
+        (tmp_path / "004-npm-diagnostics-report.html").read_bytes()
+    ).hexdigest()
+    assert manifest["reports"][3]["sourceSha256"] == hashlib.sha256(
+        Path("tests/fixtures/npm-diagnostics-report.json").read_bytes()
+    ).hexdigest()
 
     npm_html = (tmp_path / "004-npm-diagnostics-report.html").read_text(
         encoding="utf-8"

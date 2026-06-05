@@ -50,6 +50,11 @@
             "minLength": 1,
             "type": "string"
           },
+          "htmlSha256": {
+            "description": "SHA-256 digest of the rendered member HTML bytes.",
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
           "schema": {
             "description": "EDGP JSON schema identifier for the source report.",
             "minLength": 1,
@@ -58,6 +63,11 @@
           "source": {
             "description": "Source JSON path label for this rendered report.",
             "minLength": 1,
+            "type": "string"
+          },
+          "sourceSha256": {
+            "description": "SHA-256 digest of the source JSON bytes rendered for this member.",
+            "pattern": "^[0-9a-f]{64}$",
             "type": "string"
           },
           "summary": {
@@ -72,8 +82,10 @@
         },
         "required": [
           "href",
+          "htmlSha256",
           "schema",
           "source",
+          "sourceSha256",
           "summary",
           "title"
         ],

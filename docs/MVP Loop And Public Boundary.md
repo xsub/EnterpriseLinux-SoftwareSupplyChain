@@ -49,6 +49,8 @@ surfaces are:
   including bundle-level source kind and generating command metadata.
 - Document `edgp.report.bundle.v1` with a Draft 2020-12 JSON Schema and
   dependency-free smoke validation against generated bundle manifests.
+- Include per-report SHA-256 digests for report bundle source JSON and rendered
+  HTML artifacts.
 - Use a shared graph bundle writer for npm, Maven, DOT, CycloneDX SBOM, and
   installed RPM bundle commands.
 - Run deterministic synthetic CSR traversal benchmarks.
@@ -115,5 +117,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 - Add Maven optional/excluded dependency markers if dependency-tree output
   exposes them in public fixtures.
-- Add report bundle member digests so downstream RAG/workbench ingestion can
-  detect stale or modified HTML/JSON artifacts.
+- Add a bundle-level digest over the manifest and member artifacts for a single
+  portable integrity fingerprint.
