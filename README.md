@@ -471,9 +471,10 @@ context generation.
 
 `edgp report` renders graph snapshots, impact reports, advisory reports, and npm
 diagnostics into dependency-free HTML files. Snapshot reports include graph
-metrics, a compact SVG preview, most-depended-upon rankings, and a node metadata
-table. Graph snapshot reports also summarize edge relationship types, including
-Maven optional, omitted, and excluded dependency-tree markers. Impact and
+metrics, a compact SVG preview, a filterable edge explorer, most-depended-upon
+rankings, and a node metadata table. Graph snapshot reports also summarize edge
+relationship types, including Maven optional, omitted, and excluded
+dependency-tree markers. Impact and
 advisory reports render affected package lists, dependency
 chains, advisory metadata, and affected dependent counts for browser-friendly
 triage. npm diagnostics reports render duplicate package names, nested

@@ -56,9 +56,11 @@ def render_snapshot_report(snapshot: dict[str, Any]) -> str:
             '<main class="report-shell">',
             _hero(snapshot, stats),
             _graph_panel(nodes, edges),
+            _edge_explorer_panel(edges),
             _ranking_panel(rankings),
             _node_table(nodes),
             "</main>",
+            f"<script>{_edge_filter_script()}</script>",
             "</body>",
             "</html>",
         ]
@@ -432,10 +434,7 @@ def _edge_relationship_summary(edges: list[dict[str, Any]]) -> str:
         return '<p class="empty">No edge relationships.</p>'
     counts: dict[int, int] = {}
     for edge in edges:
-        try:
-            relationship_type = int(edge.get("relationshipType", 1))
-        except (TypeError, ValueError):
-            relationship_type = 1
+        relationship_type = _edge_relationship_type(edge)
         counts[relationship_type] = counts.get(relationship_type, 0) + 1
 
     rows = "\n".join(
@@ -452,6 +451,66 @@ def _edge_relationship_summary(edges: list[dict[str, Any]]) -> str:
 </div>""".strip()
 
 
+def _edge_explorer_panel(edges: list[dict[str, Any]]) -> str:
+    relationship_types = sorted({_edge_relationship_type(edge) for edge in edges})
+    options = ['<option value="">All relationships</option>']
+    options.extend(
+        f'<option value="{relationship_type}">'
+        f"{escape(_relationship_label(relationship_type))}"
+        "</option>"
+        for relationship_type in relationship_types
+    )
+    rows = "\n".join(_edge_row(edge) for edge in edges)
+    body = rows or '<tr><td colspan="3">No edges in snapshot.</td></tr>'
+    return f"""
+<section class="panel" data-testid="edge-filter-panel" data-edge-filter-panel>
+  <div class="section-head">
+    <h2>Edge Explorer</h2>
+    <span data-edge-filter-count>{len(edges)} shown</span>
+  </div>
+  <div class="edge-filter-controls" data-testid="edge-filter-controls">
+    <label>
+      <span>Source Or Target</span>
+      <input type="search" data-edge-filter-search aria-label="Filter edges by source or target" placeholder="Filter edges">
+    </label>
+    <label>
+      <span>Relationship</span>
+      <select data-edge-filter-type aria-label="Filter edges by relationship type">{"".join(options)}</select>
+    </label>
+    <button type="button" data-edge-filter-reset>Reset</button>
+  </div>
+  <div class="table-wrap">
+    <table class="edge-table">
+      <thead><tr><th>Source</th><th>Target</th><th>Relationship</th></tr></thead>
+      <tbody data-edge-filter-body>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _edge_row(edge: dict[str, Any]) -> str:
+    source = str(edge.get("source", ""))
+    target = str(edge.get("target", ""))
+    relationship_type = _edge_relationship_type(edge)
+    return (
+        '<tr data-edge-row '
+        f'data-edge-source="{escape(source.lower())}" '
+        f'data-edge-target="{escape(target.lower())}" '
+        f'data-edge-type="{relationship_type}">'
+        f"<td>{escape(source)}</td>"
+        f"<td>{escape(target)}</td>"
+        f"<td>{escape(_relationship_label(relationship_type))}</td>"
+        "</tr>"
+    )
+
+
+def _edge_relationship_type(edge: dict[str, Any]) -> int:
+    try:
+        return int(edge.get("relationshipType", 1))
+    except (TypeError, ValueError):
+        return 1
+
+
 def _relationship_label(relationship_type: int) -> str:
     labels = {
         1: "1 - Ordinary Dependency",
@@ -460,6 +519,43 @@ def _relationship_label(relationship_type: int) -> str:
         4: "4 - Maven Excluded",
     }
     return labels.get(relationship_type, f"{relationship_type} - Custom Relationship")
+
+
+def _edge_filter_script() -> str:
+    return """
+(() => {
+  for (const panel of document.querySelectorAll("[data-edge-filter-panel]")) {
+    const search = panel.querySelector("[data-edge-filter-search]");
+    const type = panel.querySelector("[data-edge-filter-type]");
+    const reset = panel.querySelector("[data-edge-filter-reset]");
+    const count = panel.querySelector("[data-edge-filter-count]");
+    const rows = Array.from(panel.querySelectorAll("[data-edge-row]"));
+    const apply = () => {
+      const query = (search.value || "").trim().toLowerCase();
+      const selectedType = type.value;
+      let shown = 0;
+      for (const row of rows) {
+        const edgeText = `${row.dataset.edgeSource || ""} ${row.dataset.edgeTarget || ""}`;
+        const textMatches = !query || edgeText.includes(query);
+        const typeMatches = !selectedType || row.dataset.edgeType === selectedType;
+        const visible = textMatches && typeMatches;
+        row.hidden = !visible;
+        if (visible) shown += 1;
+      }
+      count.textContent = `${shown} shown`;
+    };
+    search.addEventListener("input", apply);
+    type.addEventListener("change", apply);
+    reset.addEventListener("click", () => {
+      search.value = "";
+      type.value = "";
+      apply();
+      search.focus();
+    });
+    apply();
+  }
+})();
+""".strip()
 
 
 def _ranking_panel(rankings: list[dict[str, Any]]) -> str:
@@ -701,6 +797,45 @@ text {
   margin-top: 2px;
   font-size: 18px;
 }
+.edge-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 260px) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+.edge-filter-controls label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.edge-filter-controls input,
+.edge-filter-controls select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+}
+.edge-filter-controls button {
+  min-height: 42px;
+  padding: 9px 14px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
+.edge-table td:nth-child(3) { white-space: nowrap; }
+tr[hidden] { display: none; }
 .ranking {
   list-style: none;
   display: grid;
@@ -755,6 +890,7 @@ tr:last-child td { border-bottom: 0; }
   .report-shell { width: min(100vw - 20px, 1120px); padding-top: 10px; }
   .hero { grid-template-columns: 1fr; padding: 18px; }
   .metrics { grid-template-columns: 1fr; }
+  .edge-filter-controls { grid-template-columns: 1fr; }
   .edge-types ul { grid-template-columns: 1fr; }
   h1 { font-size: 24px; }
 }

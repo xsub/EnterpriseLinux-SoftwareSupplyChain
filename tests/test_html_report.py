@@ -14,6 +14,10 @@ def test_render_snapshot_report_includes_summary_graph_and_tables() -> None:
     assert "<!doctype html>" in html
     assert "EDGP Snapshot Report - app==1.0.0" in html
     assert 'data-testid="graph-panel"' in html
+    assert 'data-testid="edge-filter-panel"' in html
+    assert 'data-edge-filter-search' in html
+    assert 'data-edge-filter-count' in html
+    assert 'data-edge-type="1"' in html
     assert "lib==2.0.0" in html
     assert "Most Depended Upon" in html
 
@@ -57,6 +61,9 @@ def test_render_snapshot_report_labels_maven_relationship_types() -> None:
     html = render_snapshot_report(snapshot)
 
     assert 'data-testid="edge-relationship-panel"' in html
+    assert 'data-testid="edge-filter-panel"' in html
+    assert 'data-edge-type="2"' in html
+    assert 'data-edge-type="3"' in html
     assert "2 - Maven Optional" in html
     assert "3 - Maven Omitted" in html
 

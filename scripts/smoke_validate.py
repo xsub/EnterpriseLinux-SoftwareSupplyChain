@@ -753,6 +753,9 @@ def _assert_html_report() -> None:
         assert completed.stdout.strip() == str(output_path)
         html = output_path.read_text(encoding="utf-8")
         assert 'data-testid="report-hero"' in html
+        assert 'data-testid="edge-filter-panel"' in html
+        assert 'data-edge-filter-search' in html
+        assert 'data-edge-filter-count' in html
         assert "EDGP Snapshot Report - app==1.0.0" in html
 
 
