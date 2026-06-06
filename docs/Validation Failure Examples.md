@@ -499,3 +499,53 @@ Text output:
 FAIL reports=1 failures=1 bundleSha256=0af994b1dadc21653806683048c2ea8a91c007e817084a1f5a60cac4b8cd3119 firstFailure=reportSummaryInvalid
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportSummaryInvalid
 ```
+
+## Invalid Report Count
+
+The fixture
+[`tests/fixtures/invalid-report-count-bundle`](../tests/fixtures/invalid-report-count-bundle)
+keeps a self-consistent manifest fingerprint and valid member digests but sets
+`reportCount` to a value that does not match the number of report entries. The
+normalized verifier and validator results are committed as
+[`report-bundle-verification-invalid-report-count.json`](../tests/fixtures/report-bundle-verification-invalid-report-count.json)
+and
+[`validation-failure-invalid-report-count.json`](../tests/fixtures/validation-failure-invalid-report-count.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-count-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-report-count-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=be15c1acb06a07b5fa2ef87079f7e7caa4b52124fdc8c90321e2916bdc54aeb7 firstFailure=reportCountMismatch
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportCountMismatch
+```
+
+## Invalid Report Href
+
+The fixture
+[`tests/fixtures/invalid-report-href-bundle`](../tests/fixtures/invalid-report-href-bundle)
+keeps a self-consistent manifest fingerprint but sets `reports[1].href` to a
+path outside the bundle directory. The normalized verifier and validator
+results are committed as
+[`report-bundle-verification-invalid-report-href.json`](../tests/fixtures/report-bundle-verification-invalid-report-href.json)
+and
+[`validation-failure-invalid-report-href.json`](../tests/fixtures/validation-failure-invalid-report-href.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-href-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-report-href-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=2ab1110c5f27ad6eb179767747b4f1103092a94b24cfd91b56c8bd7b7dfe2940 firstFailure=reportHrefInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportHrefInvalid
+```

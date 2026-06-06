@@ -369,6 +369,28 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.reportSummaryInvalid",
             1,
         ),
+        (
+            Path("tests/fixtures/invalid-report-count-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-count.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-report-count.json"),
+            "reportCountMismatch",
+            "bundle.reportCountMismatch",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-report-href-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-href.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-report-href.json"),
+            "reportHrefInvalid",
+            "bundle.reportHrefInvalid",
+            1,
+        ),
     ]
 
     for (

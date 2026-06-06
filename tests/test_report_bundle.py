@@ -188,6 +188,20 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
                 "report-bundle-verification-invalid-report-summary.json"
             ),
         ),
+        (
+            Path("tests/fixtures/invalid-report-count-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-count.json"
+            ),
+        ),
+        (
+            Path("tests/fixtures/invalid-report-href-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-href.json"
+            ),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

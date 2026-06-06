@@ -110,3 +110,5 @@ cases:
 - [`tests/fixtures/report-bundle-verification-invalid-report-entry.json`](../tests/fixtures/report-bundle-verification-invalid-report-entry.json)
 - [`tests/fixtures/report-bundle-verification-invalid-report-field.json`](../tests/fixtures/report-bundle-verification-invalid-report-field.json)
 - [`tests/fixtures/report-bundle-verification-invalid-report-summary.json`](../tests/fixtures/report-bundle-verification-invalid-report-summary.json)
+- [`tests/fixtures/report-bundle-verification-invalid-report-count.json`](../tests/fixtures/report-bundle-verification-invalid-report-count.json)
+- [`tests/fixtures/report-bundle-verification-invalid-report-href.json`](../tests/fixtures/report-bundle-verification-invalid-report-href.json)

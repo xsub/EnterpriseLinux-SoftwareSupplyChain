@@ -1351,6 +1351,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.reportSummaryInvalid",
             1,
         ),
+        (
+            "invalid-report-count-bundle",
+            "report-bundle-verification-invalid-report-count.json",
+            "validation-failure-invalid-report-count.json",
+            "reportCountMismatch",
+            "bundle.reportCountMismatch",
+            1,
+        ),
+        (
+            "invalid-report-href-bundle",
+            "report-bundle-verification-invalid-report-href.json",
+            "validation-failure-invalid-report-href.json",
+            "reportHrefInvalid",
+            "bundle.reportHrefInvalid",
+            1,
+        ),
     ]
     for (
         bundle_name,
