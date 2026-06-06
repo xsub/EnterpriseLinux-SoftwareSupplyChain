@@ -131,6 +131,19 @@ def test_cli_failure_examples_lists_available_filter_values(capsys) -> None:
     assert "manifestInvalid" in payload["verificationFailureCodes"]
 
 
+def test_cli_failure_example_filter_listing_matches_documented_schema(
+    capsys, tmp_path: Path
+) -> None:
+    assert main(["failure-examples", "--list-codes"]) == 0
+
+    output_path = tmp_path / "failure-example-filters.json"
+    output_path.write_text(capsys.readouterr().out, encoding="utf-8")
+    report = validate_target(output_path)
+
+    assert report["ok"] is True
+    assert report["contract"] == "edgp.validation.failure.example.filters.v1"
+
+
 def test_cli_failure_examples_lists_filtered_filter_values_as_text(capsys) -> None:
     assert (
         main(

@@ -1,0 +1,68 @@
+{
+  "$id": "urn:edgp:schema:validation-failure-example-filters:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Filter value listing emitted by edgp failure-examples --list-codes for committed validation failure examples.",
+  "properties": {
+    "exampleCount": {
+      "description": "Number of failure examples represented by the listed filter values.",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "ids": {
+      "description": "Stable example identifiers available after any requested filters are applied.",
+      "items": {
+        "minLength": 1,
+        "pattern": "^[a-z0-9]+[a-z0-9-]*$",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "edgp.validation.failure.example.filters.v1",
+      "description": "Validation failure example filter listing schema identifier."
+    },
+    "sourceSchema": {
+      "const": "edgp.validation.failure.example.index.v1",
+      "description": "Source index schema used to build this filter listing."
+    },
+    "targetTypes": {
+      "description": "Target artifact types available after any requested filters are applied.",
+      "items": {
+        "enum": [
+          "json-file",
+          "report-bundle"
+        ],
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "validationFailureCodes": {
+      "description": "Validation failure codes available after any requested filters are applied.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "verificationFailureCodes": {
+      "description": "Bundle verifier failure codes available after any requested filters are applied.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "sourceSchema",
+    "exampleCount",
+    "ids",
+    "targetTypes",
+    "validationFailureCodes",
+    "verificationFailureCodes"
+  ],
+  "title": "EDGP Validation Failure Example Filters v1",
+  "type": "object"
+}

@@ -27,6 +27,13 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.npm.diagnostics.v1.schema.json`](schemas/edgp.npm.diagnostics.v1.schema.json)
   documents duplicate package names, nested version conflicts, and unresolved
   npm dependency declarations.
+- `edgp.validation.failure.example.index.v1`:
+  [`edgp.validation.failure.example.index.v1.schema.json`](schemas/edgp.validation.failure.example.index.v1.schema.json)
+  documents the committed validation failure example index.
+- `edgp.validation.failure.example.filters.v1`:
+  [`edgp.validation.failure.example.filters.v1.schema.json`](schemas/edgp.validation.failure.example.filters.v1.schema.json)
+  documents the filter value listing emitted by
+  `failure-examples --list-codes`.
 
 Report bundle contracts are documented separately:
 

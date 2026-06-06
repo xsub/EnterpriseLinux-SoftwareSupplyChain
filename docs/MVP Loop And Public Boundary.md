@@ -117,6 +117,8 @@ surfaces are:
 - Emit a compact text summary for validation failure examples.
 - Document `edgp.validation.failure.example.index.v1` with a Draft 2020-12 JSON
   Schema and smoke validation against the committed index.
+- Document `edgp.validation.failure.example.filters.v1` with a Draft 2020-12
+  JSON Schema and smoke validation against generated filter output.
 - Filter validation failure examples by validation or verifier failure code from
   the CLI.
 - Filter validation failure examples by target artifact type from the CLI.
@@ -261,5 +263,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add a Draft 2020-12 JSON Schema for the failure example filter listing
+- Add a committed normalized fixture for the failure example filter listing
   payload.

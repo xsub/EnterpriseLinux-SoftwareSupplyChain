@@ -319,6 +319,7 @@ def _assert_schema_index_document() -> None:
         "edgp.npm.diagnostics.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
+        "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
     } <= contracts
     for schema in index["schemas"]:
@@ -367,6 +368,15 @@ def _assert_failure_example_index_document() -> None:
     assert "manifest-invalid" in filter_summary["ids"]
     assert "bundle.manifestInvalid" in filter_summary["validationFailureCodes"]
     assert "manifestInvalid" in filter_summary["verificationFailureCodes"]
+    with tempfile.TemporaryDirectory() as temp_dir:
+        filter_summary_path = Path(temp_dir) / "failure-example-filters.json"
+        filter_summary_path.write_text(
+            json.dumps(filter_summary, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        validation = _run_cli(["validate", "--path", str(filter_summary_path)])
+    assert validation["ok"] is True
+    assert validation["contract"] == "edgp.validation.failure.example.filters.v1"
     completed = subprocess.run(
         [
             sys.executable,

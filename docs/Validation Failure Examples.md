@@ -9,6 +9,8 @@ A machine-readable index of committed examples is available at
 [`docs/validation-failure-example-index.json`](validation-failure-example-index.json).
 Its schema is documented at
 [`docs/schemas/edgp.validation.failure.example.index.v1.schema.json`](schemas/edgp.validation.failure.example.index.v1.schema.json).
+The `failure-examples --list-codes` filter listing is documented at
+[`docs/schemas/edgp.validation.failure.example.filters.v1.schema.json`](schemas/edgp.validation.failure.example.filters.v1.schema.json).
 Regenerate or check it with
 `python -B scripts/generate_failure_example_index.py --check`.
 

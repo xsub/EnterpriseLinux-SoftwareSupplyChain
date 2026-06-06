@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 7,
+  "schemaCount": 8,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -50,6 +50,14 @@
       "id": "urn:edgp:schema:report-bundle-verification:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Report Bundle Verification v1"
+    },
+    {
+      "contract": "edgp.validation.failure.example.filters.v1",
+      "description": "Filter value listing emitted by edgp failure-examples --list-codes for committed validation failure examples.",
+      "file": "edgp.validation.failure.example.filters.v1.schema.json",
+      "id": "urn:edgp:schema:validation-failure-example-filters:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Validation Failure Example Filters v1"
     },
     {
       "contract": "edgp.validation.failure.example.index.v1",
