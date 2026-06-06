@@ -112,6 +112,8 @@ surfaces are:
   bundle manifests, with smoke coverage for every stable verifier failure code.
 - Generate a machine-readable validation failure example index for workbench
   and RAG ingestion.
+- Generate a machine-readable validation failure example filter listing for
+  workbench and RAG ingestion.
 - Emit the validation failure example index through the `failure-examples` CLI
   command.
 - Emit a compact text summary for validation failure examples.
@@ -263,5 +265,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add a committed normalized fixture for the failure example filter listing
-  payload.
+- Include verifier failure codes in `failure-examples --format text` output.

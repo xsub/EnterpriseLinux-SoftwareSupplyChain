@@ -11,6 +11,8 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INDEX_PATH = REPO_ROOT / "docs" / "validation-failure-example-index.json"
 INDEX_SCHEMA = "edgp.validation.failure.example.index.v1"
+FILTERS_PATH = REPO_ROOT / "docs" / "validation-failure-example-filters.json"
+FILTERS_SCHEMA = "edgp.validation.failure.example.filters.v1"
 
 
 @dataclass(frozen=True)
@@ -190,6 +192,50 @@ def build_failure_example_index() -> dict[str, Any]:
     }
 
 
+def build_failure_example_filter_listing(
+    index: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if index is None:
+        index = build_failure_example_index()
+    examples = index.get("examples", [])
+    if not isinstance(examples, list):
+        examples = []
+    entries = [entry for entry in examples if isinstance(entry, dict)]
+    return {
+        "schema": FILTERS_SCHEMA,
+        "sourceSchema": str(index.get("schema", "unknown")),
+        "exampleCount": len(entries),
+        "ids": sorted(
+            {
+                str(entry.get("id", ""))
+                for entry in entries
+                if isinstance(entry.get("id"), str) and entry.get("id")
+            }
+        ),
+        "targetTypes": sorted(
+            {
+                str(entry.get("targetType", ""))
+                for entry in entries
+                if isinstance(entry.get("targetType"), str) and entry.get("targetType")
+            }
+        ),
+        "validationFailureCodes": sorted(
+            {
+                code
+                for entry in entries
+                for code in _string_list(entry.get("validationFailureCodes", []))
+            }
+        ),
+        "verificationFailureCodes": sorted(
+            {
+                code
+                for entry in entries
+                for code in _string_list(entry.get("verificationFailureCodes", []))
+            }
+        ),
+    }
+
+
 def _example_entry(example: FailureExample) -> dict[str, Any]:
     validation = _load_fixture(example.validation_fixture)
     failures = _failure_records(validation)
@@ -243,6 +289,12 @@ def _failure_codes(failures: list[dict[str, Any]]) -> list[str]:
     ]
 
 
+def _string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, str)]
+
+
 def _first_failure(failures: list[dict[str, Any]]) -> dict[str, str]:
     if not failures:
         return {"code": "", "message": "", "path": ""}
@@ -257,29 +309,40 @@ def _first_failure(failures: list[dict[str, Any]]) -> dict[str, str]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=INDEX_PATH)
+    parser.add_argument("--filters-output", type=Path, default=FILTERS_PATH)
     parser.add_argument(
         "--check",
         action="store_true",
-        help="fail if the existing index does not match generated content",
+        help="fail if existing generated files do not match generated content",
     )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    expected = build_failure_example_index()
+    expected_index = build_failure_example_index()
+    expected_filters = build_failure_example_filter_listing(expected_index)
     if args.check:
-        actual = json.loads(args.output.read_text(encoding="utf-8"))
-        if actual != expected:
+        actual_index = json.loads(args.output.read_text(encoding="utf-8"))
+        actual_filters = json.loads(args.filters_output.read_text(encoding="utf-8"))
+        if actual_index != expected_index:
             print(f"{args.output} is out of date")
+            return 1
+        if actual_filters != expected_filters:
+            print(f"{args.filters_output} is out of date")
             return 1
         return 0
 
     args.output.write_text(
-        json.dumps(expected, indent=2, sort_keys=True) + "\n",
+        json.dumps(expected_index, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    args.filters_output.write_text(
+        json.dumps(expected_filters, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     print(args.output)
+    print(args.filters_output)
     return 0
 
 

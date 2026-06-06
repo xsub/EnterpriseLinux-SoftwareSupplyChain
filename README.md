@@ -481,7 +481,9 @@ Validation failure examples are documented in
 [`docs/Validation Failure Examples.md`](docs/Validation%20Failure%20Examples.md).
 The machine-readable example index is committed at
 [`docs/validation-failure-example-index.json`](docs/validation-failure-example-index.json)
-and can be emitted from the CLI:
+and the filter listing fixture is committed at
+[`docs/validation-failure-example-filters.json`](docs/validation-failure-example-filters.json).
+Both can be emitted from the CLI:
 
 ```bash
 edgp failure-examples

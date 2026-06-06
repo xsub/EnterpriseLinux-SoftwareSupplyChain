@@ -3,12 +3,16 @@
 import json
 from pathlib import Path
 
-from scripts.generate_failure_example_index import build_failure_example_index
+from scripts.generate_failure_example_index import (
+    build_failure_example_filter_listing,
+    build_failure_example_index,
+)
 from src.cli import main
 from src.schema_validation import validate_target
 
 
 INDEX_PATH = Path("docs/validation-failure-example-index.json")
+FILTERS_PATH = Path("docs/validation-failure-example-filters.json")
 
 
 def test_failure_example_index_matches_committed_fixtures() -> None:
@@ -36,6 +40,23 @@ def test_failure_example_index_matches_documented_schema() -> None:
 
     assert report["ok"] is True
     assert report["contract"] == "edgp.validation.failure.example.index.v1"
+
+
+def test_failure_example_filter_listing_matches_committed_fixture() -> None:
+    listing = json.loads(FILTERS_PATH.read_text(encoding="utf-8"))
+
+    assert listing == build_failure_example_filter_listing()
+    assert listing["schema"] == "edgp.validation.failure.example.filters.v1"
+    assert listing["sourceSchema"] == "edgp.validation.failure.example.index.v1"
+    assert listing["exampleCount"] == 26
+    assert "manifest-invalid" in listing["ids"]
+
+
+def test_failure_example_filter_listing_matches_documented_schema() -> None:
+    report = validate_target(FILTERS_PATH)
+
+    assert report["ok"] is True
+    assert report["contract"] == "edgp.validation.failure.example.filters.v1"
 
 
 def test_cli_failure_examples_emits_generated_index(capsys) -> None:
@@ -120,6 +141,7 @@ def test_cli_failure_examples_lists_available_filter_values(capsys) -> None:
     assert main(["failure-examples", "--list-codes"]) == 0
 
     payload = json.loads(capsys.readouterr().out)
+    assert payload == build_failure_example_filter_listing()
     assert payload["schema"] == "edgp.validation.failure.example.filters.v1"
     assert payload["sourceSchema"] == "edgp.validation.failure.example.index.v1"
     assert payload["exampleCount"] == 26

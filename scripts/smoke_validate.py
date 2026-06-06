@@ -24,6 +24,9 @@ REPORT_BUNDLE_VERIFICATION_SCHEMA_PATH = (
 )
 SCHEMA_INDEX_PATH = REPO_ROOT / "docs" / "schemas" / "index.json"
 FAILURE_EXAMPLE_INDEX_PATH = REPO_ROOT / "docs" / "validation-failure-example-index.json"
+FAILURE_EXAMPLE_FILTERS_PATH = (
+    REPO_ROOT / "docs" / "validation-failure-example-filters.json"
+)
 REPORT_JSON_SCHEMA_CONTRACTS = {
     "edgp.graph.snapshot.v1": REPO_ROOT
     / "docs"
@@ -341,6 +344,7 @@ def _assert_failure_example_index_document() -> None:
     index = json.loads(FAILURE_EXAMPLE_INDEX_PATH.read_text(encoding="utf-8"))
     cli_index = _run_cli(["failure-examples"])
     assert cli_index == index
+    filter_fixture = json.loads(FAILURE_EXAMPLE_FILTERS_PATH.read_text(encoding="utf-8"))
     filtered_index = _run_cli(["failure-examples", "--code", "manifestInvalid"])
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "manifest-invalid"
@@ -362,19 +366,16 @@ def _assert_failure_example_index_document() -> None:
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "manifest-invalid"
     filter_summary = _run_cli(["failure-examples", "--list-codes"])
+    assert filter_summary == filter_fixture
     assert filter_summary["schema"] == "edgp.validation.failure.example.filters.v1"
     assert filter_summary["sourceSchema"] == "edgp.validation.failure.example.index.v1"
     assert filter_summary["exampleCount"] == 26
     assert "manifest-invalid" in filter_summary["ids"]
     assert "bundle.manifestInvalid" in filter_summary["validationFailureCodes"]
     assert "manifestInvalid" in filter_summary["verificationFailureCodes"]
-    with tempfile.TemporaryDirectory() as temp_dir:
-        filter_summary_path = Path(temp_dir) / "failure-example-filters.json"
-        filter_summary_path.write_text(
-            json.dumps(filter_summary, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
-        validation = _run_cli(["validate", "--path", str(filter_summary_path)])
+    validation = _run_cli(
+        ["validate", "--path", "docs/validation-failure-example-filters.json"]
+    )
     assert validation["ok"] is True
     assert validation["contract"] == "edgp.validation.failure.example.filters.v1"
     completed = subprocess.run(
