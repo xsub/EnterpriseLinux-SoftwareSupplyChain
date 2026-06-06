@@ -212,6 +212,13 @@ def build_failure_example_filter_listing(
                 if isinstance(entry.get("id"), str) and entry.get("id")
             }
         ),
+        "contracts": sorted(
+            {
+                str(entry.get("contract", ""))
+                for entry in entries
+                if isinstance(entry.get("contract"), str) and entry.get("contract")
+            }
+        ),
         "targetTypes": sorted(
             {
                 str(entry.get("targetType", ""))

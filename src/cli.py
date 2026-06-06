@@ -170,6 +170,7 @@ def _format_failure_example_filter_summary(summary: dict[str, Any]) -> str:
                 f"schema={summary.get('schema', 'unknown')}"
             ),
             f"ids={','.join(_string_list(summary.get('ids', [])))}",
+            f"contracts={','.join(_string_list(summary.get('contracts', [])))}",
             f"targetTypes={','.join(_string_list(summary.get('targetTypes', [])))}",
             f"validationFailureCodes={','.join(_string_list(summary.get('validationFailureCodes', [])))}",
             f"verificationFailureCodes={','.join(_string_list(summary.get('verificationFailureCodes', [])))}",
@@ -182,12 +183,19 @@ def _filter_failure_example_index(
     *,
     ids: Sequence[str],
     codes: Sequence[str],
+    contracts: Sequence[str],
     target_types: Sequence[str],
 ) -> dict[str, Any]:
     wanted_ids = {id_value for id_value in ids if id_value}
     wanted_codes = {code for code in codes if code}
+    wanted_contracts = {contract for contract in contracts if contract}
     wanted_target_types = {target_type for target_type in target_types if target_type}
-    if not wanted_ids and not wanted_codes and not wanted_target_types:
+    if (
+        not wanted_ids
+        and not wanted_codes
+        and not wanted_contracts
+        and not wanted_target_types
+    ):
         return index
     examples = index.get("examples", [])
     if not isinstance(examples, list):
@@ -200,6 +208,7 @@ def _filter_failure_example_index(
             entry,
             wanted_ids=wanted_ids,
             wanted_codes=wanted_codes,
+            wanted_contracts=wanted_contracts,
             wanted_target_types=wanted_target_types,
         )
     ]
@@ -214,9 +223,12 @@ def _matches_failure_example_filters(
     *,
     wanted_ids: set[str],
     wanted_codes: set[str],
+    wanted_contracts: set[str],
     wanted_target_types: set[str],
 ) -> bool:
     if wanted_ids and entry.get("id") not in wanted_ids:
+        return False
+    if wanted_contracts and entry.get("contract") not in wanted_contracts:
         return False
     if wanted_target_types and entry.get("targetType") not in wanted_target_types:
         return False
@@ -708,6 +720,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="filter examples by validation or verification failure code",
     )
     failure_examples.add_argument(
+        "--contract",
+        action="append",
+        default=[],
+        help="filter examples by documented schema contract",
+    )
+    failure_examples.add_argument(
         "--target-type",
         action="append",
         choices=["json-file", "report-bundle"],
@@ -963,6 +981,7 @@ def main(argv: list[str] | None = None) -> int:
             build_failure_example_index(),
             ids=args.id,
             codes=args.code,
+            contracts=args.contract,
             target_types=args.target_type,
         )
         if args.list_codes:

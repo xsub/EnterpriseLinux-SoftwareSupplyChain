@@ -123,6 +123,8 @@ surfaces are:
   JSON Schema and smoke validation against generated filter output.
 - Filter validation failure examples by validation or verifier failure code from
   the CLI.
+- Filter validation failure examples by documented schema contract from the
+  CLI.
 - Filter validation failure examples by target artifact type from the CLI.
 - Filter validation failure examples by stable example id from the CLI.
 - List available validation failure example ids, target types, validation
@@ -267,4 +269,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Filter validation failure examples by documented contract from the CLI.
+- Add a compact README table for validation failure example filter switches.

@@ -355,6 +355,11 @@ def _assert_failure_example_index_document() -> None:
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "graph-missing-edge-count"
     filtered_index = _run_cli(
+        ["failure-examples", "--contract", "edgp.graph.snapshot.v1"]
+    )
+    assert filtered_index["exampleCount"] == 1
+    assert filtered_index["examples"][0]["id"] == "graph-missing-edge-count"
+    filtered_index = _run_cli(
         [
             "failure-examples",
             "--target-type",
@@ -371,6 +376,7 @@ def _assert_failure_example_index_document() -> None:
     assert filter_summary["sourceSchema"] == "edgp.validation.failure.example.index.v1"
     assert filter_summary["exampleCount"] == 26
     assert "manifest-invalid" in filter_summary["ids"]
+    assert "edgp.report.bundle.v1" in filter_summary["contracts"]
     assert "bundle.manifestInvalid" in filter_summary["validationFailureCodes"]
     assert "manifestInvalid" in filter_summary["verificationFailureCodes"]
     validation = _run_cli(
@@ -465,6 +471,7 @@ def _assert_failure_example_index_document() -> None:
         "OK examples=1 schema=edgp.validation.failure.example.filters.v1"
     )
     assert "ids=graph-missing-edge-count" in completed.stdout
+    assert "contracts=edgp.graph.snapshot.v1" in completed.stdout
     assert "validationFailureCodes=requiredMissing" in completed.stdout
     assert index["schema"] == "edgp.validation.failure.example.index.v1"
     assert index["generatedBy"] == "scripts/generate_failure_example_index.py"

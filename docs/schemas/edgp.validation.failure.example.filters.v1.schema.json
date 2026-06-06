@@ -9,6 +9,14 @@
       "minimum": 0,
       "type": "integer"
     },
+    "contracts": {
+      "description": "Documented schema contracts available after any requested filters are applied.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
     "ids": {
       "description": "Stable example identifiers available after any requested filters are applied.",
       "items": {
@@ -58,6 +66,7 @@
     "schema",
     "sourceSchema",
     "exampleCount",
+    "contracts",
     "ids",
     "targetTypes",
     "validationFailureCodes",

@@ -49,6 +49,8 @@ def test_failure_example_filter_listing_matches_committed_fixture() -> None:
     assert listing["schema"] == "edgp.validation.failure.example.filters.v1"
     assert listing["sourceSchema"] == "edgp.validation.failure.example.index.v1"
     assert listing["exampleCount"] == 26
+    assert "edgp.graph.snapshot.v1" in listing["contracts"]
+    assert "edgp.report.bundle.v1" in listing["contracts"]
     assert "manifest-invalid" in listing["ids"]
 
 
@@ -150,6 +152,7 @@ def test_cli_failure_examples_lists_available_filter_values(capsys) -> None:
     assert "manifest-invalid" in payload["ids"]
     assert "json-file" in payload["targetTypes"]
     assert "report-bundle" in payload["targetTypes"]
+    assert "edgp.report.bundle.v1" in payload["contracts"]
     assert "bundle.manifestInvalid" in payload["validationFailureCodes"]
     assert "requiredMissing" in payload["validationFailureCodes"]
     assert "manifestInvalid" in payload["verificationFailureCodes"]
@@ -166,6 +169,14 @@ def test_cli_failure_example_filter_listing_matches_documented_schema(
 
     assert report["ok"] is True
     assert report["contract"] == "edgp.validation.failure.example.filters.v1"
+
+
+def test_cli_failure_examples_filters_by_contract(capsys) -> None:
+    assert main(["failure-examples", "--contract", "edgp.graph.snapshot.v1"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["exampleCount"] == 1
+    assert payload["examples"][0]["id"] == "graph-missing-edge-count"
 
 
 def test_cli_failure_examples_lists_filtered_filter_values_as_text(capsys) -> None:
@@ -188,5 +199,6 @@ def test_cli_failure_examples_lists_filtered_filter_values_as_text(capsys) -> No
         "OK examples=1 schema=edgp.validation.failure.example.filters.v1"
     )
     assert "ids=graph-missing-edge-count" in text
+    assert "contracts=edgp.graph.snapshot.v1" in text
     assert "targetTypes=json-file" in text
     assert "validationFailureCodes=requiredMissing" in text

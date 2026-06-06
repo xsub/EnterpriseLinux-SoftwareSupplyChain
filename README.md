@@ -489,6 +489,7 @@ Both can be emitted from the CLI:
 edgp failure-examples
 edgp failure-examples --format text
 edgp failure-examples --list-codes
+edgp failure-examples --contract edgp.graph.snapshot.v1 --format text
 edgp failure-examples --target-type report-bundle --code manifestInvalid
 ```
 

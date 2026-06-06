@@ -18,9 +18,9 @@ Regenerate or check it with
 
 ## CLI Index Workflows
 
-Use `failure-examples --list-codes` to discover the stable IDs, target artifact
-types, validation failure codes, and verifier failure codes available in the
-committed example index:
+Use `failure-examples --list-codes` to discover the stable IDs, documented
+contracts, target artifact types, validation failure codes, and verifier
+failure codes available in the committed example index:
 
 ```bash
 python -B -m src.cli failure-examples --list-codes
@@ -36,9 +36,21 @@ python -B -m src.cli failure-examples --target-type json-file --list-codes --for
 ```text
 OK examples=1 schema=edgp.validation.failure.example.filters.v1
 ids=graph-missing-edge-count
+contracts=edgp.graph.snapshot.v1
 targetTypes=json-file
 validationFailureCodes=requiredMissing
 verificationFailureCodes=
+```
+
+Use `--contract` to select examples for one documented schema contract:
+
+```bash
+python -B -m src.cli failure-examples --contract edgp.graph.snapshot.v1 --format text
+```
+
+```text
+OK examples=1 schema=edgp.validation.failure.example.index.v1
+graph-missing-edge-count targetType=json-file contract=edgp.graph.snapshot.v1 failureCodes=requiredMissing target=tests/fixtures/invalid-snapshot-missing-edge-count.json
 ```
 
 Use `--id` when a workbench or RAG context already knows the stable example ID:

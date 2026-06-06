@@ -1,4 +1,8 @@
 {
+  "contracts": [
+    "edgp.graph.snapshot.v1",
+    "edgp.report.bundle.v1"
+  ],
   "exampleCount": 26,
   "ids": [
     "bundle-digest-invalid",
