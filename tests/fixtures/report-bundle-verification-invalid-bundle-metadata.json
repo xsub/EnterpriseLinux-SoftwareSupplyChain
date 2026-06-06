@@ -1,0 +1,18 @@
+{
+  "bundleDir": "<bundle-dir>",
+  "bundleSha256": "<bundleSha256>",
+  "failures": [
+    {
+      "code": "bundleInvalid",
+      "message": "bundle must be an object when present",
+      "path": "<bundle-dir>/manifest.json"
+    }
+  ],
+  "manifest": "manifest.json",
+  "ok": false,
+  "schema": "edgp.report.bundle.verification.v1",
+  "summary": {
+    "failures": 1,
+    "reports": 1
+  }
+}

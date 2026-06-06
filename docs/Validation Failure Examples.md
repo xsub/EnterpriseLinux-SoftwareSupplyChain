@@ -297,3 +297,53 @@ Text output:
 FAIL reports=1 failures=1 bundleSha256=12500a13d5e0a3434417387f5e769830695cbe81498023f1fd70608c904a08bf firstFailure=reportDigestInvalid
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportDigestInvalid
 ```
+
+## Invalid Bundle Metadata Field
+
+The fixture
+[`tests/fixtures/invalid-bundle-metadata-bundle`](../tests/fixtures/invalid-bundle-metadata-bundle)
+keeps a self-consistent manifest fingerprint but sets the optional `bundle`
+metadata field to a string instead of an object. The normalized verifier and
+validator results are committed as
+[`report-bundle-verification-invalid-bundle-metadata.json`](../tests/fixtures/report-bundle-verification-invalid-bundle-metadata.json)
+and
+[`validation-failure-invalid-bundle-metadata.json`](../tests/fixtures/validation-failure-invalid-bundle-metadata.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-bundle-metadata-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-bundle-metadata-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=39f1ed21e8e86005406b9ea5e20cc15cdf275c5fbb7fce63f9e5542b20294011 firstFailure=bundleInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.bundleInvalid
+```
+
+## Invalid Bundle Index Path
+
+The fixture
+[`tests/fixtures/invalid-index-path-bundle`](../tests/fixtures/invalid-index-path-bundle)
+keeps a self-consistent manifest fingerprint but sets `index` to a path outside
+the bundle directory. The normalized verifier and validator results are
+committed as
+[`report-bundle-verification-invalid-index-path.json`](../tests/fixtures/report-bundle-verification-invalid-index-path.json)
+and
+[`validation-failure-invalid-index-path.json`](../tests/fixtures/validation-failure-invalid-index-path.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-index-path-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-index-path-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=bfce2379da03171688e7810e8a2515704237e75c1322ef96f892f83efefb494b firstFailure=indexInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.indexInvalid
+```

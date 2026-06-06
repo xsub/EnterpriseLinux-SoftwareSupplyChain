@@ -132,6 +132,20 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
                 "report-bundle-verification-invalid-report-digest.json"
             ),
         ),
+        (
+            Path("tests/fixtures/invalid-bundle-metadata-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-bundle-metadata.json"
+            ),
+        ),
+        (
+            Path("tests/fixtures/invalid-index-path-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-index-path.json"
+            ),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

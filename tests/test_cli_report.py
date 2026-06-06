@@ -281,6 +281,28 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.reportDigestInvalid",
             1,
         ),
+        (
+            Path("tests/fixtures/invalid-bundle-metadata-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-bundle-metadata.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-bundle-metadata.json"),
+            "bundleInvalid",
+            "bundle.bundleInvalid",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-index-path-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-index-path.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-index-path.json"),
+            "indexInvalid",
+            "bundle.indexInvalid",
+            1,
+        ),
     ]
 
     for (

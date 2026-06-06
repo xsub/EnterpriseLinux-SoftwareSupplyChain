@@ -102,3 +102,5 @@ cases:
 - [`tests/fixtures/report-bundle-verification-invalid-report-unknown-field.json`](../tests/fixtures/report-bundle-verification-invalid-report-unknown-field.json)
 - [`tests/fixtures/report-bundle-verification-invalid-bundle-source-kind.json`](../tests/fixtures/report-bundle-verification-invalid-bundle-source-kind.json)
 - [`tests/fixtures/report-bundle-verification-invalid-report-digest.json`](../tests/fixtures/report-bundle-verification-invalid-report-digest.json)
+- [`tests/fixtures/report-bundle-verification-invalid-bundle-metadata.json`](../tests/fixtures/report-bundle-verification-invalid-bundle-metadata.json)
+- [`tests/fixtures/report-bundle-verification-invalid-index-path.json`](../tests/fixtures/report-bundle-verification-invalid-index-path.json)

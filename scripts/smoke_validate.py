@@ -1287,6 +1287,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.reportDigestInvalid",
             1,
         ),
+        (
+            "invalid-bundle-metadata-bundle",
+            "report-bundle-verification-invalid-bundle-metadata.json",
+            "validation-failure-invalid-bundle-metadata.json",
+            "bundleInvalid",
+            "bundle.bundleInvalid",
+            1,
+        ),
+        (
+            "invalid-index-path-bundle",
+            "report-bundle-verification-invalid-index-path.json",
+            "validation-failure-invalid-index-path.json",
+            "indexInvalid",
+            "bundle.indexInvalid",
+            1,
+        ),
     ]
     for (
         bundle_name,
