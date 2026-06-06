@@ -343,6 +343,9 @@ def _assert_failure_example_index_document() -> None:
     filtered_index = _run_cli(["failure-examples", "--code", "manifestInvalid"])
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "manifest-invalid"
+    filtered_index = _run_cli(["failure-examples", "--id", "manifest-invalid"])
+    assert filtered_index["exampleCount"] == 1
+    assert filtered_index["examples"][0]["id"] == "manifest-invalid"
     filtered_index = _run_cli(["failure-examples", "--target-type", "json-file"])
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "graph-missing-edge-count"
@@ -383,6 +386,8 @@ def _assert_failure_example_index_document() -> None:
             "-m",
             "src.cli",
             "failure-examples",
+            "--id",
+            "manifest-invalid",
             "--code",
             "bundle.manifestInvalid",
             "--format",

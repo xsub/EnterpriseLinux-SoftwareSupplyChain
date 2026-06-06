@@ -161,12 +161,14 @@ def _format_failure_example_index(index: dict[str, Any]) -> str:
 def _filter_failure_example_index(
     index: dict[str, Any],
     *,
+    ids: Sequence[str],
     codes: Sequence[str],
     target_types: Sequence[str],
 ) -> dict[str, Any]:
+    wanted_ids = {id_value for id_value in ids if id_value}
     wanted_codes = {code for code in codes if code}
     wanted_target_types = {target_type for target_type in target_types if target_type}
-    if not wanted_codes and not wanted_target_types:
+    if not wanted_ids and not wanted_codes and not wanted_target_types:
         return index
     examples = index.get("examples", [])
     if not isinstance(examples, list):
@@ -177,6 +179,7 @@ def _filter_failure_example_index(
         if isinstance(entry, dict)
         and _matches_failure_example_filters(
             entry,
+            wanted_ids=wanted_ids,
             wanted_codes=wanted_codes,
             wanted_target_types=wanted_target_types,
         )
@@ -190,9 +193,12 @@ def _filter_failure_example_index(
 def _matches_failure_example_filters(
     entry: dict[str, Any],
     *,
+    wanted_ids: set[str],
     wanted_codes: set[str],
     wanted_target_types: set[str],
 ) -> bool:
+    if wanted_ids and entry.get("id") not in wanted_ids:
+        return False
     if wanted_target_types and entry.get("targetType") not in wanted_target_types:
         return False
     if not wanted_codes:
@@ -666,6 +672,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     failure_examples.add_argument("--format", choices=["json", "text"], default="json")
     failure_examples.add_argument(
+        "--id",
+        action="append",
+        default=[],
+        help="filter examples by stable example id",
+    )
+    failure_examples.add_argument(
         "--code",
         action="append",
         default=[],
@@ -925,6 +937,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "failure-examples":
         index = _filter_failure_example_index(
             build_failure_example_index(),
+            ids=args.id,
             codes=args.code,
             target_types=args.target_type,
         )

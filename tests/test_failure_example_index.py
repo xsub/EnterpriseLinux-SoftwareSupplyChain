@@ -66,6 +66,14 @@ def test_cli_failure_examples_filters_by_validation_code(capsys) -> None:
     assert payload["examples"][0]["id"] == "manifest-invalid"
 
 
+def test_cli_failure_examples_filters_by_id(capsys) -> None:
+    assert main(["failure-examples", "--id", "manifest-invalid"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["exampleCount"] == 1
+    assert payload["examples"][0]["id"] == "manifest-invalid"
+
+
 def test_cli_failure_examples_filters_by_verification_code(capsys) -> None:
     assert (
         main(["failure-examples", "--code", "manifestInvalid", "--format", "text"])
@@ -92,6 +100,8 @@ def test_cli_failure_examples_combines_filters(capsys) -> None:
         main(
             [
                 "failure-examples",
+                "--id",
+                "manifest-invalid",
                 "--target-type",
                 "report-bundle",
                 "--code",
