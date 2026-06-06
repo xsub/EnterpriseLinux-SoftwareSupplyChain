@@ -5,6 +5,11 @@ and failing checks. Failure records use stable `code`, `message`, and `path`
 fields so terminal users, future workbench views, and RAG context builders can
 triage malformed artifacts without parsing prose.
 
+A machine-readable index of committed examples is available at
+[`docs/validation-failure-example-index.json`](validation-failure-example-index.json).
+Regenerate or check it with
+`python -B scripts/generate_failure_example_index.py --check`.
+
 ## Missing Required Field
 
 The fixture

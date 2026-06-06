@@ -110,6 +110,8 @@ surfaces are:
   bundle manifests and invalid manifest JSON.
 - Provide committed validation and verification failure examples for non-object
   bundle manifests, with smoke coverage for every stable verifier failure code.
+- Generate a machine-readable validation failure example index for workbench
+  and RAG ingestion.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -232,10 +234,10 @@ python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check
+python -B scripts/generate_failure_example_index.py --check
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
 ## Next Vertical Options
 
-- Generate a machine-readable validation failure example index for workbench
-  and RAG ingestion.
+- Add a CLI subcommand to emit the validation failure example index.

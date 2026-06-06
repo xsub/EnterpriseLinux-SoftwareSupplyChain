@@ -1,0 +1,704 @@
+{
+  "exampleCount": 26,
+  "examples": [
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-snapshot-missing-edge-count.json --format text"
+      },
+      "contract": "edgp.graph.snapshot.v1",
+      "firstFailure": {
+        "code": "requiredMissing",
+        "message": "Missing required field edges",
+        "path": "$.stats.edges"
+      },
+      "id": "graph-missing-edge-count",
+      "target": "tests/fixtures/invalid-snapshot-missing-edge-count.json",
+      "targetType": "json-file",
+      "validationFailureCodes": [
+        "requiredMissing"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-missing-edge-count.json"
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/tampered-report-bundle-manifest --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/tampered-report-bundle-manifest --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.bundleDigestMismatch",
+        "message": "bundleSha256 does not match canonical manifest payload",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "bundle-digest-mismatch",
+      "target": "tests/fixtures/tampered-report-bundle-manifest",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.bundleDigestMismatch"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-tampered-bundle-manifest.json",
+      "verificationFailureCodes": [
+        "bundleDigestMismatch"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-tampered-manifest.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/tampered-report-bundle-member --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/tampered-report-bundle-member --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.htmlDigestMismatch",
+        "message": "reports[1] digest mismatch",
+        "path": "<bundle-dir>/001-snapshot-right.html"
+      },
+      "id": "html-digest-mismatch",
+      "target": "tests/fixtures/tampered-report-bundle-member",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.htmlDigestMismatch"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-tampered-bundle-member.json",
+      "verificationFailureCodes": [
+        "htmlDigestMismatch"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-tampered-member.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/missing-html-report-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/missing-html-report-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.htmlMissing",
+        "message": "reports[1] referenced file is missing",
+        "path": "<bundle-dir>/missing-snapshot.html"
+      },
+      "id": "html-missing",
+      "target": "tests/fixtures/missing-html-report-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.htmlMissing"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-missing-bundle-html.json",
+      "verificationFailureCodes": [
+        "htmlMissing"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-missing-html.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/missing-source-report-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/missing-source-report-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.sourceMissing",
+        "message": "reports[1] referenced file is missing",
+        "path": "<bundle-dir>/missing-source.json"
+      },
+      "id": "source-missing",
+      "target": "tests/fixtures/missing-source-report-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.sourceMissing"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-missing-bundle-source.json",
+      "verificationFailureCodes": [
+        "sourceMissing"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-missing-source.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-manifest-missing-report-count-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-missing-report-count-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.manifestMissingField",
+        "message": "Missing top-level field: reportCount",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "manifest-missing-field",
+      "target": "tests/fixtures/invalid-manifest-missing-report-count-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.manifestMissingField",
+        "bundle.reportCountMismatch"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-manifest-missing-report-count.json",
+      "verificationFailureCodes": [
+        "manifestMissingField",
+        "reportCountMismatch"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-manifest-missing-report-count.json",
+      "verificationSummary": {
+        "failures": 2,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-missing-title-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-missing-title-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportMissingField",
+        "message": "reports[1] missing field: title",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "report-missing-field",
+      "target": "tests/fixtures/invalid-report-missing-title-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportMissingField",
+        "bundle.reportFieldInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-report-missing-title.json",
+      "verificationFailureCodes": [
+        "reportMissingField",
+        "reportFieldInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-report-missing-title.json",
+      "verificationSummary": {
+        "failures": 2,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-manifest-unknown-field-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-unknown-field-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.manifestUnknownField",
+        "message": "Unsupported top-level field: unexpected",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "manifest-unknown-field",
+      "target": "tests/fixtures/invalid-manifest-unknown-field-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.manifestUnknownField"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-manifest-unknown-field.json",
+      "verificationFailureCodes": [
+        "manifestUnknownField"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-manifest-unknown-field.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-unknown-field-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-unknown-field-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportUnknownField",
+        "message": "reports[1] has unsupported field: unexpected",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "report-unknown-field",
+      "target": "tests/fixtures/invalid-report-unknown-field-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportUnknownField"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-report-unknown-field.json",
+      "verificationFailureCodes": [
+        "reportUnknownField"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-report-unknown-field.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-bundle-source-kind-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-bundle-source-kind-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.bundleSourceKindInvalid",
+        "message": "bundle.sourceKind is not a supported public source kind",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "bundle-source-kind-invalid",
+      "target": "tests/fixtures/invalid-bundle-source-kind-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.bundleSourceKindInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-bundle-source-kind.json",
+      "verificationFailureCodes": [
+        "bundleSourceKindInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-bundle-source-kind.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-digest-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-digest-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportDigestInvalid",
+        "message": "reports[1].htmlSha256 must be a SHA-256 hex digest",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "report-digest-invalid",
+      "target": "tests/fixtures/invalid-report-digest-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportDigestInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-report-digest.json",
+      "verificationFailureCodes": [
+        "reportDigestInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-report-digest.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-bundle-metadata-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-bundle-metadata-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.bundleInvalid",
+        "message": "bundle must be an object when present",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "bundle-invalid",
+      "target": "tests/fixtures/invalid-bundle-metadata-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.bundleInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-bundle-metadata.json",
+      "verificationFailureCodes": [
+        "bundleInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-bundle-metadata.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-index-path-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-index-path-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.indexInvalid",
+        "message": "index must be a bundle-local relative path",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "index-invalid",
+      "target": "tests/fixtures/invalid-index-path-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.indexInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-index-path.json",
+      "verificationFailureCodes": [
+        "indexInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-index-path.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-manifest-schema-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-schema-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.manifestSchemaMismatch",
+        "message": "Expected schema edgp.report.bundle.v1",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "manifest-schema-mismatch",
+      "target": "tests/fixtures/invalid-manifest-schema-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.manifestSchemaMismatch"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-manifest-schema.json",
+      "verificationFailureCodes": [
+        "manifestSchemaMismatch"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-manifest-schema.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-bundle-digest-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-bundle-digest-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.bundleDigestInvalid",
+        "message": "bundleSha256 must be a SHA-256 hex digest",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "bundle-digest-invalid",
+      "target": "tests/fixtures/invalid-bundle-digest-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.bundleDigestInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-bundle-digest.json",
+      "verificationFailureCodes": [
+        "bundleDigestInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-bundle-digest.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-reports-list-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-reports-list-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportsInvalid",
+        "message": "reports must be a non-empty list",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "reports-invalid",
+      "target": "tests/fixtures/invalid-reports-list-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportsInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-reports-list.json",
+      "verificationFailureCodes": [
+        "reportsInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-reports-list.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 0
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-entry-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-entry-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportInvalid",
+        "message": "reports[1] must be an object",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "report-invalid",
+      "target": "tests/fixtures/invalid-report-entry-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-report-entry.json",
+      "verificationFailureCodes": [
+        "reportInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-report-entry.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-field-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-field-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportFieldInvalid",
+        "message": "reports[1].title must be a non-empty string",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "report-field-invalid",
+      "target": "tests/fixtures/invalid-report-field-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportFieldInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-report-field.json",
+      "verificationFailureCodes": [
+        "reportFieldInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-report-field.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-summary-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-summary-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportSummaryInvalid",
+        "message": "reports[1].summary must be an object",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "report-summary-invalid",
+      "target": "tests/fixtures/invalid-report-summary-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportSummaryInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-report-summary.json",
+      "verificationFailureCodes": [
+        "reportSummaryInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-report-summary.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-count-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-count-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportCountMismatch",
+        "message": "reportCount must equal the number of reports",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "report-count-mismatch",
+      "target": "tests/fixtures/invalid-report-count-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportCountMismatch"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-report-count.json",
+      "verificationFailureCodes": [
+        "reportCountMismatch"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-report-count.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-href-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-href-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.reportHrefInvalid",
+        "message": "reports[1].href must be a bundle-local relative path",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "report-href-invalid",
+      "target": "tests/fixtures/invalid-report-href-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.reportHrefInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-report-href.json",
+      "verificationFailureCodes": [
+        "reportHrefInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-report-href.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/missing-index-report-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/missing-index-report-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.indexMissing",
+        "message": "Index HTML is missing",
+        "path": "<bundle-dir>/index.html"
+      },
+      "id": "index-missing",
+      "target": "tests/fixtures/missing-index-report-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.indexMissing"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-missing-index.json",
+      "verificationFailureCodes": [
+        "indexMissing"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-missing-index.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/source-digest-mismatch-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/source-digest-mismatch-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.sourceDigestMismatch",
+        "message": "reports[1] digest mismatch",
+        "path": "<bundle-dir>/source.json"
+      },
+      "id": "source-digest-mismatch",
+      "target": "tests/fixtures/source-digest-mismatch-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.sourceDigestMismatch"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-source-digest-mismatch.json",
+      "verificationFailureCodes": [
+        "sourceDigestMismatch"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-source-digest-mismatch.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 1
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/missing-manifest-report-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/missing-manifest-report-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.manifestMissing",
+        "message": "Missing manifest.json",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "manifest-missing",
+      "target": "tests/fixtures/missing-manifest-report-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.manifestMissing"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-missing-manifest.json",
+      "verificationFailureCodes": [
+        "manifestMissing"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-missing-manifest.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 0
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-json-manifest-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-json-manifest-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.manifestInvalidJson",
+        "message": "Expecting property name enclosed in double quotes: line 2 column 1 (char 2)",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "manifest-invalid-json",
+      "target": "tests/fixtures/invalid-json-manifest-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.manifestInvalidJson"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-json-manifest.json",
+      "verificationFailureCodes": [
+        "manifestInvalidJson"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-json-manifest.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 0
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle --format text",
+        "verifyText": "python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-type-bundle --format text"
+      },
+      "contract": "edgp.report.bundle.v1",
+      "firstFailure": {
+        "code": "bundle.manifestInvalid",
+        "message": "Manifest must be a JSON object",
+        "path": "<bundle-dir>/manifest.json"
+      },
+      "id": "manifest-invalid",
+      "target": "tests/fixtures/invalid-manifest-type-bundle",
+      "targetType": "report-bundle",
+      "validationFailureCodes": [
+        "bundle.manifestInvalid"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-invalid-manifest-type.json",
+      "verificationFailureCodes": [
+        "manifestInvalid"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-manifest-type.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 0
+      }
+    }
+  ],
+  "generatedBy": "scripts/generate_failure_example_index.py",
+  "schema": "edgp.validation.failure.example.index.v1"
+}

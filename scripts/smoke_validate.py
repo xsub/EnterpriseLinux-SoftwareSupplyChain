@@ -23,6 +23,7 @@ REPORT_BUNDLE_VERIFICATION_SCHEMA_PATH = (
     / "edgp.report.bundle.verification.v1.schema.json"
 )
 SCHEMA_INDEX_PATH = REPO_ROOT / "docs" / "schemas" / "index.json"
+FAILURE_EXAMPLE_INDEX_PATH = REPO_ROOT / "docs" / "validation-failure-example-index.json"
 REPORT_JSON_SCHEMA_CONTRACTS = {
     "edgp.graph.snapshot.v1": REPO_ROOT
     / "docs"
@@ -325,6 +326,27 @@ def _assert_schema_index_document() -> None:
         assert schema["jsonSchema"] == "https://json-schema.org/draft/2020-12/schema"
         assert schema["title"]
         assert schema["description"]
+
+
+def _assert_failure_example_index_document() -> None:
+    subprocess.run(
+        [sys.executable, "-B", "scripts/generate_failure_example_index.py", "--check"],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    index = json.loads(FAILURE_EXAMPLE_INDEX_PATH.read_text(encoding="utf-8"))
+    assert index["schema"] == "edgp.validation.failure.example.index.v1"
+    assert index["generatedBy"] == "scripts/generate_failure_example_index.py"
+    assert index["exampleCount"] == len(index["examples"])
+    assert index["exampleCount"] >= 25
+    validation_codes = {
+        code
+        for entry in index["examples"]
+        for code in entry["validationFailureCodes"]
+    }
+    assert {"requiredMissing", "bundle.manifestInvalid"} <= validation_codes
 
 
 def _assert_report_bundle_manifest_contract(
@@ -1692,6 +1714,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         ("report json schemas", _assert_report_json_schemas_document),
         ("schema index", _assert_schema_index_document),
+        ("failure example index", _assert_failure_example_index_document),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
         ("cargo lockfile snapshot", _assert_cargo_lockfile_snapshot),
