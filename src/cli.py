@@ -7,7 +7,7 @@ import json
 import shlex
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from src.advisory_overlay import build_advisory_report_from_file
 from src.adapters.cargo import CargoAdapter
@@ -156,6 +156,39 @@ def _format_failure_example_index(index: dict[str, Any]) -> str:
             )
         )
     return "\n".join(lines)
+
+
+def _filter_failure_example_index(
+    index: dict[str, Any],
+    *,
+    codes: Sequence[str],
+) -> dict[str, Any]:
+    wanted_codes = {code for code in codes if code}
+    if not wanted_codes:
+        return index
+    examples = index.get("examples", [])
+    if not isinstance(examples, list):
+        examples = []
+    filtered_examples = [
+        entry
+        for entry in examples
+        if isinstance(entry, dict)
+        and wanted_codes
+        & (
+            set(_string_list(entry.get("validationFailureCodes", [])))
+            | set(_string_list(entry.get("verificationFailureCodes", [])))
+        )
+    ]
+    filtered = dict(index)
+    filtered["exampleCount"] = len(filtered_examples)
+    filtered["examples"] = filtered_examples
+    return filtered
+
+
+def _string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, str)]
 
 
 def _command_string(argv: list[str]) -> str:
@@ -614,6 +647,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Emit the validation failure example index for workbench ingestion",
     )
     failure_examples.add_argument("--format", choices=["json", "text"], default="json")
+    failure_examples.add_argument(
+        "--code",
+        action="append",
+        default=[],
+        help="filter examples by validation or verification failure code",
+    )
 
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
@@ -859,7 +898,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if report["ok"] else 1
 
     if args.command == "failure-examples":
-        index = build_failure_example_index()
+        index = _filter_failure_example_index(
+            build_failure_example_index(),
+            codes=args.code,
+        )
         if args.format == "text":
             print(_format_failure_example_index(index))
         else:

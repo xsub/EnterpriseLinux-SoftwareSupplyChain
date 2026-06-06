@@ -340,6 +340,9 @@ def _assert_failure_example_index_document() -> None:
     index = json.loads(FAILURE_EXAMPLE_INDEX_PATH.read_text(encoding="utf-8"))
     cli_index = _run_cli(["failure-examples"])
     assert cli_index == index
+    filtered_index = _run_cli(["failure-examples", "--code", "manifestInvalid"])
+    assert filtered_index["exampleCount"] == 1
+    assert filtered_index["examples"][0]["id"] == "manifest-invalid"
     completed = subprocess.run(
         [
             sys.executable,
@@ -357,6 +360,27 @@ def _assert_failure_example_index_document() -> None:
     )
     assert completed.stdout.startswith(
         "OK examples=26 schema=edgp.validation.failure.example.index.v1"
+    )
+    assert "manifest-invalid targetType=report-bundle" in completed.stdout
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "failure-examples",
+            "--code",
+            "bundle.manifestInvalid",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.startswith(
+        "OK examples=1 schema=edgp.validation.failure.example.index.v1"
     )
     assert "manifest-invalid targetType=report-bundle" in completed.stdout
     assert index["schema"] == "edgp.validation.failure.example.index.v1"

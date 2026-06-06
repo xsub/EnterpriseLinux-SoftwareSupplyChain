@@ -56,3 +56,24 @@ def test_cli_failure_examples_emits_text_summary(capsys) -> None:
         "manifest-invalid targetType=report-bundle "
         "contract=edgp.report.bundle.v1 failureCodes=bundle.manifestInvalid"
     ) in text
+
+
+def test_cli_failure_examples_filters_by_validation_code(capsys) -> None:
+    assert main(["failure-examples", "--code", "bundle.manifestInvalid"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["exampleCount"] == 1
+    assert payload["examples"][0]["id"] == "manifest-invalid"
+
+
+def test_cli_failure_examples_filters_by_verification_code(capsys) -> None:
+    assert (
+        main(["failure-examples", "--code", "manifestInvalid", "--format", "text"])
+        == 0
+    )
+
+    text = capsys.readouterr().out
+    assert text.startswith(
+        "OK examples=1 schema=edgp.validation.failure.example.index.v1"
+    )
+    assert "manifest-invalid targetType=report-bundle" in text

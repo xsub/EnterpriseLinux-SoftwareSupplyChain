@@ -6,7 +6,7 @@
   "properties": {
     "exampleCount": {
       "description": "Number of indexed failure examples.",
-      "minimum": 1,
+      "minimum": 0,
       "type": "integer"
     },
     "examples": {
@@ -121,7 +121,6 @@
         ],
         "type": "object"
       },
-      "minItems": 1,
       "type": "array"
     },
     "generatedBy": {
