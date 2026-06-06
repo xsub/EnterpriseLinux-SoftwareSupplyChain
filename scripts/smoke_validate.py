@@ -1319,6 +1319,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.bundleDigestInvalid",
             1,
         ),
+        (
+            "invalid-reports-list-bundle",
+            "report-bundle-verification-invalid-reports-list.json",
+            "validation-failure-invalid-reports-list.json",
+            "reportsInvalid",
+            "bundle.reportsInvalid",
+            1,
+        ),
+        (
+            "invalid-report-entry-bundle",
+            "report-bundle-verification-invalid-report-entry.json",
+            "validation-failure-invalid-report-entry.json",
+            "reportInvalid",
+            "bundle.reportInvalid",
+            1,
+        ),
     ]
     for (
         bundle_name,
@@ -1358,14 +1374,16 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             text=True,
         )
         assert completed.returncode == 1
+        report_count = 0 if verify_code == "reportsInvalid" else 1
         if verify_code == "bundleDigestInvalid":
             assert completed.stdout.startswith(
-                f"FAIL reports=1 failures={failure_count} "
+                f"FAIL reports={report_count} failures={failure_count} "
             )
             assert "bundleSha256=" not in completed.stdout
         else:
             assert completed.stdout.startswith(
-                f"FAIL reports=1 failures={failure_count} bundleSha256="
+                f"FAIL reports={report_count} failures={failure_count} "
+                "bundleSha256="
             )
         assert f"firstFailure={verify_code}" in completed.stdout
 

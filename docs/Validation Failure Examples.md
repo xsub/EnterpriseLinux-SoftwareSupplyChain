@@ -398,3 +398,54 @@ Text output:
 FAIL reports=1 failures=1 firstFailure=bundleDigestInvalid
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.bundleDigestInvalid
 ```
+
+## Invalid Reports List
+
+The fixture
+[`tests/fixtures/invalid-reports-list-bundle`](../tests/fixtures/invalid-reports-list-bundle)
+keeps a self-consistent manifest fingerprint but sets `reports` to an empty
+list. The verifier treats report bundles as ingestible only when at least one
+report entry is present. The normalized verifier and validator results are
+committed as
+[`report-bundle-verification-invalid-reports-list.json`](../tests/fixtures/report-bundle-verification-invalid-reports-list.json)
+and
+[`validation-failure-invalid-reports-list.json`](../tests/fixtures/validation-failure-invalid-reports-list.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-reports-list-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-reports-list-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=0 failures=1 bundleSha256=f13f0b8a771476fec2a7c13dae3fe3c5ce723b00814272e4849a3aa5c81f89ab firstFailure=reportsInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportsInvalid
+```
+
+## Invalid Report Entry
+
+The fixture
+[`tests/fixtures/invalid-report-entry-bundle`](../tests/fixtures/invalid-report-entry-bundle)
+keeps a self-consistent manifest fingerprint but puts a scalar value inside the
+`reports` list instead of a report object. The normalized verifier and
+validator results are committed as
+[`report-bundle-verification-invalid-report-entry.json`](../tests/fixtures/report-bundle-verification-invalid-report-entry.json)
+and
+[`validation-failure-invalid-report-entry.json`](../tests/fixtures/validation-failure-invalid-report-entry.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-entry-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-report-entry-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=c1bce2d00332c228e50e12ffa57c95b11bfd0c392b8e304f024060f8cc59053d firstFailure=reportInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportInvalid
+```

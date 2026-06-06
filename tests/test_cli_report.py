@@ -325,6 +325,28 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.bundleDigestInvalid",
             1,
         ),
+        (
+            Path("tests/fixtures/invalid-reports-list-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-reports-list.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-reports-list.json"),
+            "reportsInvalid",
+            "bundle.reportsInvalid",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-report-entry-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-entry.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-report-entry.json"),
+            "reportInvalid",
+            "bundle.reportInvalid",
+            1,
+        ),
     ]
 
     for (
@@ -347,14 +369,16 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             == 1
         )
         verification_text = capsys.readouterr().out.strip()
+        report_count = 0 if verify_code == "reportsInvalid" else 1
         if verify_code == "bundleDigestInvalid":
             assert verification_text.startswith(
-                f"FAIL reports=1 failures={failure_count} "
+                f"FAIL reports={report_count} failures={failure_count} "
             )
             assert "bundleSha256=" not in verification_text
         else:
             assert verification_text.startswith(
-                f"FAIL reports=1 failures={failure_count} bundleSha256="
+                f"FAIL reports={report_count} failures={failure_count} "
+                "bundleSha256="
             )
         assert f"firstFailure={verify_code}" in verification_text
 

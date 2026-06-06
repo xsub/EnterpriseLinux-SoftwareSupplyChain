@@ -106,3 +106,5 @@ cases:
 - [`tests/fixtures/report-bundle-verification-invalid-index-path.json`](../tests/fixtures/report-bundle-verification-invalid-index-path.json)
 - [`tests/fixtures/report-bundle-verification-invalid-manifest-schema.json`](../tests/fixtures/report-bundle-verification-invalid-manifest-schema.json)
 - [`tests/fixtures/report-bundle-verification-invalid-bundle-digest.json`](../tests/fixtures/report-bundle-verification-invalid-bundle-digest.json)
+- [`tests/fixtures/report-bundle-verification-invalid-reports-list.json`](../tests/fixtures/report-bundle-verification-invalid-reports-list.json)
+- [`tests/fixtures/report-bundle-verification-invalid-report-entry.json`](../tests/fixtures/report-bundle-verification-invalid-report-entry.json)

@@ -1,0 +1,13 @@
+{
+  "bundle": {
+    "command": "edgp report-bundle --input tests/fixtures/snapshot-right.json --output-dir tests/fixtures/invalid-report-entry-bundle",
+    "sourceKind": "edgp-json"
+  },
+  "bundleSha256": "c1bce2d00332c228e50e12ffa57c95b11bfd0c392b8e304f024060f8cc59053d",
+  "index": "index.html",
+  "reportCount": 1,
+  "reports": [
+    "not-a-report-object"
+  ],
+  "schema": "edgp.report.bundle.v1"
+}
