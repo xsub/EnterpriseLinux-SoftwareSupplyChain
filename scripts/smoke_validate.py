@@ -337,6 +337,8 @@ def _assert_failure_example_index_document() -> None:
         text=True,
     )
     index = json.loads(FAILURE_EXAMPLE_INDEX_PATH.read_text(encoding="utf-8"))
+    cli_index = _run_cli(["failure-examples"])
+    assert cli_index == index
     assert index["schema"] == "edgp.validation.failure.example.index.v1"
     assert index["generatedBy"] == "scripts/generate_failure_example_index.py"
     assert index["exampleCount"] == len(index["examples"])

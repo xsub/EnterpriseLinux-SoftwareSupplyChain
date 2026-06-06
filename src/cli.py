@@ -30,6 +30,7 @@ from src.output.sbom_security import CycloneDXExporter
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
 from src.schema_validation import validate_target
+from scripts.generate_failure_example_index import build_failure_example_index
 
 
 def _demo_registry() -> RegistryMock:
@@ -579,6 +580,11 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--manifest-name", default="manifest.json")
     validate.add_argument("--format", choices=["json", "text"], default="json")
 
+    subparsers.add_parser(
+        "failure-examples",
+        help="Emit the validation failure example index for workbench ingestion",
+    )
+
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
     benchmark.add_argument("--fanout", type=int, default=3)
@@ -821,6 +827,10 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(_json(report))
         return 0 if report["ok"] else 1
+
+    if args.command == "failure-examples":
+        print(_json(build_failure_example_index()))
+        return 0
 
     if args.command == "benchmark":
         print(_json(run_synthetic_benchmark(nodes=args.nodes, fanout=args.fanout)))

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from scripts.generate_failure_example_index import build_failure_example_index
+from src.cli import main
 
 
 INDEX_PATH = Path("docs/validation-failure-example-index.json")
@@ -27,3 +28,10 @@ def test_failure_example_index_matches_committed_fixtures() -> None:
     assert "requiredMissing" in validation_codes
     assert "bundle.manifestInvalid" in validation_codes
     assert "bundle.sourceDigestMismatch" in validation_codes
+
+
+def test_cli_failure_examples_emits_generated_index(capsys) -> None:
+    assert main(["failure-examples"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload == build_failure_example_index()
