@@ -98,3 +98,5 @@ cases:
 - [`tests/fixtures/report-bundle-verification-missing-source.json`](../tests/fixtures/report-bundle-verification-missing-source.json)
 - [`tests/fixtures/report-bundle-verification-invalid-manifest-missing-report-count.json`](../tests/fixtures/report-bundle-verification-invalid-manifest-missing-report-count.json)
 - [`tests/fixtures/report-bundle-verification-invalid-report-missing-title.json`](../tests/fixtures/report-bundle-verification-invalid-report-missing-title.json)
+- [`tests/fixtures/report-bundle-verification-invalid-manifest-unknown-field.json`](../tests/fixtures/report-bundle-verification-invalid-manifest-unknown-field.json)
+- [`tests/fixtures/report-bundle-verification-invalid-report-unknown-field.json`](../tests/fixtures/report-bundle-verification-invalid-report-unknown-field.json)

@@ -90,6 +90,8 @@ surfaces are:
   report bundle HTML and source members.
 - Provide committed validation and verification failure examples for invalid
   report bundle manifest shape, including missing top-level and report fields.
+- Provide committed validation and verification failure examples for unknown
+  top-level and report-entry fields in report bundle manifests.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -162,6 +164,8 @@ python -B -m src.cli verify-bundle --path tests/fixtures/missing-html-report-bun
 python -B -m src.cli verify-bundle --path tests/fixtures/missing-source-report-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-missing-report-count-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-missing-title-bundle --format text
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-unknown-field-bundle --format text
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-unknown-field-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/snapshot-right.json
 python -B -m src.cli validate --path tests/fixtures/invalid-snapshot-missing-edge-count.json
 python -B -m src.cli validate --path /tmp/edgp-report-bundle --format text
@@ -171,6 +175,8 @@ python -B -m src.cli validate --path tests/fixtures/missing-html-report-bundle -
 python -B -m src.cli validate --path tests/fixtures/missing-source-report-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-manifest-missing-report-count-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-report-missing-title-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-manifest-unknown-field-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-report-unknown-field-bundle --format text
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check
@@ -179,5 +185,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add committed invalid-manifest-shape fixtures for `manifestUnknownField` and
-  `reportUnknownField` verification failures.
+- Add committed invalid-manifest-shape fixtures for `bundleSourceKindInvalid`
+  and `reportDigestInvalid` verification failures.

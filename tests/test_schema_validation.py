@@ -75,6 +75,14 @@ def test_validate_target_matches_committed_bundle_failure_fixtures() -> None:
             Path("tests/fixtures/invalid-report-missing-title-bundle"),
             Path("tests/fixtures/validation-failure-invalid-report-missing-title.json"),
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-unknown-field-bundle"),
+            Path("tests/fixtures/validation-failure-invalid-manifest-unknown-field.json"),
+        ),
+        (
+            Path("tests/fixtures/invalid-report-unknown-field-bundle"),
+            Path("tests/fixtures/validation-failure-invalid-report-unknown-field.json"),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

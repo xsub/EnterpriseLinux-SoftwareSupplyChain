@@ -197,3 +197,53 @@ Text output:
 FAIL reports=1 failures=2 bundleSha256=3c27816b9d793850f90d2c682b25827b4284e4d235973982da6502a47e581b6d firstFailure=reportMissingField
 FAIL targetType=report-bundle failures=2 contract=edgp.report.bundle.v1 firstFailure=bundle.reportMissingField
 ```
+
+## Unknown Report Bundle Manifest Field
+
+The fixture
+[`tests/fixtures/invalid-manifest-unknown-field-bundle`](../tests/fixtures/invalid-manifest-unknown-field-bundle)
+keeps a self-consistent manifest fingerprint but adds an unsupported top-level
+`unexpected` field. The normalized verifier and validator results are committed
+as
+[`report-bundle-verification-invalid-manifest-unknown-field.json`](../tests/fixtures/report-bundle-verification-invalid-manifest-unknown-field.json)
+and
+[`validation-failure-invalid-manifest-unknown-field.json`](../tests/fixtures/validation-failure-invalid-manifest-unknown-field.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-unknown-field-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-manifest-unknown-field-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=1efe6d2599447c473dd6c4f29d2c1283491f6d103504d61e4cc76855cc9bbb48 firstFailure=manifestUnknownField
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.manifestUnknownField
+```
+
+## Unknown Report Entry Field
+
+The fixture
+[`tests/fixtures/invalid-report-unknown-field-bundle`](../tests/fixtures/invalid-report-unknown-field-bundle)
+keeps a self-consistent manifest fingerprint but adds an unsupported
+`reports[1].unexpected` field. The normalized verifier and validator results
+are committed as
+[`report-bundle-verification-invalid-report-unknown-field.json`](../tests/fixtures/report-bundle-verification-invalid-report-unknown-field.json)
+and
+[`validation-failure-invalid-report-unknown-field.json`](../tests/fixtures/validation-failure-invalid-report-unknown-field.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-unknown-field-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-report-unknown-field-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=83d5e2941a20bafa81172a97e7fa3597a44c928b008b03af2b27565f0bab0306 firstFailure=reportUnknownField
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportUnknownField
+```

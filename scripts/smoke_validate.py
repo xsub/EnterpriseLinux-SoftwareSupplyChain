@@ -1255,6 +1255,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.reportMissingField",
             2,
         ),
+        (
+            "invalid-manifest-unknown-field-bundle",
+            "report-bundle-verification-invalid-manifest-unknown-field.json",
+            "validation-failure-invalid-manifest-unknown-field.json",
+            "manifestUnknownField",
+            "bundle.manifestUnknownField",
+            1,
+        ),
+        (
+            "invalid-report-unknown-field-bundle",
+            "report-bundle-verification-invalid-report-unknown-field.json",
+            "validation-failure-invalid-report-unknown-field.json",
+            "reportUnknownField",
+            "bundle.reportUnknownField",
+            1,
+        ),
     ]
     for (
         bundle_name,

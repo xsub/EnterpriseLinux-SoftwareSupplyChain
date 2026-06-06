@@ -1,0 +1,35 @@
+{
+  "bundleVerification": {
+    "bundleDir": "<bundle-dir>",
+    "bundleSha256": "<bundleSha256>",
+    "failures": [
+      {
+        "code": "reportUnknownField",
+        "message": "reports[1] has unsupported field: unexpected",
+        "path": "<bundle-dir>/manifest.json"
+      }
+    ],
+    "manifest": "manifest.json",
+    "ok": false,
+    "schema": "edgp.report.bundle.verification.v1",
+    "summary": {
+      "failures": 1,
+      "reports": 1
+    }
+  },
+  "contract": "edgp.report.bundle.v1",
+  "failures": [
+    {
+      "code": "bundle.reportUnknownField",
+      "message": "reports[1] has unsupported field: unexpected",
+      "path": "<bundle-dir>/manifest.json"
+    }
+  ],
+  "ok": false,
+  "schema": "edgp.validation.report.v1",
+  "summary": {
+    "failures": 1
+  },
+  "target": "<target>",
+  "targetType": "report-bundle"
+}

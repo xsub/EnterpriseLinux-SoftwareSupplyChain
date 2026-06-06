@@ -237,6 +237,28 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.reportMissingField",
             2,
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-unknown-field-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-manifest-unknown-field.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-manifest-unknown-field.json"),
+            "manifestUnknownField",
+            "bundle.manifestUnknownField",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-report-unknown-field-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-unknown-field.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-report-unknown-field.json"),
+            "reportUnknownField",
+            "bundle.reportUnknownField",
+            1,
+        ),
     ]
 
     for (

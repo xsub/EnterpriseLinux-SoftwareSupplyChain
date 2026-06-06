@@ -104,6 +104,20 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
                 "report-bundle-verification-invalid-report-missing-title.json"
             ),
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-unknown-field-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-manifest-unknown-field.json"
+            ),
+        ),
+        (
+            Path("tests/fixtures/invalid-report-unknown-field-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-unknown-field.json"
+            ),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

@@ -1,0 +1,25 @@
+{
+  "bundle": {
+    "command": "edgp report-bundle --input tests/fixtures/snapshot-right.json --output-dir tests/fixtures/invalid-manifest-unknown-field-bundle",
+    "sourceKind": "edgp-json"
+  },
+  "bundleSha256": "1efe6d2599447c473dd6c4f29d2c1283491f6d103504d61e4cc76855cc9bbb48",
+  "index": "index.html",
+  "reportCount": 1,
+  "reports": [
+    {
+      "href": "001-snapshot-right.html",
+      "htmlSha256": "c728342f667c98851d192519bf4eb6cc334570c9d004aa8fb382b51826a28703",
+      "schema": "edgp.graph.snapshot.v1",
+      "source": "tests/fixtures/snapshot-right.json",
+      "sourceSha256": "154aa293f4662b75fba7cab1786e302423527f49aa95f83248b755bef74496f1",
+      "summary": {
+        "edges": 2,
+        "nodes": 3
+      },
+      "title": "Graph Snapshot - app==1.0.0"
+    }
+  ],
+  "schema": "edgp.report.bundle.v1",
+  "unexpected": "manifest-shape-fixture"
+}
