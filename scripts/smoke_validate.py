@@ -339,6 +339,25 @@ def _assert_failure_example_index_document() -> None:
     index = json.loads(FAILURE_EXAMPLE_INDEX_PATH.read_text(encoding="utf-8"))
     cli_index = _run_cli(["failure-examples"])
     assert cli_index == index
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "failure-examples",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.startswith(
+        "OK examples=26 schema=edgp.validation.failure.example.index.v1"
+    )
+    assert "manifest-invalid targetType=report-bundle" in completed.stdout
     assert index["schema"] == "edgp.validation.failure.example.index.v1"
     assert index["generatedBy"] == "scripts/generate_failure_example_index.py"
     assert index["exampleCount"] == len(index["examples"])

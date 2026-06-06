@@ -129,6 +129,35 @@ def _format_validation_report(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_failure_example_index(index: dict[str, Any]) -> str:
+    examples = index.get("examples", [])
+    if not isinstance(examples, list):
+        examples = []
+    lines = [
+        (
+            f"OK examples={index.get('exampleCount', len(examples))} "
+            f"schema={index.get('schema', 'unknown')}"
+        )
+    ]
+    for entry in examples:
+        if not isinstance(entry, dict):
+            continue
+        codes = entry.get("validationFailureCodes", [])
+        code_text = ",".join(str(code) for code in codes) if isinstance(codes, list) else ""
+        lines.append(
+            " ".join(
+                [
+                    str(entry.get("id", "unknown")),
+                    f"targetType={entry.get('targetType', 'unknown')}",
+                    f"contract={entry.get('contract', 'unknown')}",
+                    f"failureCodes={code_text}",
+                    f"target={entry.get('target', '')}",
+                ]
+            )
+        )
+    return "\n".join(lines)
+
+
 def _command_string(argv: list[str]) -> str:
     return shlex.join(["edgp", *argv])
 
@@ -580,10 +609,11 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--manifest-name", default="manifest.json")
     validate.add_argument("--format", choices=["json", "text"], default="json")
 
-    subparsers.add_parser(
+    failure_examples = subparsers.add_parser(
         "failure-examples",
         help="Emit the validation failure example index for workbench ingestion",
     )
+    failure_examples.add_argument("--format", choices=["json", "text"], default="json")
 
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
@@ -829,7 +859,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if report["ok"] else 1
 
     if args.command == "failure-examples":
-        print(_json(build_failure_example_index()))
+        index = build_failure_example_index()
+        if args.format == "text":
+            print(_format_failure_example_index(index))
+        else:
+            print(_json(index))
         return 0
 
     if args.command == "benchmark":

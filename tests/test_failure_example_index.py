@@ -35,3 +35,16 @@ def test_cli_failure_examples_emits_generated_index(capsys) -> None:
 
     payload = json.loads(capsys.readouterr().out)
     assert payload == build_failure_example_index()
+
+
+def test_cli_failure_examples_emits_text_summary(capsys) -> None:
+    assert main(["failure-examples", "--format", "text"]) == 0
+
+    text = capsys.readouterr().out
+    assert text.startswith(
+        "OK examples=26 schema=edgp.validation.failure.example.index.v1"
+    )
+    assert (
+        "manifest-invalid targetType=report-bundle "
+        "contract=edgp.report.bundle.v1 failureCodes=bundle.manifestInvalid"
+    ) in text

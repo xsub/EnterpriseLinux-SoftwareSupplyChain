@@ -114,6 +114,7 @@ surfaces are:
   and RAG ingestion.
 - Emit the validation failure example index through the `failure-examples` CLI
   command.
+- Emit a compact text summary for validation failure examples.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -234,6 +235,7 @@ python -B -m src.cli validate --path tests/fixtures/missing-manifest-report-bund
 python -B -m src.cli validate --path tests/fixtures/invalid-json-manifest-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle --format text
 python -B -m src.cli failure-examples
+python -B -m src.cli failure-examples --format text
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check
@@ -243,4 +245,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add a compact text summary mode for validation failure examples.
+- Document `edgp.validation.failure.example.index.v1` with a JSON Schema.
