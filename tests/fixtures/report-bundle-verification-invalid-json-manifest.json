@@ -1,0 +1,18 @@
+{
+  "bundleDir": "<bundle-dir>",
+  "bundleSha256": null,
+  "failures": [
+    {
+      "code": "manifestInvalidJson",
+      "message": "Expecting property name enclosed in double quotes: line 2 column 1 (char 2)",
+      "path": "<bundle-dir>/manifest.json"
+    }
+  ],
+  "manifest": "manifest.json",
+  "ok": false,
+  "schema": "edgp.report.bundle.verification.v1",
+  "summary": {
+    "failures": 1,
+    "reports": 0
+  }
+}

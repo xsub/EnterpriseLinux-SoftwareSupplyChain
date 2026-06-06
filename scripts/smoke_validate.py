@@ -1383,6 +1383,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.sourceDigestMismatch",
             1,
         ),
+        (
+            "missing-manifest-report-bundle",
+            "report-bundle-verification-missing-manifest.json",
+            "validation-failure-missing-manifest.json",
+            "manifestMissing",
+            "bundle.manifestMissing",
+            1,
+        ),
+        (
+            "invalid-json-manifest-bundle",
+            "report-bundle-verification-invalid-json-manifest.json",
+            "validation-failure-invalid-json-manifest.json",
+            "manifestInvalidJson",
+            "bundle.manifestInvalidJson",
+            1,
+        ),
     ]
     for (
         bundle_name,
@@ -1422,8 +1438,14 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             text=True,
         )
         assert completed.returncode == 1
-        report_count = 0 if verify_code == "reportsInvalid" else 1
-        if verify_code == "bundleDigestInvalid":
+        no_report_codes = {"manifestInvalidJson", "manifestMissing", "reportsInvalid"}
+        no_bundle_sha_codes = {
+            "bundleDigestInvalid",
+            "manifestInvalidJson",
+            "manifestMissing",
+        }
+        report_count = 0 if verify_code in no_report_codes else 1
+        if verify_code in no_bundle_sha_codes:
             assert completed.stdout.startswith(
                 f"FAIL reports={report_count} failures={failure_count} "
             )

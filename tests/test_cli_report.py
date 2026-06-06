@@ -410,6 +410,25 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.sourceDigestMismatch",
             1,
         ),
+        (
+            Path("tests/fixtures/missing-manifest-report-bundle"),
+            Path("tests/fixtures/report-bundle-verification-missing-manifest.json"),
+            Path("tests/fixtures/validation-failure-missing-manifest.json"),
+            "manifestMissing",
+            "bundle.manifestMissing",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-json-manifest-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-json-manifest.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-json-manifest.json"),
+            "manifestInvalidJson",
+            "bundle.manifestInvalidJson",
+            1,
+        ),
     ]
 
     for (
@@ -432,8 +451,14 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             == 1
         )
         verification_text = capsys.readouterr().out.strip()
-        report_count = 0 if verify_code == "reportsInvalid" else 1
-        if verify_code == "bundleDigestInvalid":
+        no_report_codes = {"manifestInvalidJson", "manifestMissing", "reportsInvalid"}
+        no_bundle_sha_codes = {
+            "bundleDigestInvalid",
+            "manifestInvalidJson",
+            "manifestMissing",
+        }
+        report_count = 0 if verify_code in no_report_codes else 1
+        if verify_code in no_bundle_sha_codes:
             assert verification_text.startswith(
                 f"FAIL reports={report_count} failures={failure_count} "
             )

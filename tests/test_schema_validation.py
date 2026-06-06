@@ -139,6 +139,14 @@ def test_validate_target_matches_committed_bundle_failure_fixtures() -> None:
             Path("tests/fixtures/source-digest-mismatch-bundle"),
             Path("tests/fixtures/validation-failure-source-digest-mismatch.json"),
         ),
+        (
+            Path("tests/fixtures/missing-manifest-report-bundle"),
+            Path("tests/fixtures/validation-failure-missing-manifest.json"),
+        ),
+        (
+            Path("tests/fixtures/invalid-json-manifest-bundle"),
+            Path("tests/fixtures/validation-failure-invalid-json-manifest.json"),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

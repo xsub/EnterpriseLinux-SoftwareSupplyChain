@@ -213,6 +213,17 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
                 "report-bundle-verification-source-digest-mismatch.json"
             ),
         ),
+        (
+            Path("tests/fixtures/missing-manifest-report-bundle"),
+            Path("tests/fixtures/report-bundle-verification-missing-manifest.json"),
+        ),
+        (
+            Path("tests/fixtures/invalid-json-manifest-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-json-manifest.json"
+            ),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

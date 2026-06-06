@@ -1,0 +1,35 @@
+{
+  "bundleVerification": {
+    "bundleDir": "<bundle-dir>",
+    "bundleSha256": null,
+    "failures": [
+      {
+        "code": "manifestInvalidJson",
+        "message": "Expecting property name enclosed in double quotes: line 2 column 1 (char 2)",
+        "path": "<bundle-dir>/manifest.json"
+      }
+    ],
+    "manifest": "manifest.json",
+    "ok": false,
+    "schema": "edgp.report.bundle.verification.v1",
+    "summary": {
+      "failures": 1,
+      "reports": 0
+    }
+  },
+  "contract": "edgp.report.bundle.v1",
+  "failures": [
+    {
+      "code": "bundle.manifestInvalidJson",
+      "message": "Expecting property name enclosed in double quotes: line 2 column 1 (char 2)",
+      "path": "<bundle-dir>/manifest.json"
+    }
+  ],
+  "ok": false,
+  "schema": "edgp.validation.report.v1",
+  "summary": {
+    "failures": 1
+  },
+  "target": "<target>",
+  "targetType": "report-bundle"
+}

@@ -599,3 +599,55 @@ Text output:
 FAIL reports=1 failures=1 bundleSha256=6031b6425cc8cecfac1d70473d31dfe1aa220e6d8d8c8a0ca8139f4c128845e3 firstFailure=sourceDigestMismatch
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.sourceDigestMismatch
 ```
+
+## Missing Manifest
+
+The fixture
+[`tests/fixtures/missing-manifest-report-bundle`](../tests/fixtures/missing-manifest-report-bundle)
+is a directory without `manifest.json`. Because no valid manifest is available,
+the verifier reports `bundleSha256` as `null` in JSON output and omits
+`bundleSha256=` from text output. The normalized verifier and validator results
+are committed as
+[`report-bundle-verification-missing-manifest.json`](../tests/fixtures/report-bundle-verification-missing-manifest.json)
+and
+[`validation-failure-missing-manifest.json`](../tests/fixtures/validation-failure-missing-manifest.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/missing-manifest-report-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/missing-manifest-report-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=0 failures=1 firstFailure=manifestMissing
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.manifestMissing
+```
+
+## Invalid Manifest JSON
+
+The fixture
+[`tests/fixtures/invalid-json-manifest-bundle`](../tests/fixtures/invalid-json-manifest-bundle)
+contains a `manifest.json` file that cannot be parsed as JSON. Because no valid
+manifest is available, the verifier reports `bundleSha256` as `null` in JSON
+output and omits `bundleSha256=` from text output. The normalized verifier and
+validator results are committed as
+[`report-bundle-verification-invalid-json-manifest.json`](../tests/fixtures/report-bundle-verification-invalid-json-manifest.json)
+and
+[`validation-failure-invalid-json-manifest.json`](../tests/fixtures/validation-failure-invalid-json-manifest.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-json-manifest-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-json-manifest-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=0 failures=1 firstFailure=manifestInvalidJson
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.manifestInvalidJson
+```

@@ -114,3 +114,5 @@ cases:
 - [`tests/fixtures/report-bundle-verification-invalid-report-href.json`](../tests/fixtures/report-bundle-verification-invalid-report-href.json)
 - [`tests/fixtures/report-bundle-verification-missing-index.json`](../tests/fixtures/report-bundle-verification-missing-index.json)
 - [`tests/fixtures/report-bundle-verification-source-digest-mismatch.json`](../tests/fixtures/report-bundle-verification-source-digest-mismatch.json)
+- [`tests/fixtures/report-bundle-verification-missing-manifest.json`](../tests/fixtures/report-bundle-verification-missing-manifest.json)
+- [`tests/fixtures/report-bundle-verification-invalid-json-manifest.json`](../tests/fixtures/report-bundle-verification-invalid-json-manifest.json)
