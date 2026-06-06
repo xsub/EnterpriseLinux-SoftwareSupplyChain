@@ -159,6 +159,7 @@ edgp verify-bundle --path reports
 edgp verify-bundle --path reports --format text
 edgp validate --path graph.json
 edgp validate --path reports --format text
+python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 ```
 
 Run a synthetic CSR traversal benchmark:
@@ -476,6 +477,8 @@ and npm diagnostics are documented in
 machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 `edgp validate` checks a local EDGP JSON report file against the documented
 schema subset or validates a report bundle directory with the bundle verifier.
+`scripts/browser_smoke_report_sorting.py` generates a self-checking HTML report
+that exercises graph report table sorting inside a browser.
 
 `edgp report` renders graph snapshots, impact reports, advisory reports, and npm
 diagnostics into dependency-free HTML files. Snapshot reports include graph

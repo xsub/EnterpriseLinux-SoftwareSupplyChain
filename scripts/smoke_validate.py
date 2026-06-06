@@ -904,6 +904,31 @@ def _assert_html_report() -> None:
         assert "EDGP Snapshot Report - app==1.0.0" in html
 
 
+def _assert_browser_smoke_report_sorting() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "report-sorting-smoke.html"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "scripts/browser_smoke_report_sorting.py",
+                "--output",
+                str(output_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_path)
+        html = output_path.read_text(encoding="utf-8")
+        assert 'data-testid="browser-smoke-panel"' in html
+        assert 'data-testid="browser-smoke-result"' in html
+        assert "edge target descending" in html
+        assert "node package ascending" in html
+        assert "dataset.browserSmokeStatus = 'pass'" in html
+
+
 def _assert_impact_html_report() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_path = Path(temp_dir) / "impact-report.html"
@@ -1254,6 +1279,7 @@ def main(argv: list[str] | None = None) -> int:
         ("advisory overlay", _assert_advisory_overlay),
         ("rpm advisory overlay", _assert_rpm_advisory_overlay),
         ("html report", _assert_html_report),
+        ("browser smoke report sorting", _assert_browser_smoke_report_sorting),
         ("impact html report", _assert_impact_html_report),
         ("advisory html report", _assert_advisory_html_report),
         ("npm diagnostics html report", _assert_npm_diagnostics_html_report),

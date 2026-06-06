@@ -56,6 +56,8 @@ surfaces are:
   controls for static HTML reports so source/target text and relationship type
   can be narrowed in the browser without showing every matching row at once.
 - Render sortable graph snapshot node metadata tables for static HTML reports.
+- Generate a self-checking browser smoke HTML page for static graph report
+  sorting behavior.
 - Render deterministic static HTML report bundles with an index for multiple
   EDGP JSON reports.
 - Emit a machine-readable `manifest.json` for report bundles so future
@@ -146,11 +148,12 @@ python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/snapshot-right.json
 python -B -m src.cli validate --path /tmp/edgp-report-bundle --format text
+python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/generate_schema_index.py --check
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
 ## Next Vertical Options
 
-- Add browser smoke coverage for static report sorting behavior.
 - Add richer validation failure examples for common malformed report payloads.
+- Add a dependency-free smoke artifact for report bundle index navigation.
