@@ -49,7 +49,7 @@ python -B -m src.cli failure-examples --id manifest-invalid --format text
 
 ```text
 OK examples=1 schema=edgp.validation.failure.example.index.v1
-manifest-invalid targetType=report-bundle contract=edgp.report.bundle.v1 failureCodes=bundle.manifestInvalid target=tests/fixtures/invalid-manifest-type-bundle
+manifest-invalid targetType=report-bundle contract=edgp.report.bundle.v1 failureCodes=bundle.manifestInvalid verifierCodes=manifestInvalid target=tests/fixtures/invalid-manifest-type-bundle
 ```
 
 Validation and verifier codes intentionally both work with `--code`. This lets

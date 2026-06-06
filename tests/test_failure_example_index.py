@@ -77,6 +77,7 @@ def test_cli_failure_examples_emits_text_summary(capsys) -> None:
         "manifest-invalid targetType=report-bundle "
         "contract=edgp.report.bundle.v1 failureCodes=bundle.manifestInvalid"
     ) in text
+    assert "verifierCodes=manifestInvalid" in text
 
 
 def test_cli_failure_examples_filters_by_validation_code(capsys) -> None:
@@ -106,6 +107,7 @@ def test_cli_failure_examples_filters_by_verification_code(capsys) -> None:
         "OK examples=1 schema=edgp.validation.failure.example.index.v1"
     )
     assert "manifest-invalid targetType=report-bundle" in text
+    assert "verifierCodes=manifestInvalid" in text
 
 
 def test_cli_failure_examples_filters_by_target_type(capsys) -> None:

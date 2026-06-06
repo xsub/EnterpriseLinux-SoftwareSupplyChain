@@ -397,6 +397,7 @@ def _assert_failure_example_index_document() -> None:
         "OK examples=26 schema=edgp.validation.failure.example.index.v1"
     )
     assert "manifest-invalid targetType=report-bundle" in completed.stdout
+    assert "verifierCodes=manifestInvalid" in completed.stdout
     completed = subprocess.run(
         [
             sys.executable,
@@ -420,6 +421,7 @@ def _assert_failure_example_index_document() -> None:
         "OK examples=1 schema=edgp.validation.failure.example.index.v1"
     )
     assert "manifest-invalid targetType=report-bundle" in completed.stdout
+    assert "verifierCodes=manifestInvalid" in completed.stdout
     completed = subprocess.run(
         [
             sys.executable,

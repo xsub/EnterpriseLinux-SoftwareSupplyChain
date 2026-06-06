@@ -145,19 +145,20 @@ def _format_failure_example_index(index: dict[str, Any]) -> str:
     for entry in examples:
         if not isinstance(entry, dict):
             continue
-        codes = entry.get("validationFailureCodes", [])
-        code_text = ",".join(str(code) for code in codes) if isinstance(codes, list) else ""
-        lines.append(
-            " ".join(
-                [
-                    str(entry.get("id", "unknown")),
-                    f"targetType={entry.get('targetType', 'unknown')}",
-                    f"contract={entry.get('contract', 'unknown')}",
-                    f"failureCodes={code_text}",
-                    f"target={entry.get('target', '')}",
-                ]
-            )
-        )
+        parts = [
+            str(entry.get("id", "unknown")),
+            f"targetType={entry.get('targetType', 'unknown')}",
+            f"contract={entry.get('contract', 'unknown')}",
+            (
+                "failureCodes="
+                f"{','.join(_string_list(entry.get('validationFailureCodes', [])))}"
+            ),
+        ]
+        verifier_codes = _string_list(entry.get("verificationFailureCodes", []))
+        if verifier_codes:
+            parts.append(f"verifierCodes={','.join(verifier_codes)}")
+        parts.append(f"target={entry.get('target', '')}")
+        lines.append(" ".join(parts))
     return "\n".join(lines)
 
 
