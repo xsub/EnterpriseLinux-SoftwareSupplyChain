@@ -1335,6 +1335,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.reportInvalid",
             1,
         ),
+        (
+            "invalid-report-field-bundle",
+            "report-bundle-verification-invalid-report-field.json",
+            "validation-failure-invalid-report-field.json",
+            "reportFieldInvalid",
+            "bundle.reportFieldInvalid",
+            1,
+        ),
+        (
+            "invalid-report-summary-bundle",
+            "report-bundle-verification-invalid-report-summary.json",
+            "validation-failure-invalid-report-summary.json",
+            "reportSummaryInvalid",
+            "bundle.reportSummaryInvalid",
+            1,
+        ),
     ]
     for (
         bundle_name,

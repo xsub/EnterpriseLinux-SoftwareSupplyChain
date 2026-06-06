@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "command": "edgp report-bundle --input tests/fixtures/snapshot-right.json --output-dir tests/fixtures/invalid-report-field-bundle",
+    "sourceKind": "edgp-json"
+  },
+  "bundleSha256": "debaf87369ed315d2b66a294461184b952890ebf9bf58c58f0269b9c6579a804",
+  "index": "index.html",
+  "reportCount": 1,
+  "reports": [
+    {
+      "href": "001-snapshot-right.html",
+      "htmlSha256": "c728342f667c98851d192519bf4eb6cc334570c9d004aa8fb382b51826a28703",
+      "schema": "edgp.graph.snapshot.v1",
+      "source": "tests/fixtures/snapshot-right.json",
+      "sourceSha256": "154aa293f4662b75fba7cab1786e302423527f49aa95f83248b755bef74496f1",
+      "summary": {
+        "edges": 2,
+        "nodes": 3
+      },
+      "title": ""
+    }
+  ],
+  "schema": "edgp.report.bundle.v1"
+}

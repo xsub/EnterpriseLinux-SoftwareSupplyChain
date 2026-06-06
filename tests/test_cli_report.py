@@ -347,6 +347,28 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.reportInvalid",
             1,
         ),
+        (
+            Path("tests/fixtures/invalid-report-field-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-field.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-report-field.json"),
+            "reportFieldInvalid",
+            "bundle.reportFieldInvalid",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-report-summary-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-summary.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-report-summary.json"),
+            "reportSummaryInvalid",
+            "bundle.reportSummaryInvalid",
+            1,
+        ),
     ]
 
     for (

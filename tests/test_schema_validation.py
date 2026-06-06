@@ -115,6 +115,14 @@ def test_validate_target_matches_committed_bundle_failure_fixtures() -> None:
             Path("tests/fixtures/invalid-report-entry-bundle"),
             Path("tests/fixtures/validation-failure-invalid-report-entry.json"),
         ),
+        (
+            Path("tests/fixtures/invalid-report-field-bundle"),
+            Path("tests/fixtures/validation-failure-invalid-report-field.json"),
+        ),
+        (
+            Path("tests/fixtures/invalid-report-summary-bundle"),
+            Path("tests/fixtures/validation-failure-invalid-report-summary.json"),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:
