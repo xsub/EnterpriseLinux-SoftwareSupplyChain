@@ -121,6 +121,8 @@ surfaces are:
   the CLI.
 - Filter validation failure examples by target artifact type from the CLI.
 - Filter validation failure examples by stable example id from the CLI.
+- List available validation failure example ids, target types, validation
+  codes, and verifier codes from the CLI.
 - Link validation failure example index workflows from the README.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
@@ -244,6 +246,7 @@ python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle
 python -B -m src.cli validate --path docs/validation-failure-example-index.json
 python -B -m src.cli failure-examples
 python -B -m src.cli failure-examples --format text
+python -B -m src.cli failure-examples --list-codes
 python -B -m src.cli failure-examples --id manifest-invalid
 python -B -m src.cli failure-examples --code bundle.manifestInvalid
 python -B -m src.cli failure-examples --target-type report-bundle --code manifestInvalid
@@ -256,4 +259,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add a concise `failure-examples --list-codes` helper for available filters.
+- Document filtered validation failure example workflows in the dedicated
+  validation examples guide.

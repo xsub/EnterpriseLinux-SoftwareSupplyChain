@@ -486,6 +486,7 @@ and can be emitted from the CLI:
 ```bash
 edgp failure-examples
 edgp failure-examples --format text
+edgp failure-examples --list-codes
 edgp failure-examples --target-type report-bundle --code manifestInvalid
 ```
 

@@ -360,6 +360,13 @@ def _assert_failure_example_index_document() -> None:
     )
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "manifest-invalid"
+    filter_summary = _run_cli(["failure-examples", "--list-codes"])
+    assert filter_summary["schema"] == "edgp.validation.failure.example.filters.v1"
+    assert filter_summary["sourceSchema"] == "edgp.validation.failure.example.index.v1"
+    assert filter_summary["exampleCount"] == 26
+    assert "manifest-invalid" in filter_summary["ids"]
+    assert "bundle.manifestInvalid" in filter_summary["validationFailureCodes"]
+    assert "manifestInvalid" in filter_summary["verificationFailureCodes"]
     completed = subprocess.run(
         [
             sys.executable,
@@ -423,6 +430,29 @@ def _assert_failure_example_index_document() -> None:
         "OK examples=1 schema=edgp.validation.failure.example.index.v1"
     )
     assert "graph-missing-edge-count targetType=json-file" in completed.stdout
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "failure-examples",
+            "--target-type",
+            "json-file",
+            "--list-codes",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.startswith(
+        "OK examples=1 schema=edgp.validation.failure.example.filters.v1"
+    )
+    assert "ids=graph-missing-edge-count" in completed.stdout
+    assert "validationFailureCodes=requiredMissing" in completed.stdout
     assert index["schema"] == "edgp.validation.failure.example.index.v1"
     assert index["generatedBy"] == "scripts/generate_failure_example_index.py"
     assert index["exampleCount"] == len(index["examples"])

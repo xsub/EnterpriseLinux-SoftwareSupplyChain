@@ -114,3 +114,42 @@ def test_cli_failure_examples_combines_filters(capsys) -> None:
     payload = json.loads(capsys.readouterr().out)
     assert payload["exampleCount"] == 1
     assert payload["examples"][0]["id"] == "manifest-invalid"
+
+
+def test_cli_failure_examples_lists_available_filter_values(capsys) -> None:
+    assert main(["failure-examples", "--list-codes"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["schema"] == "edgp.validation.failure.example.filters.v1"
+    assert payload["sourceSchema"] == "edgp.validation.failure.example.index.v1"
+    assert payload["exampleCount"] == 26
+    assert "manifest-invalid" in payload["ids"]
+    assert "json-file" in payload["targetTypes"]
+    assert "report-bundle" in payload["targetTypes"]
+    assert "bundle.manifestInvalid" in payload["validationFailureCodes"]
+    assert "requiredMissing" in payload["validationFailureCodes"]
+    assert "manifestInvalid" in payload["verificationFailureCodes"]
+
+
+def test_cli_failure_examples_lists_filtered_filter_values_as_text(capsys) -> None:
+    assert (
+        main(
+            [
+                "failure-examples",
+                "--target-type",
+                "json-file",
+                "--list-codes",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    text = capsys.readouterr().out
+    assert text.startswith(
+        "OK examples=1 schema=edgp.validation.failure.example.filters.v1"
+    )
+    assert "ids=graph-missing-edge-count" in text
+    assert "targetTypes=json-file" in text
+    assert "validationFailureCodes=requiredMissing" in text

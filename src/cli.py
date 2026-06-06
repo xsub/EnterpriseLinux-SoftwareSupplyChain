@@ -158,6 +158,61 @@ def _format_failure_example_index(index: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _failure_example_filter_summary(index: dict[str, Any]) -> dict[str, Any]:
+    examples = index.get("examples", [])
+    if not isinstance(examples, list):
+        examples = []
+    entries = [entry for entry in examples if isinstance(entry, dict)]
+    return {
+        "schema": "edgp.validation.failure.example.filters.v1",
+        "sourceSchema": str(index.get("schema", "unknown")),
+        "exampleCount": len(entries),
+        "ids": sorted(
+            {
+                str(entry.get("id", ""))
+                for entry in entries
+                if isinstance(entry.get("id"), str) and entry.get("id")
+            }
+        ),
+        "targetTypes": sorted(
+            {
+                str(entry.get("targetType", ""))
+                for entry in entries
+                if isinstance(entry.get("targetType"), str) and entry.get("targetType")
+            }
+        ),
+        "validationFailureCodes": sorted(
+            {
+                code
+                for entry in entries
+                for code in _string_list(entry.get("validationFailureCodes", []))
+            }
+        ),
+        "verificationFailureCodes": sorted(
+            {
+                code
+                for entry in entries
+                for code in _string_list(entry.get("verificationFailureCodes", []))
+            }
+        ),
+    }
+
+
+def _format_failure_example_filter_summary(summary: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            (
+                f"OK examples={summary.get('exampleCount', 0)} "
+                f"schema={summary.get('schema', 'unknown')}"
+            ),
+            f"ids={','.join(_string_list(summary.get('ids', [])))}",
+            f"targetTypes={','.join(_string_list(summary.get('targetTypes', [])))}",
+            f"validationFailureCodes={','.join(_string_list(summary.get('validationFailureCodes', [])))}",
+            f"verificationFailureCodes={','.join(_string_list(summary.get('verificationFailureCodes', [])))}",
+        ]
+    )
+
+
 def _filter_failure_example_index(
     index: dict[str, Any],
     *,
@@ -678,6 +733,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="filter examples by stable example id",
     )
     failure_examples.add_argument(
+        "--list-codes",
+        action="store_true",
+        help="list available ids, target types, validation codes, and verifier codes",
+    )
+    failure_examples.add_argument(
         "--code",
         action="append",
         default=[],
@@ -941,6 +1001,13 @@ def main(argv: list[str] | None = None) -> int:
             codes=args.code,
             target_types=args.target_type,
         )
+        if args.list_codes:
+            summary = _failure_example_filter_summary(index)
+            if args.format == "text":
+                print(_format_failure_example_filter_summary(summary))
+            else:
+                print(_json(summary))
+            return 0
         if args.format == "text":
             print(_format_failure_example_index(index))
         else:
