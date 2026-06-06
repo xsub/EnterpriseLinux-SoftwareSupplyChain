@@ -319,6 +319,7 @@ def _assert_schema_index_document() -> None:
         "edgp.npm.diagnostics.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
+        "edgp.validation.failure.example.index.v1",
     } <= contracts
     for schema in index["schemas"]:
         assert schema["file"].endswith(".schema.json")
@@ -362,6 +363,9 @@ def _assert_failure_example_index_document() -> None:
     assert index["generatedBy"] == "scripts/generate_failure_example_index.py"
     assert index["exampleCount"] == len(index["examples"])
     assert index["exampleCount"] >= 25
+    validation = _run_cli(["validate", "--path", "docs/validation-failure-example-index.json"])
+    assert validation["ok"] is True
+    assert validation["contract"] == "edgp.validation.failure.example.index.v1"
     validation_codes = {
         code
         for entry in index["examples"]

@@ -1,0 +1,170 @@
+{
+  "$id": "urn:edgp:schema:validation-failure-example-index:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Machine-readable index of committed EDGP validation failure examples for workbench and RAG ingestion.",
+  "properties": {
+    "exampleCount": {
+      "description": "Number of indexed failure examples.",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "examples": {
+      "description": "Ordered validation failure examples.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "commands": {
+            "additionalProperties": false,
+            "description": "Reproducible CLI commands for this example.",
+            "properties": {
+              "validateText": {
+                "description": "Command that emits the compact validation failure text.",
+                "minLength": 1,
+                "type": "string"
+              },
+              "verifyText": {
+                "description": "Command that emits the compact bundle verifier failure text when this is a bundle example.",
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "validateText"
+            ],
+            "type": "object"
+          },
+          "contract": {
+            "description": "Validation contract exercised by the example.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "firstFailure": {
+            "$ref": "#/$defs/failure"
+          },
+          "id": {
+            "description": "Stable example identifier.",
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+[a-z0-9-]*$",
+            "type": "string"
+          },
+          "target": {
+            "description": "Fixture path passed to edgp validate or edgp verify-bundle.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "targetType": {
+            "description": "Type of artifact represented by target.",
+            "enum": [
+              "json-file",
+              "report-bundle"
+            ],
+            "type": "string"
+          },
+          "validationFailureCodes": {
+            "description": "Stable validation failure codes in the committed normalized validation fixture.",
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "validationFixture": {
+            "description": "Path to the normalized edgp validate failure fixture.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "verificationFailureCodes": {
+            "description": "Stable verifier failure codes when this is a bundle example.",
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "verificationFixture": {
+            "description": "Path to the normalized edgp verify-bundle failure fixture when this is a bundle example.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "verificationSummary": {
+            "additionalProperties": false,
+            "description": "Verifier failure and report counters when this is a bundle example.",
+            "properties": {
+              "failures": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "reports": {
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "failures",
+              "reports"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "target",
+          "targetType",
+          "contract",
+          "validationFixture",
+          "validationFailureCodes",
+          "firstFailure",
+          "commands"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "generatedBy": {
+      "const": "scripts/generate_failure_example_index.py",
+      "description": "Generator that owns this deterministic index."
+    },
+    "schema": {
+      "const": "edgp.validation.failure.example.index.v1",
+      "description": "Validation failure example index schema identifier."
+    }
+  },
+  "required": [
+    "schema",
+    "generatedBy",
+    "exampleCount",
+    "examples"
+  ],
+  "title": "EDGP Validation Failure Example Index v1",
+  "type": "object",
+  "$defs": {
+    "failure": {
+      "additionalProperties": false,
+      "description": "Normalized first failure record.",
+      "properties": {
+        "code": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "path"
+      ],
+      "type": "object"
+    }
+  }
+}

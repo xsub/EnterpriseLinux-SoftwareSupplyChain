@@ -26,4 +26,5 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.npm.diagnostics.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
+        "edgp.validation.failure.example.index.v1",
     }

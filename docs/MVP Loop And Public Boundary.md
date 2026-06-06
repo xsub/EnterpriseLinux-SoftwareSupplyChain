@@ -115,6 +115,8 @@ surfaces are:
 - Emit the validation failure example index through the `failure-examples` CLI
   command.
 - Emit a compact text summary for validation failure examples.
+- Document `edgp.validation.failure.example.index.v1` with a Draft 2020-12 JSON
+  Schema and smoke validation against the committed index.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -234,6 +236,7 @@ python -B -m src.cli validate --path tests/fixtures/source-digest-mismatch-bundl
 python -B -m src.cli validate --path tests/fixtures/missing-manifest-report-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-json-manifest-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle --format text
+python -B -m src.cli validate --path docs/validation-failure-example-index.json
 python -B -m src.cli failure-examples
 python -B -m src.cli failure-examples --format text
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
@@ -245,4 +248,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Document `edgp.validation.failure.example.index.v1` with a JSON Schema.
+- Add `--code` filtering to the `failure-examples` CLI command.

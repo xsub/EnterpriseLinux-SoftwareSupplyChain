@@ -5,6 +5,7 @@ from pathlib import Path
 
 from scripts.generate_failure_example_index import build_failure_example_index
 from src.cli import main
+from src.schema_validation import validate_target
 
 
 INDEX_PATH = Path("docs/validation-failure-example-index.json")
@@ -28,6 +29,13 @@ def test_failure_example_index_matches_committed_fixtures() -> None:
     assert "requiredMissing" in validation_codes
     assert "bundle.manifestInvalid" in validation_codes
     assert "bundle.sourceDigestMismatch" in validation_codes
+
+
+def test_failure_example_index_matches_documented_schema() -> None:
+    report = validate_target(INDEX_PATH)
+
+    assert report["ok"] is True
+    assert report["contract"] == "edgp.validation.failure.example.index.v1"
 
 
 def test_cli_failure_examples_emits_generated_index(capsys) -> None:

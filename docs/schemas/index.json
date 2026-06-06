@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 6,
+  "schemaCount": 7,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -50,6 +50,14 @@
       "id": "urn:edgp:schema:report-bundle-verification:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Report Bundle Verification v1"
+    },
+    {
+      "contract": "edgp.validation.failure.example.index.v1",
+      "description": "Machine-readable index of committed EDGP validation failure examples for workbench and RAG ingestion.",
+      "file": "edgp.validation.failure.example.index.v1.schema.json",
+      "id": "urn:edgp:schema:validation-failure-example-index:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Validation Failure Example Index v1"
     }
   ]
 }
