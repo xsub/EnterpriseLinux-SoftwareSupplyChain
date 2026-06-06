@@ -90,6 +90,20 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
             Path("tests/fixtures/missing-source-report-bundle"),
             Path("tests/fixtures/report-bundle-verification-missing-source.json"),
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-missing-report-count-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-manifest-missing-report-count.json"
+            ),
+        ),
+        (
+            Path("tests/fixtures/invalid-report-missing-title-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-missing-title.json"
+            ),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

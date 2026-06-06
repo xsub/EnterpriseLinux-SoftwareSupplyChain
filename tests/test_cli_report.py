@@ -186,6 +186,7 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             Path("tests/fixtures/validation-failure-tampered-bundle-manifest.json"),
             "bundleDigestMismatch",
             "bundle.bundleDigestMismatch",
+            1,
         ),
         (
             Path("tests/fixtures/tampered-report-bundle-member"),
@@ -193,6 +194,7 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             Path("tests/fixtures/validation-failure-tampered-bundle-member.json"),
             "htmlDigestMismatch",
             "bundle.htmlDigestMismatch",
+            1,
         ),
         (
             Path("tests/fixtures/missing-html-report-bundle"),
@@ -200,6 +202,7 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             Path("tests/fixtures/validation-failure-missing-bundle-html.json"),
             "htmlMissing",
             "bundle.htmlMissing",
+            1,
         ),
         (
             Path("tests/fixtures/missing-source-report-bundle"),
@@ -207,6 +210,32 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             Path("tests/fixtures/validation-failure-missing-bundle-source.json"),
             "sourceMissing",
             "bundle.sourceMissing",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-manifest-missing-report-count-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-manifest-missing-report-count.json"
+            ),
+            Path(
+                "tests/fixtures/"
+                "validation-failure-invalid-manifest-missing-report-count.json"
+            ),
+            "manifestMissingField",
+            "bundle.manifestMissingField",
+            2,
+        ),
+        (
+            Path("tests/fixtures/invalid-report-missing-title-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-missing-title.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-report-missing-title.json"),
+            "reportMissingField",
+            "bundle.reportMissingField",
+            2,
         ),
     ]
 
@@ -216,6 +245,7 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
         validation_fixture,
         verify_code,
         validate_code,
+        failure_count,
     ) in cases:
         assert main(["verify-bundle", "--path", str(bundle_dir)]) == 1
         verification = json.loads(capsys.readouterr().out)
@@ -229,7 +259,9 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             == 1
         )
         verification_text = capsys.readouterr().out.strip()
-        assert verification_text.startswith("FAIL reports=1 failures=1 bundleSha256=")
+        assert verification_text.startswith(
+            f"FAIL reports=1 failures={failure_count} bundleSha256="
+        )
         assert f"firstFailure={verify_code}" in verification_text
 
         assert main(["validate", "--path", str(bundle_dir)]) == 1
@@ -240,7 +272,7 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
         assert main(["validate", "--path", str(bundle_dir), "--format", "text"]) == 1
         validation_text = capsys.readouterr().out.strip()
         assert validation_text == (
-            "FAIL targetType=report-bundle failures=1 "
+            f"FAIL targetType=report-bundle failures={failure_count} "
             f"contract=edgp.report.bundle.v1 firstFailure={validate_code}"
         )
 

@@ -145,3 +145,55 @@ Text output:
 FAIL reports=1 failures=1 bundleSha256=11fadb0fcc32bbd367550ea94d0f4daf0e71a8fa603c092bbf16f1e77ca5d47a firstFailure=sourceMissing
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.sourceMissing
 ```
+
+## Missing Report Bundle Manifest Field
+
+The fixture
+[`tests/fixtures/invalid-manifest-missing-report-count-bundle`](../tests/fixtures/invalid-manifest-missing-report-count-bundle)
+keeps a self-consistent manifest fingerprint but omits the required top-level
+`reportCount` field. Verification reports both the missing required field and
+the resulting count mismatch. The normalized verifier and validator results are
+committed as
+[`report-bundle-verification-invalid-manifest-missing-report-count.json`](../tests/fixtures/report-bundle-verification-invalid-manifest-missing-report-count.json)
+and
+[`validation-failure-invalid-manifest-missing-report-count.json`](../tests/fixtures/validation-failure-invalid-manifest-missing-report-count.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-missing-report-count-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-manifest-missing-report-count-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=2 bundleSha256=117f112bd2b6c4811db4e33251dcdba053e06967a7d4426d5ebc9e80ff0da150 firstFailure=manifestMissingField
+FAIL targetType=report-bundle failures=2 contract=edgp.report.bundle.v1 firstFailure=bundle.manifestMissingField
+```
+
+## Missing Report Entry Field
+
+The fixture
+[`tests/fixtures/invalid-report-missing-title-bundle`](../tests/fixtures/invalid-report-missing-title-bundle)
+keeps a self-consistent manifest fingerprint but omits the required
+`reports[1].title` field. Verification reports the missing report field and the
+resulting empty-title validation failure. The normalized verifier and validator
+results are committed as
+[`report-bundle-verification-invalid-report-missing-title.json`](../tests/fixtures/report-bundle-verification-invalid-report-missing-title.json)
+and
+[`validation-failure-invalid-report-missing-title.json`](../tests/fixtures/validation-failure-invalid-report-missing-title.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-missing-title-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-report-missing-title-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=2 bundleSha256=3c27816b9d793850f90d2c682b25827b4284e4d235973982da6502a47e581b6d firstFailure=reportMissingField
+FAIL targetType=report-bundle failures=2 contract=edgp.report.bundle.v1 firstFailure=bundle.reportMissingField
+```

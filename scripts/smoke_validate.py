@@ -1213,6 +1213,7 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "validation-failure-tampered-bundle-manifest.json",
             "bundleDigestMismatch",
             "bundle.bundleDigestMismatch",
+            1,
         ),
         (
             "tampered-report-bundle-member",
@@ -1220,6 +1221,7 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "validation-failure-tampered-bundle-member.json",
             "htmlDigestMismatch",
             "bundle.htmlDigestMismatch",
+            1,
         ),
         (
             "missing-html-report-bundle",
@@ -1227,6 +1229,7 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "validation-failure-missing-bundle-html.json",
             "htmlMissing",
             "bundle.htmlMissing",
+            1,
         ),
         (
             "missing-source-report-bundle",
@@ -1234,6 +1237,23 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "validation-failure-missing-bundle-source.json",
             "sourceMissing",
             "bundle.sourceMissing",
+            1,
+        ),
+        (
+            "invalid-manifest-missing-report-count-bundle",
+            "report-bundle-verification-invalid-manifest-missing-report-count.json",
+            "validation-failure-invalid-manifest-missing-report-count.json",
+            "manifestMissingField",
+            "bundle.manifestMissingField",
+            2,
+        ),
+        (
+            "invalid-report-missing-title-bundle",
+            "report-bundle-verification-invalid-report-missing-title.json",
+            "validation-failure-invalid-report-missing-title.json",
+            "reportMissingField",
+            "bundle.reportMissingField",
+            2,
         ),
     ]
     for (
@@ -1242,6 +1262,7 @@ def _assert_bundle_validation_failure_fixtures() -> None:
         validation_fixture_name,
         verify_code,
         validate_code,
+        failure_count,
     ) in cases:
         bundle_path = Path("tests/fixtures") / bundle_name
         verification_payload = _run_cli_allow_failure(
@@ -1273,7 +1294,9 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             text=True,
         )
         assert completed.returncode == 1
-        assert completed.stdout.startswith("FAIL reports=1 failures=1 bundleSha256=")
+        assert completed.stdout.startswith(
+            f"FAIL reports=1 failures={failure_count} bundleSha256="
+        )
         assert f"firstFailure={verify_code}" in completed.stdout
 
         validation_payload = _run_cli_allow_failure(
@@ -1305,7 +1328,7 @@ def _assert_bundle_validation_failure_fixtures() -> None:
         )
         assert completed.returncode == 1
         assert completed.stdout.strip() == (
-            "FAIL targetType=report-bundle failures=1 "
+            f"FAIL targetType=report-bundle failures={failure_count} "
             f"contract=edgp.report.bundle.v1 firstFailure={validate_code}"
         )
 
