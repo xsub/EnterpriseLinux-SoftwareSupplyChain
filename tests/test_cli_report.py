@@ -178,7 +178,7 @@ def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     assert "firstFailure=htmlDigestMismatch" in text
 
 
-def test_cli_verify_and_validate_committed_tampered_bundle_fixtures(capsys) -> None:
+def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> None:
     cases = [
         (
             Path("tests/fixtures/tampered-report-bundle-manifest"),
@@ -193,6 +193,20 @@ def test_cli_verify_and_validate_committed_tampered_bundle_fixtures(capsys) -> N
             Path("tests/fixtures/validation-failure-tampered-bundle-member.json"),
             "htmlDigestMismatch",
             "bundle.htmlDigestMismatch",
+        ),
+        (
+            Path("tests/fixtures/missing-html-report-bundle"),
+            Path("tests/fixtures/report-bundle-verification-missing-html.json"),
+            Path("tests/fixtures/validation-failure-missing-bundle-html.json"),
+            "htmlMissing",
+            "bundle.htmlMissing",
+        ),
+        (
+            Path("tests/fixtures/missing-source-report-bundle"),
+            Path("tests/fixtures/report-bundle-verification-missing-source.json"),
+            Path("tests/fixtures/validation-failure-missing-bundle-source.json"),
+            "sourceMissing",
+            "bundle.sourceMissing",
         ),
     ]
 

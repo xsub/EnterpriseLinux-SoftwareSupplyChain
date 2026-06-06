@@ -1,0 +1,35 @@
+{
+  "bundleVerification": {
+    "bundleDir": "<bundle-dir>",
+    "bundleSha256": "<bundleSha256>",
+    "failures": [
+      {
+        "code": "htmlMissing",
+        "message": "reports[1] referenced file is missing",
+        "path": "<bundle-dir>/missing-snapshot.html"
+      }
+    ],
+    "manifest": "manifest.json",
+    "ok": false,
+    "schema": "edgp.report.bundle.verification.v1",
+    "summary": {
+      "failures": 1,
+      "reports": 1
+    }
+  },
+  "contract": "edgp.report.bundle.v1",
+  "failures": [
+    {
+      "code": "bundle.htmlMissing",
+      "message": "reports[1] referenced file is missing",
+      "path": "<bundle-dir>/missing-snapshot.html"
+    }
+  ],
+  "ok": false,
+  "schema": "edgp.validation.report.v1",
+  "summary": {
+    "failures": 1
+  },
+  "target": "<target>",
+  "targetType": "report-bundle"
+}

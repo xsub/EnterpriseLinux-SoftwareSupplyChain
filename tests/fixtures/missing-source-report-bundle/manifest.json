@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "command": "edgp report-bundle --input tests/fixtures/missing-source.json --output-dir tests/fixtures/missing-source-report-bundle",
+    "sourceKind": "edgp-json"
+  },
+  "bundleSha256": "11fadb0fcc32bbd367550ea94d0f4daf0e71a8fa603c092bbf16f1e77ca5d47a",
+  "index": "index.html",
+  "reportCount": 1,
+  "reports": [
+    {
+      "href": "001-snapshot-right.html",
+      "htmlSha256": "a12fc2e522eee8e2ba68cda483e2b85e19b5ab6e26eb6ad27adc890a14277d78",
+      "schema": "edgp.graph.snapshot.v1",
+      "source": "missing-source.json",
+      "sourceSha256": "154aa293f4662b75fba7cab1786e302423527f49aa95f83248b755bef74496f1",
+      "summary": {
+        "edges": 2,
+        "nodes": 3
+      },
+      "title": "Graph Snapshot - app==1.0.0"
+    }
+  ],
+  "schema": "edgp.report.bundle.v1"
+}

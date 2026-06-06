@@ -1205,7 +1205,7 @@ def _assert_verify_bundle_detects_tampering() -> None:
         assert payload["failures"][0]["code"] == "htmlDigestMismatch"
 
 
-def _assert_tampered_bundle_validation_fixtures() -> None:
+def _assert_bundle_validation_failure_fixtures() -> None:
     cases = [
         (
             "tampered-report-bundle-manifest",
@@ -1220,6 +1220,20 @@ def _assert_tampered_bundle_validation_fixtures() -> None:
             "validation-failure-tampered-bundle-member.json",
             "htmlDigestMismatch",
             "bundle.htmlDigestMismatch",
+        ),
+        (
+            "missing-html-report-bundle",
+            "report-bundle-verification-missing-html.json",
+            "validation-failure-missing-bundle-html.json",
+            "htmlMissing",
+            "bundle.htmlMissing",
+        ),
+        (
+            "missing-source-report-bundle",
+            "report-bundle-verification-missing-source.json",
+            "validation-failure-missing-bundle-source.json",
+            "sourceMissing",
+            "bundle.sourceMissing",
         ),
     ]
     for (
@@ -1485,8 +1499,8 @@ def main(argv: list[str] | None = None) -> int:
         ("report bundle", _assert_report_bundle),
         ("verify bundle tamper detection", _assert_verify_bundle_detects_tampering),
         (
-            "tampered bundle validation fixtures",
-            _assert_tampered_bundle_validation_fixtures,
+            "bundle validation failure fixtures",
+            _assert_bundle_validation_failure_fixtures,
         ),
         ("npm bundle", _assert_npm_bundle),
         ("npm bundle impact advisory", _assert_npm_bundle_with_impact_and_advisory),

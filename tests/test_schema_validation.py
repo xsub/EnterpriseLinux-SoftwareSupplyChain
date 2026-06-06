@@ -46,7 +46,7 @@ def test_validate_target_matches_committed_failure_fixture() -> None:
     assert _normalize_validation_report(report) == expected
 
 
-def test_validate_target_matches_committed_tampered_bundle_fixtures() -> None:
+def test_validate_target_matches_committed_bundle_failure_fixtures() -> None:
     cases = [
         (
             Path("tests/fixtures/tampered-report-bundle-manifest"),
@@ -55,6 +55,14 @@ def test_validate_target_matches_committed_tampered_bundle_fixtures() -> None:
         (
             Path("tests/fixtures/tampered-report-bundle-member"),
             Path("tests/fixtures/validation-failure-tampered-bundle-member.json"),
+        ),
+        (
+            Path("tests/fixtures/missing-html-report-bundle"),
+            Path("tests/fixtures/validation-failure-missing-bundle-html.json"),
+        ),
+        (
+            Path("tests/fixtures/missing-source-report-bundle"),
+            Path("tests/fixtures/validation-failure-missing-bundle-source.json"),
         ),
     ]
 

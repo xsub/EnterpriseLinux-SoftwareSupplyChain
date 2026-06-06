@@ -72,7 +72,7 @@ def test_verify_report_bundle_reports_tampered_member_html(tmp_path) -> None:
     assert report["failures"][0]["code"] == "htmlDigestMismatch"
 
 
-def test_verify_report_bundle_matches_committed_tampered_fixtures() -> None:
+def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
     cases = [
         (
             Path("tests/fixtures/tampered-report-bundle-manifest"),
@@ -81,6 +81,14 @@ def test_verify_report_bundle_matches_committed_tampered_fixtures() -> None:
         (
             Path("tests/fixtures/tampered-report-bundle-member"),
             Path("tests/fixtures/report-bundle-verification-tampered-member.json"),
+        ),
+        (
+            Path("tests/fixtures/missing-html-report-bundle"),
+            Path("tests/fixtures/report-bundle-verification-missing-html.json"),
+        ),
+        (
+            Path("tests/fixtures/missing-source-report-bundle"),
+            Path("tests/fixtures/report-bundle-verification-missing-source.json"),
         ),
     ]
 

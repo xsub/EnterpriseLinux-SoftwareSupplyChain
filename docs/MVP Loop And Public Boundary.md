@@ -86,6 +86,8 @@ surfaces are:
   payloads.
 - Provide committed validation and verification failure examples for tampered
   report bundle manifests and member files.
+- Provide committed validation and verification failure examples for missing
+  report bundle HTML and source members.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -154,11 +156,15 @@ python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/tampered-report-bundle-manifest --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/tampered-report-bundle-member --format text
+python -B -m src.cli verify-bundle --path tests/fixtures/missing-html-report-bundle --format text
+python -B -m src.cli verify-bundle --path tests/fixtures/missing-source-report-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/snapshot-right.json
 python -B -m src.cli validate --path tests/fixtures/invalid-snapshot-missing-edge-count.json
 python -B -m src.cli validate --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/tampered-report-bundle-manifest --format text
 python -B -m src.cli validate --path tests/fixtures/tampered-report-bundle-member --format text
+python -B -m src.cli validate --path tests/fixtures/missing-html-report-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/missing-source-report-bundle --format text
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check
@@ -167,5 +173,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add committed missing-member bundle fixtures for `htmlMissing` and
-  `sourceMissing` verification failures.
+- Add committed invalid-manifest-shape fixtures for `manifestMissingField` and
+  `reportMissingField` verification failures.
