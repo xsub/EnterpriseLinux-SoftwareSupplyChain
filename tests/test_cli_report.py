@@ -259,6 +259,28 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.reportUnknownField",
             1,
         ),
+        (
+            Path("tests/fixtures/invalid-bundle-source-kind-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-bundle-source-kind.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-bundle-source-kind.json"),
+            "bundleSourceKindInvalid",
+            "bundle.bundleSourceKindInvalid",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-report-digest-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-digest.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-report-digest.json"),
+            "reportDigestInvalid",
+            "bundle.reportDigestInvalid",
+            1,
+        ),
     ]
 
     for (

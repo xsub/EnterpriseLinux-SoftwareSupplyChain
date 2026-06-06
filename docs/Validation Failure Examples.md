@@ -247,3 +247,53 @@ Text output:
 FAIL reports=1 failures=1 bundleSha256=83d5e2941a20bafa81172a97e7fa3597a44c928b008b03af2b27565f0bab0306 firstFailure=reportUnknownField
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportUnknownField
 ```
+
+## Unsupported Bundle Source Kind
+
+The fixture
+[`tests/fixtures/invalid-bundle-source-kind-bundle`](../tests/fixtures/invalid-bundle-source-kind-bundle)
+keeps a self-consistent manifest fingerprint but sets `bundle.sourceKind` to an
+unsupported public-boundary value. The normalized verifier and validator
+results are committed as
+[`report-bundle-verification-invalid-bundle-source-kind.json`](../tests/fixtures/report-bundle-verification-invalid-bundle-source-kind.json)
+and
+[`validation-failure-invalid-bundle-source-kind.json`](../tests/fixtures/validation-failure-invalid-bundle-source-kind.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-bundle-source-kind-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-bundle-source-kind-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=bebfd2865ded2310cd42348c392f4cbbd58d5e690ee7221874ffb9d7c3d1f697 firstFailure=bundleSourceKindInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.bundleSourceKindInvalid
+```
+
+## Invalid Report Digest Field
+
+The fixture
+[`tests/fixtures/invalid-report-digest-bundle`](../tests/fixtures/invalid-report-digest-bundle)
+keeps a self-consistent manifest fingerprint but sets `reports[1].htmlSha256`
+to a non-SHA-256 value. The normalized verifier and validator results are
+committed as
+[`report-bundle-verification-invalid-report-digest.json`](../tests/fixtures/report-bundle-verification-invalid-report-digest.json)
+and
+[`validation-failure-invalid-report-digest.json`](../tests/fixtures/validation-failure-invalid-report-digest.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-digest-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-report-digest-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=12500a13d5e0a3434417387f5e769830695cbe81498023f1fd70608c904a08bf firstFailure=reportDigestInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportDigestInvalid
+```

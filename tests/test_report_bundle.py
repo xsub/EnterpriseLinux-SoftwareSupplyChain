@@ -118,6 +118,20 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
                 "report-bundle-verification-invalid-report-unknown-field.json"
             ),
         ),
+        (
+            Path("tests/fixtures/invalid-bundle-source-kind-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-bundle-source-kind.json"
+            ),
+        ),
+        (
+            Path("tests/fixtures/invalid-report-digest-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-report-digest.json"
+            ),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

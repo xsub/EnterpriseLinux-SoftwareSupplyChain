@@ -1271,6 +1271,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.reportUnknownField",
             1,
         ),
+        (
+            "invalid-bundle-source-kind-bundle",
+            "report-bundle-verification-invalid-bundle-source-kind.json",
+            "validation-failure-invalid-bundle-source-kind.json",
+            "bundleSourceKindInvalid",
+            "bundle.bundleSourceKindInvalid",
+            1,
+        ),
+        (
+            "invalid-report-digest-bundle",
+            "report-bundle-verification-invalid-report-digest.json",
+            "validation-failure-invalid-report-digest.json",
+            "reportDigestInvalid",
+            "bundle.reportDigestInvalid",
+            1,
+        ),
     ]
     for (
         bundle_name,
