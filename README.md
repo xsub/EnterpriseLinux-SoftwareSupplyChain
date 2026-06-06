@@ -479,6 +479,16 @@ machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 schema subset or validates a report bundle directory with the bundle verifier.
 Validation failure examples are documented in
 [`docs/Validation Failure Examples.md`](docs/Validation%20Failure%20Examples.md).
+The machine-readable example index is committed at
+[`docs/validation-failure-example-index.json`](docs/validation-failure-example-index.json)
+and can be emitted from the CLI:
+
+```bash
+edgp failure-examples
+edgp failure-examples --format text
+edgp failure-examples --target-type report-bundle --code manifestInvalid
+```
+
 `scripts/browser_smoke_report_sorting.py` generates a self-checking HTML report
 that exercises graph report table sorting inside a browser.
 `scripts/browser_smoke_report_bundle_navigation.py` generates a self-checking

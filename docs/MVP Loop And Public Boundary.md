@@ -120,6 +120,7 @@ surfaces are:
 - Filter validation failure examples by validation or verifier failure code from
   the CLI.
 - Filter validation failure examples by target artifact type from the CLI.
+- Link validation failure example index workflows from the README.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -253,4 +254,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add README links for validation failure example index workflows.
+- Add `--id` filtering to the `failure-examples` CLI command.
