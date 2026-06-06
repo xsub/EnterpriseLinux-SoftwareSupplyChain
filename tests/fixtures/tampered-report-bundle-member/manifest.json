@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "command": "edgp report-bundle --input tests/fixtures/snapshot-right.json --output-dir tests/fixtures/tampered-report-bundle-member",
+    "sourceKind": "edgp-json"
+  },
+  "bundleSha256": "c7981ee1692879fb130d77d6612cef7f5010824e9e5945bd19408b6d1f068951",
+  "index": "index.html",
+  "reportCount": 1,
+  "reports": [
+    {
+      "href": "001-snapshot-right.html",
+      "htmlSha256": "9990a1881f7394f590fd8aa8c0abec5a20b5bc780376f8002e6789eed8bba4fa",
+      "schema": "edgp.graph.snapshot.v1",
+      "source": "tests/fixtures/snapshot-right.json",
+      "sourceSha256": "154aa293f4662b75fba7cab1786e302423527f49aa95f83248b755bef74496f1",
+      "summary": {
+        "edges": 2,
+        "nodes": 3
+      },
+      "title": "Graph Snapshot - app==1.0.0"
+    }
+  ],
+  "schema": "edgp.report.bundle.v1"
+}

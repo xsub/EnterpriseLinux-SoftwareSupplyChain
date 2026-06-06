@@ -80,7 +80,24 @@ def _run_cli_allow_failure(args: list[str]) -> dict[str, Any]:
 
 def _normalize_validation_report(payload: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(payload)
+    bundle_verification = normalized.get("bundleVerification")
+    bundle_dir = ""
+    if isinstance(bundle_verification, dict):
+        bundle = dict(bundle_verification)
+        bundle_dir = str(bundle.get("bundleDir", ""))
+        bundle["bundleDir"] = "<bundle-dir>"
+        if bundle.get("bundleSha256") is not None:
+            bundle["bundleSha256"] = "<bundleSha256>"
+        bundle["failures"] = _normalize_failure_paths(
+            bundle.get("failures", []),
+            bundle_dir,
+        )
+        normalized["bundleVerification"] = bundle
     normalized["target"] = "<target>"
+    normalized["failures"] = _normalize_failure_paths(
+        normalized.get("failures", []),
+        bundle_dir,
+    )
     return normalized
 
 
@@ -436,8 +453,31 @@ def _assert_verify_bundle_fixture(output_dir: Path) -> None:
 
 def _normalize_verification_report(payload: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(payload)
+    bundle_dir = str(normalized.get("bundleDir", ""))
     normalized["bundleDir"] = "<bundle-dir>"
-    normalized["bundleSha256"] = "<bundleSha256>"
+    if normalized.get("bundleSha256") is not None:
+        normalized["bundleSha256"] = "<bundleSha256>"
+    normalized["failures"] = _normalize_failure_paths(
+        normalized.get("failures", []),
+        bundle_dir,
+    )
+    return normalized
+
+
+def _normalize_failure_paths(
+    failures: object,
+    bundle_dir: str,
+) -> list[dict[str, Any]]:
+    normalized = []
+    if not isinstance(failures, list):
+        return normalized
+    for failure in failures:
+        if not isinstance(failure, dict):
+            continue
+        item = dict(failure)
+        if bundle_dir and isinstance(item.get("path"), str):
+            item["path"] = item["path"].replace(bundle_dir, "<bundle-dir>", 1)
+        normalized.append(item)
     return normalized
 
 
@@ -1165,6 +1205,97 @@ def _assert_verify_bundle_detects_tampering() -> None:
         assert payload["failures"][0]["code"] == "htmlDigestMismatch"
 
 
+def _assert_tampered_bundle_validation_fixtures() -> None:
+    cases = [
+        (
+            "tampered-report-bundle-manifest",
+            "report-bundle-verification-tampered-manifest.json",
+            "validation-failure-tampered-bundle-manifest.json",
+            "bundleDigestMismatch",
+            "bundle.bundleDigestMismatch",
+        ),
+        (
+            "tampered-report-bundle-member",
+            "report-bundle-verification-tampered-member.json",
+            "validation-failure-tampered-bundle-member.json",
+            "htmlDigestMismatch",
+            "bundle.htmlDigestMismatch",
+        ),
+    ]
+    for (
+        bundle_name,
+        verification_fixture_name,
+        validation_fixture_name,
+        verify_code,
+        validate_code,
+    ) in cases:
+        bundle_path = Path("tests/fixtures") / bundle_name
+        verification_payload = _run_cli_allow_failure(
+            ["verify-bundle", "--path", str(bundle_path)]
+        )
+        _assert_report_bundle_verification_contract(verification_payload)
+        verification_fixture = json.loads(
+            (REPO_ROOT / "tests" / "fixtures" / verification_fixture_name).read_text(
+                encoding="utf-8"
+            )
+        )
+        assert _normalize_verification_report(verification_payload) == verification_fixture
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "verify-bundle",
+                "--path",
+                str(bundle_path),
+                "--format",
+                "text",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 1
+        assert completed.stdout.startswith("FAIL reports=1 failures=1 bundleSha256=")
+        assert f"firstFailure={verify_code}" in completed.stdout
+
+        validation_payload = _run_cli_allow_failure(
+            ["validate", "--path", str(bundle_path)]
+        )
+        validation_fixture = json.loads(
+            (REPO_ROOT / "tests" / "fixtures" / validation_fixture_name).read_text(
+                encoding="utf-8"
+            )
+        )
+        assert _normalize_validation_report(validation_payload) == validation_fixture
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "validate",
+                "--path",
+                str(bundle_path),
+                "--format",
+                "text",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 1
+        assert completed.stdout.strip() == (
+            "FAIL targetType=report-bundle failures=1 "
+            f"contract=edgp.report.bundle.v1 firstFailure={validate_code}"
+        )
+
+
 def _assert_npm_bundle() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "npm-bundle"
@@ -1353,6 +1484,10 @@ def main(argv: list[str] | None = None) -> int:
         ("npm diagnostics html report", _assert_npm_diagnostics_html_report),
         ("report bundle", _assert_report_bundle),
         ("verify bundle tamper detection", _assert_verify_bundle_detects_tampering),
+        (
+            "tampered bundle validation fixtures",
+            _assert_tampered_bundle_validation_fixtures,
+        ),
         ("npm bundle", _assert_npm_bundle),
         ("npm bundle impact advisory", _assert_npm_bundle_with_impact_and_advisory),
         ("synthetic benchmark", _assert_benchmark),

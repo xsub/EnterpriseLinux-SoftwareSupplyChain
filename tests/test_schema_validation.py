@@ -46,6 +46,25 @@ def test_validate_target_matches_committed_failure_fixture() -> None:
     assert _normalize_validation_report(report) == expected
 
 
+def test_validate_target_matches_committed_tampered_bundle_fixtures() -> None:
+    cases = [
+        (
+            Path("tests/fixtures/tampered-report-bundle-manifest"),
+            Path("tests/fixtures/validation-failure-tampered-bundle-manifest.json"),
+        ),
+        (
+            Path("tests/fixtures/tampered-report-bundle-member"),
+            Path("tests/fixtures/validation-failure-tampered-bundle-member.json"),
+        ),
+    ]
+
+    for bundle_dir, fixture_path in cases:
+        report = validate_target(bundle_dir)
+        expected = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+        assert _normalize_validation_report(report) == expected
+
+
 def test_validate_target_accepts_report_bundle_directory(tmp_path) -> None:
     write_report_bundle(
         [
@@ -66,5 +85,39 @@ def test_validate_target_accepts_report_bundle_directory(tmp_path) -> None:
 
 def _normalize_validation_report(report: dict[str, object]) -> dict[str, object]:
     normalized = dict(report)
+    bundle_verification = normalized.get("bundleVerification")
+    bundle_dir = ""
+    if isinstance(bundle_verification, dict):
+        bundle = dict(bundle_verification)
+        bundle_dir = str(bundle.get("bundleDir", ""))
+        bundle["bundleDir"] = "<bundle-dir>"
+        if bundle.get("bundleSha256") is not None:
+            bundle["bundleSha256"] = "<bundleSha256>"
+        bundle["failures"] = _normalize_failure_paths(
+            bundle.get("failures", []),
+            bundle_dir,
+        )
+        normalized["bundleVerification"] = bundle
     normalized["target"] = "<target>"
+    normalized["failures"] = _normalize_failure_paths(
+        normalized.get("failures", []),
+        bundle_dir,
+    )
+    return normalized
+
+
+def _normalize_failure_paths(
+    failures: object,
+    bundle_dir: str,
+) -> list[dict[str, object]]:
+    normalized = []
+    if not isinstance(failures, list):
+        return normalized
+    for failure in failures:
+        if not isinstance(failure, dict):
+            continue
+        item = dict(failure)
+        if bundle_dir and isinstance(item.get("path"), str):
+            item["path"] = item["path"].replace(bundle_dir, "<bundle-dir>", 1)
+        normalized.append(item)
     return normalized

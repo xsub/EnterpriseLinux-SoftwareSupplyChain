@@ -1,0 +1,35 @@
+{
+  "bundleVerification": {
+    "bundleDir": "<bundle-dir>",
+    "bundleSha256": "<bundleSha256>",
+    "failures": [
+      {
+        "code": "htmlDigestMismatch",
+        "message": "reports[1] digest mismatch",
+        "path": "<bundle-dir>/001-snapshot-right.html"
+      }
+    ],
+    "manifest": "manifest.json",
+    "ok": false,
+    "schema": "edgp.report.bundle.verification.v1",
+    "summary": {
+      "failures": 1,
+      "reports": 1
+    }
+  },
+  "contract": "edgp.report.bundle.v1",
+  "failures": [
+    {
+      "code": "bundle.htmlDigestMismatch",
+      "message": "reports[1] digest mismatch",
+      "path": "<bundle-dir>/001-snapshot-right.html"
+    }
+  ],
+  "ok": false,
+  "schema": "edgp.validation.report.v1",
+  "summary": {
+    "failures": 1
+  },
+  "target": "<target>",
+  "targetType": "report-bundle"
+}

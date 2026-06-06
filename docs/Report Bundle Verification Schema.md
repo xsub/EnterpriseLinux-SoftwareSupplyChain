@@ -88,3 +88,8 @@ Failure example:
   }
 }
 ```
+
+Committed normalized failure fixtures are available for common tamper cases:
+
+- [`tests/fixtures/report-bundle-verification-tampered-manifest.json`](../tests/fixtures/report-bundle-verification-tampered-manifest.json)
+- [`tests/fixtures/report-bundle-verification-tampered-member.json`](../tests/fixtures/report-bundle-verification-tampered-member.json)

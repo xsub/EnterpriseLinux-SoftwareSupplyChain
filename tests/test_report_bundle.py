@@ -72,6 +72,25 @@ def test_verify_report_bundle_reports_tampered_member_html(tmp_path) -> None:
     assert report["failures"][0]["code"] == "htmlDigestMismatch"
 
 
+def test_verify_report_bundle_matches_committed_tampered_fixtures() -> None:
+    cases = [
+        (
+            Path("tests/fixtures/tampered-report-bundle-manifest"),
+            Path("tests/fixtures/report-bundle-verification-tampered-manifest.json"),
+        ),
+        (
+            Path("tests/fixtures/tampered-report-bundle-member"),
+            Path("tests/fixtures/report-bundle-verification-tampered-member.json"),
+        ),
+    ]
+
+    for bundle_dir, fixture_path in cases:
+        report = verify_report_bundle(bundle_dir)
+        expected = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+        assert _normalize_verification_report(report) == expected
+
+
 def _manifest_sha256(manifest: dict[str, object]) -> str:
     digest_payload = {
         key: value for key, value in manifest.items() if key != "bundleSha256"
@@ -82,3 +101,33 @@ def _manifest_sha256(manifest: dict[str, object]) -> str:
         sort_keys=True,
     )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _normalize_verification_report(report: dict[str, object]) -> dict[str, object]:
+    normalized = dict(report)
+    bundle_dir = str(normalized.get("bundleDir", ""))
+    normalized["bundleDir"] = "<bundle-dir>"
+    if normalized.get("bundleSha256") is not None:
+        normalized["bundleSha256"] = "<bundleSha256>"
+    normalized["failures"] = _normalize_failure_paths(
+        normalized.get("failures", []),
+        bundle_dir,
+    )
+    return normalized
+
+
+def _normalize_failure_paths(
+    failures: object,
+    bundle_dir: str,
+) -> list[dict[str, object]]:
+    normalized = []
+    if not isinstance(failures, list):
+        return normalized
+    for failure in failures:
+        if not isinstance(failure, dict):
+            continue
+        item = dict(failure)
+        if bundle_dir and isinstance(item.get("path"), str):
+            item["path"] = item["path"].replace(bundle_dir, "<bundle-dir>", 1)
+        normalized.append(item)
+    return normalized

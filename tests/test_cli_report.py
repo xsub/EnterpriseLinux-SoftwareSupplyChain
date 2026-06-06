@@ -178,6 +178,59 @@ def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     assert "firstFailure=htmlDigestMismatch" in text
 
 
+def test_cli_verify_and_validate_committed_tampered_bundle_fixtures(capsys) -> None:
+    cases = [
+        (
+            Path("tests/fixtures/tampered-report-bundle-manifest"),
+            Path("tests/fixtures/report-bundle-verification-tampered-manifest.json"),
+            Path("tests/fixtures/validation-failure-tampered-bundle-manifest.json"),
+            "bundleDigestMismatch",
+            "bundle.bundleDigestMismatch",
+        ),
+        (
+            Path("tests/fixtures/tampered-report-bundle-member"),
+            Path("tests/fixtures/report-bundle-verification-tampered-member.json"),
+            Path("tests/fixtures/validation-failure-tampered-bundle-member.json"),
+            "htmlDigestMismatch",
+            "bundle.htmlDigestMismatch",
+        ),
+    ]
+
+    for (
+        bundle_dir,
+        verification_fixture,
+        validation_fixture,
+        verify_code,
+        validate_code,
+    ) in cases:
+        assert main(["verify-bundle", "--path", str(bundle_dir)]) == 1
+        verification = json.loads(capsys.readouterr().out)
+        expected_verification = json.loads(
+            verification_fixture.read_text(encoding="utf-8")
+        )
+        assert _normalize_verification_report(verification) == expected_verification
+
+        assert (
+            main(["verify-bundle", "--path", str(bundle_dir), "--format", "text"])
+            == 1
+        )
+        verification_text = capsys.readouterr().out.strip()
+        assert verification_text.startswith("FAIL reports=1 failures=1 bundleSha256=")
+        assert f"firstFailure={verify_code}" in verification_text
+
+        assert main(["validate", "--path", str(bundle_dir)]) == 1
+        validation = json.loads(capsys.readouterr().out)
+        expected_validation = json.loads(validation_fixture.read_text(encoding="utf-8"))
+        assert _normalize_validation_report(validation) == expected_validation
+
+        assert main(["validate", "--path", str(bundle_dir), "--format", "text"]) == 1
+        validation_text = capsys.readouterr().out.strip()
+        assert validation_text == (
+            "FAIL targetType=report-bundle failures=1 "
+            f"contract=edgp.report.bundle.v1 firstFailure={validate_code}"
+        )
+
+
 def test_cli_validate_reports_json_contract(capsys) -> None:
     assert main(["validate", "--path", "tests/fixtures/snapshot-right.json"]) == 0
     report = json.loads(capsys.readouterr().out)
@@ -251,6 +304,52 @@ def test_cli_validate_reports_bundle_contract(tmp_path, capsys) -> None:
 
 def _normalize_verification_report(payload: dict[str, object]) -> dict[str, object]:
     normalized = dict(payload)
+    bundle_dir = str(normalized.get("bundleDir", ""))
     normalized["bundleDir"] = "<bundle-dir>"
-    normalized["bundleSha256"] = "<bundleSha256>"
+    if normalized.get("bundleSha256") is not None:
+        normalized["bundleSha256"] = "<bundleSha256>"
+    normalized["failures"] = _normalize_failure_paths(
+        normalized.get("failures", []),
+        bundle_dir,
+    )
+    return normalized
+
+
+def _normalize_validation_report(payload: dict[str, object]) -> dict[str, object]:
+    normalized = dict(payload)
+    bundle_verification = normalized.get("bundleVerification")
+    bundle_dir = ""
+    if isinstance(bundle_verification, dict):
+        bundle = dict(bundle_verification)
+        bundle_dir = str(bundle.get("bundleDir", ""))
+        bundle["bundleDir"] = "<bundle-dir>"
+        if bundle.get("bundleSha256") is not None:
+            bundle["bundleSha256"] = "<bundleSha256>"
+        bundle["failures"] = _normalize_failure_paths(
+            bundle.get("failures", []),
+            bundle_dir,
+        )
+        normalized["bundleVerification"] = bundle
+    normalized["target"] = "<target>"
+    normalized["failures"] = _normalize_failure_paths(
+        normalized.get("failures", []),
+        bundle_dir,
+    )
+    return normalized
+
+
+def _normalize_failure_paths(
+    failures: object,
+    bundle_dir: str,
+) -> list[dict[str, object]]:
+    normalized = []
+    if not isinstance(failures, list):
+        return normalized
+    for failure in failures:
+        if not isinstance(failure, dict):
+            continue
+        item = dict(failure)
+        if bundle_dir and isinstance(item.get("path"), str):
+            item["path"] = item["path"].replace(bundle_dir, "<bundle-dir>", 1)
+        normalized.append(item)
     return normalized
