@@ -481,6 +481,9 @@ Validation failure examples are documented in
 [`docs/Validation Failure Examples.md`](docs/Validation%20Failure%20Examples.md).
 `scripts/browser_smoke_report_sorting.py` generates a self-checking HTML report
 that exercises graph report table sorting inside a browser.
+`scripts/browser_smoke_report_bundle_navigation.py` generates a self-checking
+static report bundle that exercises index card links and member report loads in
+a browser.
 
 `edgp report` renders graph snapshots, impact reports, advisory reports, and npm
 diagnostics into dependency-free HTML files. Snapshot reports include graph

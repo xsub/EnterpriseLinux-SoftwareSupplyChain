@@ -964,6 +964,35 @@ def _assert_browser_smoke_report_sorting() -> None:
         assert "dataset.browserSmokeStatus = 'pass'" in html
 
 
+def _assert_browser_smoke_report_bundle_navigation() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "report-bundle-navigation-smoke"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "scripts/browser_smoke_report_bundle_navigation.py",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        index_path = output_dir / "index.html"
+        assert completed.stdout.strip() == str(index_path)
+        html = index_path.read_text(encoding="utf-8")
+        assert 'data-testid="browser-smoke-panel"' in html
+        assert 'data-testid="browser-smoke-frame"' in html
+        assert "bundle link order" in html
+        assert "003-impact-report.html" in html
+        assert "dataset.browserSmokeStatus = 'pass'" in html
+        assert (output_dir / "001-snapshot-right.html").exists()
+        assert (output_dir / "002-npm-diagnostics-report.html").exists()
+        assert (output_dir / "003-impact-report.html").exists()
+
+
 def _assert_impact_html_report() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_path = Path(temp_dir) / "impact-report.html"
@@ -1315,6 +1344,10 @@ def main(argv: list[str] | None = None) -> int:
         ("rpm advisory overlay", _assert_rpm_advisory_overlay),
         ("html report", _assert_html_report),
         ("browser smoke report sorting", _assert_browser_smoke_report_sorting),
+        (
+            "browser smoke report bundle navigation",
+            _assert_browser_smoke_report_bundle_navigation,
+        ),
         ("impact html report", _assert_impact_html_report),
         ("advisory html report", _assert_advisory_html_report),
         ("npm diagnostics html report", _assert_npm_diagnostics_html_report),

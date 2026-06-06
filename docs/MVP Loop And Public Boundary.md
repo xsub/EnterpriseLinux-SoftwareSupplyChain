@@ -58,6 +58,8 @@ surfaces are:
 - Render sortable graph snapshot node metadata tables for static HTML reports.
 - Generate a self-checking browser smoke HTML page for static graph report
   sorting behavior.
+- Generate a self-checking browser smoke report bundle for static index
+  navigation behavior.
 - Render deterministic static HTML report bundles with an index for multiple
   EDGP JSON reports.
 - Emit a machine-readable `manifest.json` for report bundles so future
@@ -152,11 +154,11 @@ python -B -m src.cli validate --path tests/fixtures/snapshot-right.json
 python -B -m src.cli validate --path tests/fixtures/invalid-snapshot-missing-edge-count.json
 python -B -m src.cli validate --path /tmp/edgp-report-bundle --format text
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
+python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
 
 ## Next Vertical Options
 
-- Add a dependency-free smoke artifact for report bundle index navigation.
 - Add validation examples for tampered report bundle manifests and member files.
