@@ -146,6 +146,20 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
                 "report-bundle-verification-invalid-index-path.json"
             ),
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-schema-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-manifest-schema.json"
+            ),
+        ),
+        (
+            Path("tests/fixtures/invalid-bundle-digest-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-bundle-digest.json"
+            ),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

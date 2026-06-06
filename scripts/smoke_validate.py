@@ -1303,6 +1303,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.indexInvalid",
             1,
         ),
+        (
+            "invalid-manifest-schema-bundle",
+            "report-bundle-verification-invalid-manifest-schema.json",
+            "validation-failure-invalid-manifest-schema.json",
+            "manifestSchemaMismatch",
+            "bundle.manifestSchemaMismatch",
+            1,
+        ),
+        (
+            "invalid-bundle-digest-bundle",
+            "report-bundle-verification-invalid-bundle-digest.json",
+            "validation-failure-invalid-bundle-digest.json",
+            "bundleDigestInvalid",
+            "bundle.bundleDigestInvalid",
+            1,
+        ),
     ]
     for (
         bundle_name,
@@ -1342,9 +1358,15 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             text=True,
         )
         assert completed.returncode == 1
-        assert completed.stdout.startswith(
-            f"FAIL reports=1 failures={failure_count} bundleSha256="
-        )
+        if verify_code == "bundleDigestInvalid":
+            assert completed.stdout.startswith(
+                f"FAIL reports=1 failures={failure_count} "
+            )
+            assert "bundleSha256=" not in completed.stdout
+        else:
+            assert completed.stdout.startswith(
+                f"FAIL reports=1 failures={failure_count} bundleSha256="
+            )
         assert f"firstFailure={verify_code}" in completed.stdout
 
         validation_payload = _run_cli_allow_failure(

@@ -303,6 +303,28 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.indexInvalid",
             1,
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-schema-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-manifest-schema.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-manifest-schema.json"),
+            "manifestSchemaMismatch",
+            "bundle.manifestSchemaMismatch",
+            1,
+        ),
+        (
+            Path("tests/fixtures/invalid-bundle-digest-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-invalid-bundle-digest.json"
+            ),
+            Path("tests/fixtures/validation-failure-invalid-bundle-digest.json"),
+            "bundleDigestInvalid",
+            "bundle.bundleDigestInvalid",
+            1,
+        ),
     ]
 
     for (
@@ -325,9 +347,15 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             == 1
         )
         verification_text = capsys.readouterr().out.strip()
-        assert verification_text.startswith(
-            f"FAIL reports=1 failures={failure_count} bundleSha256="
-        )
+        if verify_code == "bundleDigestInvalid":
+            assert verification_text.startswith(
+                f"FAIL reports=1 failures={failure_count} "
+            )
+            assert "bundleSha256=" not in verification_text
+        else:
+            assert verification_text.startswith(
+                f"FAIL reports=1 failures={failure_count} bundleSha256="
+            )
         assert f"firstFailure={verify_code}" in verification_text
 
         assert main(["validate", "--path", str(bundle_dir)]) == 1

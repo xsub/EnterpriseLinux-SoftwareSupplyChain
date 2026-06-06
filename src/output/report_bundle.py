@@ -174,7 +174,7 @@ def verify_report_bundle(
         "bundleDir": str(bundle_dir),
         "manifest": manifest_name,
         "ok": not failures,
-        "bundleSha256": manifest.get(BUNDLE_SHA256_KEY),
+        "bundleSha256": _verified_bundle_sha256(manifest),
         "summary": {
             "reports": len(manifest.get("reports", []))
             if isinstance(manifest.get("reports"), list)
@@ -183,6 +183,13 @@ def verify_report_bundle(
         },
         "failures": failures,
     }
+
+
+def _verified_bundle_sha256(manifest: Mapping[str, Any]) -> str | None:
+    bundle_sha = manifest.get(BUNDLE_SHA256_KEY)
+    if isinstance(bundle_sha, str) and _is_sha256(bundle_sha):
+        return bundle_sha
+    return None
 
 
 def _verify_manifest_shape(

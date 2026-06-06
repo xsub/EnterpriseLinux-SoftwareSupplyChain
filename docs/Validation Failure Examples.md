@@ -347,3 +347,54 @@ Text output:
 FAIL reports=1 failures=1 bundleSha256=bfce2379da03171688e7810e8a2515704237e75c1322ef96f892f83efefb494b firstFailure=indexInvalid
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.indexInvalid
 ```
+
+## Manifest Schema Mismatch
+
+The fixture
+[`tests/fixtures/invalid-manifest-schema-bundle`](../tests/fixtures/invalid-manifest-schema-bundle)
+keeps a self-consistent manifest fingerprint but declares an unsupported
+top-level manifest schema. The normalized verifier and validator results are
+committed as
+[`report-bundle-verification-invalid-manifest-schema.json`](../tests/fixtures/report-bundle-verification-invalid-manifest-schema.json)
+and
+[`validation-failure-invalid-manifest-schema.json`](../tests/fixtures/validation-failure-invalid-manifest-schema.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-schema-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-manifest-schema-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=6b6ec81304832919a624529e48f58d7dbefe9e9092a7345554c42443a3149447 firstFailure=manifestSchemaMismatch
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.manifestSchemaMismatch
+```
+
+## Invalid Bundle Fingerprint Field
+
+The fixture
+[`tests/fixtures/invalid-bundle-digest-bundle`](../tests/fixtures/invalid-bundle-digest-bundle)
+sets the top-level `bundleSha256` field to a non-SHA-256 value. The verifier
+normalizes this field to `null` in JSON output and omits `bundleSha256=` from
+text output because the manifest did not provide a valid fingerprint. The
+normalized verifier and validator results are committed as
+[`report-bundle-verification-invalid-bundle-digest.json`](../tests/fixtures/report-bundle-verification-invalid-bundle-digest.json)
+and
+[`validation-failure-invalid-bundle-digest.json`](../tests/fixtures/validation-failure-invalid-bundle-digest.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-bundle-digest-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-bundle-digest-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 firstFailure=bundleDigestInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.bundleDigestInvalid
+```
