@@ -123,6 +123,8 @@ surfaces are:
 - Filter validation failure examples by stable example id from the CLI.
 - List available validation failure example ids, target types, validation
   codes, and verifier codes from the CLI.
+- Document filtered validation failure example workflows in the dedicated
+  validation examples guide.
 - Link validation failure example index workflows from the README.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
@@ -259,5 +261,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Document filtered validation failure example workflows in the dedicated
-  validation examples guide.
+- Add a Draft 2020-12 JSON Schema for the failure example filter listing
+  payload.

@@ -12,6 +12,52 @@ Its schema is documented at
 Regenerate or check it with
 `python -B scripts/generate_failure_example_index.py --check`.
 
+## CLI Index Workflows
+
+Use `failure-examples --list-codes` to discover the stable IDs, target artifact
+types, validation failure codes, and verifier failure codes available in the
+committed example index:
+
+```bash
+python -B -m src.cli failure-examples --list-codes
+```
+
+The same filters used by the full index command can narrow the list output. For
+example, this shows only JSON-file example filters:
+
+```bash
+python -B -m src.cli failure-examples --target-type json-file --list-codes --format text
+```
+
+```text
+OK examples=1 schema=edgp.validation.failure.example.filters.v1
+ids=graph-missing-edge-count
+targetTypes=json-file
+validationFailureCodes=requiredMissing
+verificationFailureCodes=
+```
+
+Use `--id` when a workbench or RAG context already knows the stable example ID:
+
+```bash
+python -B -m src.cli failure-examples --id manifest-invalid --format text
+```
+
+```text
+OK examples=1 schema=edgp.validation.failure.example.index.v1
+manifest-invalid targetType=report-bundle contract=edgp.report.bundle.v1 failureCodes=bundle.manifestInvalid target=tests/fixtures/invalid-manifest-type-bundle
+```
+
+Validation and verifier codes intentionally both work with `--code`. This lets
+terminal users search by normalized validation code
+`bundle.manifestInvalid`, while bundle verifier callers can search by the
+underlying verifier code `manifestInvalid`:
+
+```bash
+python -B -m src.cli failure-examples --code bundle.manifestInvalid --format text
+python -B -m src.cli failure-examples --code manifestInvalid --format text
+```
+
 ## Missing Required Field
 
 The fixture
