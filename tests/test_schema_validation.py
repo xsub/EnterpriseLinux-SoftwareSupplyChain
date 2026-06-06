@@ -131,6 +131,14 @@ def test_validate_target_matches_committed_bundle_failure_fixtures() -> None:
             Path("tests/fixtures/invalid-report-href-bundle"),
             Path("tests/fixtures/validation-failure-invalid-report-href.json"),
         ),
+        (
+            Path("tests/fixtures/missing-index-report-bundle"),
+            Path("tests/fixtures/validation-failure-missing-index.json"),
+        ),
+        (
+            Path("tests/fixtures/source-digest-mismatch-bundle"),
+            Path("tests/fixtures/validation-failure-source-digest-mismatch.json"),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

@@ -1367,6 +1367,22 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.reportHrefInvalid",
             1,
         ),
+        (
+            "missing-index-report-bundle",
+            "report-bundle-verification-missing-index.json",
+            "validation-failure-missing-index.json",
+            "indexMissing",
+            "bundle.indexMissing",
+            1,
+        ),
+        (
+            "source-digest-mismatch-bundle",
+            "report-bundle-verification-source-digest-mismatch.json",
+            "validation-failure-source-digest-mismatch.json",
+            "sourceDigestMismatch",
+            "bundle.sourceDigestMismatch",
+            1,
+        ),
     ]
     for (
         bundle_name,

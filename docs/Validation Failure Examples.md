@@ -549,3 +549,53 @@ Text output:
 FAIL reports=1 failures=1 bundleSha256=2ab1110c5f27ad6eb179767747b4f1103092a94b24cfd91b56c8bd7b7dfe2940 firstFailure=reportHrefInvalid
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.reportHrefInvalid
 ```
+
+## Missing Bundle Index
+
+The fixture
+[`tests/fixtures/missing-index-report-bundle`](../tests/fixtures/missing-index-report-bundle)
+keeps a self-consistent manifest fingerprint and valid report member files but
+omits the top-level `index.html` named by the manifest. The normalized verifier
+and validator results are committed as
+[`report-bundle-verification-missing-index.json`](../tests/fixtures/report-bundle-verification-missing-index.json)
+and
+[`validation-failure-missing-index.json`](../tests/fixtures/validation-failure-missing-index.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/missing-index-report-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/missing-index-report-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=2b3ad3949e47a4304825285e973a8fcf4e27197cf66520638d6615cb731cf092 firstFailure=indexMissing
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.indexMissing
+```
+
+## Source Digest Mismatch
+
+The fixture
+[`tests/fixtures/source-digest-mismatch-bundle`](../tests/fixtures/source-digest-mismatch-bundle)
+keeps a self-consistent manifest fingerprint and valid member HTML, but the
+manifest records an incorrect SHA-256 digest for the local `source.json` member.
+The normalized verifier and validator results are committed as
+[`report-bundle-verification-source-digest-mismatch.json`](../tests/fixtures/report-bundle-verification-source-digest-mismatch.json)
+and
+[`validation-failure-source-digest-mismatch.json`](../tests/fixtures/validation-failure-source-digest-mismatch.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/source-digest-mismatch-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/source-digest-mismatch-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=1 failures=1 bundleSha256=6031b6425cc8cecfac1d70473d31dfe1aa220e6d8d8c8a0ca8139f4c128845e3 firstFailure=sourceDigestMismatch
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.sourceDigestMismatch
+```

@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "command": "edgp report-bundle --input source.json --output-dir tests/fixtures/source-digest-mismatch-bundle",
+    "sourceKind": "edgp-json"
+  },
+  "bundleSha256": "6031b6425cc8cecfac1d70473d31dfe1aa220e6d8d8c8a0ca8139f4c128845e3",
+  "index": "index.html",
+  "reportCount": 1,
+  "reports": [
+    {
+      "href": "001-snapshot-right.html",
+      "htmlSha256": "c728342f667c98851d192519bf4eb6cc334570c9d004aa8fb382b51826a28703",
+      "schema": "edgp.graph.snapshot.v1",
+      "source": "source.json",
+      "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "summary": {
+        "edges": 2,
+        "nodes": 3
+      },
+      "title": "Graph Snapshot - app==1.0.0"
+    }
+  ],
+  "schema": "edgp.report.bundle.v1"
+}

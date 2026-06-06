@@ -104,6 +104,8 @@ surfaces are:
   report title fields and non-object report summaries.
 - Provide committed validation and verification failure examples for mismatched
   report counts and bundle-escaping report hrefs.
+- Provide committed validation and verification failure examples for missing
+  bundle index files and mismatched source digests.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -190,6 +192,8 @@ python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-field-bu
 python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-summary-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-count-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/invalid-report-href-bundle --format text
+python -B -m src.cli verify-bundle --path tests/fixtures/missing-index-report-bundle --format text
+python -B -m src.cli verify-bundle --path tests/fixtures/source-digest-mismatch-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/snapshot-right.json
 python -B -m src.cli validate --path tests/fixtures/invalid-snapshot-missing-edge-count.json
 python -B -m src.cli validate --path /tmp/edgp-report-bundle --format text
@@ -213,6 +217,8 @@ python -B -m src.cli validate --path tests/fixtures/invalid-report-field-bundle 
 python -B -m src.cli validate --path tests/fixtures/invalid-report-summary-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-report-count-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-report-href-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/missing-index-report-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/source-digest-mismatch-bundle --format text
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check
@@ -221,5 +227,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add committed bundle artifact integrity fixtures for `indexMissing` and
-  `sourceDigestMismatch` verification failures.
+- Add committed manifest loading fixtures for `manifestMissing` and
+  `manifestInvalidJson` verification failures.

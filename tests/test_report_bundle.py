@@ -202,6 +202,17 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
                 "report-bundle-verification-invalid-report-href.json"
             ),
         ),
+        (
+            Path("tests/fixtures/missing-index-report-bundle"),
+            Path("tests/fixtures/report-bundle-verification-missing-index.json"),
+        ),
+        (
+            Path("tests/fixtures/source-digest-mismatch-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-source-digest-mismatch.json"
+            ),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

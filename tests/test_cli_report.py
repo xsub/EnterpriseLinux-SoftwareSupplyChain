@@ -391,6 +391,25 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.reportHrefInvalid",
             1,
         ),
+        (
+            Path("tests/fixtures/missing-index-report-bundle"),
+            Path("tests/fixtures/report-bundle-verification-missing-index.json"),
+            Path("tests/fixtures/validation-failure-missing-index.json"),
+            "indexMissing",
+            "bundle.indexMissing",
+            1,
+        ),
+        (
+            Path("tests/fixtures/source-digest-mismatch-bundle"),
+            Path(
+                "tests/fixtures/"
+                "report-bundle-verification-source-digest-mismatch.json"
+            ),
+            Path("tests/fixtures/validation-failure-source-digest-mismatch.json"),
+            "sourceDigestMismatch",
+            "bundle.sourceDigestMismatch",
+            1,
+        ),
     ]
 
     for (
