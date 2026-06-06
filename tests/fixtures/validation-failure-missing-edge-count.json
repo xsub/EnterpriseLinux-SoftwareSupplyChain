@@ -1,0 +1,18 @@
+{
+  "contract": "edgp.graph.snapshot.v1",
+  "failures": [
+    {
+      "code": "requiredMissing",
+      "message": "Missing required field edges",
+      "path": "$.stats.edges"
+    }
+  ],
+  "ok": false,
+  "schema": "edgp.validation.report.v1",
+  "schemaFile": "edgp.graph.snapshot.v1.schema.json",
+  "summary": {
+    "failures": 1
+  },
+  "target": "<target>",
+  "targetType": "json-file"
+}

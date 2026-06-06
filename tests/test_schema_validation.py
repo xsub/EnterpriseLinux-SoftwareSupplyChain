@@ -35,6 +35,17 @@ def test_validate_target_reports_contract_mismatch(tmp_path) -> None:
     } in report["failures"]
 
 
+def test_validate_target_matches_committed_failure_fixture() -> None:
+    report = validate_target(Path("tests/fixtures/invalid-snapshot-missing-edge-count.json"))
+    expected = json.loads(
+        Path("tests/fixtures/validation-failure-missing-edge-count.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert _normalize_validation_report(report) == expected
+
+
 def test_validate_target_accepts_report_bundle_directory(tmp_path) -> None:
     write_report_bundle(
         [
@@ -51,3 +62,9 @@ def test_validate_target_accepts_report_bundle_directory(tmp_path) -> None:
     assert report["contract"] == "edgp.report.bundle.v1"
     assert report["summary"] == {"failures": 0}
     assert report["bundleVerification"]["ok"] is True
+
+
+def _normalize_validation_report(report: dict[str, object]) -> dict[str, object]:
+    normalized = dict(report)
+    normalized["target"] = "<target>"
+    return normalized

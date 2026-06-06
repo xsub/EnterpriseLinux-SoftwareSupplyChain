@@ -66,6 +66,24 @@ def _run_cli(args: list[str]) -> dict[str, Any]:
     return json.loads(completed.stdout)
 
 
+def _run_cli_allow_failure(args: list[str]) -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, "-B", "-m", "src.cli", *args],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 1
+    return json.loads(completed.stdout)
+
+
+def _normalize_validation_report(payload: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(payload)
+    normalized["target"] = "<target>"
+    return normalized
+
+
 def _assert_compile() -> None:
     ok = compileall.compile_dir(REPO_ROOT / "src", quiet=1)
     ok = compileall.compile_dir(REPO_ROOT / "tests", quiet=1) and ok
@@ -131,6 +149,23 @@ def _assert_validate_command() -> None:
     assert completed.stdout.strip() == (
         "OK targetType=json-file failures=0 contract=edgp.graph.snapshot.v1"
     )
+
+    failure_payload = _run_cli_allow_failure(
+        [
+            "validate",
+            "--path",
+            "tests/fixtures/invalid-snapshot-missing-edge-count.json",
+        ]
+    )
+    fixture = json.loads(
+        (
+            REPO_ROOT
+            / "tests"
+            / "fixtures"
+            / "validation-failure-missing-edge-count.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert _normalize_validation_report(failure_payload) == fixture
 
 
 def _load_report_bundle_manifest_schema() -> dict[str, Any]:

@@ -204,6 +204,28 @@ def test_cli_validate_reports_json_contract(capsys) -> None:
     )
 
 
+def test_cli_validate_reports_json_contract_failure(capsys) -> None:
+    path = "tests/fixtures/invalid-snapshot-missing-edge-count.json"
+
+    assert main(["validate", "--path", path]) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert report["ok"] is False
+    assert report["failures"] == [
+        {
+            "code": "requiredMissing",
+            "message": "Missing required field edges",
+            "path": "$.stats.edges",
+        }
+    ]
+
+    assert main(["validate", "--path", path, "--format", "text"]) == 1
+    text = capsys.readouterr().out.strip()
+    assert text == (
+        "FAIL targetType=json-file failures=1 "
+        "contract=edgp.graph.snapshot.v1 firstFailure=requiredMissing"
+    )
+
+
 def test_cli_validate_reports_bundle_contract(tmp_path, capsys) -> None:
     output_dir = tmp_path / "bundle"
     assert (
