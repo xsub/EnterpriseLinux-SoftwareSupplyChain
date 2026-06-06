@@ -108,6 +108,8 @@ surfaces are:
   bundle index files and mismatched source digests.
 - Provide committed validation and verification failure examples for missing
   bundle manifests and invalid manifest JSON.
+- Provide committed validation and verification failure examples for non-object
+  bundle manifests, with smoke coverage for every stable verifier failure code.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
 - Render a compact verification summary on static bundle indexes with report
@@ -198,6 +200,7 @@ python -B -m src.cli verify-bundle --path tests/fixtures/missing-index-report-bu
 python -B -m src.cli verify-bundle --path tests/fixtures/source-digest-mismatch-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/missing-manifest-report-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/invalid-json-manifest-bundle --format text
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-type-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/snapshot-right.json
 python -B -m src.cli validate --path tests/fixtures/invalid-snapshot-missing-edge-count.json
 python -B -m src.cli validate --path /tmp/edgp-report-bundle --format text
@@ -225,6 +228,7 @@ python -B -m src.cli validate --path tests/fixtures/missing-index-report-bundle 
 python -B -m src.cli validate --path tests/fixtures/source-digest-mismatch-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/missing-manifest-report-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-json-manifest-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle --format text
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check
@@ -233,5 +237,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add a committed manifest loading fixture for `manifestInvalid`, then review
-  remaining verifier failure-code coverage.
+- Generate a machine-readable validation failure example index for workbench
+  and RAG ingestion.

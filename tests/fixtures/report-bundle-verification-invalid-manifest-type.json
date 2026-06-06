@@ -1,0 +1,18 @@
+{
+  "bundleDir": "<bundle-dir>",
+  "bundleSha256": null,
+  "failures": [
+    {
+      "code": "manifestInvalid",
+      "message": "Manifest must be a JSON object",
+      "path": "<bundle-dir>/manifest.json"
+    }
+  ],
+  "manifest": "manifest.json",
+  "ok": false,
+  "schema": "edgp.report.bundle.verification.v1",
+  "summary": {
+    "failures": 1,
+    "reports": 0
+  }
+}

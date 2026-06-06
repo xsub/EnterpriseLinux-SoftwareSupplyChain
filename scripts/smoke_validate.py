@@ -1399,7 +1399,44 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             "bundle.manifestInvalidJson",
             1,
         ),
+        (
+            "invalid-manifest-type-bundle",
+            "report-bundle-verification-invalid-manifest-type.json",
+            "validation-failure-invalid-manifest-type.json",
+            "manifestInvalid",
+            "bundle.manifestInvalid",
+            1,
+        ),
     ]
+    expected_failure_codes = {
+        "bundleDigestInvalid",
+        "bundleDigestMismatch",
+        "bundleInvalid",
+        "bundleSourceKindInvalid",
+        "htmlDigestMismatch",
+        "htmlMissing",
+        "indexInvalid",
+        "indexMissing",
+        "manifestInvalid",
+        "manifestInvalidJson",
+        "manifestMissing",
+        "manifestMissingField",
+        "manifestSchemaMismatch",
+        "manifestUnknownField",
+        "reportCountMismatch",
+        "reportDigestInvalid",
+        "reportFieldInvalid",
+        "reportHrefInvalid",
+        "reportInvalid",
+        "reportMissingField",
+        "reportSummaryInvalid",
+        "reportUnknownField",
+        "reportsInvalid",
+        "sourceDigestMismatch",
+        "sourceMissing",
+    }
+    assert {case[3] for case in cases} == expected_failure_codes
+
     for (
         bundle_name,
         verification_fixture_name,
@@ -1438,9 +1475,15 @@ def _assert_bundle_validation_failure_fixtures() -> None:
             text=True,
         )
         assert completed.returncode == 1
-        no_report_codes = {"manifestInvalidJson", "manifestMissing", "reportsInvalid"}
+        no_report_codes = {
+            "manifestInvalid",
+            "manifestInvalidJson",
+            "manifestMissing",
+            "reportsInvalid",
+        }
         no_bundle_sha_codes = {
             "bundleDigestInvalid",
+            "manifestInvalid",
             "manifestInvalidJson",
             "manifestMissing",
         }

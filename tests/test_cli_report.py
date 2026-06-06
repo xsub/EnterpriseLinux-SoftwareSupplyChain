@@ -429,6 +429,14 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             "bundle.manifestInvalidJson",
             1,
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-type-bundle"),
+            Path("tests/fixtures/report-bundle-verification-invalid-manifest-type.json"),
+            Path("tests/fixtures/validation-failure-invalid-manifest-type.json"),
+            "manifestInvalid",
+            "bundle.manifestInvalid",
+            1,
+        ),
     ]
 
     for (
@@ -451,9 +459,15 @@ def test_cli_verify_and_validate_committed_bundle_failure_fixtures(capsys) -> No
             == 1
         )
         verification_text = capsys.readouterr().out.strip()
-        no_report_codes = {"manifestInvalidJson", "manifestMissing", "reportsInvalid"}
+        no_report_codes = {
+            "manifestInvalid",
+            "manifestInvalidJson",
+            "manifestMissing",
+            "reportsInvalid",
+        }
         no_bundle_sha_codes = {
             "bundleDigestInvalid",
+            "manifestInvalid",
             "manifestInvalidJson",
             "manifestMissing",
         }

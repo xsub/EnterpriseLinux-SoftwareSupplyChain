@@ -224,6 +224,10 @@ def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
                 "report-bundle-verification-invalid-json-manifest.json"
             ),
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-type-bundle"),
+            Path("tests/fixtures/report-bundle-verification-invalid-manifest-type.json"),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

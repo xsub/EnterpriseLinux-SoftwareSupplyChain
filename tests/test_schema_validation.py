@@ -147,6 +147,10 @@ def test_validate_target_matches_committed_bundle_failure_fixtures() -> None:
             Path("tests/fixtures/invalid-json-manifest-bundle"),
             Path("tests/fixtures/validation-failure-invalid-json-manifest.json"),
         ),
+        (
+            Path("tests/fixtures/invalid-manifest-type-bundle"),
+            Path("tests/fixtures/validation-failure-invalid-manifest-type.json"),
+        ),
     ]
 
     for bundle_dir, fixture_path in cases:

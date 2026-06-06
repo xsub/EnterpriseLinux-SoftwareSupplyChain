@@ -651,3 +651,29 @@ Text output:
 FAIL reports=0 failures=1 firstFailure=manifestInvalidJson
 FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.manifestInvalidJson
 ```
+
+## Invalid Manifest Type
+
+The fixture
+[`tests/fixtures/invalid-manifest-type-bundle`](../tests/fixtures/invalid-manifest-type-bundle)
+contains a syntactically valid `manifest.json` whose top-level value is not an
+object. Because no valid manifest object is available, the verifier reports
+`bundleSha256` as `null` in JSON output and omits `bundleSha256=` from text
+output. The normalized verifier and validator results are committed as
+[`report-bundle-verification-invalid-manifest-type.json`](../tests/fixtures/report-bundle-verification-invalid-manifest-type.json)
+and
+[`validation-failure-invalid-manifest-type.json`](../tests/fixtures/validation-failure-invalid-manifest-type.json).
+
+Run:
+
+```bash
+python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-type-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle --format text
+```
+
+Text output:
+
+```text
+FAIL reports=0 failures=1 firstFailure=manifestInvalid
+FAIL targetType=report-bundle failures=1 contract=edgp.report.bundle.v1 firstFailure=bundle.manifestInvalid
+```

@@ -49,6 +49,9 @@ codes cover manifest shape, bundle fingerprint, and referenced artifact checks:
 - `sourceMissing`
 - `sourceDigestMismatch`
 
+The dependency-free smoke suite asserts that committed normalized failure
+fixtures cover every code in this list.
+
 ## Example
 
 ```json
@@ -116,3 +119,4 @@ cases:
 - [`tests/fixtures/report-bundle-verification-source-digest-mismatch.json`](../tests/fixtures/report-bundle-verification-source-digest-mismatch.json)
 - [`tests/fixtures/report-bundle-verification-missing-manifest.json`](../tests/fixtures/report-bundle-verification-missing-manifest.json)
 - [`tests/fixtures/report-bundle-verification-invalid-json-manifest.json`](../tests/fixtures/report-bundle-verification-invalid-json-manifest.json)
+- [`tests/fixtures/report-bundle-verification-invalid-manifest-type.json`](../tests/fixtures/report-bundle-verification-invalid-manifest-type.json)
