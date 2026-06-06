@@ -343,6 +343,20 @@ def _assert_failure_example_index_document() -> None:
     filtered_index = _run_cli(["failure-examples", "--code", "manifestInvalid"])
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "manifest-invalid"
+    filtered_index = _run_cli(["failure-examples", "--target-type", "json-file"])
+    assert filtered_index["exampleCount"] == 1
+    assert filtered_index["examples"][0]["id"] == "graph-missing-edge-count"
+    filtered_index = _run_cli(
+        [
+            "failure-examples",
+            "--target-type",
+            "report-bundle",
+            "--code",
+            "manifestInvalid",
+        ]
+    )
+    assert filtered_index["exampleCount"] == 1
+    assert filtered_index["examples"][0]["id"] == "manifest-invalid"
     completed = subprocess.run(
         [
             sys.executable,
@@ -383,6 +397,27 @@ def _assert_failure_example_index_document() -> None:
         "OK examples=1 schema=edgp.validation.failure.example.index.v1"
     )
     assert "manifest-invalid targetType=report-bundle" in completed.stdout
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "failure-examples",
+            "--target-type",
+            "json-file",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.startswith(
+        "OK examples=1 schema=edgp.validation.failure.example.index.v1"
+    )
+    assert "graph-missing-edge-count targetType=json-file" in completed.stdout
     assert index["schema"] == "edgp.validation.failure.example.index.v1"
     assert index["generatedBy"] == "scripts/generate_failure_example_index.py"
     assert index["exampleCount"] == len(index["examples"])

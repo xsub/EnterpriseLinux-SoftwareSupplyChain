@@ -77,3 +77,30 @@ def test_cli_failure_examples_filters_by_verification_code(capsys) -> None:
         "OK examples=1 schema=edgp.validation.failure.example.index.v1"
     )
     assert "manifest-invalid targetType=report-bundle" in text
+
+
+def test_cli_failure_examples_filters_by_target_type(capsys) -> None:
+    assert main(["failure-examples", "--target-type", "json-file"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["exampleCount"] == 1
+    assert payload["examples"][0]["id"] == "graph-missing-edge-count"
+
+
+def test_cli_failure_examples_combines_filters(capsys) -> None:
+    assert (
+        main(
+            [
+                "failure-examples",
+                "--target-type",
+                "report-bundle",
+                "--code",
+                "manifestInvalid",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["exampleCount"] == 1
+    assert payload["examples"][0]["id"] == "manifest-invalid"

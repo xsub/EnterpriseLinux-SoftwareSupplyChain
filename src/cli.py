@@ -162,9 +162,11 @@ def _filter_failure_example_index(
     index: dict[str, Any],
     *,
     codes: Sequence[str],
+    target_types: Sequence[str],
 ) -> dict[str, Any]:
     wanted_codes = {code for code in codes if code}
-    if not wanted_codes:
+    wanted_target_types = {target_type for target_type in target_types if target_type}
+    if not wanted_codes and not wanted_target_types:
         return index
     examples = index.get("examples", [])
     if not isinstance(examples, list):
@@ -173,16 +175,32 @@ def _filter_failure_example_index(
         entry
         for entry in examples
         if isinstance(entry, dict)
-        and wanted_codes
-        & (
-            set(_string_list(entry.get("validationFailureCodes", [])))
-            | set(_string_list(entry.get("verificationFailureCodes", [])))
+        and _matches_failure_example_filters(
+            entry,
+            wanted_codes=wanted_codes,
+            wanted_target_types=wanted_target_types,
         )
     ]
     filtered = dict(index)
     filtered["exampleCount"] = len(filtered_examples)
     filtered["examples"] = filtered_examples
     return filtered
+
+
+def _matches_failure_example_filters(
+    entry: dict[str, Any],
+    *,
+    wanted_codes: set[str],
+    wanted_target_types: set[str],
+) -> bool:
+    if wanted_target_types and entry.get("targetType") not in wanted_target_types:
+        return False
+    if not wanted_codes:
+        return True
+    entry_codes = set(_string_list(entry.get("validationFailureCodes", []))) | set(
+        _string_list(entry.get("verificationFailureCodes", []))
+    )
+    return bool(wanted_codes & entry_codes)
 
 
 def _string_list(value: object) -> list[str]:
@@ -653,6 +671,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="filter examples by validation or verification failure code",
     )
+    failure_examples.add_argument(
+        "--target-type",
+        action="append",
+        choices=["json-file", "report-bundle"],
+        default=[],
+        help="filter examples by target artifact type",
+    )
 
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
@@ -901,6 +926,7 @@ def main(argv: list[str] | None = None) -> int:
         index = _filter_failure_example_index(
             build_failure_example_index(),
             codes=args.code,
+            target_types=args.target_type,
         )
         if args.format == "text":
             print(_format_failure_example_index(index))
