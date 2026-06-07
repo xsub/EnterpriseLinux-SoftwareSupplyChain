@@ -139,6 +139,7 @@ surfaces are:
 - Add quick links for `failure-examples` workflows and representative fixtures
   in the validation examples guide.
 - Smoke-test validation examples guide quick links against existing headings.
+- Unit-test validation examples guide quick links against existing headings.
 - Document filtered validation failure example workflows in the dedicated
   validation examples guide.
 - Document validation failure example filter switches in the README.
@@ -278,4 +279,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for validation examples guide quick-link anchors.
+- Add `failure-examples` quick-link anchors to README references.
