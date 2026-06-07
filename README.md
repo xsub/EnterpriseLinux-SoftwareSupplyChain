@@ -479,6 +479,10 @@ machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 schema subset or validates a report bundle directory with the bundle verifier.
 Validation failure examples are documented in
 [`docs/Validation Failure Examples.md`](docs/Validation%20Failure%20Examples.md).
+Start with the guide's
+[`CLI Index Workflows`](docs/Validation%20Failure%20Examples.md#cli-index-workflows)
+or [`Quick Links`](docs/Validation%20Failure%20Examples.md#quick-links)
+when looking up a failure by ID, contract, artifact type, or code.
 The machine-readable example index is committed at
 [`docs/validation-failure-example-index.json`](docs/validation-failure-example-index.json)
 and the filter listing fixture is committed at
