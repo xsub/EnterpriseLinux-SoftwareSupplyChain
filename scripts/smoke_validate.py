@@ -27,6 +27,9 @@ FAILURE_EXAMPLE_INDEX_PATH = REPO_ROOT / "docs" / "validation-failure-example-in
 FAILURE_EXAMPLE_FILTERS_PATH = (
     REPO_ROOT / "docs" / "validation-failure-example-filters.json"
 )
+VALIDATION_FAILURE_EXAMPLES_DOC_PATH = (
+    REPO_ROOT / "docs" / "Validation Failure Examples.md"
+)
 REPORT_JSON_SCHEMA_CONTRACTS = {
     "edgp.graph.snapshot.v1": REPO_ROOT
     / "docs"
@@ -542,6 +545,41 @@ def _assert_failure_example_index_document() -> None:
         for code in entry["validationFailureCodes"]
     }
     assert {"requiredMissing", "bundle.manifestInvalid"} <= validation_codes
+
+
+def _assert_validation_failure_examples_quick_links() -> None:
+    lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
+    heading_anchors = {
+        _markdown_anchor(line.removeprefix("## "))
+        for line in lines
+        if line.startswith("## ")
+    }
+    linked_anchors = []
+    for line in lines:
+        marker = "](#"
+        if not line.startswith("- [") or marker not in line:
+            continue
+        anchor_start = line.index(marker) + len(marker)
+        anchor_end = line.find(")", anchor_start)
+        if anchor_end != -1:
+            linked_anchors.append(line[anchor_start:anchor_end])
+
+    assert linked_anchors
+    for anchor in linked_anchors:
+        assert anchor in heading_anchors
+
+
+def _markdown_anchor(heading: str) -> str:
+    anchor_chars = []
+    previous_was_dash = False
+    for character in heading.strip().lower():
+        if character.isalnum():
+            anchor_chars.append(character)
+            previous_was_dash = False
+        elif character in {" ", "-"} and not previous_was_dash:
+            anchor_chars.append("-")
+            previous_was_dash = True
+    return "".join(anchor_chars).strip("-")
 
 
 def _assert_report_bundle_manifest_contract(
@@ -1910,6 +1948,10 @@ def main(argv: list[str] | None = None) -> int:
         ("report json schemas", _assert_report_json_schemas_document),
         ("schema index", _assert_schema_index_document),
         ("failure example index", _assert_failure_example_index_document),
+        (
+            "validation failure example quick links",
+            _assert_validation_failure_examples_quick_links,
+        ),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
         ("cargo lockfile snapshot", _assert_cargo_lockfile_snapshot),
