@@ -370,6 +370,19 @@ def _assert_failure_example_index_document() -> None:
     )
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "manifest-invalid"
+    filtered_summary = _run_cli(
+        [
+            "failure-examples",
+            "--target-type",
+            "report-bundle",
+            "--contract",
+            "edgp.report.bundle.v1",
+            "--list-codes",
+        ]
+    )
+    assert filtered_summary["exampleCount"] == 25
+    assert filtered_summary["contracts"] == ["edgp.report.bundle.v1"]
+    assert filtered_summary["targetTypes"] == ["report-bundle"]
     filter_summary = _run_cli(["failure-examples", "--list-codes"])
     assert filter_summary == filter_fixture
     assert filter_summary["schema"] == "edgp.validation.failure.example.filters.v1"
@@ -432,6 +445,32 @@ def _assert_failure_example_index_document() -> None:
             "manifest-invalid",
             "--code",
             "bundle.manifestInvalid",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.startswith(
+        "OK examples=1 schema=edgp.validation.failure.example.index.v1"
+    )
+    assert "manifest-invalid targetType=report-bundle" in completed.stdout
+    assert "verifierCodes=manifestInvalid" in completed.stdout
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "failure-examples",
+            "--target-type",
+            "report-bundle",
+            "--contract",
+            "edgp.report.bundle.v1",
+            "--code",
+            "manifestInvalid",
             "--format",
             "text",
         ],
