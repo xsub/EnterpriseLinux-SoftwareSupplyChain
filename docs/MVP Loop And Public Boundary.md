@@ -135,6 +135,7 @@ surfaces are:
   output.
 - Document combined validation failure example filter workflows in the README.
 - Smoke-test combined validation failure example filter workflows.
+- Unit-test combined validation failure example filter workflows.
 - Document filtered validation failure example workflows in the dedicated
   validation examples guide.
 - Document validation failure example filter switches in the README.
@@ -274,4 +275,5 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for combined `failure-examples` filter workflows.
+- Add a short `failure-examples` entry to the validation examples guide table
+  of contents.

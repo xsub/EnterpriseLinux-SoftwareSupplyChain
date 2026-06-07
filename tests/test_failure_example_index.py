@@ -153,6 +153,53 @@ def test_cli_failure_examples_combines_filters(capsys) -> None:
     assert payload["examples"][0]["id"] == "manifest-invalid"
 
 
+def test_cli_failure_examples_combines_contract_target_and_code(capsys) -> None:
+    assert (
+        main(
+            [
+                "failure-examples",
+                "--target-type",
+                "report-bundle",
+                "--contract",
+                "edgp.report.bundle.v1",
+                "--code",
+                "manifestInvalid",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    text = capsys.readouterr().out
+    assert text.startswith(
+        "OK examples=1 schema=edgp.validation.failure.example.index.v1"
+    )
+    assert "manifest-invalid targetType=report-bundle" in text
+    assert "verifierCodes=manifestInvalid" in text
+
+
+def test_cli_failure_examples_lists_combined_filter_values(capsys) -> None:
+    assert (
+        main(
+            [
+                "failure-examples",
+                "--target-type",
+                "report-bundle",
+                "--contract",
+                "edgp.report.bundle.v1",
+                "--list-codes",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["exampleCount"] == 25
+    assert payload["contracts"] == ["edgp.report.bundle.v1"]
+    assert payload["targetTypes"] == ["report-bundle"]
+
+
 def test_cli_failure_examples_lists_available_filter_values(capsys) -> None:
     assert main(["failure-examples", "--list-codes"]) == 0
 
