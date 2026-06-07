@@ -133,6 +133,7 @@ surfaces are:
 - Smoke-test `failure-examples --help` filter discoverability.
 - Include verifier failure codes in compact validation failure example text
   output.
+- Document combined validation failure example filter workflows in the README.
 - Document filtered validation failure example workflows in the dedicated
   validation examples guide.
 - Document validation failure example filter switches in the README.
@@ -272,4 +273,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add README examples for combining `failure-examples` filters.
+- Add smoke coverage for combined `failure-examples` filter workflows.

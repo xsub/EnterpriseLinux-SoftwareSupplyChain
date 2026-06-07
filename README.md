@@ -503,6 +503,13 @@ edgp failure-examples --target-type report-bundle --code manifestInvalid
 | `--code` | validation or verifier failure code | `bundle.manifestInvalid` |
 | `--list-codes` | available IDs, contracts, artifact types, and codes | `--list-codes` |
 
+Common combinations:
+
+```bash
+edgp failure-examples --target-type report-bundle --contract edgp.report.bundle.v1 --list-codes
+edgp failure-examples --target-type report-bundle --contract edgp.report.bundle.v1 --code manifestInvalid --format text
+```
+
 `scripts/browser_smoke_report_sorting.py` generates a self-checking HTML report
 that exercises graph report table sorting inside a browser.
 `scripts/browser_smoke_report_bundle_navigation.py` generates a self-checking
