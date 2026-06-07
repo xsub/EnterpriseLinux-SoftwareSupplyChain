@@ -133,6 +133,7 @@ surfaces are:
   output.
 - Document filtered validation failure example workflows in the dedicated
   validation examples guide.
+- Document validation failure example filter switches in the README.
 - Link validation failure example index workflows from the README.
 - Provide a normalized machine-readable `verify-bundle` report fixture for
   RAG/workbench ingestion examples and regression checks.
@@ -269,4 +270,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add a compact README table for validation failure example filter switches.
+- Mention documented contracts in `failure-examples --list-codes` CLI help.
