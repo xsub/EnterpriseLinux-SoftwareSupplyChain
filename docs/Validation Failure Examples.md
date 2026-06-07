@@ -16,6 +16,15 @@ The `failure-examples --list-codes` filter listing is documented at
 Regenerate or check it with
 `python -B scripts/generate_failure_example_index.py --check`.
 
+## Quick Links
+
+- [CLI Index Workflows](#cli-index-workflows)
+- [Missing Required Field](#missing-required-field)
+- [Tampered Report Bundle Manifest](#tampered-report-bundle-manifest)
+- [Tampered Report Bundle Member](#tampered-report-bundle-member)
+- [Manifest Schema Mismatch](#manifest-schema-mismatch)
+- [Invalid Manifest Type](#invalid-manifest-type)
+
 ## CLI Index Workflows
 
 Use `failure-examples --list-codes` to discover the stable IDs, documented
