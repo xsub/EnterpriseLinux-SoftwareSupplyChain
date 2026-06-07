@@ -7,12 +7,24 @@ from scripts.generate_failure_example_index import (
     build_failure_example_filter_listing,
     build_failure_example_index,
 )
-from src.cli import main
+from src.cli import build_parser, main
 from src.schema_validation import validate_target
 
 
 INDEX_PATH = Path("docs/validation-failure-example-index.json")
 FILTERS_PATH = Path("docs/validation-failure-example-filters.json")
+
+
+def test_cli_failure_examples_help_mentions_contract_filters(capsys) -> None:
+    try:
+        build_parser().parse_args(["failure-examples", "--help"])
+    except SystemExit as error:
+        assert error.code == 0
+
+    help_text = capsys.readouterr().out
+    assert "--contract CONTRACT" in help_text
+    assert "--list-codes" in help_text
+    assert "contracts, target types" in help_text
 
 
 def test_failure_example_index_matches_committed_fixtures() -> None:

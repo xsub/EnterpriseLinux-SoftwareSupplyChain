@@ -711,7 +711,10 @@ def build_parser() -> argparse.ArgumentParser:
     failure_examples.add_argument(
         "--list-codes",
         action="store_true",
-        help="list available ids, target types, validation codes, and verifier codes",
+        help=(
+            "list available ids, contracts, target types, validation codes, "
+            "and verifier codes"
+        ),
     )
     failure_examples.add_argument(
         "--code",
