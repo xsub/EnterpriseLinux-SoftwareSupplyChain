@@ -130,6 +130,7 @@ surfaces are:
 - List available validation failure example ids, target types, validation
   codes, and verifier codes from the CLI.
 - Mention documented contracts in `failure-examples --list-codes` CLI help.
+- Smoke-test `failure-examples --help` filter discoverability.
 - Include verifier failure codes in compact validation failure example text
   output.
 - Document filtered validation failure example workflows in the dedicated
@@ -271,4 +272,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add smoke coverage for `failure-examples --help` discoverability.
+- Add README examples for combining `failure-examples` filters.

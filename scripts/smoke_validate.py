@@ -391,6 +391,23 @@ def _assert_failure_example_index_document() -> None:
             "-m",
             "src.cli",
             "failure-examples",
+            "--help",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert "--contract CONTRACT" in completed.stdout
+    assert "--list-codes" in completed.stdout
+    assert "contracts, target types" in completed.stdout
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "failure-examples",
             "--format",
             "text",
         ],
