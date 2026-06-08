@@ -559,6 +559,13 @@ def _assert_validation_failure_examples_quick_links() -> None:
         assert anchor in heading_anchors
 
 
+def _assert_validation_failure_examples_local_links() -> None:
+    _assert_markdown_local_path_links(
+        VALIDATION_FAILURE_EXAMPLES_DOC_PATH,
+        VALIDATION_FAILURE_EXAMPLES_DOC_PATH.parent,
+    )
+
+
 def _assert_readme_validation_guide_anchors() -> None:
     heading_anchors = _validation_failure_example_heading_anchors()
     linked_anchors = _markdown_links_to_anchor(
@@ -586,13 +593,17 @@ def _assert_readme_validation_failure_fixture_links() -> None:
 
 
 def _assert_readme_local_documentation_links() -> None:
-    readme_paths = set(
-        _markdown_path_links(README_PATH.read_text(encoding="utf-8").splitlines())
+    _assert_markdown_local_path_links(README_PATH, REPO_ROOT)
+
+
+def _assert_markdown_local_path_links(document_path: Path, base_path: Path) -> None:
+    linked_paths = set(
+        _markdown_path_links(document_path.read_text(encoding="utf-8").splitlines())
     )
 
-    assert readme_paths
-    for path in readme_paths:
-        assert (REPO_ROOT / unquote(path)).exists()
+    assert linked_paths
+    for path in linked_paths:
+        assert (base_path / unquote(path)).exists()
 
 
 def _validation_failure_example_heading_anchors() -> set[str]:
@@ -2030,6 +2041,10 @@ def main(argv: list[str] | None = None) -> int:
         (
             "validation failure example quick links",
             _assert_validation_failure_examples_quick_links,
+        ),
+        (
+            "validation failure example local links",
+            _assert_validation_failure_examples_local_links,
         ),
         (
             "readme validation guide anchors",

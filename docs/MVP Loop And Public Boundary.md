@@ -140,6 +140,7 @@ surfaces are:
   in the validation examples guide.
 - Smoke-test validation examples guide quick links against existing headings.
 - Unit-test validation examples guide quick links against existing headings.
+- Smoke-test validation examples guide local links against committed files.
 - Link README validation failure example references directly to guide anchors.
 - Smoke-test README validation guide anchors against existing headings.
 - Unit-test README validation guide anchors against existing headings.
@@ -290,4 +291,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Smoke-test validation examples guide local links against committed files.
+- Add unit coverage for validation examples guide local links.
