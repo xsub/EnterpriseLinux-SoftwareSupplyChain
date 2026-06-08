@@ -144,6 +144,7 @@ surfaces are:
 - Smoke-test README validation guide anchors against existing headings.
 - Unit-test README validation guide anchors against existing headings.
 - Smoke-test README validation failure fixture links against committed files.
+- Unit-test README validation failure fixture links against committed files.
 - Share reusable Markdown heading and anchor extraction helpers for
   documentation checks.
 - Document filtered validation failure example workflows in the dedicated
@@ -285,4 +286,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for README links to committed validation failure fixtures.
+- Add reusable Markdown path link extraction helpers for documentation checks.

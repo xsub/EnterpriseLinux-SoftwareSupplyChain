@@ -39,3 +39,15 @@ def test_readme_validation_guide_anchor_links_target_headings() -> None:
 
     assert {"cli-index-workflows", "quick-links"} <= readme_anchors
     assert readme_anchors <= heading_anchors
+
+
+def test_readme_validation_failure_fixture_links_target_committed_files() -> None:
+    readme_text = README_PATH.read_text(encoding="utf-8")
+    linked_paths = {
+        "docs/validation-failure-example-index.json",
+        "docs/validation-failure-example-filters.json",
+    }
+
+    for path in linked_paths:
+        assert path in readme_text
+        assert Path(path).exists()
