@@ -84,6 +84,7 @@ surfaces are:
 - Unit-test report schema documentation local links against committed files.
 - Remove pasted source-span artifacts from the architecture research document.
 - Smoke-test architecture documentation local links against committed files.
+- Unit-test architecture documentation local links against committed files.
 - Validate local EDGP JSON report files and report bundle directories with a
   dependency-free `edgp validate` command.
 - Provide committed validation failure examples for common malformed report
@@ -296,4 +297,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for architecture documentation local links.
+- Normalize architecture research headings for Markdown anchor generation.

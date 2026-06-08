@@ -4,6 +4,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from scripts.smoke_validate import (
+    ARCHITECTURE_DOC_PATH,
     REPORT_SCHEMA_DOC_PATHS,
     _markdown_heading_anchors,
     _markdown_link_anchors,
@@ -87,6 +88,18 @@ def test_report_schema_docs_local_links_target_committed_files() -> None:
         assert schema_doc_paths
         for path in schema_doc_paths:
             assert (doc_path.parent / unquote(path)).exists()
+
+
+def test_architecture_doc_local_links_target_committed_files() -> None:
+    architecture_paths = set(
+        _markdown_path_links(
+            ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8").splitlines()
+        )
+    )
+
+    assert architecture_paths
+    for path in architecture_paths:
+        assert (ARCHITECTURE_DOC_PATH.parent / unquote(path)).exists()
 
 
 def test_markdown_path_links_return_local_targets_without_fragments() -> None:
