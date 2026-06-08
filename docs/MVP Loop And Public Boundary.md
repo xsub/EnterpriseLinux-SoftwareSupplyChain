@@ -80,6 +80,7 @@ surfaces are:
   output.
 - Generate a deterministic schema index for documented EDGP JSON Schema
   contracts and validate that it stays current in the smoke suite.
+- Smoke-test report schema documentation local links against committed files.
 - Validate local EDGP JSON report files and report bundle directories with a
   dependency-free `edgp validate` command.
 - Provide committed validation failure examples for common malformed report
@@ -292,4 +293,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Smoke-test report schema documentation local links against committed files.
+- Add unit coverage for report schema documentation local links.

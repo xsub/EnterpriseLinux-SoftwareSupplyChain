@@ -15,6 +15,11 @@ from urllib.parse import unquote
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 README_PATH = REPO_ROOT / "README.md"
+REPORT_SCHEMA_DOC_PATHS = (
+    REPO_ROOT / "docs" / "Report JSON Schemas.md",
+    REPO_ROOT / "docs" / "Report Bundle Manifest Schema.md",
+    REPO_ROOT / "docs" / "Report Bundle Verification Schema.md",
+)
 REPORT_BUNDLE_SCHEMA_PATH = (
     REPO_ROOT / "docs" / "schemas" / "edgp.report.bundle.v1.schema.json"
 )
@@ -547,6 +552,11 @@ def _assert_failure_example_index_document() -> None:
         for code in entry["validationFailureCodes"]
     }
     assert {"requiredMissing", "bundle.manifestInvalid"} <= validation_codes
+
+
+def _assert_report_schema_docs_local_links() -> None:
+    for document_path in REPORT_SCHEMA_DOC_PATHS:
+        _assert_markdown_local_path_links(document_path, document_path.parent)
 
 
 def _assert_validation_failure_examples_quick_links() -> None:
@@ -2036,6 +2046,7 @@ def main(argv: list[str] | None = None) -> int:
             _assert_report_bundle_verification_schema_document,
         ),
         ("report json schemas", _assert_report_json_schemas_document),
+        ("report schema docs local links", _assert_report_schema_docs_local_links),
         ("schema index", _assert_schema_index_document),
         ("failure example index", _assert_failure_example_index_document),
         (
