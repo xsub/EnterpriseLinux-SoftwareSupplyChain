@@ -551,15 +551,7 @@ def _assert_failure_example_index_document() -> None:
 def _assert_validation_failure_examples_quick_links() -> None:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
     heading_anchors = _validation_failure_example_heading_anchors()
-    linked_anchors = []
-    for line in lines:
-        marker = "](#"
-        if not line.startswith("- [") or marker not in line:
-            continue
-        anchor_start = line.index(marker) + len(marker)
-        anchor_end = line.find(")", anchor_start)
-        if anchor_end != -1:
-            linked_anchors.append(line[anchor_start:anchor_end])
+    linked_anchors = _markdown_link_anchors(lines)
 
     assert linked_anchors
     for anchor in linked_anchors:
@@ -568,15 +560,10 @@ def _assert_validation_failure_examples_quick_links() -> None:
 
 def _assert_readme_validation_guide_anchors() -> None:
     heading_anchors = _validation_failure_example_heading_anchors()
-    linked_anchors = []
-    for line in README_PATH.read_text(encoding="utf-8").splitlines():
-        marker = "docs/Validation%20Failure%20Examples.md#"
-        if marker not in line:
-            continue
-        anchor_start = line.index(marker) + len(marker)
-        anchor_end = line.find(")", anchor_start)
-        if anchor_end != -1:
-            linked_anchors.append(line[anchor_start:anchor_end])
+    linked_anchors = _markdown_links_to_anchor(
+        README_PATH.read_text(encoding="utf-8").splitlines(),
+        "docs/Validation%20Failure%20Examples.md#",
+    )
 
     assert {"cli-index-workflows", "quick-links"} <= set(linked_anchors)
     for anchor in linked_anchors:
@@ -585,11 +572,7 @@ def _assert_readme_validation_guide_anchors() -> None:
 
 def _validation_failure_example_heading_anchors() -> set[str]:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
-    return {
-        _markdown_anchor(line.removeprefix("## "))
-        for line in lines
-        if line.startswith("## ")
-    }
+    return _markdown_heading_anchors(lines)
 
 
 def _markdown_anchor(heading: str) -> str:
@@ -603,6 +586,30 @@ def _markdown_anchor(heading: str) -> str:
             anchor_chars.append("-")
             previous_was_dash = True
     return "".join(anchor_chars).strip("-")
+
+
+def _markdown_heading_anchors(lines: list[str], *, level: str = "## ") -> set[str]:
+    return {
+        _markdown_anchor(line.removeprefix(level))
+        for line in lines
+        if line.startswith(level)
+    }
+
+
+def _markdown_link_anchors(lines: list[str]) -> list[str]:
+    return _markdown_links_to_anchor(lines, "#")
+
+
+def _markdown_links_to_anchor(lines: list[str], marker: str) -> list[str]:
+    anchors = []
+    for line in lines:
+        if marker not in line:
+            continue
+        anchor_start = line.index(marker) + len(marker)
+        anchor_end = line.find(")", anchor_start)
+        if anchor_end != -1:
+            anchors.append(line[anchor_start:anchor_end])
+    return anchors
 
 
 def _assert_report_bundle_manifest_contract(
