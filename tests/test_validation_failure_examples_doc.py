@@ -102,6 +102,27 @@ def test_architecture_doc_local_links_target_committed_files() -> None:
         assert (ARCHITECTURE_DOC_PATH.parent / unquote(path)).exists()
 
 
+def test_architecture_doc_headings_generate_expected_anchors() -> None:
+    lines = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8").splitlines()
+    title_anchors = _markdown_heading_anchors(lines, level="# ")
+    section_anchors = _markdown_heading_anchors(lines, level="## ")
+    subsection_anchors = _markdown_heading_anchors(lines, level="### ")
+
+    assert title_anchors == {
+        "architecture-and-traversal-of-massive-scale-dependency-graphs"
+    }
+    assert {
+        "the-imperative-of-massive-scale-graph-architectures",
+        "memory-optimization-and-sparse-matrix-representations",
+        "algorithmic-resolution-of-software-dependency-graphs",
+        "conclusion",
+    } <= section_anchors
+    assert {
+        "compressed-sparse-row-and-compressed-sparse-column-formats",
+        "pubgrub-and-conflict-driven-clause-learning",
+    } <= subsection_anchors
+
+
 def test_markdown_path_links_return_local_targets_without_fragments() -> None:
     links = _markdown_path_links(
         [
