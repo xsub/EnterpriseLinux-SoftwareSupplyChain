@@ -11,6 +11,7 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 README_PATH = REPO_ROOT / "README.md"
@@ -582,6 +583,16 @@ def _assert_readme_validation_failure_fixture_links() -> None:
     assert linked_paths <= readme_paths
     for path in linked_paths:
         assert (REPO_ROOT / path).exists()
+
+
+def _assert_readme_local_documentation_links() -> None:
+    readme_paths = set(
+        _markdown_path_links(README_PATH.read_text(encoding="utf-8").splitlines())
+    )
+
+    assert readme_paths
+    for path in readme_paths:
+        assert (REPO_ROOT / unquote(path)).exists()
 
 
 def _validation_failure_example_heading_anchors() -> set[str]:
@@ -2027,6 +2038,10 @@ def main(argv: list[str] | None = None) -> int:
         (
             "readme validation failure fixture links",
             _assert_readme_validation_failure_fixture_links,
+        ),
+        (
+            "readme local documentation links",
+            _assert_readme_local_documentation_links,
         ),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
