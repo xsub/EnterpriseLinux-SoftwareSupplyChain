@@ -6,6 +6,7 @@ from scripts.smoke_validate import (
     _markdown_heading_anchors,
     _markdown_link_anchors,
     _markdown_links_to_anchor,
+    _markdown_path_links,
 )
 
 
@@ -42,12 +43,31 @@ def test_readme_validation_guide_anchor_links_target_headings() -> None:
 
 
 def test_readme_validation_failure_fixture_links_target_committed_files() -> None:
-    readme_text = README_PATH.read_text(encoding="utf-8")
+    readme_paths = set(
+        _markdown_path_links(README_PATH.read_text(encoding="utf-8").splitlines())
+    )
     linked_paths = {
         "docs/validation-failure-example-index.json",
         "docs/validation-failure-example-filters.json",
     }
 
+    assert linked_paths <= readme_paths
     for path in linked_paths:
-        assert path in readme_text
         assert Path(path).exists()
+
+
+def test_markdown_path_links_return_local_targets_without_fragments() -> None:
+    links = _markdown_path_links(
+        [
+            "[Guide](docs/Validation%20Failure%20Examples.md#quick-links)",
+            "[Anchor](#quick-links)",
+            "[External](https://example.invalid/docs)",
+            "![Screenshot](docs/report.png)",
+            "[Fixture](docs/validation-failure-example-index.json)",
+        ]
+    )
+
+    assert links == [
+        "docs/Validation%20Failure%20Examples.md",
+        "docs/validation-failure-example-index.json",
+    ]

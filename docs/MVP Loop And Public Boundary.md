@@ -147,6 +147,8 @@ surfaces are:
 - Unit-test README validation failure fixture links against committed files.
 - Share reusable Markdown heading and anchor extraction helpers for
   documentation checks.
+- Share reusable Markdown link target and path extraction helpers for
+  documentation checks.
 - Document filtered validation failure example workflows in the dedicated
   validation examples guide.
 - Document validation failure example filter switches in the README.
@@ -286,4 +288,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add reusable Markdown path link extraction helpers for documentation checks.
+- Smoke-test local README documentation links against committed files.

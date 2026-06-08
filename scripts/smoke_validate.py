@@ -571,13 +571,16 @@ def _assert_readme_validation_guide_anchors() -> None:
 
 
 def _assert_readme_validation_failure_fixture_links() -> None:
-    readme_text = README_PATH.read_text(encoding="utf-8")
+    readme_paths = set(
+        _markdown_path_links(README_PATH.read_text(encoding="utf-8").splitlines())
+    )
     linked_paths = {
         "docs/validation-failure-example-index.json",
         "docs/validation-failure-example-filters.json",
     }
+
+    assert linked_paths <= readme_paths
     for path in linked_paths:
-        assert path in readme_text
         assert (REPO_ROOT / path).exists()
 
 
@@ -613,14 +616,38 @@ def _markdown_link_anchors(lines: list[str]) -> list[str]:
 
 def _markdown_links_to_anchor(lines: list[str], marker: str) -> list[str]:
     anchors = []
-    for line in lines:
-        if marker not in line:
-            continue
-        anchor_start = line.index(marker) + len(marker)
-        anchor_end = line.find(")", anchor_start)
-        if anchor_end != -1:
-            anchors.append(line[anchor_start:anchor_end])
+    for target in _markdown_link_targets(lines):
+        if marker in target:
+            anchors.append(target.split(marker, 1)[1])
     return anchors
+
+
+def _markdown_path_links(lines: list[str]) -> list[str]:
+    paths = []
+    for target in _markdown_link_targets(lines):
+        if target.startswith("#") or "://" in target or target.startswith("mailto:"):
+            continue
+        paths.append(target.split("#", 1)[0])
+    return paths
+
+
+def _markdown_link_targets(lines: list[str]) -> list[str]:
+    targets = []
+    for line in lines:
+        search_start = 0
+        while True:
+            link_start = line.find("](", search_start)
+            if link_start == -1:
+                break
+            target_start = link_start + 2
+            target_end = line.find(")", target_start)
+            if target_end == -1:
+                break
+            label_start = line.rfind("[", 0, link_start)
+            if label_start == 0 or line[label_start - 1] != "!":
+                targets.append(line[target_start:target_end])
+            search_start = target_end + 1
+    return targets
 
 
 def _assert_report_bundle_manifest_contract(
