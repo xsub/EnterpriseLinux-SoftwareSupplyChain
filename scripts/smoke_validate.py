@@ -647,6 +647,22 @@ def _assert_readme_architecture_research_link() -> None:
     assert (REPO_ROOT / unquote(architecture_path)).exists()
 
 
+def _assert_readme_architecture_research_anchors() -> None:
+    linked_anchors = _markdown_links_to_anchor(
+        README_PATH.read_text(encoding="utf-8").splitlines(),
+        "docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20"
+        "Dependency%20Graphs.md#",
+    )
+    heading_anchors = _architecture_doc_heading_anchors()
+
+    assert {
+        "memory-optimization-and-sparse-matrix-representations",
+        "algorithmic-resolution-of-software-dependency-graphs",
+    } <= set(linked_anchors)
+    for anchor in linked_anchors:
+        assert anchor in heading_anchors
+
+
 def _assert_readme_local_documentation_links() -> None:
     _assert_markdown_local_path_links(README_PATH, REPO_ROOT)
 
@@ -670,6 +686,15 @@ def _assert_markdown_local_path_links(
 def _validation_failure_example_heading_anchors() -> set[str]:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
     return _markdown_heading_anchors(lines)
+
+
+def _architecture_doc_heading_anchors() -> set[str]:
+    lines = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8").splitlines()
+    return (
+        _markdown_heading_anchors(lines, level="# ")
+        | _markdown_heading_anchors(lines, level="## ")
+        | _markdown_heading_anchors(lines, level="### ")
+    )
 
 
 def _markdown_anchor(heading: str) -> str:
@@ -2121,6 +2146,10 @@ def main(argv: list[str] | None = None) -> int:
         (
             "readme architecture research link",
             _assert_readme_architecture_research_link,
+        ),
+        (
+            "readme architecture research anchors",
+            _assert_readme_architecture_research_anchors,
         ),
         (
             "readme local documentation links",

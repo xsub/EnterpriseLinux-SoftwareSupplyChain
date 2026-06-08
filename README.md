@@ -473,7 +473,11 @@ the plain interchange format for notebooks, local workbench panels, and RAG
 context generation.
 The architecture and traversal research behind these graph-building choices is
 summarized in
-[`docs/Architecture and Traversal of Massive-Scale Dependency Graphs.md`](docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20Dependency%20Graphs.md).
+[`docs/Architecture and Traversal of Massive-Scale Dependency Graphs.md`](docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20Dependency%20Graphs.md),
+especially the sections on
+[memory representation](docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20Dependency%20Graphs.md#memory-optimization-and-sparse-matrix-representations)
+and
+[dependency graph resolution](docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20Dependency%20Graphs.md#algorithmic-resolution-of-software-dependency-graphs).
 Report JSON contracts for graph snapshots, impact reports, advisory reports,
 and npm diagnostics are documented in
 [`docs/Report JSON Schemas.md`](docs/Report%20JSON%20Schemas.md), with
