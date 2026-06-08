@@ -570,6 +570,17 @@ def _assert_readme_validation_guide_anchors() -> None:
         assert anchor in heading_anchors
 
 
+def _assert_readme_validation_failure_fixture_links() -> None:
+    readme_text = README_PATH.read_text(encoding="utf-8")
+    linked_paths = {
+        "docs/validation-failure-example-index.json",
+        "docs/validation-failure-example-filters.json",
+    }
+    for path in linked_paths:
+        assert path in readme_text
+        assert (REPO_ROOT / path).exists()
+
+
 def _validation_failure_example_heading_anchors() -> set[str]:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
     return _markdown_heading_anchors(lines)
@@ -1985,6 +1996,10 @@ def main(argv: list[str] | None = None) -> int:
         (
             "readme validation guide anchors",
             _assert_readme_validation_guide_anchors,
+        ),
+        (
+            "readme validation failure fixture links",
+            _assert_readme_validation_failure_fixture_links,
         ),
         ("poetry lockfile snapshot", _assert_poetry_lockfile_snapshot),
         ("poetry query", _assert_poetry_query),
