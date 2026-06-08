@@ -634,6 +634,19 @@ def _assert_readme_validation_failure_fixture_links() -> None:
         assert (REPO_ROOT / path).exists()
 
 
+def _assert_readme_architecture_research_link() -> None:
+    readme_paths = set(
+        _markdown_path_links(README_PATH.read_text(encoding="utf-8").splitlines())
+    )
+    architecture_path = (
+        "docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20"
+        "Dependency%20Graphs.md"
+    )
+
+    assert architecture_path in readme_paths
+    assert (REPO_ROOT / unquote(architecture_path)).exists()
+
+
 def _assert_readme_local_documentation_links() -> None:
     _assert_markdown_local_path_links(README_PATH, REPO_ROOT)
 
@@ -2104,6 +2117,10 @@ def main(argv: list[str] | None = None) -> int:
         (
             "readme validation failure fixture links",
             _assert_readme_validation_failure_fixture_links,
+        ),
+        (
+            "readme architecture research link",
+            _assert_readme_architecture_research_link,
         ),
         (
             "readme local documentation links",

@@ -471,6 +471,9 @@ document with root, ecosystem, node metadata, direct dependencies, direct
 dependents, edge records, graph stats, and most-depended-upon rankings. This is
 the plain interchange format for notebooks, local workbench panels, and RAG
 context generation.
+The architecture and traversal research behind these graph-building choices is
+summarized in
+[`docs/Architecture and Traversal of Massive-Scale Dependency Graphs.md`](docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20Dependency%20Graphs.md).
 Report JSON contracts for graph snapshots, impact reports, advisory reports,
 and npm diagnostics are documented in
 [`docs/Report JSON Schemas.md`](docs/Report%20JSON%20Schemas.md), with
