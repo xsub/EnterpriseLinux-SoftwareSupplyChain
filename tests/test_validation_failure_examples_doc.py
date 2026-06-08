@@ -69,6 +69,19 @@ def test_readme_validation_failure_fixture_links_target_committed_files() -> Non
         assert Path(path).exists()
 
 
+def test_readme_architecture_research_link_targets_committed_doc() -> None:
+    readme_paths = set(
+        _markdown_path_links(README_PATH.read_text(encoding="utf-8").splitlines())
+    )
+    architecture_path = (
+        "docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20"
+        "Dependency%20Graphs.md"
+    )
+
+    assert architecture_path in readme_paths
+    assert Path(unquote(architecture_path)).exists()
+
+
 def test_readme_local_documentation_links_target_committed_files() -> None:
     readme_paths = set(
         _markdown_path_links(README_PATH.read_text(encoding="utf-8").splitlines())
