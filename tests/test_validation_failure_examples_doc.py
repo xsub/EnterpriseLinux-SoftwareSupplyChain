@@ -28,6 +28,16 @@ def test_validation_failure_examples_quick_links_target_headings() -> None:
     assert quick_link_anchors <= heading_anchors
 
 
+def test_validation_failure_examples_local_links_target_committed_files() -> None:
+    guide_paths = set(
+        _markdown_path_links(DOC_PATH.read_text(encoding="utf-8").splitlines())
+    )
+
+    assert guide_paths
+    for path in guide_paths:
+        assert (DOC_PATH.parent / unquote(path)).exists()
+
+
 def test_readme_validation_guide_anchor_links_target_headings() -> None:
     heading_anchors = _markdown_heading_anchors(
         DOC_PATH.read_text(encoding="utf-8").splitlines()
