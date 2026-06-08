@@ -15,6 +15,9 @@ from urllib.parse import unquote
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 README_PATH = REPO_ROOT / "README.md"
+ARCHITECTURE_DOC_PATH = (
+    REPO_ROOT / "docs" / "Architecture and Traversal of Massive-Scale Dependency Graphs.md"
+)
 REPORT_SCHEMA_DOC_PATHS = (
     REPO_ROOT / "docs" / "Report JSON Schemas.md",
     REPO_ROOT / "docs" / "Report Bundle Manifest Schema.md",
@@ -559,6 +562,14 @@ def _assert_report_schema_docs_local_links() -> None:
         _assert_markdown_local_path_links(document_path, document_path.parent)
 
 
+def _assert_architecture_doc_local_links() -> None:
+    _assert_markdown_local_path_links(
+        ARCHITECTURE_DOC_PATH,
+        ARCHITECTURE_DOC_PATH.parent,
+        require_links=False,
+    )
+
+
 def _assert_validation_failure_examples_quick_links() -> None:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
     heading_anchors = _validation_failure_example_heading_anchors()
@@ -606,12 +617,18 @@ def _assert_readme_local_documentation_links() -> None:
     _assert_markdown_local_path_links(README_PATH, REPO_ROOT)
 
 
-def _assert_markdown_local_path_links(document_path: Path, base_path: Path) -> None:
+def _assert_markdown_local_path_links(
+    document_path: Path,
+    base_path: Path,
+    *,
+    require_links: bool = True,
+) -> None:
     linked_paths = set(
         _markdown_path_links(document_path.read_text(encoding="utf-8").splitlines())
     )
 
-    assert linked_paths
+    if require_links:
+        assert linked_paths
     for path in linked_paths:
         assert (base_path / unquote(path)).exists()
 
@@ -2047,6 +2064,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         ("report json schemas", _assert_report_json_schemas_document),
         ("report schema docs local links", _assert_report_schema_docs_local_links),
+        ("architecture doc local links", _assert_architecture_doc_local_links),
         ("schema index", _assert_schema_index_document),
         ("failure example index", _assert_failure_example_index_document),
         (

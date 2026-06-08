@@ -128,7 +128,7 @@ Alternative package managers employ diverse algorithmic families to tackle this 
 
 • Minimal Version Selection (MVS): Utilized exclusively by Go modules, this algorithm structurally simplifies the graph by invariably utilizing the minimum satisfying version declared in the tree, guaranteeing high reproducibility.
 
-• Backtracking & Deduplication: Python's pip and Rust's Cargo deploy backtracking mechanisms that sequentially assign versions and recursively back out upon encountering conflicts. Conversely, JavaScript managers like npm (via Arborist) build a logical graph overlaid upon a physical node_modules directory, utilizing maximally naive deduplication with nested fallbacks to navigate complex JavaScript ecosystems. Modern alternatives like [span_137](start_span)[span_137](end_span)PNPM reject npm's destructive hoisting, employing strict symlink-based dependency resolution and global content-addressable storage to expose the true dependency graph, effectively eliminating phantom dependencies.
+• Backtracking & Deduplication: Python's pip and Rust's Cargo deploy backtracking mechanisms that sequentially assign versions and recursively back out upon encountering conflicts. Conversely, JavaScript managers like npm (via Arborist) build a logical graph overlaid upon a physical node_modules directory, utilizing maximally naive deduplication with nested fallbacks to navigate complex JavaScript ecosystems. Modern alternatives like PNPM reject npm's destructive hoisting, employing strict symlink-based dependency resolution and global content-addressable storage to expose the true dependency graph, effectively eliminating phantom dependencies.
 
 Distributed SAT Solvers and Clause Evaluation
 
