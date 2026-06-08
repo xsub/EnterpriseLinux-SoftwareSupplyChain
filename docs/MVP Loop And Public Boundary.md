@@ -142,6 +142,7 @@ surfaces are:
 - Unit-test validation examples guide quick links against existing headings.
 - Link README validation failure example references directly to guide anchors.
 - Smoke-test README validation guide anchors against existing headings.
+- Unit-test README validation guide anchors against existing headings.
 - Document filtered validation failure example workflows in the dedicated
   validation examples guide.
 - Document validation failure example filter switches in the README.
@@ -281,4 +282,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for README validation guide anchors.
+- Add reusable Markdown anchor extraction helpers for documentation checks.
