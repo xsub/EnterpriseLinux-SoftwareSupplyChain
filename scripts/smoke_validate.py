@@ -570,6 +570,27 @@ def _assert_architecture_doc_local_links() -> None:
     )
 
 
+def _assert_architecture_doc_headings() -> None:
+    lines = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8").splitlines()
+    title_anchors = _markdown_heading_anchors(lines, level="# ")
+    section_anchors = _markdown_heading_anchors(lines, level="## ")
+    subsection_anchors = _markdown_heading_anchors(lines, level="### ")
+
+    assert title_anchors == {
+        "architecture-and-traversal-of-massive-scale-dependency-graphs"
+    }
+    assert {
+        "the-imperative-of-massive-scale-graph-architectures",
+        "memory-optimization-and-sparse-matrix-representations",
+        "algorithmic-resolution-of-software-dependency-graphs",
+        "conclusion",
+    } <= section_anchors
+    assert {
+        "compressed-sparse-row-and-compressed-sparse-column-formats",
+        "pubgrub-and-conflict-driven-clause-learning",
+    } <= subsection_anchors
+
+
 def _assert_validation_failure_examples_quick_links() -> None:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
     heading_anchors = _validation_failure_example_heading_anchors()
@@ -2065,6 +2086,7 @@ def main(argv: list[str] | None = None) -> int:
         ("report json schemas", _assert_report_json_schemas_document),
         ("report schema docs local links", _assert_report_schema_docs_local_links),
         ("architecture doc local links", _assert_architecture_doc_local_links),
+        ("architecture doc headings", _assert_architecture_doc_headings),
         ("schema index", _assert_schema_index_document),
         ("failure example index", _assert_failure_example_index_document),
         (

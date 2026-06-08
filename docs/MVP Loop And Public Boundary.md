@@ -85,6 +85,8 @@ surfaces are:
 - Remove pasted source-span artifacts from the architecture research document.
 - Smoke-test architecture documentation local links against committed files.
 - Unit-test architecture documentation local links against committed files.
+- Normalize architecture research headings for Markdown anchor generation.
+- Smoke-test architecture documentation headings against expected anchors.
 - Validate local EDGP JSON report files and report bundle directories with a
   dependency-free `edgp validate` command.
 - Provide committed validation failure examples for common malformed report
@@ -297,4 +299,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Normalize architecture research headings for Markdown anchor generation.
+- Add unit coverage for architecture documentation headings.
