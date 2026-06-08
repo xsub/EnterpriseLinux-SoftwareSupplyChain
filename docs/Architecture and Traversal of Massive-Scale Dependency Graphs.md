@@ -3,6 +3,12 @@
 For the implementation boundary and validation loop that applies this research,
 see [MVP Loop And Public Boundary](MVP%20Loop%20And%20Public%20Boundary.md).
 
+## Quick Links
+
+- [Memory Optimization and Sparse Matrix Representations](#memory-optimization-and-sparse-matrix-representations)
+- [Algorithmic Resolution of Software Dependency Graphs](#algorithmic-resolution-of-software-dependency-graphs)
+- [Securing the Open-Source Supply Chain at Scale](#securing-the-open-source-supply-chain-at-scale)
+
 ## The Imperative of Massive-Scale Graph Architectures
 
 The paradigm of large-scale computational architecture has fundamentally shifted to address the complexity of massive, interconnected datasets. Historically, computational models favored flat, tabular representations optimized for sequential access and highly structured, localized queries. However, the emergence of planetary-scale social networks, complex biological models, and increasingly intricate software supply chains has introduced graphs containing billions of vertices and hundreds of billions—if not trillions—of edges. In these domains, the intrinsic value of the data lies not merely within the isolated properties of individual entities, but within the topology of the connections that bind them.

@@ -591,6 +591,20 @@ def _assert_architecture_doc_headings() -> None:
     } <= subsection_anchors
 
 
+def _assert_architecture_doc_quick_links() -> None:
+    lines = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8").splitlines()
+    linked_anchors = _markdown_link_anchors(lines)
+    heading_anchors = _architecture_doc_heading_anchors()
+
+    assert {
+        "memory-optimization-and-sparse-matrix-representations",
+        "algorithmic-resolution-of-software-dependency-graphs",
+        "securing-the-open-source-supply-chain-at-scale",
+    } <= set(linked_anchors)
+    for anchor in linked_anchors:
+        assert anchor in heading_anchors
+
+
 def _assert_validation_failure_examples_quick_links() -> None:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
     heading_anchors = _validation_failure_example_heading_anchors()
@@ -2125,6 +2139,7 @@ def main(argv: list[str] | None = None) -> int:
         ("report schema docs local links", _assert_report_schema_docs_local_links),
         ("architecture doc local links", _assert_architecture_doc_local_links),
         ("architecture doc headings", _assert_architecture_doc_headings),
+        ("architecture doc quick links", _assert_architecture_doc_quick_links),
         ("schema index", _assert_schema_index_document),
         ("failure example index", _assert_failure_example_index_document),
         (

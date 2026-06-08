@@ -88,6 +88,8 @@ surfaces are:
 - Normalize architecture research headings for Markdown anchor generation.
 - Smoke-test architecture documentation headings against expected anchors.
 - Unit-test architecture documentation headings against expected anchors.
+- Add quick links to the architecture research document.
+- Smoke-test architecture research quick links against architecture headings.
 - Link architecture research from the README.
 - Smoke-test README architecture research link against the committed document.
 - Unit-test README architecture research link against the committed document.
@@ -306,4 +308,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add quick links to the architecture research document.
+- Add unit coverage for architecture research quick links.
