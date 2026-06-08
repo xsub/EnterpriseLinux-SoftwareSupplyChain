@@ -1,9 +1,10 @@
-"""Documentation link tests for validation failure example workflows."""
+"""Documentation link tests for public workflow guides."""
 
 from pathlib import Path
 from urllib.parse import unquote
 
 from scripts.smoke_validate import (
+    REPORT_SCHEMA_DOC_PATHS,
     _markdown_heading_anchors,
     _markdown_link_anchors,
     _markdown_links_to_anchor,
@@ -75,6 +76,17 @@ def test_readme_local_documentation_links_target_committed_files() -> None:
     assert readme_paths
     for path in readme_paths:
         assert Path(unquote(path)).exists()
+
+
+def test_report_schema_docs_local_links_target_committed_files() -> None:
+    for doc_path in REPORT_SCHEMA_DOC_PATHS:
+        schema_doc_paths = set(
+            _markdown_path_links(doc_path.read_text(encoding="utf-8").splitlines())
+        )
+
+        assert schema_doc_paths
+        for path in schema_doc_paths:
+            assert (doc_path.parent / unquote(path)).exists()
 
 
 def test_markdown_path_links_return_local_targets_without_fragments() -> None:
