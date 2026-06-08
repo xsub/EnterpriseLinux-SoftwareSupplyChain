@@ -93,6 +93,7 @@ surfaces are:
 - Unit-test README architecture research link against the committed document.
 - Link README architecture research references to key section anchors.
 - Smoke-test README architecture research anchors against architecture headings.
+- Unit-test README architecture research anchors against architecture headings.
 - Validate local EDGP JSON report files and report bundle directories with a
   dependency-free `edgp validate` command.
 - Provide committed validation failure examples for common malformed report
@@ -305,4 +306,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for README architecture research anchors.
+- Add quick links to the architecture research document.

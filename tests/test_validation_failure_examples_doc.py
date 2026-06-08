@@ -6,6 +6,7 @@ from urllib.parse import unquote
 from scripts.smoke_validate import (
     ARCHITECTURE_DOC_PATH,
     REPORT_SCHEMA_DOC_PATHS,
+    _architecture_doc_heading_anchors,
     _markdown_heading_anchors,
     _markdown_link_anchors,
     _markdown_links_to_anchor,
@@ -80,6 +81,22 @@ def test_readme_architecture_research_link_targets_committed_doc() -> None:
 
     assert architecture_path in readme_paths
     assert Path(unquote(architecture_path)).exists()
+
+
+def test_readme_architecture_research_anchor_links_target_headings() -> None:
+    readme_anchors = set(
+        _markdown_links_to_anchor(
+            README_PATH.read_text(encoding="utf-8").splitlines(),
+            "docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20"
+            "Dependency%20Graphs.md#",
+        )
+    )
+
+    assert {
+        "memory-optimization-and-sparse-matrix-representations",
+        "algorithmic-resolution-of-software-dependency-graphs",
+    } <= readme_anchors
+    assert readme_anchors <= _architecture_doc_heading_anchors()
 
 
 def test_readme_local_documentation_links_target_committed_files() -> None:
