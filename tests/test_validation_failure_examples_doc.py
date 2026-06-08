@@ -153,6 +153,18 @@ def test_architecture_doc_headings_generate_expected_anchors() -> None:
     } <= subsection_anchors
 
 
+def test_architecture_doc_quick_links_target_headings() -> None:
+    lines = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8").splitlines()
+    quick_link_anchors = set(_markdown_link_anchors(lines))
+
+    assert {
+        "memory-optimization-and-sparse-matrix-representations",
+        "algorithmic-resolution-of-software-dependency-graphs",
+        "securing-the-open-source-supply-chain-at-scale",
+    } <= quick_link_anchors
+    assert quick_link_anchors <= _architecture_doc_heading_anchors()
+
+
 def test_markdown_path_links_return_local_targets_without_fragments() -> None:
     links = _markdown_path_links(
         [
