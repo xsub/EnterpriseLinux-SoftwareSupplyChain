@@ -146,6 +146,7 @@ surfaces are:
 - Smoke-test README validation failure fixture links against committed files.
 - Unit-test README validation failure fixture links against committed files.
 - Smoke-test local README documentation links against committed files.
+- Unit-test local README documentation links against committed files.
 - Share reusable Markdown heading and anchor extraction helpers for
   documentation checks.
 - Share reusable Markdown link target and path extraction helpers for
@@ -289,4 +290,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for local README documentation links.
+- Smoke-test validation examples guide local links against committed files.
