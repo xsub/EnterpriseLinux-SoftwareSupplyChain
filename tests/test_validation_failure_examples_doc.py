@@ -165,6 +165,13 @@ def test_architecture_doc_quick_links_target_headings() -> None:
     assert quick_link_anchors <= _architecture_doc_heading_anchors()
 
 
+def test_architecture_doc_has_no_extraction_artifacts() -> None:
+    text = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8")
+
+    for marker in ("span_", "start_span", "end_span", "\ufffc"):
+        assert marker not in text
+
+
 def test_markdown_path_links_return_local_targets_without_fragments() -> None:
     links = _markdown_path_links(
         [

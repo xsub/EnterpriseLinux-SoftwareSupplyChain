@@ -94,6 +94,7 @@ surfaces are:
 - Clean object-replacement extraction artifacts from the architecture research
   document.
 - Smoke-test architecture research document for pasted extraction artifacts.
+- Unit-test architecture research document for pasted extraction artifacts.
 - Link architecture research from the README.
 - Smoke-test README architecture research link against the committed document.
 - Unit-test README architecture research link against the committed document.
@@ -312,4 +313,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for architecture research extraction artifacts.
+- Normalize architecture research bullet lists to Markdown syntax.
