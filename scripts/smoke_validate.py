@@ -605,6 +605,12 @@ def _assert_architecture_doc_quick_links() -> None:
         assert anchor in heading_anchors
 
 
+def _assert_architecture_doc_extraction_artifacts() -> None:
+    text = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8")
+    for marker in ("span_", "start_span", "end_span", "\ufffc"):
+        assert marker not in text
+
+
 def _assert_validation_failure_examples_quick_links() -> None:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
     heading_anchors = _validation_failure_example_heading_anchors()
@@ -2140,6 +2146,10 @@ def main(argv: list[str] | None = None) -> int:
         ("architecture doc local links", _assert_architecture_doc_local_links),
         ("architecture doc headings", _assert_architecture_doc_headings),
         ("architecture doc quick links", _assert_architecture_doc_quick_links),
+        (
+            "architecture doc extraction artifacts",
+            _assert_architecture_doc_extraction_artifacts,
+        ),
         ("schema index", _assert_schema_index_document),
         ("failure example index", _assert_failure_example_index_document),
         (

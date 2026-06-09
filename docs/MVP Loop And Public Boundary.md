@@ -91,6 +91,9 @@ surfaces are:
 - Add quick links to the architecture research document.
 - Smoke-test architecture research quick links against architecture headings.
 - Unit-test architecture research quick links against architecture headings.
+- Clean object-replacement extraction artifacts from the architecture research
+  document.
+- Smoke-test architecture research document for pasted extraction artifacts.
 - Link architecture research from the README.
 - Smoke-test README architecture research link against the committed document.
 - Unit-test README architecture research link against the committed document.
@@ -309,4 +312,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Smoke-test architecture research document for pasted extraction artifacts.
+- Add unit coverage for architecture research extraction artifacts.
