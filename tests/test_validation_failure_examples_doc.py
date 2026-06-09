@@ -172,6 +172,15 @@ def test_architecture_doc_has_no_extraction_artifacts() -> None:
         assert marker not in text
 
 
+def test_architecture_doc_uses_markdown_list_syntax() -> None:
+    text = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8")
+
+    assert "\n•" not in text
+    assert "- Answer Set Programming (ASP):" in text
+    assert "- Minimal Version Selection (MVS):" in text
+    assert "- Backtracking & Deduplication:" in text
+
+
 def test_markdown_path_links_return_local_targets_without_fragments() -> None:
     links = _markdown_path_links(
         [

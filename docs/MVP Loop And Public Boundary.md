@@ -97,6 +97,7 @@ surfaces are:
 - Unit-test architecture research document for pasted extraction artifacts.
 - Normalize architecture research bullet lists to Markdown syntax.
 - Smoke-test architecture research Markdown list syntax.
+- Unit-test architecture research Markdown list syntax.
 - Link architecture research from the README.
 - Smoke-test README architecture research link against the committed document.
 - Unit-test README architecture research link against the committed document.
@@ -315,4 +316,4 @@ python -B -m src.cli benchmark --nodes 1000 --fanout 3
 
 ## Next Vertical Options
 
-- Add unit coverage for architecture research Markdown list syntax.
+- Collapse excessive blank lines in the architecture research document.
