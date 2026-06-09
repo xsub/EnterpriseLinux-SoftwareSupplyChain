@@ -16,6 +16,21 @@ drop-in replacement for mature package-manager solvers such as libsolv,
 PubGrub, or Cargo, but it gives the project a concrete architecture for those
 ideas.
 
+## Core Capabilities
+
+EDGP focuses on local, inspectable graph workflows:
+
+- Build: ingest resolved dependency data from npm, Poetry, Cargo, Maven
+  dependency trees, CycloneDX SBOMs, DOT/RPM graphs, and bounded local RPM
+  database snapshots.
+- Analyze: query reachability, dependents, shortest paths,
+  most-depended-upon packages, npm path conflicts, advisory overlays, and
+  reverse impact.
+- Export: emit deterministic EDGP JSON, CycloneDX, Neo4j Cypher, static HTML
+  reports, report bundles, and bundle verification manifests.
+- Validate: run dependency-free smoke checks, schema validation, bundle
+  verification, and synthetic CSR traversal benchmarks.
+
 ## Repository Layout
 
 ```text
@@ -31,6 +46,8 @@ tests/
 
 ## Quick Start
 
+### Install And Validate
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -38,131 +55,81 @@ python -m pip install -e ".[dev]"
 pytest
 ```
 
-Run dependency-free smoke validation:
-
 ```bash
 python -B scripts/smoke_validate.py
 python -B scripts/smoke_validate.py --include-rpm-installed
 ```
 
-Run the demo resolver and export the result:
+### Build Graphs
+
+Start with the demo resolver, then ingest real resolved dependency inputs:
 
 ```bash
 edgp demo --format cypher
 edgp demo --format cyclonedx
-```
-
-Export an already-resolved npm lockfile:
-
-```bash
 edgp lockfile --path package-lock.json --format cypher
 edgp lockfile --path package-lock.json --format cyclonedx
 edgp lockfile --path package-lock.json --format json
 ```
 
-Export an already-resolved Poetry lockfile:
+Use ecosystem-specific adapters when the input format is already resolved:
 
 ```bash
 edgp lockfile --ecosystem poetry --path poetry.lock --format json
-edgp lockfile --ecosystem poetry --path poetry.lock --format cyclonedx
-```
-
-Export an already-resolved Cargo lockfile:
-
-```bash
 edgp lockfile --ecosystem cargo --path Cargo.lock --format json
-edgp lockfile --ecosystem cargo --path Cargo.lock --format cyclonedx
-```
-
-Export a Maven dependency tree:
-
-```bash
 mvn dependency:tree -DoutputFile=maven-tree.txt
 edgp maven-tree --path maven-tree.txt --format json
-edgp maven-tree --path maven-tree.txt --format cyclonedx
-edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
 ```
 
-Query an already-resolved npm lockfile:
+SBOM, DOT/RPM, and installed RPM sources are supported for system-oriented
+investigation. Use bounded limits for local RPM database exploration.
+
+```bash
+edgp sbom --path bom.json --format json
+edgp dot --path repograph.dot --ecosystem rpm --format json
+edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
+edgp rpm-installed --limit 100 --max-requirements 40 --format json
+```
+
+### Query And Analyze
+
+Use the same traversal layer across lockfiles, SBOMs, DOT graphs, and local RPM
+snapshots:
 
 ```bash
 edgp query --path package-lock.json --operation reachable --node app==1.0.0
 edgp query --path package-lock.json --operation path --node app==1.0.0 --target library==2.0.0
-edgp query --path package-lock.json --operation most-depended-upon --limit 20
+edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc
+edgp query --source rpm-installed --rpm-limit 100 --max-requirements 40 --operation most-depended-upon
 ```
 
-Diagnose npm dependency path conflicts:
-
-```bash
-edgp npm-diagnostics --path package-lock.json
-edgp npm-bundle --path package-lock.json --output-dir reports/npm
-edgp npm-bundle --path package-lock.json --impact-node left-pad --advisories advisories.json --output-dir reports/npm
-```
-
-Report reverse dependency impact for a package:
+Impact, advisory overlays, and npm diagnostics cover the main triage flows:
 
 ```bash
 edgp impact --path package-lock.json --node left-pad
-edgp impact --source dot --path repograph.dot --ecosystem rpm --node glibc
-edgp impact --source rpm-installed --node glibc --rpm-limit 100 --max-requirements 40
-```
-
-Overlay local advisory JSON and include impact for matched packages:
-
-```bash
 edgp advisory --path package-lock.json --advisories advisories.json
-edgp advisory --source rpm-installed --advisories advisories.json --rpm-limit 100
-```
-
-Export an AlmaLinux/RPM universe graph from DOT:
-
-```bash
-edgp dot --path repograph.dot --ecosystem rpm --format json
-edgp dot --path repograph.dot --ecosystem rpm --format cypher
-edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
-edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc
-edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
-```
-
-Export a bounded graph from the local RPM database on AlmaLinux:
-
-```bash
-edgp rpm-installed --limit 100 --max-requirements 40 --format json
-edgp rpm-installed --limit 100 --max-requirements 40 --format cyclonedx
-edgp query --source rpm-installed --rpm-limit 100 --max-requirements 40 --operation most-depended-upon
-edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --output-dir reports/rpm-installed
-```
-
-Import and re-export a CycloneDX JSON SBOM:
-
-```bash
-edgp sbom --path bom.json --format json
-edgp query --source sbom --path bom.json --operation reachable --node app
-edgp sbom-bundle --path bom.json --impact-node left-pad --output-dir reports/sbom
-```
-
-Diff two EDGP JSON snapshots:
-
-```bash
+edgp npm-diagnostics --path package-lock.json
 edgp diff --left before.json --right after.json
 ```
 
-Render static HTML reports from EDGP JSON documents:
+### Reports And Bundles
+
+Generate browser-friendly reports and verifiable static bundles:
 
 ```bash
+edgp npm-bundle --path package-lock.json --impact-node left-pad --advisories advisories.json --output-dir reports/npm
+edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
+edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
+edgp sbom-bundle --path bom.json --impact-node left-pad --output-dir reports/sbom
+edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --output-dir reports/rpm-installed
 edgp report --snapshot graph.json --output graph-report.html
-edgp report --input impact.json --output impact-report.html
-edgp report --input advisory.json --output advisory-report.html
-edgp report --input npm-diagnostics.json --output npm-diagnostics-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports
 edgp verify-bundle --path reports
-edgp verify-bundle --path reports --format text
 edgp validate --path graph.json
 edgp validate --path reports --format text
-python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 ```
 
-Run a synthetic CSR traversal benchmark:
+### Benchmark
 
 ```bash
 edgp benchmark --nodes 1000 --fanout 3
@@ -407,8 +374,8 @@ as `dot` and includes the generating command.
 `manifest.json`. The manifest records `bundle.sourceKind` as `cyclonedx-sbom`
 and includes the generating command.
 
-`edgp rpm-installed-bundle` renders a bounded local RPM database graph on
-AlmaLinux-compatible hosts into a static bundle with `rpm-installed-graph.json`,
+`edgp rpm-installed-bundle` renders a bounded local RPM database graph on hosts
+with an RPM database into a static bundle with `rpm-installed-graph.json`,
 optional impact reports, HTML, `index.html`, and `manifest.json`. The manifest
 records `bundle.sourceKind` as `rpm-installed` and includes the generating
 command.
@@ -452,8 +419,8 @@ graph, diagnostics, and local advisory view. The manifest records
 `edgp impact` turns reverse reachability into a vulnerability-style impact
 report. For a selected node it returns direct dependents, all transitive
 affected dependents, and shortest dependency chains back to the selected
-component. This is the public AlmaLinux-friendly stand-in for future advisory or
-CloudLinux-specific risk feeds.
+component. This is the public-input stand-in for future advisory or curated
+risk feeds.
 
 `edgp advisory` accepts a small local JSON overlay with `id`, `package`,
 optional `versions`, `severity`, `summary`, and `references` fields. It matches
@@ -462,7 +429,7 @@ for every matched package.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
 reachable traversal, and most-depended-upon timings. It is intended as a
-dependency-free smoke benchmark for comparing local and AlmaLinux behavior.
+dependency-free smoke benchmark for comparing host environments.
 
 ### JSON Snapshot
 
@@ -570,8 +537,9 @@ report count, manifest schema, and a shortened bundle fingerprint.
 
 ## Roadmap
 
-- replace the prototype learner with full PubGrub conflict explanation;
-- add native lockfile graph extraction for Poetry, Cargo, and Maven;
-- support vulnerability annotations and reachability queries;
+- deepen resolver conflict explanations toward full PubGrub semantics;
+- harden ecosystem adapters with larger real-world fixture suites;
+- support curated vulnerability annotations and reachability policies;
 - add GraphBLAS or GPU-backed traversal adapters for very large static graphs;
-- add batch Cypher and SBOM submission clients for automated DevSecOps flows.
+- add batch Cypher, SBOM, and report-bundle submission clients for automated
+  DevSecOps flows.
