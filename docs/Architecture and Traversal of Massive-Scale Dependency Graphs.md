@@ -101,13 +101,13 @@ The theoretical complexities of graph traversal manifest acutely within the doma
 
 The underlying mathematics of cross-ecosystem dependency resolution map directly to Boolean satisfiability (SAT). Proving whether a valid dependency graph can be constructed from a given set of version constraints is mathematically proven to be an NP-hard problem. To execute dependency resolution utilizing a SAT solver, computational engines map the environment into an exhaustive boolean formula. For each individual package available in the registry, boolean variables are generated to represent the active inclusion of specific package versions. External dependencies, platform-specific constraints, and version limits are encoded as boolean clauses. Modern package managers, such as Conda and DNF, utilize advanced SAT libraries (e.g., libsolv) to translate these dependencies into satisfiability equations, traversing the logical graph to locate a state entirely devoid of contradictions.
 
-Alternative package managers employ diverse algorithmic families to tackle this problem :
+Alternative package managers employ diverse algorithmic families to tackle this problem:
 
-• Answer Set Programming (ASP): Solvers like aspcud and package managers like Spack use ASP to navigate constraints, optimizing for multi-criteria objective functions rather than strictly boolean satisfaction.
+- Answer Set Programming (ASP): Solvers like aspcud and package managers like Spack use ASP to navigate constraints, optimizing for multi-criteria objective functions rather than strictly boolean satisfaction.
 
-• Minimal Version Selection (MVS): Utilized exclusively by Go modules, this algorithm structurally simplifies the graph by invariably utilizing the minimum satisfying version declared in the tree, guaranteeing high reproducibility.
+- Minimal Version Selection (MVS): Utilized exclusively by Go modules, this algorithm structurally simplifies the graph by invariably utilizing the minimum satisfying version declared in the tree, guaranteeing high reproducibility.
 
-• Backtracking & Deduplication: Python's pip and Rust's Cargo deploy backtracking mechanisms that sequentially assign versions and recursively back out upon encountering conflicts. Conversely, JavaScript managers like npm (via Arborist) build a logical graph overlaid upon a physical node_modules directory, utilizing maximally naive deduplication with nested fallbacks to navigate complex JavaScript ecosystems. Modern alternatives like PNPM reject npm's destructive hoisting, employing strict symlink-based dependency resolution and global content-addressable storage to expose the true dependency graph, effectively eliminating phantom dependencies.
+- Backtracking & Deduplication: Python's pip and Rust's Cargo deploy backtracking mechanisms that sequentially assign versions and recursively back out upon encountering conflicts. Conversely, JavaScript managers like npm (via Arborist) build a logical graph overlaid upon a physical node_modules directory, utilizing maximally naive deduplication with nested fallbacks to navigate complex JavaScript ecosystems. Modern alternatives like PNPM reject npm's destructive hoisting, employing strict symlink-based dependency resolution and global content-addressable storage to expose the true dependency graph, effectively eliminating phantom dependencies.
 
 ### Distributed SAT Solvers and Clause Evaluation
 

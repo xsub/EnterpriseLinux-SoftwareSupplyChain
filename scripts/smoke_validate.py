@@ -611,6 +611,15 @@ def _assert_architecture_doc_extraction_artifacts() -> None:
         assert marker not in text
 
 
+def _assert_architecture_doc_markdown_lists() -> None:
+    text = ARCHITECTURE_DOC_PATH.read_text(encoding="utf-8")
+
+    assert "\n•" not in text
+    assert "- Answer Set Programming (ASP):" in text
+    assert "- Minimal Version Selection (MVS):" in text
+    assert "- Backtracking & Deduplication:" in text
+
+
 def _assert_validation_failure_examples_quick_links() -> None:
     lines = VALIDATION_FAILURE_EXAMPLES_DOC_PATH.read_text(encoding="utf-8").splitlines()
     heading_anchors = _validation_failure_example_heading_anchors()
@@ -2150,6 +2159,7 @@ def main(argv: list[str] | None = None) -> int:
             "architecture doc extraction artifacts",
             _assert_architecture_doc_extraction_artifacts,
         ),
+        ("architecture doc markdown lists", _assert_architecture_doc_markdown_lists),
         ("schema index", _assert_schema_index_document),
         ("failure example index", _assert_failure_example_index_document),
         (
