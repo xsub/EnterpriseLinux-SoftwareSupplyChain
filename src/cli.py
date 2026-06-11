@@ -9,26 +9,38 @@ import sys
 from pathlib import Path
 from typing import Any, Sequence
 
+from src.albs_build_diff import build_albs_build_diff_report
+from src.albs_build_timing import build_albs_build_timing_report
+from src.albs_artifact_inventory import build_albs_artifact_inventory
+from src.albs_log_intelligence import build_albs_log_intelligence_report
+from src.albs_release_completeness import build_albs_release_completeness_report
 from src.advisory_overlay import build_advisory_report_from_file
+from src.adapters.albs import DEFAULT_ALBS_BASE_URL, AlbsBuildAdapter
+from src.adapters.base import ResolvedProjectGraph
 from src.adapters.cargo import CargoAdapter
 from src.adapters.cyclonedx import CycloneDXAdapter
 from src.adapters.dot import DotAdapter
 from src.adapters.maven import MavenTreeAdapter
 from src.adapters.npm import NpmAdapter
 from src.adapters.poetry import PoetryAdapter
+from src.adapters.rpm_repository import RpmRepositoryAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.benchmark import run_synthetic_benchmark
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
+from src.libsolv_bridge import build_libsolv_bridge_report
 from src.output.cypher_export import CypherExporter
 from src.output.graph_bundle import write_graph_report_bundle
 from src.output.html_report import write_report_file
 from src.output.json_export import GraphJsonExporter
 from src.output.report_bundle import verify_report_bundle, write_report_bundle
 from src.output.sbom_security import CycloneDXExporter
+from src.performance_report import build_performance_report
+from src.public_advisory_feed import build_public_advisory_feed_report
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
+from src.rpm_albs_provenance import build_rpm_albs_provenance_report
 from src.schema_validation import validate_target
 from scripts.generate_failure_example_index import (
     build_failure_example_filter_listing,
@@ -381,6 +393,138 @@ def _write_rpm_installed_bundle(
     )
 
 
+def _load_albs_build_project_graph(
+    *,
+    build_id: str | None = None,
+    path: Path | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+    task_limit: int = 50,
+    artifact_limit: int = 200,
+    test_task_limit: int = 50,
+    include_logs: bool = False,
+) -> tuple[str, CSRDependencyGraph, str]:
+    adapter = AlbsBuildAdapter()
+    if path is not None:
+        resolved = adapter.parse_file(
+            path,
+            base_url=base_url,
+            task_limit=task_limit,
+            artifact_limit=artifact_limit,
+            test_task_limit=test_task_limit,
+            include_logs=include_logs,
+        )
+    elif build_id is not None:
+        resolved = adapter.parse_build(
+            build_id,
+            base_url=base_url,
+            task_limit=task_limit,
+            artifact_limit=artifact_limit,
+            test_task_limit=test_task_limit,
+            include_logs=include_logs,
+        )
+    else:
+        raise ValueError("Either --build-id or --path is required for ALBS build input")
+    return resolved.root_identifier, resolved.graph, resolved.ecosystem
+
+
+def _load_albs_build_metadata(
+    *,
+    build_id: str | None = None,
+    path: Path | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+) -> dict[str, Any]:
+    adapter = AlbsBuildAdapter()
+    if path is not None:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError(f"ALBS build fixture must be a JSON object: {path}")
+        return payload
+    if build_id is not None:
+        return adapter.fetch_build_metadata(build_id, base_url=base_url)
+    raise ValueError("Either --build-id or --path is required for ALBS build input")
+
+
+def _load_albs_build_metadata_list(
+    *,
+    build_ids: Sequence[str],
+    paths: Sequence[Path],
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+) -> list[dict[str, Any]]:
+    payloads = [
+        _load_albs_build_metadata(path=path, base_url=base_url)
+        for path in paths
+    ]
+    payloads.extend(
+        _load_albs_build_metadata(build_id=build_id, base_url=base_url)
+        for build_id in build_ids
+    )
+    if not payloads:
+        raise ValueError("At least one ALBS --path or --build-id is required")
+    return payloads
+
+
+def _write_albs_build_bundle(
+    output_dir: Path,
+    *,
+    build_id: str | None = None,
+    path: Path | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+    task_limit: int = 50,
+    artifact_limit: int = 200,
+    test_task_limit: int = 50,
+    include_logs: bool = False,
+    impact_nodes: list[str] | None = None,
+    max_paths: int = 20,
+    command: str | None = None,
+) -> Path:
+    payload = _load_albs_build_metadata(build_id=build_id, path=path, base_url=base_url)
+    resolved = AlbsBuildAdapter().parse_metadata(
+        payload,
+        base_url=base_url,
+        task_limit=task_limit,
+        artifact_limit=artifact_limit,
+        test_task_limit=test_task_limit,
+        include_logs=include_logs,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    inventory_path = output_dir / "albs-artifact-inventory.json"
+    inventory_path.write_text(
+        _json(build_albs_artifact_inventory(resolved.graph, root=resolved.root_identifier)),
+        encoding="utf-8",
+    )
+    timing_path = output_dir / "albs-build-timing.json"
+    timing_path.write_text(
+        _json(build_albs_build_timing_report(payload, root=resolved.root_identifier)),
+        encoding="utf-8",
+    )
+    return write_graph_report_bundle(
+        resolved=resolved,
+        output_dir=output_dir,
+        graph_name="albs-build-graph",
+        impact_nodes=impact_nodes,
+        node_resolver=_resolve_impact_node,
+        max_paths=max_paths,
+        extra_reports_after_graph=[inventory_path, timing_path],
+        bundle_metadata={"sourceKind": "albs-build", "command": command},
+    )
+
+
+def _load_public_json(path: Path) -> object:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) -> list[tuple[int, int]]:
+    if not values:
+        return [(nodes, fanout)]
+    scenarios = []
+    for value in values:
+        left, separator, right = value.partition(":")
+        if not separator:
+            raise ValueError("--scenario must use NODES:FANOUT")
+        scenarios.append((int(left), int(right)))
+    return scenarios
+
+
 def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependencyGraph]:
     root, graph, _ = _load_lockfile_project_graph(path, ecosystem)
     return root, graph
@@ -453,6 +597,10 @@ def _load_source_project_graph(
             max_requirements=max_requirements,
         )
         return resolved.root_identifier, resolved.graph, resolved.ecosystem
+    if source == "albs-build":
+        if path is None:
+            raise ValueError("--path is required for albs-build source")
+        return _load_albs_build_project_graph(path=path)
     raise ValueError(f"Unsupported graph source: {source}")
 
 
@@ -637,6 +785,128 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_installed_bundle.add_argument("--max-requirements", type=int, default=40)
     rpm_installed_bundle.add_argument("--report-limit", type=int, default=20)
 
+    rpm_repo = subparsers.add_parser(
+        "rpm-repo",
+        help="Export a graph from public RPM primary.xml repository metadata",
+    )
+    rpm_repo.add_argument("--primary", type=Path, required=True)
+    rpm_repo.add_argument("--repo-id", default="public-rpm-repository")
+    rpm_repo.add_argument("--package-limit", type=int, default=5000)
+    rpm_repo.add_argument("--requirement-limit", type=int, default=40)
+    rpm_repo.add_argument(
+        "--format", choices=["cypher", "cyclonedx", "json"], default="json"
+    )
+
+    albs_build = subparsers.add_parser(
+        "albs-build",
+        help="Export a graph from public ALBS build metadata",
+    )
+    albs_input = albs_build.add_mutually_exclusive_group(required=True)
+    albs_input.add_argument("--build-id")
+    albs_input.add_argument("--path", type=Path)
+    albs_build.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_build.add_argument("--task-limit", type=int, default=50)
+    albs_build.add_argument("--artifact-limit", type=int, default=200)
+    albs_build.add_argument("--test-task-limit", type=int, default=50)
+    albs_build.add_argument("--include-logs", action="store_true")
+    albs_build.add_argument(
+        "--format", choices=["cypher", "cyclonedx", "json"], default="json"
+    )
+
+    albs_artifact_inventory = subparsers.add_parser(
+        "albs-artifact-inventory",
+        help="Export ALBS build artifact inventory from public build metadata",
+    )
+    albs_inventory_input = albs_artifact_inventory.add_mutually_exclusive_group(
+        required=True
+    )
+    albs_inventory_input.add_argument("--build-id")
+    albs_inventory_input.add_argument("--path", type=Path)
+    albs_artifact_inventory.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_artifact_inventory.add_argument("--task-limit", type=int, default=50)
+    albs_artifact_inventory.add_argument("--artifact-limit", type=int, default=200)
+    albs_artifact_inventory.add_argument("--test-task-limit", type=int, default=50)
+    albs_artifact_inventory.add_argument("--include-logs", action="store_true")
+
+    albs_build_timing = subparsers.add_parser(
+        "albs-build-timing",
+        help="Export ALBS build task and artifact timing from public build metadata",
+    )
+    albs_timing_input = albs_build_timing.add_mutually_exclusive_group(required=True)
+    albs_timing_input.add_argument("--build-id")
+    albs_timing_input.add_argument("--path", type=Path)
+    albs_build_timing.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+
+    albs_build_bundle = subparsers.add_parser(
+        "albs-build-bundle",
+        help="Render public ALBS build metadata as a static graph bundle",
+    )
+    albs_bundle_input = albs_build_bundle.add_mutually_exclusive_group(required=True)
+    albs_bundle_input.add_argument("--build-id")
+    albs_bundle_input.add_argument("--path", type=Path)
+    albs_build_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_build_bundle.add_argument("--output-dir", type=Path, required=True)
+    albs_build_bundle.add_argument("--impact-node", action="append", default=[])
+    albs_build_bundle.add_argument("--task-limit", type=int, default=50)
+    albs_build_bundle.add_argument("--artifact-limit", type=int, default=200)
+    albs_build_bundle.add_argument("--test-task-limit", type=int, default=50)
+    albs_build_bundle.add_argument("--include-logs", action="store_true")
+    albs_build_bundle.add_argument("--report-limit", type=int, default=20)
+
+    albs_build_diff = subparsers.add_parser(
+        "albs-build-diff",
+        help="Compare two public ALBS builds or local ALBS JSON fixtures",
+    )
+    albs_build_diff.add_argument("--left-build-id")
+    albs_build_diff.add_argument("--left-path", type=Path)
+    albs_build_diff.add_argument("--right-build-id")
+    albs_build_diff.add_argument("--right-path", type=Path)
+    albs_build_diff.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+
+    albs_log_intelligence = subparsers.add_parser(
+        "albs-log-intelligence",
+        help="Extract build-log signals from public ALBS build metadata",
+    )
+    albs_log_input = albs_log_intelligence.add_mutually_exclusive_group(required=True)
+    albs_log_input.add_argument("--build-id")
+    albs_log_input.add_argument("--path", type=Path)
+    albs_log_intelligence.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+
+    albs_release_completeness = subparsers.add_parser(
+        "albs-release-completeness",
+        help="Summarize architecture, signing, and test coverage across ALBS builds",
+    )
+    albs_release_completeness.add_argument("--build-id", action="append", default=[])
+    albs_release_completeness.add_argument("--path", type=Path, action="append", default=[])
+    albs_release_completeness.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+
+    rpm_albs_provenance = subparsers.add_parser(
+        "rpm-albs-provenance",
+        help="Join installed RPMs to artifacts from a public ALBS build",
+    )
+    rpm_albs_input = rpm_albs_provenance.add_mutually_exclusive_group(required=True)
+    rpm_albs_input.add_argument("--build-id")
+    rpm_albs_input.add_argument("--path", type=Path)
+    rpm_albs_provenance.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    rpm_albs_provenance.add_argument("--rpm-limit", type=int, default=100)
+    rpm_albs_provenance.add_argument("--max-requirements", type=int, default=40)
+
+    libsolv_bridge = subparsers.add_parser(
+        "libsolv-bridge",
+        help="Report libsolv command availability and parse transaction output",
+    )
+    libsolv_bridge.add_argument("--transaction", type=Path)
+
+    public_advisory_feed = subparsers.add_parser(
+        "public-advisory-feed",
+        help="Normalize a public advisory feed into an EDGP advisory overlay",
+    )
+    public_advisory_feed.add_argument("--path", type=Path, required=True)
+    public_advisory_feed.add_argument("--ecosystem", default="rpm")
+    public_advisory_feed.add_argument(
+        "--format", choices=["report", "overlay"], default="report"
+    )
+
     diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
@@ -644,7 +914,14 @@ def build_parser() -> argparse.ArgumentParser:
     impact = subparsers.add_parser("impact", help="Report reverse dependency impact")
     impact.add_argument(
         "--source",
-        choices=["lockfile", "dot", "sbom", "maven-tree", "rpm-installed"],
+        choices=[
+            "lockfile",
+            "dot",
+            "sbom",
+            "maven-tree",
+            "rpm-installed",
+            "albs-build",
+        ],
         default="lockfile",
     )
     impact.add_argument("--path", type=Path)
@@ -657,7 +934,14 @@ def build_parser() -> argparse.ArgumentParser:
     advisory = subparsers.add_parser("advisory", help="Overlay local advisories on a graph")
     advisory.add_argument(
         "--source",
-        choices=["lockfile", "dot", "sbom", "maven-tree", "rpm-installed"],
+        choices=[
+            "lockfile",
+            "dot",
+            "sbom",
+            "maven-tree",
+            "rpm-installed",
+            "albs-build",
+        ],
         default="lockfile",
     )
     advisory.add_argument("--path", type=Path)
@@ -740,10 +1024,30 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--nodes", type=int, default=1000)
     benchmark.add_argument("--fanout", type=int, default=3)
 
+    performance_report = subparsers.add_parser(
+        "performance-report",
+        help="Run deterministic CSR benchmark scenarios as an EDGP report",
+    )
+    performance_report.add_argument("--nodes", type=int, default=1000)
+    performance_report.add_argument("--fanout", type=int, default=3)
+    performance_report.add_argument(
+        "--scenario",
+        action="append",
+        default=[],
+        help="benchmark scenario as NODES:FANOUT; may be repeated",
+    )
+
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument(
         "--source",
-        choices=["lockfile", "dot", "sbom", "maven-tree", "rpm-installed"],
+        choices=[
+            "lockfile",
+            "dot",
+            "sbom",
+            "maven-tree",
+            "rpm-installed",
+            "albs-build",
+        ],
         default="lockfile",
     )
     query.add_argument("--path", type=Path)
@@ -900,6 +1204,151 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
+    if args.command == "rpm-repo":
+        resolved = RpmRepositoryAdapter().parse_primary(
+            args.primary,
+            repo_id=args.repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
+        )
+        print(
+            _export(
+                args.format,
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "albs-build":
+        root_identifier, graph, resolved_ecosystem = _load_albs_build_project_graph(
+            build_id=args.build_id,
+            path=args.path,
+            base_url=args.base_url,
+            task_limit=args.task_limit,
+            artifact_limit=args.artifact_limit,
+            test_task_limit=args.test_task_limit,
+            include_logs=args.include_logs,
+        )
+        print(
+            _export(
+                args.format,
+                graph,
+                root=root_identifier,
+                ecosystem=resolved_ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "albs-artifact-inventory":
+        root_identifier, graph, _ = _load_albs_build_project_graph(
+            build_id=args.build_id,
+            path=args.path,
+            base_url=args.base_url,
+            task_limit=args.task_limit,
+            artifact_limit=args.artifact_limit,
+            test_task_limit=args.test_task_limit,
+            include_logs=args.include_logs,
+        )
+        print(_json(build_albs_artifact_inventory(graph, root=root_identifier)))
+        return 0
+
+    if args.command == "albs-build-timing":
+        payload = _load_albs_build_metadata(
+            build_id=args.build_id,
+            path=args.path,
+            base_url=args.base_url,
+        )
+        build_id = str(payload.get("build_id") or payload.get("id") or "unknown")
+        print(
+            _json(
+                build_albs_build_timing_report(
+                    payload,
+                    root=f"albs-build:{build_id}",
+                )
+            )
+        )
+        return 0
+
+    if args.command == "albs-build-bundle":
+        print(
+            _write_albs_build_bundle(
+                args.output_dir,
+                build_id=args.build_id,
+                path=args.path,
+                base_url=args.base_url,
+                task_limit=args.task_limit,
+                artifact_limit=args.artifact_limit,
+                test_task_limit=args.test_task_limit,
+                include_logs=args.include_logs,
+                impact_nodes=args.impact_node,
+                max_paths=args.report_limit,
+                command=command,
+            )
+        )
+        return 0
+
+    if args.command == "albs-build-diff":
+        left = _load_albs_build_metadata(
+            build_id=args.left_build_id,
+            path=args.left_path,
+            base_url=args.base_url,
+        )
+        right = _load_albs_build_metadata(
+            build_id=args.right_build_id,
+            path=args.right_path,
+            base_url=args.base_url,
+        )
+        print(_json(build_albs_build_diff_report(left, right)))
+        return 0
+
+    if args.command == "albs-log-intelligence":
+        payload = _load_albs_build_metadata(
+            build_id=args.build_id,
+            path=args.path,
+            base_url=args.base_url,
+        )
+        print(_json(build_albs_log_intelligence_report(payload)))
+        return 0
+
+    if args.command == "albs-release-completeness":
+        payloads = _load_albs_build_metadata_list(
+            build_ids=args.build_id,
+            paths=args.path,
+            base_url=args.base_url,
+        )
+        print(_json(build_albs_release_completeness_report(payloads)))
+        return 0
+
+    if args.command == "rpm-albs-provenance":
+        albs_payload = _load_albs_build_metadata(
+            build_id=args.build_id,
+            path=args.path,
+            base_url=args.base_url,
+        )
+        installed = InstalledRpmAdapter().parse_installed(
+            limit=args.rpm_limit,
+            max_requirements=args.max_requirements,
+        )
+        print(_json(build_rpm_albs_provenance_report(installed.graph, albs_payload)))
+        return 0
+
+    if args.command == "libsolv-bridge":
+        print(_json(build_libsolv_bridge_report(args.transaction)))
+        return 0
+
+    if args.command == "public-advisory-feed":
+        report = build_public_advisory_feed_report(
+            _load_public_json(args.path),
+            ecosystem=args.ecosystem,
+        )
+        if args.format == "overlay":
+            print(_json(report["overlay"]))
+        else:
+            print(_json(report))
+        return 0
+
     if args.command == "diff":
         print(diff_snapshot_files(args.left, args.right))
         return 0
@@ -1002,6 +1451,20 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "benchmark":
         print(_json(run_synthetic_benchmark(nodes=args.nodes, fanout=args.fanout)))
+        return 0
+
+    if args.command == "performance-report":
+        print(
+            _json(
+                build_performance_report(
+                    _performance_scenarios(
+                        args.scenario,
+                        nodes=args.nodes,
+                        fanout=args.fanout,
+                    )
+                )
+            )
+        )
         return 0
 
     if args.command == "query":

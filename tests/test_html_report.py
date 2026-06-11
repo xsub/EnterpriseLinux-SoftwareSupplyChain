@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from src.output.html_report import render_report, render_snapshot_report, write_report_file
 
 
@@ -141,3 +143,55 @@ def test_render_report_supports_npm_diagnostics_json() -> None:
     assert "shared==2.0.0" in html
     assert "node_modules/tool/node_modules/shared" in html
     assert "missing" in html
+
+
+def test_render_report_supports_albs_artifact_inventory_json() -> None:
+    report = json.loads(Path("tests/fixtures/albs-artifact-inventory.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP ALBS Artifact Inventory - albs-build:17812" in html
+    assert 'data-testid="albs-arch-summary-panel"' in html
+    assert 'data-testid="albs-artifact-table-panel"' in html
+    assert "nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm" in html
+    assert "data-sortable-table" in html
+
+
+def test_render_report_supports_albs_build_timing_json() -> None:
+    report = json.loads(Path("tests/fixtures/albs-build-timing.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP ALBS Build Timing - albs-build:17812" in html
+    assert 'data-testid="albs-task-timing-panel"' in html
+    assert 'data-testid="albs-sign-timing-panel"' in html
+    assert 'data-testid="albs-artifact-timing-panel"' in html
+    assert "371.070048" in html
+
+
+@pytest.mark.parametrize(
+    ("fixture", "test_id"),
+    [
+        ("tests/fixtures/albs-build-diff.json", "albs-build-diff-changed-panel"),
+        ("tests/fixtures/rpm-albs-provenance.json", "rpm-albs-provenance-matches-panel"),
+        ("tests/fixtures/albs-log-intelligence.json", "albs-log-intelligence-panel"),
+        (
+            "tests/fixtures/albs-release-completeness.json",
+            "albs-release-completeness-panel",
+        ),
+        ("tests/fixtures/libsolv-bridge.json", "libsolv-commands-panel"),
+        ("tests/fixtures/public-advisory-feed.json", "public-advisory-feed-panel"),
+        ("tests/fixtures/performance-report.json", "performance-results-panel"),
+    ],
+)
+def test_render_report_supports_public_vertical_reports(
+    fixture: str,
+    test_id: str,
+) -> None:
+    report = json.loads(Path(fixture).read_text())
+
+    html = render_report(report)
+
+    assert "<!doctype html>" in html
+    assert f'data-testid="{test_id}"' in html
+    assert "data-sortable-table" in html

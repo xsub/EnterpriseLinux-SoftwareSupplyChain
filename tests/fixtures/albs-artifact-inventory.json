@@ -1,0 +1,110 @@
+{
+  "buildArchitectures": [
+    "x86_64",
+    "ppc64le"
+  ],
+  "byBuildArch": [
+    {
+      "artifactArches": {
+        "x86_64": 2
+      },
+      "buildArch": "x86_64",
+      "packages": [
+        "nginx",
+        "nginx-core"
+      ],
+      "totalArtifacts": 2
+    },
+    {
+      "artifactArches": {
+        "ppc64le": 1,
+        "src": 1
+      },
+      "buildArch": "ppc64le",
+      "packages": [
+        "nginx",
+        "nginx-core"
+      ],
+      "totalArtifacts": 2
+    }
+  ],
+  "ecosystem": "albs",
+  "items": [
+    {
+      "artifactArch": "x86_64",
+      "artifactId": "3238001",
+      "artifactKind": "binary",
+      "artifactNodeId": "rpm:3238001:nginx-1.20.1-16.el9_4.1.x86_64.rpm",
+      "artifactType": "rpm",
+      "buildArch": "x86_64",
+      "buildTaskId": "albs-task:188081:x86_64",
+      "casHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "filename": "nginx-1.20.1-16.el9_4.1.x86_64.rpm",
+      "href": "/pulp/api/v3/content/rpm/packages/0191b819-main-x86/",
+      "packageName": "nginx",
+      "release": "16.el9_4.1",
+      "version": "1.20.1"
+    },
+    {
+      "artifactArch": "x86_64",
+      "artifactId": "3238000",
+      "artifactKind": "binary",
+      "artifactNodeId": "rpm:3238000:nginx-core-1.20.1-16.el9_4.1.x86_64.rpm",
+      "artifactType": "rpm",
+      "buildArch": "x86_64",
+      "buildTaskId": "albs-task:188081:x86_64",
+      "casHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "filename": "nginx-core-1.20.1-16.el9_4.1.x86_64.rpm",
+      "href": "/pulp/api/v3/content/rpm/packages/0191b819-core-x86/",
+      "packageName": "nginx-core",
+      "release": "16.el9_4.1",
+      "version": "1.20.1"
+    },
+    {
+      "artifactArch": "ppc64le",
+      "artifactId": "3237086",
+      "artifactKind": "binary",
+      "artifactNodeId": "rpm:3237086:nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm",
+      "artifactType": "rpm",
+      "buildArch": "ppc64le",
+      "buildTaskId": "albs-task:188080:ppc64le",
+      "casHash": "3e32ea857035de3155945c8870a62c1db6b05576e7dfe1c1416a2fd971e8a419",
+      "filename": "nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm",
+      "href": "/pulp/api/v3/content/rpm/packages/0191b819-core/",
+      "packageName": "nginx-core",
+      "release": "16.el9_4.1",
+      "version": "1.20.1"
+    },
+    {
+      "artifactArch": "src",
+      "artifactId": "3237038",
+      "artifactKind": "srpm",
+      "artifactNodeId": "srpm:3237038:nginx-1.20.1-16.el9_4.1.src.rpm",
+      "artifactType": "rpm",
+      "buildArch": "ppc64le",
+      "buildTaskId": "albs-task:188080:ppc64le",
+      "casHash": "f8e2a823ffc9fe9311dac3e3a50c349c3a0689b951656fefa955cd4405ddf510",
+      "filename": "nginx-1.20.1-16.el9_4.1.src.rpm",
+      "href": "/pulp/api/v3/content/rpm/packages/0191b80d-src/",
+      "packageName": "nginx",
+      "release": "16.el9_4.1",
+      "version": "1.20.1"
+    }
+  ],
+  "packages": [
+    "nginx",
+    "nginx-core"
+  ],
+  "root": "albs-build:17812",
+  "schema": "edgp.albs.artifact_inventory.v1",
+  "summary": {
+    "architectures": 2,
+    "artifacts": 4,
+    "binaryRpms": 3,
+    "buildLogs": 0,
+    "buildTasks": 2,
+    "debugArtifacts": 0,
+    "packages": 2,
+    "sourceRpms": 1
+  }
+}

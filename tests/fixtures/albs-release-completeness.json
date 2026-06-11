@@ -1,0 +1,6 @@
+{
+  "schema": "edgp.albs.release_completeness.v1",
+  "ecosystem": "albs",
+  "summary": {"builds": 1, "releasedBuilds": 1, "buildsWithMissingArchitectures": 1, "missingBuildArchitectures": 3, "failedBuildTasks": 0, "buildsWithoutSignTasks": 0, "buildsWithoutTestTasks": 0},
+  "builds": []
+}

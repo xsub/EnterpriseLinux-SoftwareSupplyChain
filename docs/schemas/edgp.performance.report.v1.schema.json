@@ -1,0 +1,15 @@
+{
+  "$id": "urn:edgp:schema:performance-report:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Synthetic CSR performance report for public validation environments.",
+  "properties": {
+    "ecosystem": {"const": "generic"},
+    "results": {"items": {"type": "object"}, "type": "array"},
+    "schema": {"const": "edgp.performance.report.v1"},
+    "summary": {"type": "object"}
+  },
+  "required": ["schema", "ecosystem", "summary", "results"],
+  "title": "EDGP Performance Report v1",
+  "type": "object"
+}

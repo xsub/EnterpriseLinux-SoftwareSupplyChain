@@ -1,0 +1,15 @@
+{
+  "$id": "urn:edgp:schema:albs-release-completeness:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "ALBS release completeness report for public build batches.",
+  "properties": {
+    "builds": {"items": {"type": "object"}, "type": "array"},
+    "ecosystem": {"const": "albs"},
+    "schema": {"const": "edgp.albs.release_completeness.v1"},
+    "summary": {"type": "object"}
+  },
+  "required": ["schema", "ecosystem", "summary", "builds"],
+  "title": "EDGP ALBS Release Completeness v1",
+  "type": "object"
+}

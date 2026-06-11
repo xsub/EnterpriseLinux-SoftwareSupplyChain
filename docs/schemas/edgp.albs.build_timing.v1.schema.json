@@ -1,0 +1,301 @@
+{
+  "$id": "urn:edgp:schema:albs-build-timing:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "ALBS build timing report for build tasks, sign tasks, and artifact processing.",
+  "properties": {
+    "artifactArches": {
+      "additionalProperties": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "type": "object"
+    },
+    "artifactTimings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifactArch": {
+            "type": "string"
+          },
+          "artifactId": {
+            "type": "string"
+          },
+          "artifactType": {
+            "type": "string"
+          },
+          "buildArch": {
+            "type": "string"
+          },
+          "buildTaskId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "packageName": {
+            "type": "string"
+          },
+          "taskStepSeconds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "taskWallSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "artifactId",
+          "name",
+          "artifactType",
+          "buildTaskId",
+          "buildArch",
+          "artifactArch",
+          "packageName",
+          "taskWallSeconds",
+          "taskStepSeconds"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "artifactTypes": {
+      "additionalProperties": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "type": "object"
+    },
+    "buildId": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "buildStepTotalsSeconds": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "type": "object"
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "ecosystem": {
+      "const": "albs",
+      "description": "Report source ecosystem."
+    },
+    "finishedAt": {
+      "type": "string"
+    },
+    "root": {
+      "description": "Root ALBS build graph node.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema": {
+      "const": "edgp.albs.build_timing.v1",
+      "description": "ALBS build timing schema identifier."
+    },
+    "signStepTotalsSeconds": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "type": "object"
+    },
+    "signTimings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "finishedAt": {
+            "type": "string"
+          },
+          "signTaskId": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "statsSeconds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "status": {
+            "type": "string"
+          },
+          "wallSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "signTaskId",
+          "status",
+          "startedAt",
+          "finishedAt",
+          "wallSeconds",
+          "statsSeconds"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "aggregateBuildTaskWallSeconds": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "aggregateSignTaskWallSeconds": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "artifacts": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "buildTasks": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "criticalBuildTaskWallSeconds": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "signTasks": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "buildTasks",
+        "signTasks",
+        "artifacts",
+        "aggregateBuildTaskWallSeconds",
+        "criticalBuildTaskWallSeconds",
+        "aggregateSignTaskWallSeconds"
+      ],
+      "type": "object"
+    },
+    "taskTimings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "arch": {
+            "type": "string"
+          },
+          "artifactCounts": {
+            "additionalProperties": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "finishedAt": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "finishedAt": {
+                  "type": "string"
+                },
+                "name": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "seconds": {
+                  "type": "number"
+                },
+                "startedAt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "seconds",
+                "startedAt",
+                "finishedAt"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "testStepTotalsSeconds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "testTasks": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "wallSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "taskId",
+          "arch",
+          "status",
+          "startedAt",
+          "finishedAt",
+          "wallSeconds",
+          "artifactCounts",
+          "steps",
+          "testTasks",
+          "testStepTotalsSeconds"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "wallSeconds": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "buildId",
+    "createdAt",
+    "finishedAt",
+    "wallSeconds",
+    "summary",
+    "artifactTypes",
+    "artifactArches",
+    "buildStepTotalsSeconds",
+    "signStepTotalsSeconds",
+    "taskTimings",
+    "signTimings",
+    "artifactTimings"
+  ],
+  "title": "EDGP ALBS Build Timing v1",
+  "type": "object"
+}

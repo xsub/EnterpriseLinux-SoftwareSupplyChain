@@ -1,0 +1,8 @@
+{
+  "schema": "edgp.albs.log_intelligence.v1",
+  "ecosystem": "albs",
+  "root": "albs-build:17813",
+  "summary": {"logArtifacts": 1, "logsWithInlineContent": 1, "signalKinds": 4, "signals": 4},
+  "signalCounts": {"error": 1, "failed": 1, "missing": 1, "warning": 1},
+  "logs": []
+}

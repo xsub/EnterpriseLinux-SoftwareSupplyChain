@@ -1,0 +1,24 @@
+{
+  "$id": "urn:edgp:schema:libsolv-bridge:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "libsolv command availability and transaction bridge report.",
+  "properties": {
+    "commands": {"items": {"type": "object"}, "type": "array"},
+    "ecosystem": {"const": "rpm"},
+    "integration": {"items": {"type": "string"}, "type": "array"},
+    "schema": {"const": "edgp.libsolv.bridge.v1"},
+    "summary": {"type": "object"},
+    "transactionActions": {"items": {"type": "object"}, "type": "array"}
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "summary",
+    "commands",
+    "transactionActions",
+    "integration"
+  ],
+  "title": "EDGP libsolv Bridge v1",
+  "type": "object"
+}

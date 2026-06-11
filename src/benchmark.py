@@ -41,6 +41,7 @@ def run_synthetic_benchmark(*, nodes: int = 1000, fanout: int = 3) -> dict[str, 
             "reachable": reachable_ms,
             "mostDependedUpon": ranking_ms,
         },
+        "storage": graph.storage_profile(),
         "mostDependedUpon": [
             {"package": package_id, "dependents": count}
             for package_id, count in ranking

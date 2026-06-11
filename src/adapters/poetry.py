@@ -102,9 +102,13 @@ class PoetryAdapter(LockfileAdapter):
             "ecosystem": self.ecosystem,
             "source": "poetry.lock",
         }
+        category = record.get("category")
+        groups = record.get("groups")
+        if category is None and isinstance(groups, list) and "main" in groups:
+            category = "main"
         optional_fields = {
-            "category": record.get("category"),
-            "groups": record.get("groups"),
+            "category": category,
+            "groups": groups,
             "optional": record.get("optional"),
             "python_versions": record.get("python-versions"),
         }

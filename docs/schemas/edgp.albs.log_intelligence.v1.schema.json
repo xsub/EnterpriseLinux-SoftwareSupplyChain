@@ -1,0 +1,24 @@
+{
+  "$id": "urn:edgp:schema:albs-log-intelligence:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "ALBS build-log signal extraction report from public build metadata.",
+  "properties": {
+    "ecosystem": {"const": "albs"},
+    "logs": {"items": {"type": "object"}, "type": "array"},
+    "root": {"type": "string"},
+    "schema": {"const": "edgp.albs.log_intelligence.v1"},
+    "signalCounts": {"type": "object"},
+    "summary": {"type": "object"}
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "summary",
+    "signalCounts",
+    "logs"
+  ],
+  "title": "EDGP ALBS Log Intelligence v1",
+  "type": "object"
+}

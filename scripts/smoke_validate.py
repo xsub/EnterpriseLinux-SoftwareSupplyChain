@@ -1,4 +1,4 @@
-"""Run dependency graph smoke checks without external test dependencies."""
+"""Run dependency graph smoke checks without extra test-only dependencies."""
 
 from __future__ import annotations
 
@@ -41,6 +41,26 @@ VALIDATION_FAILURE_EXAMPLES_DOC_PATH = (
     REPO_ROOT / "docs" / "Validation Failure Examples.md"
 )
 REPORT_JSON_SCHEMA_CONTRACTS = {
+    "edgp.albs.build_diff.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.albs.build_diff.v1.schema.json",
+    "edgp.albs.log_intelligence.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.albs.log_intelligence.v1.schema.json",
+    "edgp.albs.release_completeness.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.albs.release_completeness.v1.schema.json",
+    "edgp.albs.artifact_inventory.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.albs.artifact_inventory.v1.schema.json",
+    "edgp.albs.build_timing.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.albs.build_timing.v1.schema.json",
     "edgp.graph.snapshot.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -57,8 +77,44 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.npm.diagnostics.v1.schema.json",
+    "edgp.libsolv.bridge.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.libsolv.bridge.v1.schema.json",
+    "edgp.performance.report.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.performance.report.v1.schema.json",
+    "edgp.public.advisory_feed.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.public.advisory_feed.v1.schema.json",
+    "edgp.rpm.albs_provenance.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.rpm.albs_provenance.v1.schema.json",
 }
 REPORT_JSON_SCHEMA_FIXTURES = {
+    "edgp.albs.build_diff.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "albs-build-diff.json",
+    "edgp.albs.log_intelligence.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "albs-log-intelligence.json",
+    "edgp.albs.release_completeness.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "albs-release-completeness.json",
+    "edgp.albs.artifact_inventory.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "albs-artifact-inventory.json",
+    "edgp.albs.build_timing.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "albs-build-timing.json",
     "edgp.graph.snapshot.v1": REPO_ROOT / "tests" / "fixtures" / "snapshot-right.json",
     "edgp.impact.report.v1": REPO_ROOT / "tests" / "fixtures" / "impact-report.json",
     "edgp.advisory.report.v1": REPO_ROOT
@@ -69,6 +125,22 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "npm-diagnostics-report.json",
+    "edgp.libsolv.bridge.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "libsolv-bridge.json",
+    "edgp.performance.report.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "performance-report.json",
+    "edgp.public.advisory_feed.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "public-advisory-feed.json",
+    "edgp.rpm.albs_provenance.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "rpm-albs-provenance.json",
 }
 
 
@@ -228,6 +300,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "sourceSha256",
     } <= set(schema["properties"]["reports"]["items"]["required"])
     assert set(schema["properties"]["bundle"]["properties"]["sourceKind"]["enum"]) == {
+        "albs-build",
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
@@ -329,12 +402,21 @@ def _assert_schema_index_document() -> None:
         if isinstance(schema, dict) and "contract" in schema
     }
     assert {
+        "edgp.albs.build_diff.v1",
+        "edgp.albs.log_intelligence.v1",
+        "edgp.albs.release_completeness.v1",
+        "edgp.albs.artifact_inventory.v1",
+        "edgp.albs.build_timing.v1",
         "edgp.advisory.report.v1",
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
+        "edgp.libsolv.bridge.v1",
         "edgp.npm.diagnostics.v1",
+        "edgp.performance.report.v1",
+        "edgp.public.advisory_feed.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
+        "edgp.rpm.albs_provenance.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
     } <= contracts
@@ -1280,6 +1362,143 @@ def _assert_dot_bundle() -> None:
         assert impact["node"] == "glibc==unknown"
 
 
+def _assert_albs_build_snapshot() -> None:
+    payload = _run_cli(
+        [
+            "albs-build",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--format",
+            "json",
+        ]
+    )
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["ecosystem"] == "albs"
+    assert payload["root"] == "albs-build:17812"
+    assert payload["stats"] == {"edges": 20, "nodes": 15}
+    assert {
+        "source": "albs-task:188080:ppc64le",
+        "target": "rpm:3237086:nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm",
+        "relationshipType": 25,
+    } in payload["edges"]
+
+
+def _assert_albs_build_bundle() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "albs-build-bundle"
+        impact_node = "rpm:3237086:nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-build-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--impact-node",
+                impact_node,
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "albs-build"
+        assert manifest["bundle"]["command"].startswith("edgp albs-build-bundle ")
+        assert manifest["reports"][0]["href"] == "001-albs-build-graph.html"
+        assert manifest["reports"][1]["href"] == "002-albs-artifact-inventory.html"
+        assert manifest["reports"][2]["href"] == "003-albs-build-timing.html"
+        assert (
+            manifest["reports"][3]["href"]
+            == "004-impact-rpm-3237086-nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm.html"
+        )
+        graph_html = (output_dir / "001-albs-build-graph.html").read_text(
+            encoding="utf-8"
+        )
+        inventory = json.loads(
+            (output_dir / "albs-artifact-inventory.json").read_text(encoding="utf-8")
+        )
+        timing = json.loads(
+            (output_dir / "albs-build-timing.json").read_text(encoding="utf-8")
+        )
+        inventory_html = (output_dir / "002-albs-artifact-inventory.html").read_text(
+            encoding="utf-8"
+        )
+        timing_html = (output_dir / "003-albs-build-timing.html").read_text(
+            encoding="utf-8"
+        )
+        assert "25 - ALBS Produces Artifact" in graph_html
+        assert inventory["schema"] == "edgp.albs.artifact_inventory.v1"
+        assert inventory["summary"]["artifacts"] == 4
+        assert "nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm" in inventory_html
+        assert timing["schema"] == "edgp.albs.build_timing.v1"
+        assert timing["summary"]["criticalBuildTaskWallSeconds"] == 371.070048
+        assert "EDGP ALBS Build Timing" in timing_html
+
+
+def _assert_public_vertical_reports() -> None:
+    diff = _run_cli(
+        [
+            "albs-build-diff",
+            "--left-path",
+            "tests/fixtures/albs-build.json",
+            "--right-path",
+            "tests/fixtures/albs-build-updated.json",
+        ]
+    )
+    assert diff["schema"] == "edgp.albs.build_diff.v1"
+    assert diff["summary"]["changedArtifacts"] == 3
+
+    log = _run_cli(
+        ["albs-log-intelligence", "--path", "tests/fixtures/albs-build-updated.json"]
+    )
+    assert log["schema"] == "edgp.albs.log_intelligence.v1"
+    assert log["signalCounts"]["missing"] == 1
+
+    completeness = _run_cli(
+        [
+            "albs-release-completeness",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+        ]
+    )
+    assert completeness["schema"] == "edgp.albs.release_completeness.v1"
+    assert completeness["summary"]["builds"] == 2
+
+    rpm_repo = _run_cli(
+        ["rpm-repo", "--primary", "tests/fixtures/rpm-primary.xml", "--format", "json"]
+    )
+    assert rpm_repo["schema"] == "edgp.graph.snapshot.v1"
+    assert rpm_repo["stats"] == {"edges": 3, "nodes": 3}
+
+    libsolv = _run_cli(
+        ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]
+    )
+    assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
+    assert libsolv["summary"]["transactionActions"] == 3
+
+    advisory = _run_cli(
+        ["public-advisory-feed", "--path", "tests/fixtures/public-osv.json"]
+    )
+    assert advisory["schema"] == "edgp.public.advisory_feed.v1"
+    assert advisory["overlay"]["schema"] == "edgp.advisory.overlay.v1"
+
+    performance = _run_cli(
+        ["performance-report", "--scenario", "16:2", "--scenario", "32:3"]
+    )
+    assert performance["schema"] == "edgp.performance.report.v1"
+    assert performance["summary"]["allContiguous"] is True
+
+
 def _assert_sbom_query() -> None:
     payload = _run_cli(
         [
@@ -2203,6 +2422,9 @@ def main(argv: list[str] | None = None) -> int:
         ("maven bundle", _assert_maven_bundle),
         ("dot snapshot", _assert_dot_snapshot),
         ("dot bundle", _assert_dot_bundle),
+        ("albs build snapshot", _assert_albs_build_snapshot),
+        ("albs build bundle", _assert_albs_build_bundle),
+        ("public vertical reports", _assert_public_vertical_reports),
         ("sbom query", _assert_sbom_query),
         ("sbom bundle", _assert_sbom_bundle),
         ("snapshot diff", _assert_snapshot_diff),

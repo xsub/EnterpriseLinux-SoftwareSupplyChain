@@ -15,9 +15,9 @@ def test_maven_tree_adapter_builds_resolved_graph() -> None:
     assert resolved.root_identifier == "com.example:demo-app==1.0.0"
     assert resolved.ecosystem == "maven"
     assert resolved.graph.get_dependencies("com.example:demo-app==1.0.0") == [
+        "org.slf4j:slf4j-api==1.7.36",
         "com.fasterxml.jackson.core:jackson-databind==2.17.0",
         "junit:junit==4.13.2",
-        "org.slf4j:slf4j-api==1.7.36",
     ]
     assert resolved.graph.get_dependencies(
         "com.fasterxml.jackson.core:jackson-databind==2.17.0"

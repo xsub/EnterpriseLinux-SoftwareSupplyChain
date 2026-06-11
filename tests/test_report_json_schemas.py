@@ -5,6 +5,26 @@ from pathlib import Path
 
 
 SCHEMA_FIXTURES = {
+    "edgp.albs.build_diff.v1": (
+        Path("docs/schemas/edgp.albs.build_diff.v1.schema.json"),
+        Path("tests/fixtures/albs-build-diff.json"),
+    ),
+    "edgp.albs.log_intelligence.v1": (
+        Path("docs/schemas/edgp.albs.log_intelligence.v1.schema.json"),
+        Path("tests/fixtures/albs-log-intelligence.json"),
+    ),
+    "edgp.albs.release_completeness.v1": (
+        Path("docs/schemas/edgp.albs.release_completeness.v1.schema.json"),
+        Path("tests/fixtures/albs-release-completeness.json"),
+    ),
+    "edgp.albs.artifact_inventory.v1": (
+        Path("docs/schemas/edgp.albs.artifact_inventory.v1.schema.json"),
+        Path("tests/fixtures/albs-artifact-inventory.json"),
+    ),
+    "edgp.albs.build_timing.v1": (
+        Path("docs/schemas/edgp.albs.build_timing.v1.schema.json"),
+        Path("tests/fixtures/albs-build-timing.json"),
+    ),
     "edgp.graph.snapshot.v1": (
         Path("docs/schemas/edgp.graph.snapshot.v1.schema.json"),
         Path("tests/fixtures/snapshot-right.json"),
@@ -20,6 +40,22 @@ SCHEMA_FIXTURES = {
     "edgp.npm.diagnostics.v1": (
         Path("docs/schemas/edgp.npm.diagnostics.v1.schema.json"),
         Path("tests/fixtures/npm-diagnostics-report.json"),
+    ),
+    "edgp.libsolv.bridge.v1": (
+        Path("docs/schemas/edgp.libsolv.bridge.v1.schema.json"),
+        Path("tests/fixtures/libsolv-bridge.json"),
+    ),
+    "edgp.performance.report.v1": (
+        Path("docs/schemas/edgp.performance.report.v1.schema.json"),
+        Path("tests/fixtures/performance-report.json"),
+    ),
+    "edgp.public.advisory_feed.v1": (
+        Path("docs/schemas/edgp.public.advisory_feed.v1.schema.json"),
+        Path("tests/fixtures/public-advisory-feed.json"),
+    ),
+    "edgp.rpm.albs_provenance.v1": (
+        Path("docs/schemas/edgp.rpm.albs_provenance.v1.schema.json"),
+        Path("tests/fixtures/rpm-albs-provenance.json"),
     ),
 }
 
@@ -121,4 +157,75 @@ def test_npm_diagnostics_schema_documents_all_diagnostic_lists() -> None:
         "source",
         "sourcePath",
         "searchedPaths",
+    }
+
+
+def test_albs_artifact_inventory_schema_documents_inventory_shapes() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.albs.artifact_inventory.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert set(schema["properties"]["summary"]["required"]) == {
+        "artifacts",
+        "buildTasks",
+        "binaryRpms",
+        "sourceRpms",
+        "debugArtifacts",
+        "buildLogs",
+        "architectures",
+        "packages",
+    }
+    assert set(schema["properties"]["items"]["items"]["required"]) == {
+        "artifactNodeId",
+        "artifactId",
+        "filename",
+        "artifactType",
+        "artifactKind",
+        "packageName",
+        "version",
+        "release",
+        "artifactArch",
+        "buildTaskId",
+        "buildArch",
+        "href",
+        "casHash",
+    }
+
+
+def test_albs_build_timing_schema_documents_timing_shapes() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.albs.build_timing.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert set(schema["properties"]["summary"]["required"]) == {
+        "buildTasks",
+        "signTasks",
+        "artifacts",
+        "aggregateBuildTaskWallSeconds",
+        "criticalBuildTaskWallSeconds",
+        "aggregateSignTaskWallSeconds",
+    }
+    assert set(schema["properties"]["taskTimings"]["items"]["required"]) == {
+        "taskId",
+        "arch",
+        "status",
+        "startedAt",
+        "finishedAt",
+        "wallSeconds",
+        "artifactCounts",
+        "steps",
+        "testTasks",
+        "testStepTotalsSeconds",
+    }
+    assert set(schema["properties"]["signTimings"]["items"]["required"]) == {
+        "signTaskId",
+        "status",
+        "startedAt",
+        "finishedAt",
+        "wallSeconds",
+        "statsSeconds",
     }

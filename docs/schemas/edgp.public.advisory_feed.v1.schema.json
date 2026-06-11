@@ -1,0 +1,26 @@
+{
+  "$id": "urn:edgp:schema:public-advisory-feed:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Normalized public advisory feed report with EDGP overlay output.",
+  "properties": {
+    "advisories": {"items": {"type": "object"}, "type": "array"},
+    "ecosystem": {"type": "string"},
+    "overlay": {"type": "object"},
+    "packages": {"items": {"type": "string"}, "type": "array"},
+    "schema": {"const": "edgp.public.advisory_feed.v1"},
+    "severities": {"items": {"type": "string"}, "type": "array"},
+    "summary": {"type": "object"}
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "summary",
+    "packages",
+    "severities",
+    "advisories",
+    "overlay"
+  ],
+  "title": "EDGP Public Advisory Feed v1",
+  "type": "object"
+}

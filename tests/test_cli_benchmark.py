@@ -12,3 +12,4 @@ def test_cli_benchmark_outputs_json(capsys) -> None:
     assert payload["schema"] == "edgp.benchmark.v1"
     assert payload["stats"]["nodes"] == 6
     assert payload["stats"]["edges"] == 9
+    assert payload["storage"]["layout"] == "numpy.int32.c_contiguous"

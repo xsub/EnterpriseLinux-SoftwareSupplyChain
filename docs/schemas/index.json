@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 8,
+  "schemaCount": 17,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -10,6 +10,46 @@
       "id": "urn:edgp:schema:advisory-report:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Advisory Report v1"
+    },
+    {
+      "contract": "edgp.albs.artifact_inventory.v1",
+      "description": "ALBS build artifact inventory report derived from public build metadata.",
+      "file": "edgp.albs.artifact_inventory.v1.schema.json",
+      "id": "urn:edgp:schema:albs-artifact-inventory:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP ALBS Artifact Inventory v1"
+    },
+    {
+      "contract": "edgp.albs.build_diff.v1",
+      "description": "ALBS build comparison report for public build metadata.",
+      "file": "edgp.albs.build_diff.v1.schema.json",
+      "id": "urn:edgp:schema:albs-build-diff:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP ALBS Build Diff v1"
+    },
+    {
+      "contract": "edgp.albs.build_timing.v1",
+      "description": "ALBS build timing report for build tasks, sign tasks, and artifact processing.",
+      "file": "edgp.albs.build_timing.v1.schema.json",
+      "id": "urn:edgp:schema:albs-build-timing:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP ALBS Build Timing v1"
+    },
+    {
+      "contract": "edgp.albs.log_intelligence.v1",
+      "description": "ALBS build-log signal extraction report from public build metadata.",
+      "file": "edgp.albs.log_intelligence.v1.schema.json",
+      "id": "urn:edgp:schema:albs-log-intelligence:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP ALBS Log Intelligence v1"
+    },
+    {
+      "contract": "edgp.albs.release_completeness.v1",
+      "description": "ALBS release completeness report for public build batches.",
+      "file": "edgp.albs.release_completeness.v1.schema.json",
+      "id": "urn:edgp:schema:albs-release-completeness:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP ALBS Release Completeness v1"
     },
     {
       "contract": "edgp.graph.snapshot.v1",
@@ -28,12 +68,36 @@
       "title": "EDGP Impact Report v1"
     },
     {
+      "contract": "edgp.libsolv.bridge.v1",
+      "description": "libsolv command availability and transaction bridge report.",
+      "file": "edgp.libsolv.bridge.v1.schema.json",
+      "id": "urn:edgp:schema:libsolv-bridge:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP libsolv Bridge v1"
+    },
+    {
       "contract": "edgp.npm.diagnostics.v1",
       "description": "npm package-lock diagnostics for duplicate names, nested version conflicts, and unresolved declarations.",
       "file": "edgp.npm.diagnostics.v1.schema.json",
       "id": "urn:edgp:schema:npm-diagnostics:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP npm Diagnostics v1"
+    },
+    {
+      "contract": "edgp.performance.report.v1",
+      "description": "Synthetic CSR performance report for public validation environments.",
+      "file": "edgp.performance.report.v1.schema.json",
+      "id": "urn:edgp:schema:performance-report:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Performance Report v1"
+    },
+    {
+      "contract": "edgp.public.advisory_feed.v1",
+      "description": "Normalized public advisory feed report with EDGP overlay output.",
+      "file": "edgp.public.advisory_feed.v1.schema.json",
+      "id": "urn:edgp:schema:public-advisory-feed:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Public Advisory Feed v1"
     },
     {
       "contract": "edgp.report.bundle.v1",
@@ -50,6 +114,14 @@
       "id": "urn:edgp:schema:report-bundle-verification:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Report Bundle Verification v1"
+    },
+    {
+      "contract": "edgp.rpm.albs_provenance.v1",
+      "description": "Installed RPM to ALBS artifact provenance join report.",
+      "file": "edgp.rpm.albs_provenance.v1.schema.json",
+      "id": "urn:edgp:schema:rpm-albs-provenance:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP RPM ALBS Provenance v1"
     },
     {
       "contract": "edgp.validation.failure.example.filters.v1",

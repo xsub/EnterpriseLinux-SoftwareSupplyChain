@@ -27,6 +27,33 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.npm.diagnostics.v1.schema.json`](schemas/edgp.npm.diagnostics.v1.schema.json)
   documents duplicate package names, nested version conflicts, and unresolved
   npm dependency declarations.
+- `edgp.albs.artifact_inventory.v1`:
+  [`edgp.albs.artifact_inventory.v1.schema.json`](schemas/edgp.albs.artifact_inventory.v1.schema.json)
+  documents public ALBS build artifact inventory grouped by build architecture.
+- `edgp.albs.build_timing.v1`:
+  [`edgp.albs.build_timing.v1.schema.json`](schemas/edgp.albs.build_timing.v1.schema.json)
+  documents public ALBS build task, sign task, and artifact timing.
+- `edgp.albs.build_diff.v1`:
+  [`edgp.albs.build_diff.v1.schema.json`](schemas/edgp.albs.build_diff.v1.schema.json)
+  documents public ALBS build-to-build artifact, commit, and timing changes.
+- `edgp.albs.log_intelligence.v1`:
+  [`edgp.albs.log_intelligence.v1.schema.json`](schemas/edgp.albs.log_intelligence.v1.schema.json)
+  documents build-log artifacts and extracted warning/error/failure signals.
+- `edgp.albs.release_completeness.v1`:
+  [`edgp.albs.release_completeness.v1.schema.json`](schemas/edgp.albs.release_completeness.v1.schema.json)
+  documents release coverage across public ALBS build batches.
+- `edgp.rpm.albs_provenance.v1`:
+  [`edgp.rpm.albs_provenance.v1.schema.json`](schemas/edgp.rpm.albs_provenance.v1.schema.json)
+  documents installed RPM to ALBS artifact joins.
+- `edgp.libsolv.bridge.v1`:
+  [`edgp.libsolv.bridge.v1.schema.json`](schemas/edgp.libsolv.bridge.v1.schema.json)
+  documents libsolv command discovery and parsed transaction actions.
+- `edgp.public.advisory_feed.v1`:
+  [`edgp.public.advisory_feed.v1.schema.json`](schemas/edgp.public.advisory_feed.v1.schema.json)
+  documents normalized public advisory feeds and generated EDGP overlays.
+- `edgp.performance.report.v1`:
+  [`edgp.performance.report.v1.schema.json`](schemas/edgp.performance.report.v1.schema.json)
+  documents synthetic CSR benchmark scenarios and storage profiles.
 - `edgp.validation.failure.example.index.v1`:
   [`edgp.validation.failure.example.index.v1.schema.json`](schemas/edgp.validation.failure.example.index.v1.schema.json)
   documents the committed validation failure example index.

@@ -1,0 +1,6 @@
+{
+  "schema": "edgp.performance.report.v1",
+  "ecosystem": "generic",
+  "summary": {"scenarios": 1, "maxNodes": 10, "maxEdges": 17, "allContiguous": true, "layout": "numpy.int32.c_contiguous"},
+  "results": []
+}

@@ -1,0 +1,8 @@
+{
+  "schema": "edgp.libsolv.bridge.v1",
+  "ecosystem": "rpm",
+  "summary": {"commandsAvailable": 0, "transactionActions": 3, "installs": 1, "erases": 1, "upgrades": 1},
+  "commands": [],
+  "transactionActions": [],
+  "integration": []
+}

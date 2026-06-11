@@ -18,6 +18,7 @@
         "sourceKind": {
           "description": "Public input surface that produced the bundle.",
           "enum": [
+            "albs-build",
             "cyclonedx-sbom",
             "dot",
             "edgp-json",

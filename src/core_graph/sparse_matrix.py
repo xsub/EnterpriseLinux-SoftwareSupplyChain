@@ -1,4 +1,4 @@
-"""Compressed Sparse Row graph storage for resolved dependency topology."""
+"""Compressed Sparse Row graph storage backed by contiguous NumPy arrays."""
 
 from __future__ import annotations
 
@@ -6,6 +6,11 @@ from collections.abc import Mapping
 from collections import deque
 from dataclasses import dataclass
 from typing import Iterator
+
+import numpy as np
+
+_CSR_DTYPE = np.int32
+_CSR_MAX = int(np.iinfo(_CSR_DTYPE).max)
 
 
 @dataclass(frozen=True)
@@ -16,16 +21,16 @@ class DependencyEdge:
 
 
 class CSRDependencyGraph:
-    """Directed dependency graph materialized as Compressed Sparse Row arrays."""
+    """Directed dependency graph materialized as C-contiguous CSR arrays."""
 
     def __init__(self) -> None:
         self.vertex_map: dict[str, int] = {}
         self.reverse_vertex_map: dict[int, str] = {}
         self.next_vertex_id = 0
 
-        self.values: list[int] = []
-        self.column_indices: list[int] = []
-        self.row_pointers: list[int] = [0]
+        self.values = np.array([], dtype=_CSR_DTYPE)
+        self.column_indices = np.array([], dtype=_CSR_DTYPE)
+        self.row_pointers = np.array([0], dtype=_CSR_DTYPE)
         self.vertex_metadata: dict[str, dict[str, str]] = {}
 
         self._adjacency: dict[int, dict[int, int]] = {}
@@ -38,6 +43,8 @@ class CSRDependencyGraph:
         self, package_id: str, metadata: Mapping[str, object] | None = None
     ) -> int:
         if package_id not in self.vertex_map:
+            if self.next_vertex_id >= _CSR_MAX:
+                raise OverflowError("CSR vertex id exceeds np.int32 capacity")
             vertex_id = self.next_vertex_id
             self.vertex_map[package_id] = vertex_id
             self.reverse_vertex_map[vertex_id] = package_id
@@ -75,9 +82,12 @@ class CSRDependencyGraph:
         if package_id not in self.vertex_map:
             return []
         vertex_id = self.vertex_map[package_id]
-        start = self.row_pointers[vertex_id]
-        end = self.row_pointers[vertex_id + 1]
-        return [self.reverse_vertex_map[target] for target in self.column_indices[start:end]]
+        start = int(self.row_pointers[vertex_id])
+        end = int(self.row_pointers[vertex_id + 1])
+        return [
+            self.reverse_vertex_map[int(target)]
+            for target in self.column_indices[start:end]
+        ]
 
     def get_dependents(self, package_id: str) -> list[str]:
         self._materialize()
@@ -87,9 +97,9 @@ class CSRDependencyGraph:
         target_id = self.vertex_map[package_id]
         dependents: list[str] = []
         for source in range(self.next_vertex_id):
-            start = self.row_pointers[source]
-            end = self.row_pointers[source + 1]
-            if target_id in self.column_indices[start:end]:
+            start = int(self.row_pointers[source])
+            end = int(self.row_pointers[source + 1])
+            if np.any(self.column_indices[start:end] == target_id):
                 dependents.append(self.reverse_vertex_map[source])
         return dependents
 
@@ -137,19 +147,41 @@ class CSRDependencyGraph:
     def edges(self) -> Iterator[DependencyEdge]:
         self._materialize()
         for source in range(self.next_vertex_id):
-            start = self.row_pointers[source]
-            end = self.row_pointers[source + 1]
+            start = int(self.row_pointers[source])
+            end = int(self.row_pointers[source + 1])
             for index in range(start, end):
                 yield DependencyEdge(
                     source=self.reverse_vertex_map[source],
-                    target=self.reverse_vertex_map[self.column_indices[index]],
-                    relationship_type=self.values[index],
+                    target=self.reverse_vertex_map[int(self.column_indices[index])],
+                    relationship_type=int(self.values[index]),
                 )
 
     def to_adjacency_dict(self) -> dict[str, list[str]]:
         return {
             package_id: self.get_dependencies(package_id)
             for package_id in sorted(self.vertex_map)
+        }
+
+    def storage_profile(self) -> dict[str, object]:
+        """Return the materialized CSR array memory layout and byte footprint."""
+
+        self._materialize()
+        return {
+            "layout": "numpy.int32.c_contiguous",
+            "dtype": str(self.values.dtype),
+            "valuesBytes": int(self.values.nbytes),
+            "columnIndicesBytes": int(self.column_indices.nbytes),
+            "rowPointersBytes": int(self.row_pointers.nbytes),
+            "totalBytes": int(
+                self.values.nbytes
+                + self.column_indices.nbytes
+                + self.row_pointers.nbytes
+            ),
+            "cContiguous": bool(
+                self.values.flags.c_contiguous
+                and self.column_indices.flags.c_contiguous
+                and self.row_pointers.flags.c_contiguous
+            ),
         }
 
     def _reachable(self, package_id: str, neighbor_fn) -> list[str]:
@@ -175,14 +207,23 @@ class CSRDependencyGraph:
         if not self._dirty:
             return
 
-        self.values = []
-        self.column_indices = []
-        self.row_pointers = [0]
+        if self.next_vertex_id > _CSR_MAX:
+            raise OverflowError("CSR vertex count exceeds np.int32 capacity")
+
+        values: list[int] = []
+        column_indices: list[int] = []
+        row_pointers: list[int] = [0]
 
         for source in range(self.next_vertex_id):
             for target, relationship_type in sorted(self._adjacency.get(source, {}).items()):
-                self.values.append(relationship_type)
-                self.column_indices.append(target)
-            self.row_pointers.append(len(self.column_indices))
+                values.append(relationship_type)
+                column_indices.append(target)
+            if len(column_indices) > _CSR_MAX:
+                raise OverflowError("CSR edge count exceeds np.int32 capacity")
+            row_pointers.append(len(column_indices))
+
+        self.values = np.ascontiguousarray(values, dtype=_CSR_DTYPE)
+        self.column_indices = np.ascontiguousarray(column_indices, dtype=_CSR_DTYPE)
+        self.row_pointers = np.ascontiguousarray(row_pointers, dtype=_CSR_DTYPE)
 
         self._dirty = False

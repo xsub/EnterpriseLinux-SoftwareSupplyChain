@@ -1,0 +1,24 @@
+{
+  "$id": "urn:edgp:schema:rpm-albs-provenance:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Installed RPM to ALBS artifact provenance join report.",
+  "properties": {
+    "ecosystem": {"const": "rpm"},
+    "matches": {"items": {"type": "object"}, "type": "array"},
+    "root": {"type": "string"},
+    "schema": {"const": "edgp.rpm.albs_provenance.v1"},
+    "summary": {"type": "object"},
+    "unmatchedInstalledPackages": {"items": {"type": "object"}, "type": "array"}
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "summary",
+    "matches",
+    "unmatchedInstalledPackages"
+  ],
+  "title": "EDGP RPM ALBS Provenance v1",
+  "type": "object"
+}

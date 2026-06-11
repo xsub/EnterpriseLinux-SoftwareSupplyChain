@@ -1,0 +1,8 @@
+{
+  "schema": "edgp.rpm.albs_provenance.v1",
+  "ecosystem": "rpm",
+  "root": "rpm-installed==local",
+  "summary": {"installedPackages": 1, "albsArtifacts": 1, "matchedPackages": 1, "unmatchedPackages": 0},
+  "matches": [],
+  "unmatchedInstalledPackages": []
+}

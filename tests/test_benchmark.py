@@ -16,3 +16,6 @@ def test_synthetic_benchmark_reports_graph_shape_and_timings() -> None:
     assert payload["timingsMs"]["build"] >= 0
     assert payload["timingsMs"]["reachable"] >= 0
     assert payload["timingsMs"]["mostDependedUpon"] >= 0
+    assert payload["storage"]["layout"] == "numpy.int32.c_contiguous"
+    assert payload["storage"]["dtype"] == "int32"
+    assert payload["storage"]["cContiguous"] is True

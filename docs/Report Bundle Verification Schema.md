@@ -49,8 +49,8 @@ codes cover manifest shape, bundle fingerprint, and referenced artifact checks:
 - `sourceMissing`
 - `sourceDigestMismatch`
 
-The dependency-free smoke suite asserts that committed normalized failure
-fixtures cover every code in this list.
+The smoke suite asserts that committed normalized failure fixtures cover every
+code in this list.
 
 ## Example
 

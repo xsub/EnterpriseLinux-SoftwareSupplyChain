@@ -1,0 +1,204 @@
+{
+  "$id": "urn:edgp:schema:albs-artifact-inventory:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "ALBS build artifact inventory report derived from public build metadata.",
+  "properties": {
+    "buildArchitectures": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "byBuildArch": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifactArches": {
+            "additionalProperties": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "buildArch": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "packages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "totalArtifacts": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "buildArch",
+          "totalArtifacts",
+          "artifactArches",
+          "packages"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "ecosystem": {
+      "const": "albs",
+      "description": "Report source ecosystem."
+    },
+    "items": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifactId": {
+            "type": "string"
+          },
+          "artifactArch": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "artifactKind": {
+            "enum": [
+              "binary",
+              "build-log",
+              "debug",
+              "noarch",
+              "srpm"
+            ],
+            "type": "string"
+          },
+          "artifactNodeId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "artifactType": {
+            "type": "string"
+          },
+          "buildArch": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "buildTaskId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "casHash": {
+            "type": "string"
+          },
+          "filename": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          },
+          "packageName": {
+            "type": "string"
+          },
+          "release": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifactNodeId",
+          "artifactId",
+          "filename",
+          "artifactType",
+          "artifactKind",
+          "packageName",
+          "version",
+          "release",
+          "artifactArch",
+          "buildTaskId",
+          "buildArch",
+          "href",
+          "casHash"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "packages": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "root": {
+      "description": "Root ALBS build graph node.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema": {
+      "const": "edgp.albs.artifact_inventory.v1",
+      "description": "ALBS artifact inventory schema identifier."
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "architectures": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "artifacts": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "binaryRpms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "buildLogs": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "buildTasks": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "debugArtifacts": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "packages": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sourceRpms": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifacts",
+        "buildTasks",
+        "binaryRpms",
+        "sourceRpms",
+        "debugArtifacts",
+        "buildLogs",
+        "architectures",
+        "packages"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "summary",
+    "buildArchitectures",
+    "packages",
+    "byBuildArch",
+    "items"
+  ],
+  "title": "EDGP ALBS Artifact Inventory v1",
+  "type": "object"
+}

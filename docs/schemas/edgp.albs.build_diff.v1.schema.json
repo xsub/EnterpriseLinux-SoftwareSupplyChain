@@ -1,0 +1,32 @@
+{
+  "$id": "urn:edgp:schema:albs-build-diff:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "ALBS build comparison report for public build metadata.",
+  "properties": {
+    "addedArtifacts": {"items": {"type": "object"}, "type": "array"},
+    "changedArtifacts": {"items": {"type": "object"}, "type": "array"},
+    "ecosystem": {"const": "albs"},
+    "left": {"type": "object"},
+    "missingBuildArchitectures": {"type": "object"},
+    "removedArtifacts": {"items": {"type": "object"}, "type": "array"},
+    "right": {"type": "object"},
+    "schema": {"const": "edgp.albs.build_diff.v1"},
+    "summary": {"type": "object"},
+    "timingDelta": {"type": "object"}
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "left",
+    "right",
+    "summary",
+    "missingBuildArchitectures",
+    "addedArtifacts",
+    "removedArtifacts",
+    "changedArtifacts",
+    "timingDelta"
+  ],
+  "title": "EDGP ALBS Build Diff v1",
+  "type": "object"
+}

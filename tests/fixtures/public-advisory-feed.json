@@ -1,0 +1,9 @@
+{
+  "schema": "edgp.public.advisory_feed.v1",
+  "ecosystem": "rpm",
+  "summary": {"advisories": 1, "packages": 1, "severities": 1},
+  "packages": ["nginx"],
+  "severities": ["HIGH"],
+  "advisories": [],
+  "overlay": {"schema": "edgp.advisory.overlay.v1", "advisories": []}
+}

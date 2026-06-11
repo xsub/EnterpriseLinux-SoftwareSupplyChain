@@ -1,0 +1,133 @@
+{
+  "artifactArches": {
+    "non-rpm": 1,
+    "ppc64le": 1,
+    "src": 1,
+    "x86_64": 2
+  },
+  "artifactTimings": [
+    {
+      "artifactArch": "x86_64",
+      "artifactId": "3238001",
+      "artifactType": "rpm",
+      "buildArch": "x86_64",
+      "buildTaskId": "188081",
+      "name": "nginx-1.20.1-16.el9_4.1.x86_64.rpm",
+      "packageName": "nginx",
+      "taskStepSeconds": {},
+      "taskWallSeconds": 371.070048
+    },
+    {
+      "artifactArch": "x86_64",
+      "artifactId": "3238000",
+      "artifactType": "rpm",
+      "buildArch": "x86_64",
+      "buildTaskId": "188081",
+      "name": "nginx-core-1.20.1-16.el9_4.1.x86_64.rpm",
+      "packageName": "nginx-core",
+      "taskStepSeconds": {},
+      "taskWallSeconds": 371.070048
+    },
+    {
+      "artifactArch": "non-rpm",
+      "artifactId": "3237071",
+      "artifactType": "build_log",
+      "buildArch": "ppc64le",
+      "buildTaskId": "188080",
+      "name": "mock.srpm.188080.1725369834.cfg",
+      "packageName": "",
+      "taskStepSeconds": {},
+      "taskWallSeconds": 370.070048
+    },
+    {
+      "artifactArch": "src",
+      "artifactId": "3237038",
+      "artifactType": "rpm",
+      "buildArch": "ppc64le",
+      "buildTaskId": "188080",
+      "name": "nginx-1.20.1-16.el9_4.1.src.rpm",
+      "packageName": "nginx",
+      "taskStepSeconds": {},
+      "taskWallSeconds": 370.070048
+    },
+    {
+      "artifactArch": "ppc64le",
+      "artifactId": "3237086",
+      "artifactType": "rpm",
+      "buildArch": "ppc64le",
+      "buildTaskId": "188080",
+      "name": "nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm",
+      "packageName": "nginx-core",
+      "taskStepSeconds": {},
+      "taskWallSeconds": 370.070048
+    }
+  ],
+  "artifactTypes": {
+    "build_log": 1,
+    "rpm": 4
+  },
+  "buildId": "17812",
+  "buildStepTotalsSeconds": {},
+  "createdAt": "2024-09-03T13:17:19.527127",
+  "ecosystem": "albs",
+  "finishedAt": "2024-09-03T13:30:53.682871",
+  "root": "albs-build:17812",
+  "schema": "edgp.albs.build_timing.v1",
+  "signStepTotalsSeconds": {
+    "sign_packages_time": 22.0,
+    "upload_packages_time": 187.0
+  },
+  "signTimings": [
+    {
+      "finishedAt": "2024-09-03T13:36:14.543733",
+      "signTaskId": "11754",
+      "startedAt": "2024-09-03T13:31:58.839332",
+      "statsSeconds": {
+        "sign_packages_time": 22.0,
+        "upload_packages_time": 187.0
+      },
+      "status": "3",
+      "wallSeconds": 255.704401
+    }
+  ],
+  "summary": {
+    "aggregateBuildTaskWallSeconds": 741.140096,
+    "aggregateSignTaskWallSeconds": 255.704401,
+    "artifacts": 5,
+    "buildTasks": 2,
+    "criticalBuildTaskWallSeconds": 371.070048,
+    "signTasks": 1
+  },
+  "taskTimings": [
+    {
+      "arch": "x86_64",
+      "artifactCounts": {
+        "rpm": 2
+      },
+      "finishedAt": "2024-09-03T13:28:57.649087",
+      "startedAt": "2024-09-03T13:22:46.579039",
+      "status": "2",
+      "steps": [],
+      "taskId": "188081",
+      "testStepTotalsSeconds": {},
+      "testTasks": 0,
+      "wallSeconds": 371.070048
+    },
+    {
+      "arch": "ppc64le",
+      "artifactCounts": {
+        "build_log": 1,
+        "rpm": 2
+      },
+      "finishedAt": "2024-09-03T13:28:56.649087",
+      "startedAt": "2024-09-03T13:22:46.579039",
+      "status": "2",
+      "steps": [],
+      "taskId": "188080",
+      "testStepTotalsSeconds": {},
+      "testTasks": 0,
+      "wallSeconds": 370.070048
+    }
+  ],
+  "wallSeconds": 814.155744
+}

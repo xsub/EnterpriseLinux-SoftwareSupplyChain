@@ -4,7 +4,7 @@ This project is developed in vertical slices:
 
 1. Pick the next public, AlmaLinux-compatible capability.
 2. Implement the smallest useful path end to end.
-3. Validate locally with dependency-free smoke checks.
+3. Validate locally with smoke checks from the installed project environment.
 4. Validate on the AlmaLinux VPS when the slice touches host/runtime behavior.
 5. Commit and push to `origin/main`.
 6. Reassess the next vertical.
@@ -23,6 +23,10 @@ surfaces are:
 - local advisory overlay JSON;
 - directed DOT graphs, including `dnf repograph`-style block edges;
 - installed RPM database inspection on AlmaLinux via the public `rpm` command;
+- public RPM repository `primary.xml` or `primary.xml.gz` metadata;
+- public ALBS build metadata and build-log metadata embedded in ALBS payloads;
+- public OSV-like advisory JSON payloads;
+- libsolv command discovery and saved transaction transcripts;
 - local graph traversal, impact reporting, diffing, and JSON/Cypher/CycloneDX
   export.
 
@@ -66,18 +70,17 @@ surfaces are:
   workbench and RAG integrations can ingest generated artifacts directly,
   including bundle-level source kind and generating command metadata.
 - Document `edgp.report.bundle.v1` with a Draft 2020-12 JSON Schema and
-  dependency-free smoke validation against generated bundle manifests.
+  smoke validation against generated bundle manifests.
 - Include per-report SHA-256 digests for report bundle source JSON and rendered
   HTML artifacts.
 - Include a top-level report bundle fingerprint derived from the canonical
   manifest payload and member artifact digests.
-- Verify generated report bundles with a dependency-free `verify-bundle` command
-  that checks manifest shape, member digests, and the bundle fingerprint.
+- Verify generated report bundles with a local `verify-bundle` command that
+  checks manifest shape, member digests, and the bundle fingerprint.
 - Emit `verify-bundle` results as JSON by default, with a concise text format
   for terminal checks.
 - Document `edgp.report.bundle.verification.v1` with a Draft 2020-12 JSON
-  Schema and dependency-free smoke validation against generated verifier
-  output.
+  Schema and smoke validation against generated verifier output.
 - Generate a deterministic schema index for documented EDGP JSON Schema
   contracts and validate that it stays current in the smoke suite.
 - Smoke-test report schema documentation local links against committed files.
@@ -104,8 +107,8 @@ surfaces are:
 - Link README architecture research references to key section anchors.
 - Smoke-test README architecture research anchors against architecture headings.
 - Unit-test README architecture research anchors against architecture headings.
-- Validate local EDGP JSON report files and report bundle directories with a
-  dependency-free `edgp validate` command.
+- Validate local EDGP JSON report files and report bundle directories with an
+  installed `edgp validate` command.
 - Provide committed validation failure examples for common malformed report
   payloads.
 - Provide committed validation and verification failure examples for tampered
@@ -205,6 +208,18 @@ surfaces are:
   time, architecture, and non-zero epoch.
 - Preserve public RPM origin/build hints including distribution, packager,
   upstream URL, and build host when present.
+- Build public ALBS provenance graphs from build metadata.
+- Generate ALBS artifact inventory, build timing, build diff, log intelligence,
+  and release completeness reports.
+- Join installed RPM database nodes to artifacts from public ALBS build
+  metadata.
+- Parse public RPM repository primary metadata into package/provider/requirement
+  graphs.
+- Report libsolv command availability and parse saved libsolv-style
+  transaction transcripts.
+- Normalize OSV-like public advisory feeds into EDGP advisory overlays.
+- Generate performance reports for deterministic NumPy-backed CSR benchmark
+  scenarios.
 
 ## Validation Commands
 
@@ -236,6 +251,14 @@ python -B -m src.cli dot-bundle --path tests/fixtures/repograph.dot --ecosystem 
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-node left-pad --output-dir /tmp/edgp-sbom-bundle
 python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --output-dir /tmp/edgp-rpm-installed-bundle
+python -B -m src.cli rpm-repo --primary tests/fixtures/rpm-primary.xml --format json
+python -B -m src.cli albs-build --path tests/fixtures/albs-build.json --format json
+python -B -m src.cli albs-build-diff --left-path tests/fixtures/albs-build.json --right-path tests/fixtures/albs-build-updated.json
+python -B -m src.cli albs-log-intelligence --path tests/fixtures/albs-build-updated.json
+python -B -m src.cli albs-release-completeness --path tests/fixtures/albs-build.json --path tests/fixtures/albs-build-updated.json
+python -B -m src.cli libsolv-bridge --transaction tests/fixtures/libsolv-transaction.txt
+python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv.json --ecosystem rpm
+python -B -m src.cli performance-report --scenario 1000:3 --scenario 10000:5
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
 python -B -m src.cli impact --path tests/fixtures/package-lock.json --node left-pad
 python -B -m src.cli advisory --path tests/fixtures/package-lock.json --advisories tests/fixtures/advisories.json

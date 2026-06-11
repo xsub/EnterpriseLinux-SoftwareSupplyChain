@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="2">
+  <package type="rpm">
+    <name>nginx</name>
+    <arch>x86_64</arch>
+    <version epoch="0" ver="1.20.1" rel="16.el9_4.1"/>
+    <summary>web server</summary>
+    <format>
+      <rpm:sourcerpm>nginx-1.20.1-16.el9_4.1.src.rpm</rpm:sourcerpm>
+      <rpm:provides>
+        <rpm:entry name="nginx"/>
+      </rpm:provides>
+      <rpm:requires>
+        <rpm:entry name="nginx-core"/>
+      </rpm:requires>
+    </format>
+  </package>
+  <package type="rpm">
+    <name>nginx-core</name>
+    <arch>x86_64</arch>
+    <version epoch="0" ver="1.20.1" rel="16.el9_4.1"/>
+    <summary>web server core</summary>
+    <format>
+      <rpm:sourcerpm>nginx-1.20.1-16.el9_4.1.src.rpm</rpm:sourcerpm>
+      <rpm:provides>
+        <rpm:entry name="nginx-core"/>
+      </rpm:provides>
+      <rpm:requires/>
+    </format>
+  </package>
+</metadata>

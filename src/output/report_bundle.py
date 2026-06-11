@@ -16,6 +16,7 @@ BUNDLE_SHA256_KEY = "bundleSha256"
 MANIFEST_SCHEMA = "edgp.report.bundle.v1"
 VERIFICATION_SCHEMA = "edgp.report.bundle.verification.v1"
 SOURCE_KINDS = {
+    "albs-build",
     "cyclonedx-sbom",
     "dot",
     "edgp-json",
@@ -561,6 +562,28 @@ def _report_title(payload: dict[str, Any]) -> str:
         return f"Advisory Report - {payload.get('root') or 'graph'}"
     if schema == "edgp.npm.diagnostics.v1":
         return f"npm Diagnostics - {payload.get('root') or 'package-lock'}"
+    if schema == "edgp.albs.artifact_inventory.v1":
+        return f"ALBS Artifact Inventory - {payload.get('root') or 'build'}"
+    if schema == "edgp.albs.build_timing.v1":
+        return f"ALBS Build Timing - {payload.get('root') or 'build'}"
+    if schema == "edgp.albs.build_diff.v1":
+        left = payload.get("left", {})
+        right = payload.get("right", {})
+        if isinstance(left, dict) and isinstance(right, dict):
+            return f"ALBS Build Diff - {left.get('buildId', '?')} to {right.get('buildId', '?')}"
+        return "ALBS Build Diff"
+    if schema == "edgp.rpm.albs_provenance.v1":
+        return "RPM to ALBS Provenance"
+    if schema == "edgp.albs.log_intelligence.v1":
+        return f"ALBS Log Intelligence - {payload.get('root') or 'build'}"
+    if schema == "edgp.albs.release_completeness.v1":
+        return "ALBS Release Completeness"
+    if schema == "edgp.libsolv.bridge.v1":
+        return "libsolv Bridge"
+    if schema == "edgp.public.advisory_feed.v1":
+        return "Public Advisory Feed"
+    if schema == "edgp.performance.report.v1":
+        return "Performance Report"
     return str(schema or "EDGP Report")
 
 

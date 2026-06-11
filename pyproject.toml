@@ -9,7 +9,7 @@ description = "CSR-backed dependency graph resolver and exporter prototype"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Software Supply Chain" }]
-dependencies = []
+dependencies = ["numpy>=2.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]

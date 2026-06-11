@@ -31,6 +31,24 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_advisory_report(payload)
     if schema == "edgp.npm.diagnostics.v1":
         return render_npm_diagnostics_report(payload)
+    if schema == "edgp.albs.artifact_inventory.v1":
+        return render_albs_artifact_inventory_report(payload)
+    if schema == "edgp.albs.build_timing.v1":
+        return render_albs_build_timing_report(payload)
+    if schema == "edgp.albs.build_diff.v1":
+        return render_albs_build_diff_report(payload)
+    if schema == "edgp.rpm.albs_provenance.v1":
+        return render_rpm_albs_provenance_report(payload)
+    if schema == "edgp.albs.log_intelligence.v1":
+        return render_albs_log_intelligence_report(payload)
+    if schema == "edgp.albs.release_completeness.v1":
+        return render_albs_release_completeness_report(payload)
+    if schema == "edgp.libsolv.bridge.v1":
+        return render_libsolv_bridge_report(payload)
+    if schema == "edgp.public.advisory_feed.v1":
+        return render_public_advisory_feed_report(payload)
+    if schema == "edgp.performance.report.v1":
+        return render_performance_report(payload)
     raise ValueError(f"Unsupported HTML report schema: {schema}")
 
 
@@ -149,7 +167,317 @@ def render_npm_diagnostics_report(report: dict[str, Any]) -> str:
     )
 
 
-def _document(title: str, sections: list[str]) -> str:
+def render_albs_artifact_inventory_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.albs.artifact_inventory.v1":
+        raise ValueError("HTML ALBS artifact inventory input must be an EDGP ALBS report")
+
+    summary = report.get("summary", {})
+    title = f"EDGP ALBS Artifact Inventory - {report.get('root') or 'build'}"
+    return _document(
+        title,
+        [
+            _generic_hero(
+                eyebrow=str(report.get("ecosystem", "albs")),
+                heading=str(report.get("root") or "ALBS artifact inventory"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Artifacts", summary.get("artifacts", 0)),
+                    ("Build Tasks", summary.get("buildTasks", 0)),
+                    ("Packages", summary.get("packages", 0)),
+                ],
+            ),
+            _albs_arch_summary_panel(report.get("byBuildArch", [])),
+            _albs_artifact_table(report.get("items", [])),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_albs_build_timing_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.albs.build_timing.v1":
+        raise ValueError("HTML ALBS build timing input must be an EDGP ALBS report")
+
+    summary = report.get("summary", {})
+    title = f"EDGP ALBS Build Timing - {report.get('root') or 'build'}"
+    return _document(
+        title,
+        [
+            _generic_hero(
+                eyebrow=str(report.get("ecosystem", "albs")),
+                heading=str(report.get("root") or "ALBS build timing"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Build Tasks", summary.get("buildTasks", 0)),
+                    ("Critical Seconds", summary.get("criticalBuildTaskWallSeconds", 0)),
+                    ("Artifacts", summary.get("artifacts", 0)),
+                ],
+            ),
+            _albs_task_timing_panel(report.get("taskTimings", [])),
+            _albs_sign_timing_panel(report.get("signTimings", [])),
+            _albs_artifact_timing_panel(report.get("artifactTimings", [])),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_albs_build_diff_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.albs.build_diff.v1":
+        raise ValueError("HTML ALBS build diff input must be an EDGP ALBS report")
+
+    summary = report.get("summary", {})
+    left = report.get("left", {})
+    right = report.get("right", {})
+    title = "EDGP ALBS Build Diff"
+    return _document(
+        title,
+        [
+            _generic_hero(
+                eyebrow="albs",
+                heading=f"{_dict_value(left, 'buildId')} -> {_dict_value(right, 'buildId')}",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Added", summary.get("addedArtifacts", 0)),
+                    ("Removed", summary.get("removedArtifacts", 0)),
+                    ("Changed", summary.get("changedArtifacts", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Changed Artifacts",
+                report.get("changedArtifacts", []),
+                ["packageName", "artifactArch", "buildArch", "changedFields"],
+                test_id="albs-build-diff-changed-panel",
+            ),
+            _rows_panel(
+                "Added Artifacts",
+                report.get("addedArtifacts", []),
+                ["filename", "packageName", "artifactArch", "buildArch"],
+                test_id="albs-build-diff-added-panel",
+            ),
+            _rows_panel(
+                "Removed Artifacts",
+                report.get("removedArtifacts", []),
+                ["filename", "packageName", "artifactArch", "buildArch"],
+                test_id="albs-build-diff-removed-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_rpm_albs_provenance_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.rpm.albs_provenance.v1":
+        raise ValueError("HTML RPM ALBS provenance input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    rows = []
+    for match in report.get("matches", []) if isinstance(report.get("matches"), list) else []:
+        if not isinstance(match, dict):
+            continue
+        installed = match.get("installedPackage", {})
+        artifact = match.get("albsArtifact", {})
+        rows.append(
+            {
+                "package": _dict_value(installed, "nodeId"),
+                "artifact": _dict_value(artifact, "filename"),
+                "buildId": match.get("buildId", ""),
+                "releaseId": match.get("releaseId", ""),
+            }
+        )
+    return _document(
+        "EDGP RPM ALBS Provenance",
+        [
+            _generic_hero(
+                eyebrow="rpm",
+                heading=str(report.get("root") or "RPM to ALBS provenance"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Installed", summary.get("installedPackages", 0)),
+                    ("Matched", summary.get("matchedPackages", 0)),
+                    ("Unmatched", summary.get("unmatchedPackages", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Matched Packages",
+                rows,
+                ["package", "artifact", "buildId", "releaseId"],
+                test_id="rpm-albs-provenance-matches-panel",
+            ),
+            _rows_panel(
+                "Unmatched Installed Packages",
+                report.get("unmatchedInstalledPackages", []),
+                ["nodeId", "name", "version", "release", "arch"],
+                test_id="rpm-albs-provenance-unmatched-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_albs_log_intelligence_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.albs.log_intelligence.v1":
+        raise ValueError("HTML ALBS log intelligence input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP ALBS Log Intelligence",
+        [
+            _generic_hero(
+                eyebrow="albs",
+                heading=str(report.get("root") or "ALBS logs"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Logs", summary.get("logArtifacts", 0)),
+                    ("Signals", summary.get("signals", 0)),
+                    ("Signal Kinds", summary.get("signalKinds", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Build Logs",
+                report.get("logs", []),
+                ["name", "buildArch", "contentAvailable", "signals", "sample"],
+                test_id="albs-log-intelligence-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_albs_release_completeness_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.albs.release_completeness.v1":
+        raise ValueError("HTML ALBS release completeness input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP ALBS Release Completeness",
+        [
+            _generic_hero(
+                eyebrow="albs",
+                heading="ALBS release completeness",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Builds", summary.get("builds", 0)),
+                    ("Released", summary.get("releasedBuilds", 0)),
+                    ("Missing Arches", summary.get("missingBuildArchitectures", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Build Coverage",
+                report.get("builds", []),
+                [
+                    "buildId",
+                    "released",
+                    "observedBuildArchitectures",
+                    "missingBuildArchitectures",
+                    "failedBuildTasks",
+                    "rpmArtifacts",
+                ],
+                test_id="albs-release-completeness-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_libsolv_bridge_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.libsolv.bridge.v1":
+        raise ValueError("HTML libsolv bridge input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP libsolv Bridge",
+        [
+            _generic_hero(
+                eyebrow="rpm",
+                heading="libsolv bridge",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Commands", summary.get("commandsAvailable", 0)),
+                    ("Actions", summary.get("transactionActions", 0)),
+                    ("Installs", summary.get("installs", 0)),
+                ],
+            ),
+            _rows_panel(
+                "libsolv Commands",
+                report.get("commands", []),
+                ["command", "available", "path"],
+                test_id="libsolv-commands-panel",
+            ),
+            _rows_panel(
+                "Transaction Actions",
+                report.get("transactionActions", []),
+                ["action", "package", "oldPackage", "newPackage"],
+                test_id="libsolv-transaction-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_public_advisory_feed_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.public.advisory_feed.v1":
+        raise ValueError("HTML public advisory feed input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP Public Advisory Feed",
+        [
+            _generic_hero(
+                eyebrow=str(report.get("ecosystem", "public")),
+                heading="Public advisory normalization",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Advisories", summary.get("advisories", 0)),
+                    ("Packages", summary.get("packages", 0)),
+                    ("Severities", summary.get("severities", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Normalized Advisories",
+                report.get("advisories", []),
+                ["id", "severity", "package", "versions", "summary"],
+                test_id="public-advisory-feed-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_performance_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.performance.report.v1":
+        raise ValueError("HTML performance report input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP Performance Report",
+        [
+            _generic_hero(
+                eyebrow="generic",
+                heading="CSR performance",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Scenarios", summary.get("scenarios", 0)),
+                    ("Max Nodes", summary.get("maxNodes", 0)),
+                    ("Layout", summary.get("layout", "")),
+                ],
+            ),
+            _rows_panel(
+                "Benchmark Results",
+                report.get("results", []),
+                ["nodes", "fanout", "edges", "buildMs", "reachableMs", "mostDependedUponMs", "storage"],
+                test_id="performance-results-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def _document(
+    title: str,
+    sections: list[str],
+    *,
+    scripts: list[str] | None = None,
+) -> str:
+    script_markup = [f"<script>{script}</script>" for script in scripts or []]
     return "\n".join(
         [
             "<!doctype html>",
@@ -164,6 +492,7 @@ def _document(title: str, sections: list[str]) -> str:
             '<main class="report-shell">',
             *sections,
             "</main>",
+            *script_markup,
             "</body>",
             "</html>",
         ]
@@ -207,6 +536,61 @@ def _generic_hero(
   </div>
   <dl class="metrics">{metric_markup}</dl>
 </section>""".strip()
+
+
+def _rows_panel(
+    title: str,
+    rows: object,
+    columns: list[str],
+    *,
+    test_id: str,
+) -> str:
+    rendered_rows = []
+    if isinstance(rows, list):
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            rendered_rows.append(
+                "<tr>"
+                + "".join(f"<td>{escape(_cell(row.get(column)))}</td>" for column in columns)
+                + "</tr>"
+            )
+    header = "".join(
+        f'<th><button type="button" data-sort-index="{index}">{escape(_humanize_label(column))}</button></th>'
+        for index, column in enumerate(columns)
+    )
+    body = "".join(rendered_rows) or (
+        f'<tr><td colspan="{len(columns)}">No rows.</td></tr>'
+    )
+    return f"""
+<section class="panel" data-testid="{escape(test_id)}">
+  <div class="section-head">
+    <h2>{escape(title)}</h2>
+    <span>{len(rendered_rows)} rows</span>
+  </div>
+  <div class="table-wrap">
+    <table data-sortable-table>
+      <thead><tr>{header}</tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _cell(value: object) -> str:
+    if isinstance(value, dict | list):
+        return json.dumps(value, sort_keys=True)
+    return str(value if value is not None else "")
+
+
+def _dict_value(value: object, key: str) -> str:
+    if isinstance(value, dict):
+        return str(value.get(key, ""))
+    return ""
+
+
+def _humanize_label(key: str) -> str:
+    return key.replace("_", " ").replace("-", " ").title()
 
 
 def _package_list_panel(title: str, packages: object, *, test_id: str) -> str:
@@ -420,6 +804,242 @@ def _npm_unresolved_panel(unresolved: object) -> str:
 </section>""".strip()
 
 
+def _albs_arch_summary_panel(summaries: object) -> str:
+    rows = []
+    if isinstance(summaries, list):
+        for summary in summaries:
+            if not isinstance(summary, dict):
+                continue
+            artifact_arches = summary.get("artifactArches", {})
+            arch_text = (
+                ", ".join(
+                    f"{arch}: {count}"
+                    for arch, count in sorted(artifact_arches.items())
+                )
+                if isinstance(artifact_arches, dict)
+                else ""
+            )
+            packages = summary.get("packages", [])
+            package_text = (
+                ", ".join(str(package) for package in packages)
+                if isinstance(packages, list)
+                else ""
+            )
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(summary.get('buildArch', '')))}</td>"
+                f"<td>{escape(str(summary.get('totalArtifacts', 0)))}</td>"
+                f"<td>{escape(arch_text)}</td>"
+                f"<td>{escape(package_text)}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="4">No build architecture summaries.</td></tr>'
+    return f"""
+<section class="panel" data-testid="albs-arch-summary-panel">
+  <div class="section-head">
+    <h2>Build Architectures</h2>
+    <span>{len(rows)} arches</span>
+  </div>
+  <div class="table-wrap">
+    <table data-sortable-table>
+      <thead>
+        <tr>
+          <th><button type="button" data-sort-index="0">Build Arch</button></th>
+          <th><button type="button" data-sort-index="1" data-sort-type="number">Artifacts</button></th>
+          <th><button type="button" data-sort-index="2">Artifact Arches</button></th>
+          <th><button type="button" data-sort-index="3">Packages</button></th>
+        </tr>
+      </thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _albs_artifact_table(items: object) -> str:
+    rows = []
+    if isinstance(items, list):
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(item.get('filename', '')))}</td>"
+                f"<td>{escape(str(item.get('artifactKind', '')))}</td>"
+                f"<td>{escape(str(item.get('packageName', '')))}</td>"
+                f"<td>{escape(str(item.get('version', '')))}</td>"
+                f"<td>{escape(str(item.get('release', '')))}</td>"
+                f"<td>{escape(str(item.get('artifactArch', '')))}</td>"
+                f"<td>{escape(str(item.get('buildArch', '')))}</td>"
+                f"<td>{escape(str(item.get('artifactNodeId', '')))}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="8">No artifacts.</td></tr>'
+    return f"""
+<section class="panel" data-testid="albs-artifact-table-panel">
+  <div class="section-head">
+    <h2>Artifacts</h2>
+    <span>{len(rows)} total</span>
+  </div>
+  <div class="table-wrap">
+    <table data-sortable-table>
+      <thead>
+        <tr>
+          <th><button type="button" data-sort-index="0">Filename</button></th>
+          <th><button type="button" data-sort-index="1">Kind</button></th>
+          <th><button type="button" data-sort-index="2">Package</button></th>
+          <th><button type="button" data-sort-index="3">Version</button></th>
+          <th><button type="button" data-sort-index="4">Release</button></th>
+          <th><button type="button" data-sort-index="5">Artifact Arch</button></th>
+          <th><button type="button" data-sort-index="6">Build Arch</button></th>
+          <th><button type="button" data-sort-index="7">Node</button></th>
+        </tr>
+      </thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _albs_task_timing_panel(tasks: object) -> str:
+    rows = []
+    if isinstance(tasks, list):
+        for task in tasks:
+            if not isinstance(task, dict):
+                continue
+            artifact_counts = task.get("artifactCounts", {})
+            artifact_text = (
+                ", ".join(f"{key}: {value}" for key, value in sorted(artifact_counts.items()))
+                if isinstance(artifact_counts, dict)
+                else ""
+            )
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(task.get('taskId', '')))}</td>"
+                f"<td>{escape(str(task.get('arch', '')))}</td>"
+                f"<td>{escape(str(task.get('status', '')))}</td>"
+                f"<td>{escape(str(task.get('wallSeconds', '')))}</td>"
+                f"<td>{escape(artifact_text)}</td>"
+                f"<td>{escape(str(task.get('startedAt', '')))}</td>"
+                f"<td>{escape(str(task.get('finishedAt', '')))}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="7">No build task timings.</td></tr>'
+    return f"""
+<section class="panel" data-testid="albs-task-timing-panel">
+  <div class="section-head">
+    <h2>Build Task Timing</h2>
+    <span>{len(rows)} tasks</span>
+  </div>
+  <div class="table-wrap">
+    <table data-sortable-table>
+      <thead>
+        <tr>
+          <th><button type="button" data-sort-index="0">Task</button></th>
+          <th><button type="button" data-sort-index="1">Arch</button></th>
+          <th><button type="button" data-sort-index="2">Status</button></th>
+          <th><button type="button" data-sort-index="3" data-sort-type="number">Wall Seconds</button></th>
+          <th><button type="button" data-sort-index="4">Artifacts</button></th>
+          <th><button type="button" data-sort-index="5">Started</button></th>
+          <th><button type="button" data-sort-index="6">Finished</button></th>
+        </tr>
+      </thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _albs_sign_timing_panel(sign_tasks: object) -> str:
+    rows = []
+    if isinstance(sign_tasks, list):
+        for sign_task in sign_tasks:
+            if not isinstance(sign_task, dict):
+                continue
+            stats = sign_task.get("statsSeconds", {})
+            stats_text = (
+                ", ".join(f"{key}: {value}" for key, value in sorted(stats.items()))
+                if isinstance(stats, dict)
+                else ""
+            )
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(sign_task.get('signTaskId', '')))}</td>"
+                f"<td>{escape(str(sign_task.get('status', '')))}</td>"
+                f"<td>{escape(str(sign_task.get('wallSeconds', '')))}</td>"
+                f"<td>{escape(stats_text)}</td>"
+                f"<td>{escape(str(sign_task.get('startedAt', '')))}</td>"
+                f"<td>{escape(str(sign_task.get('finishedAt', '')))}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="6">No sign task timings.</td></tr>'
+    return f"""
+<section class="panel" data-testid="albs-sign-timing-panel">
+  <div class="section-head">
+    <h2>Sign Task Timing</h2>
+    <span>{len(rows)} tasks</span>
+  </div>
+  <div class="table-wrap">
+    <table data-sortable-table>
+      <thead>
+        <tr>
+          <th><button type="button" data-sort-index="0">Sign Task</button></th>
+          <th><button type="button" data-sort-index="1">Status</button></th>
+          <th><button type="button" data-sort-index="2" data-sort-type="number">Wall Seconds</button></th>
+          <th><button type="button" data-sort-index="3">Stats</button></th>
+          <th><button type="button" data-sort-index="4">Started</button></th>
+          <th><button type="button" data-sort-index="5">Finished</button></th>
+        </tr>
+      </thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
+def _albs_artifact_timing_panel(artifacts: object) -> str:
+    rows = []
+    if isinstance(artifacts, list):
+        for artifact in artifacts:
+            if not isinstance(artifact, dict):
+                continue
+            rows.append(
+                "<tr>"
+                f"<td>{escape(str(artifact.get('name', '')))}</td>"
+                f"<td>{escape(str(artifact.get('artifactType', '')))}</td>"
+                f"<td>{escape(str(artifact.get('packageName', '')))}</td>"
+                f"<td>{escape(str(artifact.get('buildArch', '')))}</td>"
+                f"<td>{escape(str(artifact.get('artifactArch', '')))}</td>"
+                f"<td>{escape(str(artifact.get('taskWallSeconds', '')))}</td>"
+                f"<td>{escape(str(artifact.get('buildTaskId', '')))}</td>"
+                "</tr>"
+            )
+    body = "".join(rows) or '<tr><td colspan="7">No artifact timings.</td></tr>'
+    return f"""
+<section class="panel" data-testid="albs-artifact-timing-panel">
+  <div class="section-head">
+    <h2>Artifact Timing</h2>
+    <span>{len(rows)} artifacts</span>
+  </div>
+  <div class="table-wrap">
+    <table data-sortable-table>
+      <thead>
+        <tr>
+          <th><button type="button" data-sort-index="0">Artifact</button></th>
+          <th><button type="button" data-sort-index="1">Type</button></th>
+          <th><button type="button" data-sort-index="2">Package</button></th>
+          <th><button type="button" data-sort-index="3">Build Arch</button></th>
+          <th><button type="button" data-sort-index="4">Artifact Arch</button></th>
+          <th><button type="button" data-sort-index="5" data-sort-type="number">Task Seconds</button></th>
+          <th><button type="button" data-sort-index="6">Task</button></th>
+        </tr>
+      </thead>
+      <tbody>{body}</tbody>
+    </table>
+  </div>
+</section>""".strip()
+
+
 def _graph_panel(nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> str:
     return f"""
 <section class="panel" data-testid="graph-panel">
@@ -530,6 +1150,17 @@ def _relationship_label(relationship_type: int) -> str:
         2: "2 - Maven Optional",
         3: "3 - Maven Omitted",
         4: "4 - Maven Excluded",
+        20: "20 - ALBS Source Package",
+        21: "21 - ALBS Git Repository",
+        22: "22 - ALBS Git Commit",
+        23: "23 - ALBS Build Task",
+        24: "24 - ALBS Build Environment",
+        25: "25 - ALBS Produces Artifact",
+        26: "26 - ALBS Sign Task",
+        27: "27 - ALBS Test Task",
+        28: "28 - ALBS Release",
+        30: "30 - RPM Requires Provider",
+        31: "31 - RPM Unresolved Requirement",
     }
     return labels.get(relationship_type, f"{relationship_type} - Custom Relationship")
 

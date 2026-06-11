@@ -1,5 +1,7 @@
 """CSR graph tests for row pointers, neighbor traversal, and duplicate edges."""
 
+import numpy as np
+
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 
 
@@ -13,8 +15,31 @@ def test_csr_graph_materializes_neighbors_in_row_order() -> None:
     assert graph.get_dependencies("app==1.0.0") == ["lib==1.0.0", "tool==2.0.0"]
     assert graph.get_dependencies("lib==1.0.0") == ["base==1.0.0"]
     assert graph.get_dependencies("missing==0.0.0") == []
-    assert graph.row_pointers == [0, 2, 3, 3, 3]
-    assert graph.column_indices == [1, 2, 3]
+    assert graph.row_pointers.tolist() == [0, 2, 3, 3, 3]
+    assert graph.column_indices.tolist() == [1, 2, 3]
+    assert graph.values.tolist() == [1, 1, 1]
+
+
+def test_csr_graph_materializes_numpy_int32_contiguous_arrays() -> None:
+    graph = CSRDependencyGraph()
+
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    graph.add_dependency_edge("app==1.0.0", "tool==2.0.0", relationship_type=7)
+
+    assert graph.get_dependencies("app==1.0.0") == ["lib==1.0.0", "tool==2.0.0"]
+    for array in (graph.values, graph.column_indices, graph.row_pointers):
+        assert isinstance(array, np.ndarray)
+        assert array.dtype == np.int32
+        assert array.flags.c_contiguous
+    assert graph.storage_profile() == {
+        "cContiguous": True,
+        "columnIndicesBytes": 8,
+        "dtype": "int32",
+        "layout": "numpy.int32.c_contiguous",
+        "rowPointersBytes": 16,
+        "totalBytes": 32,
+        "valuesBytes": 8,
+    }
 
 
 def test_duplicate_edges_do_not_expand_sparse_arrays() -> None:

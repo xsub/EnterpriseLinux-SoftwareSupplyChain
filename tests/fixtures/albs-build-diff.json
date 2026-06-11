@@ -1,0 +1,12 @@
+{
+  "schema": "edgp.albs.build_diff.v1",
+  "ecosystem": "albs",
+  "left": {"buildId": "17812", "released": true, "releaseId": "7396", "package": "nginx", "buildArchitectures": ["x86_64"], "gitCommits": ["old"], "artifacts": 1},
+  "right": {"buildId": "17813", "released": true, "releaseId": "7397", "package": "nginx", "buildArchitectures": ["x86_64"], "gitCommits": ["new"], "artifacts": 1},
+  "summary": {"addedArtifacts": 1, "removedArtifacts": 0, "changedArtifacts": 1, "leftMissingBuildArchitectures": 0, "rightMissingBuildArchitectures": 0, "gitCommitChanged": true, "criticalBuildTaskWallSecondsDelta": 10.0},
+  "missingBuildArchitectures": {"left": [], "right": []},
+  "addedArtifacts": [],
+  "removedArtifacts": [],
+  "changedArtifacts": [],
+  "timingDelta": {"leftWallSeconds": 1.0, "rightWallSeconds": 2.0, "wallSecondsDelta": 1.0, "leftCriticalBuildTaskWallSeconds": 1.0, "rightCriticalBuildTaskWallSeconds": 11.0, "criticalBuildTaskWallSecondsDelta": 10.0}
+}

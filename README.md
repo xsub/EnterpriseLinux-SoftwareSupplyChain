@@ -1,5 +1,13 @@
 # Enterprise Dependency Graph Pipeline
 
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
+![CLI edgp](https://img.shields.io/badge/CLI-edgp-0A7E8C)
+![CSR-backed graph](https://img.shields.io/badge/graph-CSR--backed-2F855A)
+![Inputs](https://img.shields.io/badge/inputs-lockfiles%20%7C%20SBOM%20%7C%20RPM%20%7C%20ALBS-4B5563)
+![Exports](https://img.shields.io/badge/exports-CycloneDX%20%7C%20Cypher%20%7C%20JSON-1D4ED8)
+![Static reports](https://img.shields.io/badge/reports-static%20HTML-EA580C)
+![Validation](https://img.shields.io/badge/validation-pytest%20%2B%20smoke-16A34A)
+
 Enterprise Dependency Graph Pipeline (EDGP) is a prototype for building,
 resolving, storing, and exporting software dependency graphs at supply-chain
 scale.
@@ -21,15 +29,19 @@ ideas.
 EDGP focuses on local, inspectable graph workflows:
 
 - Build: ingest resolved dependency data from npm, Poetry, Cargo, Maven
-  dependency trees, CycloneDX SBOMs, DOT/RPM graphs, and bounded local RPM
-  database snapshots.
+  dependency trees, CycloneDX SBOMs, DOT/RPM graphs, bounded local RPM
+  database snapshots, public RPM repository metadata, plus public ALBS build
+  metadata.
 - Analyze: query reachability, dependents, shortest paths,
   most-depended-upon packages, npm path conflicts, advisory overlays, and
-  reverse impact.
+  reverse impact. Public ALBS reports compare builds, summarize release
+  coverage, extract log signals, and join installed RPMs back to build
+  artifacts.
 - Export: emit deterministic EDGP JSON, CycloneDX, Neo4j Cypher, static HTML
   reports, report bundles, and bundle verification manifests.
-- Validate: run dependency-free smoke checks, schema validation, bundle
-  verification, and synthetic CSR traversal benchmarks.
+- Validate: run smoke checks from the installed project environment, schema
+  validation, bundle verification, libsolv bridge checks, and synthetic CSR
+  traversal benchmarks.
 
 ## Repository Layout
 
@@ -82,13 +94,24 @@ edgp maven-tree --path maven-tree.txt --format json
 ```
 
 SBOM, DOT/RPM, and installed RPM sources are supported for system-oriented
-investigation. Use bounded limits for local RPM database exploration.
+investigation. Use bounded limits for local RPM database exploration, or fetch
+public ALBS build metadata by build ID.
 
 ```bash
 edgp sbom --path bom.json --format json
 edgp dot --path repograph.dot --ecosystem rpm --format json
 edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
+edgp rpm-repo --primary repodata/primary.xml.gz --repo-id alma-public --format json
+edgp albs-build --build-id 17812 --format json
+edgp albs-artifact-inventory --build-id 17812
+edgp albs-build-timing --build-id 17812
+edgp albs-build-diff --left-build-id 17812 --right-build-id 17813
+edgp albs-release-completeness --build-id 17812 --build-id 17813
+edgp albs-log-intelligence --build-id 17813
+edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
+edgp libsolv-bridge --transaction solver-transaction.txt
+edgp public-advisory-feed --path osv.json --ecosystem rpm
 ```
 
 ### Query And Analyze
@@ -122,6 +145,7 @@ edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
 edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
 edgp sbom-bundle --path bom.json --impact-node left-pad --output-dir reports/sbom
 edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --output-dir reports/rpm-installed
+edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
 edgp report --snapshot graph.json --output graph-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports
 edgp verify-bundle --path reports
@@ -133,6 +157,7 @@ edgp validate --path reports --format text
 
 ```bash
 edgp benchmark --nodes 1000 --fanout 3
+edgp performance-report --scenario 1000:3 --scenario 10000:5
 ```
 
 ## Architecture
@@ -175,6 +200,22 @@ class CycloneDXAdapter {
 class InstalledRpmAdapter {
   +parse_installed(limit) ResolvedProjectGraph
 }
+class RpmRepositoryAdapter {
+  +parse_primary(path) ResolvedProjectGraph
+}
+class AlbsBuildAdapter {
+  +parse_build(build_id) ResolvedProjectGraph
+  +parse_file(path) ResolvedProjectGraph
+}
+class PublicReports {
+  +build_albs_build_diff_report()
+  +build_rpm_albs_provenance_report()
+  +build_albs_log_intelligence_report()
+  +build_albs_release_completeness_report()
+  +build_libsolv_bridge_report()
+  +build_public_advisory_feed_report()
+  +build_performance_report()
+}
 class RegistryMock {
   +matching_versions(name, constraint)
 }
@@ -188,6 +229,7 @@ class CSRDependencyGraph {
   +get_dependents(package_id)
   +reachable_dependencies(package_id)
   +shortest_dependency_path(source, target)
+  +storage_profile()
   +edges()
 }
 class CypherExporter {
@@ -239,6 +281,9 @@ CLI --> MavenTreeAdapter : ingest dependency tree
 CLI --> DotAdapter : ingest DOT
 CLI --> CycloneDXAdapter : ingest SBOM
 CLI --> InstalledRpmAdapter : ingest RPM DB
+CLI --> RpmRepositoryAdapter : ingest public RPM metadata
+CLI --> AlbsBuildAdapter : ingest ALBS build
+CLI --> PublicReports : build public vertical reports
 NpmAdapter --|> LockfileAdapter
 PoetryAdapter --|> LockfileAdapter
 CDCLResolver --> RegistryMock : query versions
@@ -251,6 +296,9 @@ MavenTreeAdapter --> CSRDependencyGraph : build graph
 DotAdapter --> CSRDependencyGraph : build graph
 CycloneDXAdapter --> CSRDependencyGraph : build graph
 InstalledRpmAdapter --> CSRDependencyGraph : build graph
+RpmRepositoryAdapter --> CSRDependencyGraph : build graph
+AlbsBuildAdapter --> CSRDependencyGraph : build graph
+PublicReports --> CSRDependencyGraph : consume graph evidence
 CLI --> CypherExporter : export Cypher
 CLI --> CycloneDXExporter : export SBOM
 CLI --> GraphJsonExporter : export snapshot
@@ -261,6 +309,7 @@ CLI --> HtmlReportExporter : render local report
 CLI --> GraphBundleExporter : render graph bundle
 CLI --> ReportBundleExporter : render report bundle
 CLI --> Benchmark : run synthetic traversal
+CLI --> PublicReports : emit report JSON
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
 GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
@@ -272,6 +321,7 @@ GraphBundleExporter --> ImpactReporter : write impact reports
 GraphBundleExporter --> ReportBundleExporter : render static bundle
 ReportBundleExporter --> HtmlReportExporter : render member reports
 Benchmark --> CSRDependencyGraph : generate and traverse graph
+PublicReports --> HtmlReportExporter : render public reports
 ```
 
 ### Graph Build And Traversal UML
@@ -296,6 +346,13 @@ else Resolved lockfile ingestion
   CLI->>Builder: parse_lockfile_graph(path)
   Builder->>CSR: Add lockfile package vertices
   Builder->>CSR: Add edges via node_modules lookup
+else Public RPM repository metadata
+  CLI->>Builder: parse_primary(primary.xml)
+  Builder->>CSR: Add package and capability vertices
+  Builder->>CSR: Link requires to providers
+else Public ALBS build metadata
+  CLI->>Builder: parse_build(build_id)
+  Builder->>CSR: Add build, task, source, commit, artifact, sign, test, release vertices
 end
 CLI->>Exporter: Export graph
 Exporter->>CSR: Request edges or dependency row slices
@@ -306,14 +363,29 @@ Exporter-->>User: Emit Cypher or CycloneDX
 ### CSR Graph Core
 
 `CSRDependencyGraph` stores nodes in integer maps and materializes directed
-edges into three contiguous arrays:
+edges into three C-contiguous NumPy `int32` arrays:
 
 - `values`: relationship type identifiers;
 - `column_indices`: destination vertex ids;
 - `row_pointers`: offsets into `column_indices` for each source vertex.
 
-This keeps graph traversal cache-friendly and makes the output layer independent
-of nested Python object graphs.
+This is an intentional productionization step. Native Python lists would store
+boxed integers behind arrays of object pointers. Even when the list container is
+contiguous, traversal still chases pointers to scattered Python objects, which
+hurts spatial locality and defeats much of the hardware cache prefetch behavior
+that makes CSR powerful. NumPy `int32` arrays store unboxed integers in one
+C-contiguous memory region, reducing pointer chasing, improving cache-line
+utilization, and keeping row-slice scans close to the memory layout used by C
+and Fortran graph kernels.
+
+The decision also lines up with Python 3.14 free-threaded (`3.14t`) deployment.
+Historically, Python's Global Interpreter Lock limited parallel graph traversal
+from pure Python workers. With a free-threaded build, EDGP can pursue
+multi-core reachability over these contiguous NumPy arrays using native Python
+threading. That gives us enterprise-grade performance without the overhead of
+maintaining a separate Rust or C++ extension. The current benchmark output
+includes the CSR storage profile (`numpy.int32.c_contiguous`, byte counts, and
+contiguity flag) so this assumption is visible in smoke runs.
 
 ### CDCL-Inspired Resolution
 
@@ -369,6 +441,12 @@ graphs, into static local bundles with `dot-graph.json`, optional impact reports
 HTML, `index.html`, and `manifest.json`. The manifest records `bundle.sourceKind`
 as `dot` and includes the generating command.
 
+`edgp rpm-repo` parses public RPM `primary.xml` or `primary.xml.gz` repository
+metadata and builds an RPM universe graph from package, provides, and requires
+records. Resolved requirements point at provider packages; unresolved
+requirements become explicit capability nodes. This is the public-resource path
+toward distribution-scale graph size without private repositories.
+
 `edgp sbom-bundle` renders CycloneDX JSON SBOMs into static local bundles with
 `sbom-graph.json`, optional impact reports, HTML, `index.html`, and
 `manifest.json`. The manifest records `bundle.sourceKind` as `cyclonedx-sbom`
@@ -379,6 +457,37 @@ with an RPM database into a static bundle with `rpm-installed-graph.json`,
 optional impact reports, HTML, `index.html`, and `manifest.json`. The manifest
 records `bundle.sourceKind` as `rpm-installed` and includes the generating
 command.
+
+`edgp albs-build` fetches public ALBS build metadata by build ID or reads an
+ALBS JSON file and turns source package, repository, commit, build task,
+environment, RPM artifact, sign task, test task, and release records into the
+same CSR snapshot format. `edgp albs-artifact-inventory` emits a build-output
+inventory grouped by architecture and package. `edgp albs-build-timing` emits
+task, sign, and artifact timing derived from the same ALBS metadata. `edgp
+albs-build-bundle` renders that real build provenance graph into a static bundle
+with `albs-build-graph.json`, `albs-artifact-inventory.json`,
+`albs-build-timing.json`, optional impact reports, HTML, `index.html`, and
+`manifest.json`. The manifest records `bundle.sourceKind` as `albs-build` and
+includes the generating command.
+
+The public ALBS/report layer adds investigation views that do not need private
+resources:
+
+- `edgp albs-build-diff` compares two builds for artifact, source commit, and
+  timing changes.
+- `edgp rpm-albs-provenance` joins installed RPMs from the local RPM database to
+  artifacts from one public ALBS build.
+- `edgp albs-log-intelligence` extracts warning/error/failure signals from
+  inline build-log metadata when present.
+- `edgp albs-release-completeness` summarizes release, architecture, sign, and
+  test coverage across a batch of public builds.
+- `edgp public-advisory-feed` normalizes OSV-like public advisory payloads into
+  EDGP advisory overlays.
+- `edgp libsolv-bridge` reports local libsolv command availability and parses
+  transaction transcripts so EDGP can explain solved RPM actions while leaving
+  SAT solving to libsolv.
+- `edgp performance-report` runs deterministic NumPy-backed CSR benchmark
+  scenarios and records storage layout evidence.
 
 ### Graph and Security Egress
 
@@ -429,7 +538,7 @@ for every matched package.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
 reachable traversal, and most-depended-upon timings. It is intended as a
-dependency-free smoke benchmark for comparing host environments.
+small smoke benchmark for comparing host environments.
 
 ### JSON Snapshot
 
@@ -500,7 +609,7 @@ metrics, a compact SVG preview, a filterable, windowed, and sortable edge
 explorer, a sortable node metadata table, and most-depended-upon rankings. Graph
 snapshot reports also summarize edge
 relationship types, including Maven optional, omitted, and excluded
-dependency-tree markers. Impact and
+dependency-tree markers plus ALBS build/provenance edges. Impact and
 advisory reports render affected package lists, dependency
 chains, advisory metadata, and affected dependent counts for browser-friendly
 triage. npm diagnostics reports render duplicate package names, nested

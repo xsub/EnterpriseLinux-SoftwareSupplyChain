@@ -20,12 +20,21 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         for entry in index["schemas"]
         if "contract" in entry
     } == {
+        "edgp.albs.build_diff.v1",
+        "edgp.albs.log_intelligence.v1",
+        "edgp.albs.release_completeness.v1",
+        "edgp.albs.artifact_inventory.v1",
+        "edgp.albs.build_timing.v1",
         "edgp.advisory.report.v1",
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
+        "edgp.libsolv.bridge.v1",
         "edgp.npm.diagnostics.v1",
+        "edgp.performance.report.v1",
+        "edgp.public.advisory_feed.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
+        "edgp.rpm.albs_provenance.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
     }
