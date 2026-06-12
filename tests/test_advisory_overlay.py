@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from src.adapters.cyclonedx import CycloneDXAdapter
 from src.adapters.rpm_repository import RpmRepositoryAdapter
 from src.adapters.npm import NpmAdapter
 from src.advisory_overlay import build_advisory_report, build_advisory_report_from_file
@@ -95,3 +96,28 @@ def test_advisory_overlay_matches_osv_range_for_rpm_evr() -> None:
         ecosystem=resolved.ecosystem,
     )
     assert nonmatching["summary"]["findings"] == 0
+
+
+def test_advisory_overlay_matches_component_package_url() -> None:
+    resolved = CycloneDXAdapter().parse_graph(Path("tests/fixtures/sample-bom.json"))
+
+    payload = build_advisory_report(
+        {
+            "schema": "edgp.advisory.overlay.v1",
+            "advisories": [
+                {
+                    "id": "ADV-PURL-0001",
+                    "ecosystem": "npm",
+                    "purl": "pkg:npm/left-pad@1.3.0?vendor=public",
+                    "severity": "high",
+                    "summary": "PURL-only advisory locator fixture.",
+                }
+            ],
+        },
+        resolved.graph,
+        root=resolved.root_identifier,
+        ecosystem=resolved.ecosystem,
+    )
+
+    assert payload["summary"]["findings"] == 1
+    assert payload["findings"][0]["package"] == "left-pad==1.3.0"

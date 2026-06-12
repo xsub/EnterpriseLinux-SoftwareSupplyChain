@@ -1674,6 +1674,22 @@ def _assert_public_vertical_reports() -> None:
     cvss_advisory = json.loads(completed_cvss_gate.stdout)
     assert cvss_advisory["schema"] == "edgp.advisory.report.v1"
     assert cvss_advisory["findings"][0]["advisory"]["severity"] == "9.8"
+    purl_advisory = _run_cli(
+        [
+            "advisory",
+            "--source",
+            "sbom",
+            "--path",
+            "tests/fixtures/sample-bom.json",
+            "--public-advisory-feed",
+            "tests/fixtures/public-osv-purl.json",
+            "--ecosystem",
+            "npm",
+        ]
+    )
+    assert purl_advisory["schema"] == "edgp.advisory.report.v1"
+    assert purl_advisory["summary"]["findings"] == 1
+    assert purl_advisory["findings"][0]["package"] == "left-pad==1.3.0"
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]

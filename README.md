@@ -560,13 +560,16 @@ component. This is the public-input stand-in for future advisory or curated
 risk feeds.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
-optional `versions`, `ranges`, `severity`, `summary`, and `references` fields,
-or a public OSV-like advisory feed from `--public-advisory-feed` or
+optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`
+fields, or a public OSV-like advisory feed from `--public-advisory-feed` or
 `--public-advisory-feed-url`. It matches those records against graph nodes and
-embeds an `edgp.impact.report.v1` result for every matched package. For RPM
-graphs, `versions` may use the full node version, the RPM `version-release` EVR
-without architecture, or `epoch:version-release` when epoch is non-zero.
-`ranges` support simple OSV-style bounds for public feed impact reporting;
+embeds an `edgp.impact.report.v1` result for every matched package. Public
+SBOM/advisory workflows can identify components by Package URL (`purl`); EDGP
+compares exact PURLs and their qualifier-free form before falling back to
+package-name and version matching. For RPM graphs, `versions` may use the full
+node version, the RPM `version-release` EVR without architecture, or
+`epoch:version-release` when epoch is non-zero. `ranges` support simple
+OSV-style bounds for public feed impact reporting;
 `--fail-on-findings` still prints the full JSON report and exits with status `2`
 when matched findings exist. `--fail-min-severity` can raise that gate to
 `low`, `medium`, `high`, or `critical` while leaving the report unfiltered.

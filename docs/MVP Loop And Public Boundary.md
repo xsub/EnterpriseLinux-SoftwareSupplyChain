@@ -27,7 +27,8 @@ surfaces are:
   repository base URLs;
 - public ALBS build metadata and build-log metadata embedded in ALBS payloads;
 - public OSV-like advisory JSON payloads from local files or URLs, including
-  explicit vulnerable versions and simple introduced/fixed ranges;
+  explicit vulnerable versions, simple introduced/fixed ranges, and Package
+  URL component locators;
 - libsolv command discovery and saved transaction transcripts;
 - local graph traversal, impact reporting, diffing, and JSON/Cypher/CycloneDX
   export.
@@ -234,6 +235,8 @@ surfaces are:
 - Apply a minimum severity threshold to advisory CI gates without filtering the
   emitted report.
 - Interpret numeric CVSS-style advisory severity scores for CI gate decisions.
+- Match SBOM components to public advisories by Package URL before falling back
+  to package-name and version matching.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

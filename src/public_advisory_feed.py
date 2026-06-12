@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Mapping
+from urllib.parse import unquote
 
 PUBLIC_ADVISORY_FEED_SCHEMA = "edgp.public.advisory_feed.v1"
 
@@ -53,6 +54,8 @@ def _normalize_advisories(payload: object, *, ecosystem: str) -> list[dict[str, 
                 "summary": summary,
                 "references": references,
             }
+            if package["purl"]:
+                advisory["purl"] = package["purl"]
             if package["ranges"]:
                 advisory["ranges"] = package["ranges"]
             advisories.append(advisory)
@@ -126,9 +129,17 @@ def _affected_packages(record: Mapping[str, Any], *, ecosystem: str) -> list[dic
             package_ecosystem = str(package.get("ecosystem") or ecosystem)
             if package_ecosystem.lower() != ecosystem.lower():
                 continue
+            purl = str(package.get("purl") or "")
+            name = str(
+                package.get("name")
+                or item.get("name")
+                or _package_name_from_purl(purl)
+                or ""
+            )
             packages.append(
                 {
-                    "name": str(package.get("name") or item.get("name") or ""),
+                    "name": name,
+                    "purl": purl,
                     "versions": [
                         str(version)
                         for version in item.get("versions", [])
@@ -138,12 +149,14 @@ def _affected_packages(record: Mapping[str, Any], *, ecosystem: str) -> list[dic
                 }
             )
         return [package for package in packages if package["name"]]
-    package = record.get("package") or record.get("name")
+    purl = str(record.get("purl") or record.get("packageUrl") or "")
+    package = record.get("package") or record.get("name") or _package_name_from_purl(purl)
     if package:
         versions = record.get("versions")
         return [
             {
                 "name": str(package),
+                "purl": purl,
                 "versions": (
                     [str(version) for version in versions]
                     if isinstance(versions, list)
@@ -153,6 +166,21 @@ def _affected_packages(record: Mapping[str, Any], *, ecosystem: str) -> list[dic
             }
         ]
     return []
+
+
+def _package_name_from_purl(purl: str) -> str:
+    if not purl.startswith("pkg:"):
+        return ""
+    path = purl.removeprefix("pkg:").split("?", 1)[0].rsplit("@", 1)[0]
+    _, separator, package_path = path.partition("/")
+    if not separator:
+        return ""
+    segments = [unquote(segment) for segment in package_path.split("/") if segment]
+    if not segments:
+        return ""
+    if len(segments) >= 2 and segments[0].startswith("@"):
+        return "/".join(segments[-2:])
+    return segments[-1]
 
 
 def _osv_ranges(ranges: object) -> list[dict[str, str]]:

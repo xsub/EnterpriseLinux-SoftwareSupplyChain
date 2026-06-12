@@ -6,6 +6,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.impact_report import build_impact_report
@@ -96,8 +97,10 @@ def _extract_advisories(payload: object) -> list[dict[str, Any]]:
     for advisory in advisories:
         if not isinstance(advisory, dict):
             raise ValueError("Each advisory must be an object")
-        if not _advisory_package(advisory):
-            raise ValueError("Each advisory must define package, name, or packageId")
+        if not _has_advisory_locator(advisory):
+            raise ValueError(
+                "Each advisory must define package, name, packageId, or purl"
+            )
         normalized.append(advisory)
     return normalized
 
@@ -111,6 +114,9 @@ def _matches_advisory(
     advisory_ecosystem = advisory.get("ecosystem")
     if advisory_ecosystem and str(advisory_ecosystem) != ecosystem:
         return False
+
+    if _matches_advisory_purl(advisory, package_id, metadata):
+        return True
 
     if advisory.get("packageId") == package_id:
         return True
@@ -165,6 +171,46 @@ def _version_candidates(
 
 def _advisory_package(advisory: dict[str, Any]) -> object | None:
     return advisory.get("package") or advisory.get("name") or advisory.get("packageId")
+
+
+def _has_advisory_locator(advisory: dict[str, Any]) -> bool:
+    return bool(_advisory_package(advisory) or _advisory_purls(advisory))
+
+
+def _matches_advisory_purl(
+    advisory: dict[str, Any],
+    package_id: str,
+    metadata: dict[str, str],
+) -> bool:
+    advisory_purls = _advisory_purls(advisory)
+    if not advisory_purls:
+        return False
+    package_purls = _purl_candidates(metadata.get("purl")) | _purl_candidates(package_id)
+    return bool(advisory_purls & package_purls)
+
+
+def _advisory_purls(advisory: dict[str, Any]) -> set[str]:
+    purls: set[str] = set()
+    for key in ("purl", "packageUrl", "packageURL", "packageId"):
+        value = advisory.get(key)
+        if isinstance(value, str):
+            purls.update(_purl_candidates(value))
+    package = advisory.get("package")
+    if isinstance(package, dict):
+        value = package.get("purl")
+        if isinstance(value, str):
+            purls.update(_purl_candidates(value))
+    return purls
+
+
+def _purl_candidates(value: str | None) -> set[str]:
+    if not value or not value.startswith("pkg:"):
+        return set()
+    normalized = unquote(value.strip())
+    candidates = {normalized}
+    without_qualifiers = normalized.split("?", 1)[0]
+    candidates.add(without_qualifiers)
+    return {candidate for candidate in candidates if candidate}
 
 
 def _advisory_versions(advisory: dict[str, Any]) -> set[str]:

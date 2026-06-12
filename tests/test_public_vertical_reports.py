@@ -199,6 +199,12 @@ def test_public_advisory_feed_normalizes_osv_to_overlay() -> None:
         ecosystem="rpm",
     )
     assert cvss_report["advisories"][0]["severity"] == "9.8"
+    purl_report = build_public_advisory_feed_report(
+        _fixture("tests/fixtures/public-osv-purl.json"),
+        ecosystem="npm",
+    )
+    assert purl_report["advisories"][0]["package"] == "left-pad"
+    assert purl_report["advisories"][0]["purl"] == "pkg:npm/left-pad@1.3.0"
 
 
 def test_performance_report_keeps_numpy_storage_visible() -> None:
@@ -387,6 +393,24 @@ def test_cli_public_vertical_commands(capsys) -> None:
     critical_advisory = json.loads(capsys.readouterr().out)
     assert critical_advisory["schema"] == "edgp.advisory.report.v1"
     assert critical_advisory["findings"][0]["advisory"]["severity"] == "9.8"
+
+    assert main(
+        [
+            "advisory",
+            "--source",
+            "sbom",
+            "--path",
+            "tests/fixtures/sample-bom.json",
+            "--public-advisory-feed",
+            "tests/fixtures/public-osv-purl.json",
+            "--ecosystem",
+            "npm",
+        ]
+    ) == 0
+    purl_advisory = json.loads(capsys.readouterr().out)
+    assert purl_advisory["schema"] == "edgp.advisory.report.v1"
+    assert purl_advisory["summary"]["findings"] == 1
+    assert purl_advisory["findings"][0]["package"] == "left-pad==1.3.0"
 
     assert main(
         [
