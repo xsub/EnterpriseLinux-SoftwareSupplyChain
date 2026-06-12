@@ -90,9 +90,6 @@ The efficacy of a distributed graph framework relies fundamentally upon its part
 To resolve this, modern frameworks like Apache Spark's GraphX explicitly reject edge-cuts in favor of a vertex-cut partitioning strategy. Instead of severing edges, GraphX partitions the graph by splitting the vertices themselves. A single logical vertex is physically replicated across multiple machines, while the edges associated with it remain strictly intact and localized to a specific partition. This transformation distributes the communication overhead of high-degree vertices evenly across the cluster.
 
 GraphX operationalizes this through Resilient Distributed Datasets (RDDs) and specialized routing tables, offering several sophisticated vertex-cut heuristics to optimize the balance between vertex replication factor and expected communication volume.
-
-
-
 By lifting message construction out of the rigid vertex program and utilizing these vertex-cut routing tables, GraphX efficiently distributes edge joining, mapping, and aggregation functions over the cluster, executing them in optimal order upon billions of elements with strictly bounded communication overhead.
 
 ## Native Graph Databases versus Relational Systems
@@ -106,9 +103,6 @@ Conversely, native graph databases physically materialize relationships on disk 
 ### Comparative Architectural Analysis of Graph Databases
 
 The ecosystem of graph databases features diverse architectural approaches tailored to scaling limitations and querying specific topological domains.
-
-
-
 Beyond the core engines, other specialized databases such as Cayley (Go-based), ArangoDB (C++ multi-model), and TerminusDB (Prolog/Rust based) offer varied integrations tailored to specific deployment paradigms, often heavily relying on Docker and NixOS for containerized distribution and high-availability orchestrations. Ultimately, the shift from SQL mental models to languages like Cypher or Gremlin remains a necessary educational hurdle for engineering teams striving to adopt graph-based dependency resolution and topological validation methodologies.
 
 ## Algorithmic Resolution of Software Dependency Graphs

@@ -368,7 +368,3 @@ python -B scripts/generate_schema_index.py --check
 python -B scripts/generate_failure_example_index.py --check
 python -B -m src.cli benchmark --nodes 1000 --fanout 3
 ```
-
-## Next Vertical Options
-
-- Collapse excessive blank lines in the architecture research document.
