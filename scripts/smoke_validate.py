@@ -1592,6 +1592,13 @@ def _assert_public_vertical_reports() -> None:
     )
     assert advisory_url["schema"] == "edgp.public.advisory_feed.v1"
     assert advisory_url["summary"]["advisories"] == 1
+    advisory_range = _run_cli(
+        ["public-advisory-feed", "--path", "tests/fixtures/public-osv-ranges.json"]
+    )
+    assert advisory_range["schema"] == "edgp.public.advisory_feed.v1"
+    assert advisory_range["advisories"][0]["ranges"][0]["fixed"] == (
+        "1.20.1-16.el9_4.2"
+    )
 
     performance = _run_cli(
         ["performance-report", "--scenario", "16:2", "--scenario", "32:3"]
@@ -1615,7 +1622,9 @@ def _assert_public_vertical_reports() -> None:
                 "--advisories",
                 "tests/fixtures/rpm-repo-advisories.json",
                 "--public-advisory-feed-url",
-                (REPO_ROOT / "tests" / "fixtures" / "public-osv.json").as_uri(),
+                (
+                    REPO_ROOT / "tests" / "fixtures" / "public-osv-ranges.json"
+                ).as_uri(),
                 "--output-dir",
                 str(output_dir),
             ],
@@ -1643,6 +1652,10 @@ def _assert_public_vertical_reports() -> None:
         )
         assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
         assert public_feed["summary"]["advisories"] == 1
+        assert public_feed["advisories"][0]["versions"] == []
+        assert public_feed["advisories"][0]["ranges"][0]["fixed"] == (
+            "1.20.1-16.el9_4.2"
+        )
         public_advisory = json.loads(
             (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
         )

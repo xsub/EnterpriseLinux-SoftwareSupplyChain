@@ -1,10 +1,12 @@
 """Advisory overlay tests for local vulnerability-style graph context."""
 
+import json
 from pathlib import Path
 
 from src.adapters.rpm_repository import RpmRepositoryAdapter
 from src.adapters.npm import NpmAdapter
-from src.advisory_overlay import build_advisory_report_from_file
+from src.advisory_overlay import build_advisory_report, build_advisory_report_from_file
+from src.public_advisory_feed import build_public_advisory_feed_report
 
 
 def test_advisory_overlay_matches_packages_and_embeds_impact() -> None:
@@ -44,3 +46,52 @@ def test_advisory_overlay_matches_rpm_repo_evr_without_arch_suffix() -> None:
 
     assert payload["summary"]["findings"] == 1
     assert payload["findings"][0]["package"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+
+
+def test_advisory_overlay_matches_osv_range_for_rpm_evr() -> None:
+    resolved = RpmRepositoryAdapter().parse_source(
+        Path("tests/fixtures/repodata/repomd.xml")
+    )
+    feed = build_public_advisory_feed_report(
+        json.loads(
+            Path("tests/fixtures/public-osv-ranges.json").read_text(encoding="utf-8")
+        ),
+        ecosystem=resolved.ecosystem,
+    )
+
+    payload = build_advisory_report(
+        feed["overlay"],
+        resolved.graph,
+        root=resolved.root_identifier,
+        ecosystem=resolved.ecosystem,
+    )
+
+    assert payload["summary"]["findings"] == 1
+    assert payload["findings"][0]["package"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+    assert payload["findings"][0]["advisory"]["ranges"][0]["fixed"] == (
+        "1.20.1-16.el9_4.2"
+    )
+
+    nonmatching = build_advisory_report(
+        {
+            "schema": "edgp.advisory.overlay.v1",
+            "advisories": [
+                {
+                    "id": "OSV-2026-0003",
+                    "ecosystem": "rpm",
+                    "package": "nginx",
+                    "ranges": [
+                        {
+                            "type": "ECOSYSTEM",
+                            "introduced": "1.20.1-16.el9_4.2",
+                            "fixed": "1.20.1-16.el9_4.3",
+                        }
+                    ],
+                }
+            ],
+        },
+        resolved.graph,
+        root=resolved.root_identifier,
+        ecosystem=resolved.ecosystem,
+    )
+    assert nonmatching["summary"]["findings"] == 0

@@ -506,7 +506,9 @@ resources:
 - `edgp public-advisory-feed` normalizes OSV-like public advisory payloads from
   local JSON files or URLs into EDGP advisory overlays; RPM repository bundles
   can include that feed and a graph-matched advisory impact report in the same
-  static review artifact.
+  static review artifact. Normalization preserves explicit OSV `versions` and
+  simple `ranges.events` intervals using inclusive `introduced`, exclusive
+  `fixed`/`limit`, and inclusive `lastAffected` bounds for report matching.
 - `edgp libsolv-bridge` reports local libsolv command availability and parses
   transaction transcripts so EDGP can explain solved RPM actions while leaving
   SAT solving to libsolv.
@@ -556,11 +558,13 @@ component. This is the public-input stand-in for future advisory or curated
 risk feeds.
 
 `edgp advisory` accepts a small local JSON overlay with `id`, `package`,
-optional `versions`, `severity`, `summary`, and `references` fields. It matches
-those records against graph nodes and embeds an `edgp.impact.report.v1` result
-for every matched package. For RPM graphs, `versions` may use the full node
-version, the RPM `version-release` EVR without architecture, or
-`epoch:version-release` when epoch is non-zero.
+optional `versions`, `ranges`, `severity`, `summary`, and `references` fields.
+It matches those records against graph nodes and embeds an
+`edgp.impact.report.v1` result for every matched package. For RPM graphs,
+`versions` may use the full node version, the RPM `version-release` EVR without
+architecture, or `epoch:version-release` when epoch is non-zero. `ranges`
+support simple OSV-style bounds for public feed impact reporting; libsolv
+remains the production authority for RPM SAT solving and transaction decisions.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
 reachable traversal, and most-depended-upon timings. It is intended as a

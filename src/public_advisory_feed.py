@@ -44,17 +44,18 @@ def _normalize_advisories(payload: object, *, ecosystem: str) -> list[dict[str, 
         severity = _severity(record)
         references = _references(record)
         for package in _affected_packages(record, ecosystem=ecosystem):
-            advisories.append(
-                {
-                    "id": advisory_id,
-                    "ecosystem": ecosystem,
-                    "package": package["name"],
-                    "versions": package["versions"],
-                    "severity": severity,
-                    "summary": summary,
-                    "references": references,
-                }
-            )
+            advisory = {
+                "id": advisory_id,
+                "ecosystem": ecosystem,
+                "package": package["name"],
+                "versions": package["versions"],
+                "severity": severity,
+                "summary": summary,
+                "references": references,
+            }
+            if package["ranges"]:
+                advisory["ranges"] = package["ranges"]
+            advisories.append(advisory)
     return sorted(
         advisories,
         key=lambda advisory: (
@@ -128,7 +129,12 @@ def _affected_packages(record: Mapping[str, Any], *, ecosystem: str) -> list[dic
             packages.append(
                 {
                     "name": str(package.get("name") or item.get("name") or ""),
-                    "versions": [str(version) for version in item.get("versions", []) if isinstance(version, str)],
+                    "versions": [
+                        str(version)
+                        for version in item.get("versions", [])
+                        if isinstance(version, str)
+                    ],
+                    "ranges": _osv_ranges(item.get("ranges")),
                 }
             )
         return [package for package in packages if package["name"]]
@@ -138,7 +144,64 @@ def _affected_packages(record: Mapping[str, Any], *, ecosystem: str) -> list[dic
         return [
             {
                 "name": str(package),
-                "versions": [str(version) for version in versions] if isinstance(versions, list) else [],
+                "versions": (
+                    [str(version) for version in versions]
+                    if isinstance(versions, list)
+                    else []
+                ),
+                "ranges": _osv_ranges(record.get("ranges")),
             }
         ]
     return []
+
+
+def _osv_ranges(ranges: object) -> list[dict[str, str]]:
+    if not isinstance(ranges, list):
+        return []
+    intervals: list[dict[str, str]] = []
+    for range_record in ranges:
+        if not isinstance(range_record, dict):
+            continue
+        range_type = str(range_record.get("type") or "")
+        intervals.extend(_osv_range_intervals(range_record.get("events"), range_type))
+    return intervals
+
+
+def _osv_range_intervals(events: object, range_type: str) -> list[dict[str, str]]:
+    if not isinstance(events, list):
+        return []
+    intervals: list[dict[str, str]] = []
+    current: dict[str, str] = {"type": range_type} if range_type else {}
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        if "introduced" in event:
+            if _range_has_bound(current):
+                intervals.append(current)
+            current = {"type": range_type} if range_type else {}
+            current["introduced"] = str(event["introduced"])
+            continue
+        for source_key, target_key in (
+            ("fixed", "fixed"),
+            ("last_affected", "lastAffected"),
+            ("lastAffected", "lastAffected"),
+            ("limit", "limit"),
+        ):
+            if source_key not in event:
+                continue
+            if not current:
+                current = {"type": range_type} if range_type else {}
+            current[target_key] = str(event[source_key])
+            intervals.append(current)
+            current = {"type": range_type} if range_type else {}
+            break
+    if _range_has_bound(current):
+        intervals.append(current)
+    return intervals
+
+
+def _range_has_bound(range_record: Mapping[str, str]) -> bool:
+    return any(
+        key in range_record
+        for key in ("introduced", "fixed", "lastAffected", "limit")
+    )

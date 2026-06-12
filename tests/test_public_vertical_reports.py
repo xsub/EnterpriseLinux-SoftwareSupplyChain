@@ -181,6 +181,20 @@ def test_public_advisory_feed_normalizes_osv_to_overlay() -> None:
     assert report["overlay"]["schema"] == "edgp.advisory.overlay.v1"
     assert report["advisories"][0]["package"] == "nginx"
 
+    range_report = build_public_advisory_feed_report(
+        _fixture("tests/fixtures/public-osv-ranges.json"),
+        ecosystem="rpm",
+    )
+    range_advisory = range_report["advisories"][0]
+    assert range_advisory["versions"] == []
+    assert range_advisory["ranges"] == [
+        {
+            "type": "ECOSYSTEM",
+            "introduced": "1.20.1-16.el9_4.0",
+            "fixed": "1.20.1-16.el9_4.2",
+        }
+    ]
+
 
 def test_performance_report_keeps_numpy_storage_visible() -> None:
     report = build_performance_report([(10, 2)])
@@ -318,7 +332,7 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
             "--advisories",
             "tests/fixtures/rpm-repo-advisories.json",
             "--public-advisory-feed-url",
-            Path("tests/fixtures/public-osv.json").resolve().as_uri(),
+            Path("tests/fixtures/public-osv-ranges.json").resolve().as_uri(),
         ]
     ) == 0
 
@@ -347,6 +361,9 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     )
     assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
     assert public_feed["summary"]["advisories"] == 1
+    assert public_feed["advisories"][0]["ranges"][0]["fixed"] == (
+        "1.20.1-16.el9_4.2"
+    )
     public_advisory = json.loads(
         (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
     )

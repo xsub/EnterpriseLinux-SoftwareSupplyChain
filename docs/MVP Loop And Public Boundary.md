@@ -26,7 +26,8 @@ surfaces are:
 - public RPM repository `primary.xml`, `primary.xml.gz`, `repomd.xml`, or
   repository base URLs;
 - public ALBS build metadata and build-log metadata embedded in ALBS payloads;
-- public OSV-like advisory JSON payloads from local files or URLs;
+- public OSV-like advisory JSON payloads from local files or URLs, including
+  explicit vulnerable versions and simple introduced/fixed ranges;
 - libsolv command discovery and saved transaction transcripts;
 - local graph traversal, impact reporting, diffing, and JSON/Cypher/CycloneDX
   export.
@@ -232,6 +233,8 @@ surfaces are:
   transaction transcripts.
 - Normalize OSV-like public advisory feeds from files or URLs into EDGP
   advisory overlays.
+- Match normalized public advisory range intervals against RPM repository EVR
+  metadata for impact reporting.
 - Include normalized public advisory feeds and graph-matched advisory reports in
   generated RPM repository graph bundles.
 - Generate performance reports for deterministic NumPy-backed CSR benchmark
@@ -269,7 +272,7 @@ python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-
 python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --output-dir /tmp/edgp-rpm-installed-bundle
 python -B -m src.cli rpm-repo --source tests/fixtures/repodata/repomd.xml --format json
 python -B -m src.cli rpm-repo-summary --source tests/fixtures/repodata/repomd.xml
-python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --advisories tests/fixtures/rpm-repo-advisories.json --public-advisory-feed tests/fixtures/public-osv.json --output-dir /tmp/edgp-rpm-repo-bundle
+python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --advisories tests/fixtures/rpm-repo-advisories.json --public-advisory-feed tests/fixtures/public-osv-ranges.json --output-dir /tmp/edgp-rpm-repo-bundle
 python -B -m src.cli query --source rpm-repo --path tests/fixtures/repodata/repomd.xml --operation dependencies --node nginx
 python -B -m src.cli impact --source rpm-repo --path tests/fixtures/repodata/repomd.xml --node nginx-core
 python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --advisories tests/fixtures/rpm-repo-advisories.json --ecosystem rpm
@@ -279,6 +282,7 @@ python -B -m src.cli albs-log-intelligence --path tests/fixtures/albs-build-upda
 python -B -m src.cli albs-release-completeness --path tests/fixtures/albs-build.json --path tests/fixtures/albs-build-updated.json
 python -B -m src.cli libsolv-bridge --transaction tests/fixtures/libsolv-transaction.txt
 python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv.json --ecosystem rpm
+python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv-ranges.json --ecosystem rpm
 python -B -m src.cli public-advisory-feed --url file://$PWD/tests/fixtures/public-osv.json --ecosystem rpm
 python -B -m src.cli performance-report --scenario 1000:3 --scenario 10000:5
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc

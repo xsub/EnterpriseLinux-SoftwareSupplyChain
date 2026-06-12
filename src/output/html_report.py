@@ -523,7 +523,7 @@ def render_public_advisory_feed_report(report: dict[str, Any]) -> str:
             _rows_panel(
                 "Normalized Advisories",
                 report.get("advisories", []),
-                ["id", "severity", "package", "versions", "summary"],
+                ["id", "severity", "package", "versions", "ranges", "summary"],
                 test_id="public-advisory-feed-panel",
             ),
         ],
