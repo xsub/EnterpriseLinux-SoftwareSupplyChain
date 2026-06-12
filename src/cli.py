@@ -688,6 +688,10 @@ def _load_source_graph(
     *,
     rpm_limit: int = 100,
     max_requirements: int = 40,
+    rpm_repo_source: str | None = None,
+    repo_id: str = "public-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
 ) -> tuple[str, CSRDependencyGraph]:
     root, graph, _ = _load_source_project_graph(
         source,
@@ -695,6 +699,10 @@ def _load_source_graph(
         ecosystem,
         rpm_limit=rpm_limit,
         max_requirements=max_requirements,
+        rpm_repo_source=rpm_repo_source,
+        repo_id=repo_id,
+        package_limit=package_limit,
+        requirement_limit=requirement_limit,
     )
     return root, graph
 
@@ -706,6 +714,10 @@ def _load_source_project_graph(
     *,
     rpm_limit: int = 100,
     max_requirements: int = 40,
+    rpm_repo_source: str | None = None,
+    repo_id: str = "public-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
 ) -> tuple[str, CSRDependencyGraph, str]:
     if source == "lockfile":
         if path is None:
@@ -732,11 +744,35 @@ def _load_source_project_graph(
             max_requirements=max_requirements,
         )
         return resolved.root_identifier, resolved.graph, resolved.ecosystem
+    if source == "rpm-repo":
+        resolved = _load_rpm_repo_project_graph(
+            _source_path_or_value(
+                path,
+                rpm_repo_source,
+                "--path or --rpm-repo-source is required for rpm-repo source",
+            ),
+            repo_id=repo_id,
+            package_limit=package_limit,
+            requirement_limit=requirement_limit,
+        )
+        return resolved.root_identifier, resolved.graph, resolved.ecosystem
     if source == "albs-build":
         if path is None:
             raise ValueError("--path is required for albs-build source")
         return _load_albs_build_project_graph(path=path)
     raise ValueError(f"Unsupported graph source: {source}")
+
+
+def _source_path_or_value(
+    path: Path | None,
+    source_value: str | None,
+    error: str,
+) -> str:
+    if source_value:
+        return source_value
+    if path is not None:
+        return str(path)
+    raise ValueError(error)
 
 
 def _query_graph(
@@ -825,6 +861,16 @@ def _resolve_node_selector(graph: CSRDependencyGraph, selector: str, *, role: st
 
 def _resolve_impact_node(graph: CSRDependencyGraph, selector: str) -> str:
     return _resolve_node_selector(graph, selector, role="impact node")
+
+
+def _add_rpm_repo_source_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--rpm-repo-source",
+        help="RPM repository primary.xml, repomd.xml, or base URL for --source rpm-repo",
+    )
+    parser.add_argument("--repo-id", default="public-rpm-repository")
+    parser.add_argument("--package-limit", type=int, default=5000)
+    parser.add_argument("--requirement-limit", type=int, default=40)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1106,6 +1152,7 @@ def build_parser() -> argparse.ArgumentParser:
             "sbom",
             "maven-tree",
             "rpm-installed",
+            "rpm-repo",
             "albs-build",
         ],
         default="lockfile",
@@ -1116,6 +1163,7 @@ def build_parser() -> argparse.ArgumentParser:
     impact.add_argument("--limit", type=int, default=20)
     impact.add_argument("--rpm-limit", type=int, default=100)
     impact.add_argument("--max-requirements", type=int, default=40)
+    _add_rpm_repo_source_options(impact)
 
     advisory = subparsers.add_parser("advisory", help="Overlay local advisories on a graph")
     advisory.add_argument(
@@ -1126,6 +1174,7 @@ def build_parser() -> argparse.ArgumentParser:
             "sbom",
             "maven-tree",
             "rpm-installed",
+            "rpm-repo",
             "albs-build",
         ],
         default="lockfile",
@@ -1136,6 +1185,7 @@ def build_parser() -> argparse.ArgumentParser:
     advisory.add_argument("--limit", type=int, default=20)
     advisory.add_argument("--rpm-limit", type=int, default=100)
     advisory.add_argument("--max-requirements", type=int, default=40)
+    _add_rpm_repo_source_options(advisory)
 
     report = subparsers.add_parser("report", help="Render a local HTML JSON report")
     report_input = report.add_mutually_exclusive_group(required=True)
@@ -1232,6 +1282,7 @@ def build_parser() -> argparse.ArgumentParser:
             "sbom",
             "maven-tree",
             "rpm-installed",
+            "rpm-repo",
             "albs-build",
         ],
         default="lockfile",
@@ -1255,6 +1306,7 @@ def build_parser() -> argparse.ArgumentParser:
     query.add_argument("--limit", type=int, default=10)
     query.add_argument("--rpm-limit", type=int, default=100)
     query.add_argument("--max-requirements", type=int, default=40)
+    _add_rpm_repo_source_options(query)
 
     return parser
 
@@ -1608,6 +1660,10 @@ def main(argv: list[str] | None = None) -> int:
             args.ecosystem,
             rpm_limit=args.rpm_limit,
             max_requirements=args.max_requirements,
+            rpm_repo_source=args.rpm_repo_source,
+            repo_id=args.repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
         )
         node = _resolve_node_selector(graph, args.node, role="node")
         print(
@@ -1630,6 +1686,10 @@ def main(argv: list[str] | None = None) -> int:
             args.ecosystem,
             rpm_limit=args.rpm_limit,
             max_requirements=args.max_requirements,
+            rpm_repo_source=args.rpm_repo_source,
+            repo_id=args.repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
         )
         print(
             _json(
@@ -1722,6 +1782,10 @@ def main(argv: list[str] | None = None) -> int:
             args.ecosystem,
             rpm_limit=args.rpm_limit,
             max_requirements=args.max_requirements,
+            rpm_repo_source=args.rpm_repo_source,
+            repo_id=args.repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
         )
         print(
             _json(

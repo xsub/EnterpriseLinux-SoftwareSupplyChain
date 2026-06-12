@@ -231,6 +231,57 @@ def test_cli_public_vertical_commands(capsys) -> None:
 
     assert main(
         [
+            "query",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--operation",
+            "dependencies",
+            "--node",
+            "nginx",
+        ]
+    ) == 0
+    query = json.loads(capsys.readouterr().out)
+    assert query["node"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+    assert query["result"] == ["nginx-core==1.20.1-16.el9_4.1.x86_64"]
+
+    assert main(
+        [
+            "impact",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--node",
+            "nginx-core",
+        ]
+    ) == 0
+    impact = json.loads(capsys.readouterr().out)
+    assert impact["schema"] == "edgp.impact.report.v1"
+    assert impact["node"] == "nginx-core==1.20.1-16.el9_4.1.x86_64"
+    assert "nginx==1.20.1-16.el9_4.1.x86_64" in impact["directDependents"]
+
+    assert main(
+        [
+            "advisory",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--advisories",
+            "tests/fixtures/rpm-repo-advisories.json",
+            "--ecosystem",
+            "rpm",
+        ]
+    ) == 0
+    advisory = json.loads(capsys.readouterr().out)
+    assert advisory["schema"] == "edgp.advisory.report.v1"
+    assert advisory["summary"]["findings"] == 1
+    assert advisory["findings"][0]["package"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+
+    assert main(
+        [
             "public-advisory-feed",
             "--path",
             "tests/fixtures/public-osv.json",

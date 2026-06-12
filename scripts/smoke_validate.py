@@ -1524,6 +1524,54 @@ def _assert_public_vertical_reports() -> None:
     assert rpm_repo_diff["schema"] == "edgp.rpm.repository_diff.v1"
     assert rpm_repo_diff["summary"]["changedPackages"] == 1
 
+    rpm_repo_query = _run_cli(
+        [
+            "query",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--operation",
+            "dependencies",
+            "--node",
+            "nginx",
+        ]
+    )
+    assert rpm_repo_query["node"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+    assert rpm_repo_query["result"] == [
+        "nginx-core==1.20.1-16.el9_4.1.x86_64"
+    ]
+
+    rpm_repo_impact = _run_cli(
+        [
+            "impact",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--node",
+            "nginx-core",
+        ]
+    )
+    assert rpm_repo_impact["schema"] == "edgp.impact.report.v1"
+    assert rpm_repo_impact["node"] == "nginx-core==1.20.1-16.el9_4.1.x86_64"
+
+    rpm_repo_advisory = _run_cli(
+        [
+            "advisory",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--advisories",
+            "tests/fixtures/rpm-repo-advisories.json",
+            "--ecosystem",
+            "rpm",
+        ]
+    )
+    assert rpm_repo_advisory["schema"] == "edgp.advisory.report.v1"
+    assert rpm_repo_advisory["summary"]["findings"] == 1
+
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]
     )

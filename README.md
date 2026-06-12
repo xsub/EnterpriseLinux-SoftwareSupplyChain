@@ -126,6 +126,7 @@ snapshots:
 edgp query --path package-lock.json --operation reachable --node app==1.0.0
 edgp query --path package-lock.json --operation path --node app==1.0.0 --target library==2.0.0
 edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc
+edgp query --source rpm-repo --rpm-repo-source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --operation most-depended-upon
 edgp query --source rpm-installed --rpm-limit 100 --max-requirements 40 --operation most-depended-upon
 ```
 
@@ -133,7 +134,9 @@ Impact, advisory overlays, and npm diagnostics cover the main triage flows:
 
 ```bash
 edgp impact --path package-lock.json --node left-pad
+edgp impact --source rpm-repo --path repodata/repomd.xml --node glibc
 edgp advisory --path package-lock.json --advisories advisories.json
+edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisories.json --ecosystem rpm
 edgp npm-diagnostics --path package-lock.json
 edgp diff --left before.json --right after.json
 ```
@@ -457,6 +460,9 @@ source RPM concentration, architecture coverage, and unresolved requirements.
 architecture, surfacing added, removed, and changed EVR/source-RPM records.
 `edgp rpm-repo-diff-bundle` renders that comparison as a static HTML bundle
 with a verifiable manifest for browser review.
+The same repository input can also feed `edgp query`, `edgp impact`, and
+`edgp advisory` via `--source rpm-repo`, which makes public repo metadata usable
+in the generic traversal and advisory workflows.
 `edgp rpm-repo-bundle` writes the graph, summary, optional impact reports,
 static HTML, and a verification manifest. This is the public-resource path
 toward distribution-scale graph size without private repositories.
