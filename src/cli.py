@@ -14,7 +14,7 @@ from src.albs_build_timing import build_albs_build_timing_report
 from src.albs_artifact_inventory import build_albs_artifact_inventory
 from src.albs_log_intelligence import build_albs_log_intelligence_report
 from src.albs_release_completeness import build_albs_release_completeness_report
-from src.advisory_overlay import build_advisory_report_from_file
+from src.advisory_overlay import build_advisory_report, build_advisory_report_from_file
 from src.adapters.albs import DEFAULT_ALBS_BASE_URL, AlbsBuildAdapter
 from src.adapters.base import ResolvedProjectGraph
 from src.adapters.cargo import CargoAdapter
@@ -419,6 +419,7 @@ def _write_rpm_repo_bundle(
     requirement_limit: int = 40,
     impact_nodes: list[str] | None = None,
     advisory_path: Path | None = None,
+    public_advisory_feed_path: Path | None = None,
     max_paths: int = 20,
     command: str | None = None,
 ) -> Path:
@@ -455,6 +456,32 @@ def _write_rpm_repo_bundle(
             encoding="utf-8",
         )
         final_reports.append(advisory_report_path)
+    if public_advisory_feed_path is not None:
+        public_feed_report_path = output_dir / "public-advisory-feed.json"
+        public_feed_report = build_public_advisory_feed_report(
+            _load_public_json(public_advisory_feed_path),
+            ecosystem=resolved.ecosystem,
+        )
+        public_feed_report_path.write_text(
+            _json(public_feed_report),
+            encoding="utf-8",
+        )
+        final_reports.append(public_feed_report_path)
+
+        public_advisory_report_path = output_dir / "public-advisory-report.json"
+        public_advisory_report_path.write_text(
+            _json(
+                build_advisory_report(
+                    public_feed_report["overlay"],
+                    resolved.graph,
+                    root=resolved.root_identifier,
+                    ecosystem=resolved.ecosystem,
+                    max_paths=max_paths,
+                )
+            ),
+            encoding="utf-8",
+        )
+        final_reports.append(public_advisory_report_path)
 
     return write_graph_report_bundle(
         resolved,
@@ -1020,6 +1047,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_bundle.add_argument("--output-dir", type=Path, required=True)
     rpm_repo_bundle.add_argument("--impact-node", action="append", default=[])
     rpm_repo_bundle.add_argument("--advisories", type=Path)
+    rpm_repo_bundle.add_argument("--public-advisory-feed", type=Path)
     rpm_repo_bundle.add_argument("--report-limit", type=int, default=20)
 
     rpm_repo_diff = subparsers.add_parser(
@@ -1506,6 +1534,7 @@ def main(argv: list[str] | None = None) -> int:
                 requirement_limit=args.requirement_limit,
                 impact_nodes=args.impact_node,
                 advisory_path=args.advisories,
+                public_advisory_feed_path=args.public_advisory_feed,
                 max_paths=args.report_limit,
                 command=command,
             )

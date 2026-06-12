@@ -306,6 +306,8 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
             "nginx-core",
             "--advisories",
             "tests/fixtures/rpm-repo-advisories.json",
+            "--public-advisory-feed",
+            "tests/fixtures/public-osv.json",
         ]
     ) == 0
 
@@ -318,6 +320,8 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
         "003-impact-nginx-core-1.20.1-16.el9_4.1.x86_64.html"
     )
     assert manifest["reports"][3]["href"] == "004-advisory-report.html"
+    assert manifest["reports"][4]["href"] == "005-public-advisory-feed.html"
+    assert manifest["reports"][5]["href"] == "006-public-advisory-report.html"
     summary = json.loads(
         (output_dir / "rpm-repository-summary.json").read_text(encoding="utf-8")
     )
@@ -327,10 +331,28 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     )
     assert advisory["schema"] == "edgp.advisory.report.v1"
     assert advisory["summary"]["findings"] == 1
+    public_feed = json.loads(
+        (output_dir / "public-advisory-feed.json").read_text(encoding="utf-8")
+    )
+    assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
+    assert public_feed["summary"]["advisories"] == 1
+    public_advisory = json.loads(
+        (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
+    )
+    assert public_advisory["schema"] == "edgp.advisory.report.v1"
+    assert public_advisory["summary"]["findings"] == 1
     advisory_html = (output_dir / "004-advisory-report.html").read_text(
         encoding="utf-8"
     )
     assert 'data-testid="advisory-findings-panel"' in advisory_html
+    public_feed_html = (output_dir / "005-public-advisory-feed.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'data-testid="public-advisory-feed-panel"' in public_feed_html
+    public_advisory_html = (output_dir / "006-public-advisory-report.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'data-testid="advisory-findings-panel"' in public_advisory_html
 
 
 def test_cli_rpm_repo_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:

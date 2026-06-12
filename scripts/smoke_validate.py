@@ -1605,6 +1605,8 @@ def _assert_public_vertical_reports() -> None:
                 "nginx-core",
                 "--advisories",
                 "tests/fixtures/rpm-repo-advisories.json",
+                "--public-advisory-feed",
+                "tests/fixtures/public-osv.json",
                 "--output-dir",
                 str(output_dir),
             ],
@@ -1620,11 +1622,23 @@ def _assert_public_vertical_reports() -> None:
         assert manifest["bundle"]["sourceKind"] == "rpm-repository"
         assert manifest["reports"][1]["href"] == "002-rpm-repository-summary.html"
         assert manifest["reports"][3]["href"] == "004-advisory-report.html"
+        assert manifest["reports"][4]["href"] == "005-public-advisory-feed.html"
+        assert manifest["reports"][5]["href"] == "006-public-advisory-report.html"
         advisory = json.loads(
             (output_dir / "advisory-report.json").read_text(encoding="utf-8")
         )
         assert advisory["schema"] == "edgp.advisory.report.v1"
         assert advisory["summary"]["findings"] == 1
+        public_feed = json.loads(
+            (output_dir / "public-advisory-feed.json").read_text(encoding="utf-8")
+        )
+        assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
+        assert public_feed["summary"]["advisories"] == 1
+        public_advisory = json.loads(
+            (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
+        )
+        assert public_advisory["schema"] == "edgp.advisory.report.v1"
+        assert public_advisory["summary"]["findings"] == 1
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "rpm-repo-diff-bundle"
