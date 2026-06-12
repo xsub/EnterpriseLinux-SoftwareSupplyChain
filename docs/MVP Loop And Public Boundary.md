@@ -245,6 +245,8 @@ surfaces are:
   public RPM repository, and installed RPM graph bundles.
 - Return CI-friendly non-zero bundle exit status for denied license findings
   after writing the static report artifacts.
+- Generate aggregate triage summaries from report lists or existing static
+  report bundles for CI/workbench consumption.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

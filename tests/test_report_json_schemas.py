@@ -69,6 +69,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.rpm.repository_diff.v1.schema.json"),
         Path("tests/fixtures/rpm-repository-diff.json"),
     ),
+    "edgp.triage.summary.v1": (
+        Path("docs/schemas/edgp.triage.summary.v1.schema.json"),
+        Path("tests/fixtures/triage-summary.json"),
+    ),
 }
 
 

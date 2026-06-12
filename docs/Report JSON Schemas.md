@@ -65,6 +65,9 @@ python -B scripts/generate_schema_index.py --check
 - `edgp.performance.report.v1`:
   [`edgp.performance.report.v1.schema.json`](schemas/edgp.performance.report.v1.schema.json)
   documents synthetic CSR benchmark scenarios and storage profiles.
+- `edgp.triage.summary.v1`:
+  [`edgp.triage.summary.v1.schema.json`](schemas/edgp.triage.summary.v1.schema.json)
+  documents aggregate triage status for EDGP reports and report bundles.
 - `edgp.validation.failure.example.index.v1`:
   [`edgp.validation.failure.example.index.v1.schema.json`](schemas/edgp.validation.failure.example.index.v1.schema.json)
   documents the committed validation failure example index.

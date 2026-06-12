@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 20,
+  "schemaCount": 21,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -146,6 +146,14 @@
       "id": "urn:edgp:schema:rpm-repository-summary:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP RPM Repository Summary v1"
+    },
+    {
+      "contract": "edgp.triage.summary.v1",
+      "description": "Aggregate triage summary for EDGP reports and report bundles.",
+      "file": "edgp.triage.summary.v1.schema.json",
+      "id": "urn:edgp:schema:triage-summary:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Triage Summary v1"
     },
     {
       "contract": "edgp.validation.failure.example.filters.v1",

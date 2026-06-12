@@ -590,6 +590,8 @@ def _report_title(payload: dict[str, Any]) -> str:
         return "Public Advisory Feed"
     if schema == "edgp.performance.report.v1":
         return "Performance Report"
+    if schema == "edgp.triage.summary.v1":
+        return "Triage Summary"
     return str(schema or "EDGP Report")
 
 

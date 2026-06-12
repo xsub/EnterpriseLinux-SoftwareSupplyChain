@@ -105,6 +105,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.rpm.repository_summary.v1.schema.json",
+    "edgp.triage.summary.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.triage.summary.v1.schema.json",
 }
 REPORT_JSON_SCHEMA_FIXTURES = {
     "edgp.albs.build_diff.v1": REPO_ROOT
@@ -165,6 +169,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "rpm-repository-summary.json",
+    "edgp.triage.summary.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "triage-summary.json",
 }
 
 
@@ -446,6 +454,7 @@ def _assert_schema_index_document() -> None:
         "edgp.rpm.albs_provenance.v1",
         "edgp.rpm.repository_diff.v1",
         "edgp.rpm.repository_summary.v1",
+        "edgp.triage.summary.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
     } <= contracts
@@ -1724,6 +1733,22 @@ def _assert_public_vertical_reports() -> None:
     assert license_gate["schema"] == "edgp.license.report.v1"
     assert license_gate["summary"]["deniedFindings"] == 1
     assert license_gate["findings"][0]["package"] == "left-pad==1.3.0"
+    triage = _run_cli(
+        [
+            "triage-summary",
+            "--input",
+            "tests/fixtures/snapshot-right.json",
+            "--input",
+            "tests/fixtures/advisory-report.json",
+            "--input",
+            "tests/fixtures/license-report.json",
+            "--input",
+            "tests/fixtures/npm-diagnostics-report.json",
+        ]
+    )
+    assert triage["schema"] == "edgp.triage.summary.v1"
+    assert triage["status"] == "fail"
+    assert triage["summary"]["failedChecks"] == 2
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]
@@ -1911,6 +1936,10 @@ def _assert_sbom_bundle() -> None:
         )
         assert license_report["schema"] == "edgp.license.report.v1"
         assert license_report["summary"]["deniedFindings"] == 1
+        triage = _run_cli(["triage-summary", "--bundle", str(output_dir)])
+        assert triage["schema"] == "edgp.triage.summary.v1"
+        assert triage["bundle"]["sourceKind"] == "cyclonedx-sbom"
+        assert triage["summary"]["deniedLicenseFindings"] == 1
 
 
 def _assert_snapshot_diff() -> None:

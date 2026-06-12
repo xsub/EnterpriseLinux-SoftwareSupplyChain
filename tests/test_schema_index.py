@@ -38,6 +38,7 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.rpm.albs_provenance.v1",
         "edgp.rpm.repository_diff.v1",
         "edgp.rpm.repository_summary.v1",
+        "edgp.triage.summary.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
     }

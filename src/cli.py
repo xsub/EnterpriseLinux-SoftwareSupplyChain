@@ -46,6 +46,10 @@ from src.rpm_albs_provenance import build_rpm_albs_provenance_report
 from src.rpm_repository_diff import build_rpm_repository_diff_report
 from src.rpm_repository_summary import build_rpm_repository_summary_report
 from src.schema_validation import validate_target
+from src.triage_summary import (
+    build_triage_summary_from_bundle,
+    build_triage_summary_from_paths,
+)
 from scripts.generate_failure_example_index import (
     build_failure_example_filter_listing,
     build_failure_example_index,
@@ -1478,6 +1482,15 @@ def build_parser() -> argparse.ArgumentParser:
     license_report.add_argument("--max-requirements", type=int, default=40)
     _add_rpm_repo_source_options(license_report)
 
+    triage_summary = subparsers.add_parser(
+        "triage-summary",
+        help="Aggregate EDGP reports or a report bundle into one triage summary",
+    )
+    triage_input = triage_summary.add_mutually_exclusive_group(required=True)
+    triage_input.add_argument("--bundle", type=Path)
+    triage_input.add_argument("--input", type=Path, action="append", default=[])
+    triage_summary.add_argument("--manifest-name", default="manifest.json")
+
     report = subparsers.add_parser("report", help="Render a local HTML JSON report")
     report_input = report.add_mutually_exclusive_group(required=True)
     report_input.add_argument("--snapshot", type=Path)
@@ -2034,6 +2047,20 @@ def main(argv: list[str] | None = None) -> int:
         print(_json(license_report))
         if args.fail_on_denied and _license_report_should_fail(license_report):
             return 2
+        return 0
+
+    if args.command == "triage-summary":
+        if args.bundle is not None:
+            print(
+                _json(
+                    build_triage_summary_from_bundle(
+                        args.bundle,
+                        manifest_name=args.manifest_name,
+                    )
+                )
+            )
+        else:
+            print(_json(build_triage_summary_from_paths(args.input)))
         return 0
 
     if args.command == "report":

@@ -55,6 +55,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_performance_report(payload)
     if schema == "edgp.license.report.v1":
         return render_license_report(payload)
+    if schema == "edgp.triage.summary.v1":
+        return render_triage_summary_report(payload)
     raise ValueError(f"Unsupported HTML report schema: {schema}")
 
 
@@ -597,6 +599,62 @@ def render_license_report(report: dict[str, Any]) -> str:
                 report.get("missingLicenses", []),
                 ["package"],
                 test_id="license-missing-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_triage_summary_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.triage.summary.v1":
+        raise ValueError("HTML triage summary input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    top_findings = report.get("topFindings", {})
+    top_findings = top_findings if isinstance(top_findings, dict) else {}
+    npm_findings = top_findings.get("npm", [])
+    return _document(
+        "EDGP Triage Summary",
+        [
+            _generic_hero(
+                eyebrow=str(report.get("status", "unknown")),
+                heading="Triage summary",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Reports", summary.get("reports", 0)),
+                    ("Advisories", summary.get("advisoryFindings", 0)),
+                    ("Denied Licenses", summary.get("deniedLicenseFindings", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Checks",
+                report.get("checks", []),
+                ["kind", "status", "findings", "deniedFindings"],
+                test_id="triage-checks-panel",
+            ),
+            _rows_panel(
+                "Advisory Findings",
+                top_findings.get("advisories", []),
+                ["id", "severity", "package", "summary"],
+                test_id="triage-advisory-panel",
+            ),
+            _rows_panel(
+                "License Findings",
+                top_findings.get("licenses", []),
+                ["package", "license", "matchedDeniedLicenses"],
+                test_id="triage-license-panel",
+            ),
+            _rows_panel(
+                "npm Signals",
+                npm_findings,
+                ["kind", "count", "root"],
+                test_id="triage-npm-panel",
+            ),
+            _rows_panel(
+                "Source Reports",
+                report.get("reports", []),
+                ["schema", "root", "summary"],
+                test_id="triage-reports-panel",
             ),
         ],
         scripts=[_table_sort_script()],

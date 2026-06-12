@@ -1,0 +1,27 @@
+{
+  "$id": "urn:edgp:schema:triage-summary:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Aggregate triage summary for EDGP reports and report bundles.",
+  "properties": {
+    "bundle": {"type": "object"},
+    "checks": {"items": {"type": "object"}, "type": "array"},
+    "reports": {"items": {"type": "object"}, "type": "array"},
+    "schema": {"const": "edgp.triage.summary.v1"},
+    "source": {"type": "object"},
+    "status": {"enum": ["pass", "warn", "fail"]},
+    "summary": {"type": "object"},
+    "topFindings": {"type": "object"}
+  },
+  "required": [
+    "schema",
+    "source",
+    "status",
+    "summary",
+    "checks",
+    "topFindings",
+    "reports"
+  ],
+  "title": "EDGP Triage Summary v1",
+  "type": "object"
+}
