@@ -24,6 +24,7 @@ SOURCE_KINDS = {
     "npm-lockfile",
     "rpm-installed",
     "rpm-repository",
+    "rpm-repository-diff",
 }
 
 _MANIFEST_REQUIRED_KEYS = {

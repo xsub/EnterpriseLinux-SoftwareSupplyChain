@@ -268,3 +268,31 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
         (output_dir / "rpm-repository-summary.json").read_text(encoding="utf-8")
     )
     assert summary["schema"] == "edgp.rpm.repository_summary.v1"
+
+
+def test_cli_rpm_repo_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "rpm-repo-diff-bundle"
+
+    assert main(
+        [
+            "rpm-repo-diff-bundle",
+            "--left-primary",
+            "tests/fixtures/rpm-primary.xml",
+            "--right-primary",
+            "tests/fixtures/rpm-primary-updated.xml",
+            "--output-dir",
+            str(output_dir),
+        ]
+    ) == 0
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "rpm-repository-diff"
+    assert manifest["reports"][0]["href"] == "001-rpm-repository-diff.html"
+    diff = json.loads(
+        (output_dir / "rpm-repository-diff.json").read_text(encoding="utf-8")
+    )
+    assert diff["schema"] == "edgp.rpm.repository_diff.v1"
+    assert diff["summary"]["changedPackages"] == 1
+    html = (output_dir / "001-rpm-repository-diff.html").read_text(encoding="utf-8")
+    assert 'data-testid="rpm-repository-diff-changed-panel"' in html

@@ -148,6 +148,7 @@ edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
 edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
 edgp sbom-bundle --path bom.json --impact-node left-pad --output-dir reports/sbom
 edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --output-dir reports/rpm-installed
+edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff
 edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
 edgp report --snapshot graph.json --output graph-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports
@@ -454,6 +455,8 @@ explicit capability nodes. `edgp rpm-repo-summary` reports package counts,
 source RPM concentration, architecture coverage, and unresolved requirements.
 `edgp rpm-repo-diff` compares two repository snapshots by package name and
 architecture, surfacing added, removed, and changed EVR/source-RPM records.
+`edgp rpm-repo-diff-bundle` renders that comparison as a static HTML bundle
+with a verifiable manifest for browser review.
 `edgp rpm-repo-bundle` writes the graph, summary, optional impact reports,
 static HTML, and a verification manifest. This is the public-resource path
 toward distribution-scale graph size without private repositories.

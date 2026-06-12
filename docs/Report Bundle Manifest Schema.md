@@ -36,6 +36,7 @@ The public source-kind values are:
 - `cyclonedx-sbom`
 - `rpm-installed`
 - `rpm-repository`
+- `rpm-repository-diff`
 - `edgp-json`
 
 ## Example

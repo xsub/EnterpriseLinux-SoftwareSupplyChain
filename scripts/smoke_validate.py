@@ -324,6 +324,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "npm-lockfile",
         "rpm-installed",
         "rpm-repository",
+        "rpm-repository-diff",
     }
 
 
@@ -1568,6 +1569,39 @@ def _assert_public_vertical_reports() -> None:
         _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "rpm-repository"
         assert manifest["reports"][1]["href"] == "002-rpm-repository-summary.html"
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "rpm-repo-diff-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-repo-diff-bundle",
+                "--left-primary",
+                "tests/fixtures/rpm-primary.xml",
+                "--right-primary",
+                "tests/fixtures/rpm-primary-updated.xml",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "rpm-repository-diff"
+        assert manifest["reports"][0]["href"] == "001-rpm-repository-diff.html"
+        diff = json.loads(
+            (output_dir / "rpm-repository-diff.json").read_text(encoding="utf-8")
+        )
+        assert diff["schema"] == "edgp.rpm.repository_diff.v1"
+        assert diff["summary"]["changedPackages"] == 1
 
 
 def _assert_sbom_query() -> None:

@@ -450,6 +450,68 @@ def _write_rpm_repo_bundle(
     )
 
 
+def _build_rpm_repo_diff_report(
+    left_source: str,
+    right_source: str,
+    *,
+    left_repo_id: str = "left-rpm-repository",
+    right_repo_id: str = "right-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
+) -> dict[str, Any]:
+    left = _load_rpm_repo_project_graph(
+        left_source,
+        repo_id=left_repo_id,
+        package_limit=package_limit,
+        requirement_limit=requirement_limit,
+    )
+    right = _load_rpm_repo_project_graph(
+        right_source,
+        repo_id=right_repo_id,
+        package_limit=package_limit,
+        requirement_limit=requirement_limit,
+    )
+    return build_rpm_repository_diff_report(
+        left.graph,
+        right.graph,
+        left_root=left.root_identifier,
+        right_root=right.root_identifier,
+    )
+
+
+def _write_rpm_repo_diff_bundle(
+    left_source: str,
+    right_source: str,
+    output_dir: Path,
+    *,
+    left_repo_id: str = "left-rpm-repository",
+    right_repo_id: str = "right-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
+    command: str | None = None,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    diff_path = output_dir / "rpm-repository-diff.json"
+    diff_path.write_text(
+        _json(
+            _build_rpm_repo_diff_report(
+                left_source,
+                right_source,
+                left_repo_id=left_repo_id,
+                right_repo_id=right_repo_id,
+                package_limit=package_limit,
+                requirement_limit=requirement_limit,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [diff_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "rpm-repository-diff", "command": command},
+    )
+
+
 def _load_albs_build_project_graph(
     *,
     build_id: str | None = None,
@@ -906,6 +968,20 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_diff.add_argument("--right-repo-id", default="right-rpm-repository")
     rpm_repo_diff.add_argument("--package-limit", type=int, default=5000)
     rpm_repo_diff.add_argument("--requirement-limit", type=int, default=40)
+
+    rpm_repo_diff_bundle = subparsers.add_parser(
+        "rpm-repo-diff-bundle",
+        help="Render public RPM repository snapshot diff as a static bundle",
+    )
+    rpm_repo_diff_bundle.add_argument("--left-primary", type=Path)
+    rpm_repo_diff_bundle.add_argument("--left-source")
+    rpm_repo_diff_bundle.add_argument("--right-primary", type=Path)
+    rpm_repo_diff_bundle.add_argument("--right-source")
+    rpm_repo_diff_bundle.add_argument("--left-repo-id", default="left-rpm-repository")
+    rpm_repo_diff_bundle.add_argument("--right-repo-id", default="right-rpm-repository")
+    rpm_repo_diff_bundle.add_argument("--package-limit", type=int, default=5000)
+    rpm_repo_diff_bundle.add_argument("--requirement-limit", type=int, default=40)
+    rpm_repo_diff_bundle.add_argument("--output-dir", type=Path, required=True)
 
     albs_build = subparsers.add_parser(
         "albs-build",
@@ -1364,26 +1440,31 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "rpm-repo-diff":
-        left = _load_rpm_repo_project_graph(
-            _rpm_repo_diff_source(args.left_primary, args.left_source, "left"),
-            repo_id=args.left_repo_id,
-            package_limit=args.package_limit,
-            requirement_limit=args.requirement_limit,
-        )
-        right = _load_rpm_repo_project_graph(
-            _rpm_repo_diff_source(args.right_primary, args.right_source, "right"),
-            repo_id=args.right_repo_id,
-            package_limit=args.package_limit,
-            requirement_limit=args.requirement_limit,
-        )
         print(
             _json(
-                build_rpm_repository_diff_report(
-                    left.graph,
-                    right.graph,
-                    left_root=left.root_identifier,
-                    right_root=right.root_identifier,
+                _build_rpm_repo_diff_report(
+                    _rpm_repo_diff_source(args.left_primary, args.left_source, "left"),
+                    _rpm_repo_diff_source(args.right_primary, args.right_source, "right"),
+                    left_repo_id=args.left_repo_id,
+                    right_repo_id=args.right_repo_id,
+                    package_limit=args.package_limit,
+                    requirement_limit=args.requirement_limit,
                 )
+            )
+        )
+        return 0
+
+    if args.command == "rpm-repo-diff-bundle":
+        print(
+            _write_rpm_repo_diff_bundle(
+                _rpm_repo_diff_source(args.left_primary, args.left_source, "left"),
+                _rpm_repo_diff_source(args.right_primary, args.right_source, "right"),
+                args.output_dir,
+                left_repo_id=args.left_repo_id,
+                right_repo_id=args.right_repo_id,
+                package_limit=args.package_limit,
+                requirement_limit=args.requirement_limit,
+                command=command,
             )
         )
         return 0

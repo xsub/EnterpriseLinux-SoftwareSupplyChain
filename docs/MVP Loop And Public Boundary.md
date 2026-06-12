@@ -221,6 +221,8 @@ surfaces are:
 - Generate RPM repository summary reports and static graph/summary bundles.
 - Compare two public RPM repository snapshots and report added, removed, and
   changed package EVR/source-RPM records.
+- Render RPM repository snapshot diff reports as static, verifiable HTML
+  bundles.
 - Report libsolv command availability and parse saved libsolv-style
   transaction transcripts.
 - Normalize OSV-like public advisory feeds into EDGP advisory overlays.

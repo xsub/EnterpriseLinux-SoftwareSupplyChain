@@ -25,7 +25,8 @@
             "maven-dependency-tree",
             "npm-lockfile",
             "rpm-installed",
-            "rpm-repository"
+            "rpm-repository",
+            "rpm-repository-diff"
           ],
           "type": "string"
         }
