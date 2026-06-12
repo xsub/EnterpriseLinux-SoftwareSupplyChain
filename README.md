@@ -624,6 +624,9 @@ and npm diagnostics are documented in
 machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 `edgp validate` checks a local EDGP JSON report file against the documented
 schema subset or validates a report bundle directory with the bundle verifier.
+For bundles that already contain `manifest.triageSummary`, `validate
+--fail-on-status warn|fail` also gates on the generated triage status while
+leaving validation itself read-only.
 Validation failure examples are documented in
 [`docs/Validation Failure Examples.md`](docs/Validation%20Failure%20Examples.md).
 Start with the guide's

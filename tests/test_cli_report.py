@@ -633,6 +633,53 @@ def test_cli_validate_reports_bundle_contract(tmp_path, capsys) -> None:
     assert report["bundleVerification"]["ok"] is True
 
 
+def test_cli_validate_can_fail_on_bundle_triage_status(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "bundle"
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "validate",
+                "--path",
+                str(output_dir),
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+    report = json.loads(capsys.readouterr().out)
+    assert report["ok"] is True
+    assert report["triageSummary"]["status"] == "warn"
+
+    assert (
+        main(
+            [
+                "validate",
+                "--path",
+                str(output_dir),
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 0
+    )
+
+
 def _normalize_verification_report(payload: dict[str, object]) -> dict[str, object]:
     normalized = dict(payload)
     bundle_dir = str(normalized.get("bundleDir", ""))

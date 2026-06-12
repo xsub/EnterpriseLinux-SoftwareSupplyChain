@@ -256,6 +256,8 @@ surfaces are:
   RPM repository diff, and ALBS build inputs.
 - Return CI-friendly non-zero bundle exit status when generated triage summary
   status reaches a selected warn/fail threshold.
+- Return CI-friendly non-zero validation exit status when an existing bundle
+  triage summary reaches a selected warn/fail threshold.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

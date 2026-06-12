@@ -178,6 +178,22 @@ def test_validate_target_accepts_report_bundle_directory(tmp_path) -> None:
     assert report["bundleVerification"]["ok"] is True
 
 
+def test_validate_target_reports_bundle_triage_summary(tmp_path) -> None:
+    write_report_bundle(
+        [Path("tests/fixtures/npm-diagnostics-report.json")],
+        tmp_path,
+        include_triage_summary=True,
+    )
+
+    report = validate_target(tmp_path)
+
+    assert report["ok"] is True
+    assert report["triageSummary"]["schema"] == "edgp.triage.summary.v1"
+    assert report["triageSummary"]["source"] == "triage-summary.json"
+    assert report["triageSummary"]["status"] == "warn"
+    assert report["triageSummary"]["summary"]["reports"] == 1
+
+
 def _normalize_validation_report(report: dict[str, object]) -> dict[str, object]:
     normalized = dict(report)
     bundle_verification = normalized.get("bundleVerification")

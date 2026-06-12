@@ -612,6 +612,20 @@ def _bundle_triage_summary_should_fail(
     )
 
 
+def _validation_report_should_fail_on_status(
+    report: dict[str, Any],
+    *,
+    min_status: str | None = None,
+) -> bool:
+    if min_status is None:
+        return False
+    triage_summary = report.get("triageSummary")
+    if not isinstance(triage_summary, dict):
+        return False
+    status = str(triage_summary.get("status", "pass")).lower()
+    return _TRIAGE_STATUS_RANKS.get(status, 0) >= _TRIAGE_STATUS_RANKS[min_status]
+
+
 def _bundle_license_report_should_fail(output_dir: Path) -> bool:
     report_path = output_dir / "license-report.json"
     if not report_path.exists():
@@ -1611,6 +1625,11 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--path", type=Path, required=True)
     validate.add_argument("--manifest-name", default="manifest.json")
     validate.add_argument("--format", choices=["json", "text"], default="json")
+    validate.add_argument(
+        "--fail-on-status",
+        choices=["warn", "fail"],
+        help="return status 2 when a bundle triage summary reaches this severity",
+    )
 
     failure_examples = subparsers.add_parser(
         "failure-examples",
@@ -2198,7 +2217,14 @@ def main(argv: list[str] | None = None) -> int:
             print(_format_validation_report(report))
         else:
             print(_json(report))
-        return 0 if report["ok"] else 1
+        if not report["ok"]:
+            return 1
+        if _validation_report_should_fail_on_status(
+            report,
+            min_status=args.fail_on_status,
+        ):
+            return 2
+        return 0
 
     if args.command == "failure-examples":
         index = _filter_failure_example_index(

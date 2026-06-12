@@ -31,7 +31,7 @@ def _validate_bundle(path: Path, *, manifest_name: str) -> dict[str, Any]:
         for failure in bundle_report.get("failures", [])
         if isinstance(failure, dict)
     ]
-    return {
+    report: dict[str, Any] = {
         "schema": VALIDATION_SCHEMA,
         "target": str(path.resolve()),
         "targetType": "report-bundle",
@@ -41,6 +41,52 @@ def _validate_bundle(path: Path, *, manifest_name: str) -> dict[str, Any]:
         "failures": failures,
         "bundleVerification": bundle_report,
     }
+    triage_summary = _load_bundle_triage_summary(path, manifest_name=manifest_name)
+    if triage_summary is not None:
+        report["triageSummary"] = triage_summary
+    return report
+
+
+def _load_bundle_triage_summary(
+    bundle_dir: Path,
+    *,
+    manifest_name: str,
+) -> dict[str, Any] | None:
+    try:
+        manifest = json.loads((bundle_dir / manifest_name).read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    if not isinstance(manifest, dict):
+        return None
+    triage_entry = manifest.get("triageSummary")
+    if not isinstance(triage_entry, dict):
+        return None
+    source = triage_entry.get("source")
+    if not isinstance(source, str) or not source:
+        return None
+    source_path = _bundle_member_path(bundle_dir, source)
+    if source_path is None:
+        return None
+    try:
+        payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    summary = payload.get("summary")
+    return {
+        "schema": payload.get("schema"),
+        "source": source,
+        "status": payload.get("status"),
+        "summary": summary if isinstance(summary, dict) else {},
+    }
+
+
+def _bundle_member_path(bundle_dir: Path, label: str) -> Path | None:
+    member_path = Path(label)
+    if member_path.is_absolute() or ".." in member_path.parts:
+        return None
+    return bundle_dir / member_path
 
 
 def _validate_json_file(path: Path) -> dict[str, Any]:

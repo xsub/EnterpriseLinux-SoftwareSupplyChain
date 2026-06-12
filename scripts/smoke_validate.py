@@ -2277,6 +2277,28 @@ def _assert_report_bundle() -> None:
         assert validation["ok"] is True
         assert validation["targetType"] == "report-bundle"
         assert validation["bundleVerification"]["ok"] is True
+        assert validation["triageSummary"]["status"] == "warn"
+        completed_validation_gate = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "validate",
+                "--path",
+                str(output_dir),
+                "--fail-on-status",
+                "warn",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_validation_gate.returncode == 2
+        gated_validation = json.loads(completed_validation_gate.stdout)
+        assert gated_validation["ok"] is True
+        assert gated_validation["triageSummary"]["status"] == "warn"
         assert manifest["schema"] == "edgp.report.bundle.v1"
         assert manifest["bundle"]["sourceKind"] == "edgp-json"
         assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
