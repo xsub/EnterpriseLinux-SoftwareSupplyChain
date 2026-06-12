@@ -115,6 +115,7 @@ edgp albs-log-intelligence --build-id 17813
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
 edgp libsolv-bridge --transaction solver-transaction.txt
 edgp libsolv-bridge --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json
+edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
 edgp public-advisory-feed --path osv.json --ecosystem rpm
 edgp public-advisory-feed --url https://example.com/osv.json --ecosystem rpm
 ```
@@ -158,6 +159,7 @@ edgp sbom-bundle --path bom.json --impact-node left-pad --deny-license WTFPL --f
 edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --license-report --output-dir reports/rpm-installed --triage-summary
 edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff
 edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
+edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
 edgp report --snapshot graph.json --output graph-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports --fail-on-status fail
 edgp verify-bundle --path reports
@@ -594,6 +596,9 @@ transaction, while EDGP can attach those solved package identities to CSR graph
 snapshots, bundle reports, and later blast-radius traversal. Passing
 `--graph-snapshot` enriches each transaction action with graph match status,
 matched node IDs, and dependent counts from an existing EDGP graph snapshot.
+`edgp libsolv-bundle` writes the same bridge report into a static, verifiable
+HTML bundle with `manifest.json`, so a saved solver transaction can be reviewed
+in the browser or attached to a CI/workbench artifact set.
 
 `edgp license-report` summarizes license metadata from any supported graph
 source and optionally checks a deny-list. `--deny-license` may be repeated; EDGP

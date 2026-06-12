@@ -336,6 +336,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
+        "libsolv-transaction",
         "maven-dependency-tree",
         "npm-lockfile",
         "rpm-installed",
@@ -1831,6 +1832,38 @@ def _assert_public_vertical_reports() -> None:
     assert libsolv_graph["graphContext"]["schema"] == "edgp.graph.snapshot.v1"
     assert libsolv_graph["summary"]["graphExactActions"] == 1
     assert libsolv_graph["transactionActions"][0]["graphMatchStatus"] == "exact"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_dir = Path(tmpdir) / "libsolv-bundle"
+        graph_snapshot_path = Path(tmpdir) / "rpm-repo-snapshot.json"
+        graph_snapshot_path.write_text(json.dumps(rpm_repo_snapshot), encoding="utf-8")
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "libsolv-bundle",
+                "--transaction",
+                "tests/fixtures/libsolv-transaction.txt",
+                "--graph-snapshot",
+                str(graph_snapshot_path),
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip().endswith("index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "libsolv-transaction"
+        report = json.loads((output_dir / "libsolv-bridge.json").read_text(encoding="utf-8"))
+        assert report["summary"]["graphExactActions"] == 1
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
 
     advisory = _run_cli(
         ["public-advisory-feed", "--path", "tests/fixtures/public-osv.json"]

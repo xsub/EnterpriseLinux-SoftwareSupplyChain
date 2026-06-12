@@ -699,6 +699,28 @@ def _write_rpm_repo_diff_bundle(
     )
 
 
+def _write_libsolv_bundle(
+    transaction_path: Path,
+    output_dir: Path,
+    *,
+    graph_snapshot_path: Path | None = None,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "libsolv-bridge.json"
+    report_path.write_text(
+        _json(build_libsolv_bridge_report(transaction_path, graph_snapshot_path)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "libsolv-transaction", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _load_albs_build_project_graph(
     *,
     build_id: str | None = None,
@@ -1494,6 +1516,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="EDGP graph snapshot used to match transaction packages to graph nodes",
     )
 
+    libsolv_bundle = subparsers.add_parser(
+        "libsolv-bundle",
+        help="Render a libsolv transaction bridge report bundle",
+    )
+    libsolv_bundle.add_argument("--transaction", type=Path, required=True)
+    libsolv_bundle.add_argument("--output-dir", type=Path, required=True)
+    libsolv_bundle.add_argument(
+        "--graph-snapshot",
+        type=Path,
+        help="EDGP graph snapshot used to match transaction packages to graph nodes",
+    )
+    _add_triage_bundle_option(libsolv_bundle)
+
     public_advisory_feed = subparsers.add_parser(
         "public-advisory-feed",
         help="Normalize a public advisory feed into an EDGP advisory overlay",
@@ -2079,6 +2114,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "libsolv-bridge":
         print(_json(build_libsolv_bridge_report(args.transaction, args.graph_snapshot)))
         return 0
+
+    if args.command == "libsolv-bundle":
+        return _print_bundle_result(
+            _write_libsolv_bundle(
+                args.transaction,
+                args.output_dir,
+                graph_snapshot_path=args.graph_snapshot,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "public-advisory-feed":
         report = build_public_advisory_feed_report(

@@ -266,6 +266,8 @@ surfaces are:
   EDGP graph node identifiers, and Package URLs.
 - Match normalized libsolv-style transaction actions against an existing EDGP
   graph snapshot and report exact, candidate, and unmatched graph actions.
+- Render saved libsolv-style transaction bridge reports as static, verifiable
+  HTML bundles for browser review.
 - Normalize OSV-like public advisory feeds from files or URLs into EDGP
   advisory overlays.
 - Match normalized public advisory range intervals against RPM repository EVR
@@ -319,6 +321,7 @@ python -B -m src.cli albs-log-intelligence --path tests/fixtures/albs-build-upda
 python -B -m src.cli albs-release-completeness --path tests/fixtures/albs-build.json --path tests/fixtures/albs-build-updated.json
 python -B -m src.cli libsolv-bridge --transaction tests/fixtures/libsolv-transaction.txt
 python -B -m src.cli libsolv-bridge --transaction tests/fixtures/libsolv-transaction.txt --graph-snapshot /tmp/edgp-rpm-repo.json
+python -B -m src.cli libsolv-bundle --transaction tests/fixtures/libsolv-transaction.txt --graph-snapshot /tmp/edgp-rpm-repo.json --output-dir /tmp/edgp-libsolv-bundle
 python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv.json --ecosystem rpm
 python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv-ranges.json --ecosystem rpm
 python -B -m src.cli public-advisory-feed --url file://$PWD/tests/fixtures/public-osv.json --ecosystem rpm

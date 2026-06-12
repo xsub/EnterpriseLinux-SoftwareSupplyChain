@@ -216,6 +216,49 @@ def test_libsolv_bridge_matches_transaction_actions_to_graph_snapshot(
     assert report["transactionActions"][1]["graphMatchStatus"] == "unmatched"
 
 
+def test_cli_libsolv_bundle_writes_report_bundle(tmp_path: Path, capsys) -> None:
+    resolved = RpmRepositoryAdapter().parse_primary(Path("tests/fixtures/rpm-primary.xml"))
+    snapshot_path = tmp_path / "rpm-repo-snapshot.json"
+    snapshot_path.write_text(
+        GraphJsonExporter.export_to_json(
+            resolved.graph,
+            root=resolved.root_identifier,
+            ecosystem=resolved.ecosystem,
+        ),
+        encoding="utf-8",
+    )
+    output_dir = tmp_path / "libsolv-bundle"
+
+    assert main(
+        [
+            "libsolv-bundle",
+            "--transaction",
+            "tests/fixtures/libsolv-transaction.txt",
+            "--graph-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+            "--triage-summary",
+        ]
+    ) == 0
+
+    index_path = Path(capsys.readouterr().out.strip())
+    assert index_path == output_dir / "index.html"
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "libsolv-transaction"
+    assert manifest["reports"][0]["source"] == "libsolv-bridge.json"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    report = json.loads((output_dir / "libsolv-bridge.json").read_text(encoding="utf-8"))
+    assert report["summary"]["graphExactActions"] == 1
+    html = (output_dir / manifest["reports"][0]["href"]).read_text(encoding="utf-8")
+    assert 'data-testid="libsolv-transaction-panel"' in html
+    assert "exact" in html
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True
+
+
 def test_public_advisory_feed_normalizes_osv_to_overlay() -> None:
     report = build_public_advisory_feed_report(
         _fixture("tests/fixtures/public-osv.json"),

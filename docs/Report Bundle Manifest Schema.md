@@ -40,6 +40,7 @@ The public source-kind values are:
 - `rpm-installed`
 - `rpm-repository`
 - `rpm-repository-diff`
+- `libsolv-transaction`
 - `edgp-json`
 
 ## Example
