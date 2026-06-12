@@ -1,0 +1,30 @@
+{
+  "$id": "urn:edgp:schema:rpm-repository-diff:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "RPM repository snapshot diff report for public primary metadata.",
+  "properties": {
+    "addedPackages": {"items": {"type": "object"}, "type": "array"},
+    "changedPackages": {"items": {"type": "object"}, "type": "array"},
+    "ecosystem": {"const": "rpm"},
+    "left": {"type": "object"},
+    "removedPackages": {"items": {"type": "object"}, "type": "array"},
+    "right": {"type": "object"},
+    "schema": {"const": "edgp.rpm.repository_diff.v1"},
+    "sourceRpmDelta": {"type": "object"},
+    "summary": {"type": "object"}
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "left",
+    "right",
+    "summary",
+    "addedPackages",
+    "removedPackages",
+    "changedPackages",
+    "sourceRpmDelta"
+  ],
+  "title": "EDGP RPM Repository Diff v1",
+  "type": "object"
+}

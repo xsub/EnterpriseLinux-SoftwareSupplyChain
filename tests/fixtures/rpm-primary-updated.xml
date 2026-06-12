@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="2">
+  <package type="rpm">
+    <name>nginx</name>
+    <arch>x86_64</arch>
+    <version epoch="0" ver="1.20.1" rel="17.el9_4.2"/>
+    <summary>web server security update</summary>
+    <format>
+      <rpm:sourcerpm>nginx-1.20.1-17.el9_4.2.src.rpm</rpm:sourcerpm>
+      <rpm:provides>
+        <rpm:entry name="nginx"/>
+      </rpm:provides>
+      <rpm:requires>
+        <rpm:entry name="nginx-filesystem"/>
+      </rpm:requires>
+    </format>
+  </package>
+  <package type="rpm">
+    <name>nginx-filesystem</name>
+    <arch>noarch</arch>
+    <version epoch="0" ver="1.20.1" rel="17.el9_4.2"/>
+    <summary>web server filesystem layout</summary>
+    <format>
+      <rpm:sourcerpm>nginx-1.20.1-17.el9_4.2.src.rpm</rpm:sourcerpm>
+      <rpm:provides>
+        <rpm:entry name="nginx-filesystem"/>
+      </rpm:provides>
+      <rpm:requires/>
+    </format>
+  </package>
+</metadata>

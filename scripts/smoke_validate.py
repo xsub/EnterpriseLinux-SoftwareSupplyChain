@@ -93,6 +93,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.rpm.albs_provenance.v1.schema.json",
+    "edgp.rpm.repository_diff.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.rpm.repository_diff.v1.schema.json",
     "edgp.rpm.repository_summary.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -145,6 +149,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "rpm-albs-provenance.json",
+    "edgp.rpm.repository_diff.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "rpm-repository-diff.json",
     "edgp.rpm.repository_summary.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -426,6 +434,7 @@ def _assert_schema_index_document() -> None:
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
         "edgp.rpm.albs_provenance.v1",
+        "edgp.rpm.repository_diff.v1",
         "edgp.rpm.repository_summary.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
@@ -1501,6 +1510,18 @@ def _assert_public_vertical_reports() -> None:
     )
     assert rpm_repo_summary["schema"] == "edgp.rpm.repository_summary.v1"
     assert rpm_repo_summary["summary"]["packages"] == 2
+
+    rpm_repo_diff = _run_cli(
+        [
+            "rpm-repo-diff",
+            "--left-primary",
+            "tests/fixtures/rpm-primary.xml",
+            "--right-primary",
+            "tests/fixtures/rpm-primary-updated.xml",
+        ]
+    )
+    assert rpm_repo_diff["schema"] == "edgp.rpm.repository_diff.v1"
+    assert rpm_repo_diff["summary"]["changedPackages"] == 1
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]

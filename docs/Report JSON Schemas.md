@@ -49,6 +49,10 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.rpm.repository_summary.v1.schema.json`](schemas/edgp.rpm.repository_summary.v1.schema.json)
   documents public RPM repository package, source RPM, architecture, and
   unresolved requirement coverage.
+- `edgp.rpm.repository_diff.v1`:
+  [`edgp.rpm.repository_diff.v1.schema.json`](schemas/edgp.rpm.repository_diff.v1.schema.json)
+  documents added, removed, and changed packages between public RPM repository
+  snapshots.
 - `edgp.libsolv.bridge.v1`:
   [`edgp.libsolv.bridge.v1.schema.json`](schemas/edgp.libsolv.bridge.v1.schema.json)
   documents libsolv command discovery and parsed transaction actions.

@@ -219,6 +219,8 @@ surfaces are:
 - Discover primary metadata from public RPM `repomd.xml` files and repository
   base URLs.
 - Generate RPM repository summary reports and static graph/summary bundles.
+- Compare two public RPM repository snapshots and report added, removed, and
+  changed package EVR/source-RPM records.
 - Report libsolv command availability and parse saved libsolv-style
   transaction transcripts.
 - Normalize OSV-like public advisory feeds into EDGP advisory overlays.

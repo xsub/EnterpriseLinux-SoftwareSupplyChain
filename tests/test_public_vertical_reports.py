@@ -13,6 +13,7 @@ from src.libsolv_bridge import build_libsolv_bridge_report
 from src.performance_report import build_performance_report
 from src.public_advisory_feed import build_public_advisory_feed_report
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
+from src.rpm_repository_diff import build_rpm_repository_diff_report
 from src.rpm_repository_summary import build_rpm_repository_summary_report
 
 
@@ -127,6 +128,41 @@ def test_rpm_repository_summary_counts_arches_and_source_rpms() -> None:
     assert report["architectures"] == [{"arch": "x86_64", "packages": 2}]
 
 
+def test_rpm_repository_diff_detects_snapshot_changes() -> None:
+    left = RpmRepositoryAdapter().parse_primary(Path("tests/fixtures/rpm-primary.xml"))
+    right = RpmRepositoryAdapter().parse_primary(
+        Path("tests/fixtures/rpm-primary-updated.xml")
+    )
+
+    report = build_rpm_repository_diff_report(
+        left.graph,
+        right.graph,
+        left_root=left.root_identifier,
+        right_root=right.root_identifier,
+    )
+
+    assert report["schema"] == "edgp.rpm.repository_diff.v1"
+    assert report["summary"] == {
+        "leftPackages": 2,
+        "rightPackages": 2,
+        "addedPackages": 1,
+        "removedPackages": 1,
+        "changedPackages": 1,
+        "unchangedPackages": 0,
+        "addedSourceRpms": 1,
+        "removedSourceRpms": 1,
+    }
+    assert report["changedPackages"][0]["name"] == "nginx"
+    assert report["changedPackages"][0]["changedFields"] == [
+        "release",
+        "sourceRpm",
+        "summary",
+        "nodeId",
+    ]
+    assert report["addedPackages"][0]["name"] == "nginx-filesystem"
+    assert report["removedPackages"][0]["name"] == "nginx-core"
+
+
 def test_libsolv_bridge_parses_transaction_actions() -> None:
     report = build_libsolv_bridge_report(Path("tests/fixtures/libsolv-transaction.txt"))
 
@@ -178,6 +214,19 @@ def test_cli_public_vertical_commands(capsys) -> None:
     ) == 0
     assert json.loads(capsys.readouterr().out)["schema"] == (
         "edgp.rpm.repository_summary.v1"
+    )
+
+    assert main(
+        [
+            "rpm-repo-diff",
+            "--left-primary",
+            "tests/fixtures/rpm-primary.xml",
+            "--right-primary",
+            "tests/fixtures/rpm-primary-updated.xml",
+        ]
+    ) == 0
+    assert json.loads(capsys.readouterr().out)["schema"] == (
+        "edgp.rpm.repository_diff.v1"
     )
 
     assert main(

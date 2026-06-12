@@ -178,6 +178,10 @@ def test_render_report_supports_albs_build_timing_json() -> None:
             "tests/fixtures/rpm-repository-summary.json",
             "rpm-repository-architectures-panel",
         ),
+        (
+            "tests/fixtures/rpm-repository-diff.json",
+            "rpm-repository-diff-changed-panel",
+        ),
         ("tests/fixtures/albs-log-intelligence.json", "albs-log-intelligence-panel"),
         (
             "tests/fixtures/albs-release-completeness.json",

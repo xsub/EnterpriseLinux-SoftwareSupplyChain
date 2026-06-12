@@ -41,6 +41,7 @@ from src.public_advisory_feed import build_public_advisory_feed_report
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
+from src.rpm_repository_diff import build_rpm_repository_diff_report
 from src.rpm_repository_summary import build_rpm_repository_summary_report
 from src.schema_validation import validate_target
 from scripts.generate_failure_example_index import (
@@ -589,6 +590,14 @@ def _rpm_repo_source(primary: Path | None, source: str | None) -> str:
     raise ValueError("Either --source or --primary is required for RPM repository input")
 
 
+def _rpm_repo_diff_source(primary: Path | None, source: str | None, side: str) -> str:
+    if source:
+        return source
+    if primary is not None:
+        return str(primary)
+    raise ValueError(f"Either --{side}-source or --{side}-primary is required")
+
+
 def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependencyGraph]:
     root, graph, _ = _load_lockfile_project_graph(path, ecosystem)
     return root, graph
@@ -884,6 +893,19 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_bundle.add_argument("--output-dir", type=Path, required=True)
     rpm_repo_bundle.add_argument("--impact-node", action="append", default=[])
     rpm_repo_bundle.add_argument("--report-limit", type=int, default=20)
+
+    rpm_repo_diff = subparsers.add_parser(
+        "rpm-repo-diff",
+        help="Compare two public RPM repository metadata snapshots",
+    )
+    rpm_repo_diff.add_argument("--left-primary", type=Path)
+    rpm_repo_diff.add_argument("--left-source")
+    rpm_repo_diff.add_argument("--right-primary", type=Path)
+    rpm_repo_diff.add_argument("--right-source")
+    rpm_repo_diff.add_argument("--left-repo-id", default="left-rpm-repository")
+    rpm_repo_diff.add_argument("--right-repo-id", default="right-rpm-repository")
+    rpm_repo_diff.add_argument("--package-limit", type=int, default=5000)
+    rpm_repo_diff.add_argument("--requirement-limit", type=int, default=40)
 
     albs_build = subparsers.add_parser(
         "albs-build",
@@ -1337,6 +1359,31 @@ def main(argv: list[str] | None = None) -> int:
                 impact_nodes=args.impact_node,
                 max_paths=args.report_limit,
                 command=command,
+            )
+        )
+        return 0
+
+    if args.command == "rpm-repo-diff":
+        left = _load_rpm_repo_project_graph(
+            _rpm_repo_diff_source(args.left_primary, args.left_source, "left"),
+            repo_id=args.left_repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
+        )
+        right = _load_rpm_repo_project_graph(
+            _rpm_repo_diff_source(args.right_primary, args.right_source, "right"),
+            repo_id=args.right_repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
+        )
+        print(
+            _json(
+                build_rpm_repository_diff_report(
+                    left.graph,
+                    right.graph,
+                    left_root=left.root_identifier,
+                    right_root=right.root_identifier,
+                )
             )
         )
         return 0

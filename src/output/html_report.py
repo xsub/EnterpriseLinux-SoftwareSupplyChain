@@ -41,6 +41,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_rpm_albs_provenance_report(payload)
     if schema == "edgp.rpm.repository_summary.v1":
         return render_rpm_repository_summary_report(payload)
+    if schema == "edgp.rpm.repository_diff.v1":
+        return render_rpm_repository_diff_report(payload)
     if schema == "edgp.albs.log_intelligence.v1":
         return render_albs_log_intelligence_report(payload)
     if schema == "edgp.albs.release_completeness.v1":
@@ -350,6 +352,50 @@ def render_rpm_repository_summary_report(report: dict[str, Any]) -> str:
                 report.get("unresolvedRequirements", []),
                 ["package", "capability"],
                 test_id="rpm-repository-unresolved-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_rpm_repository_diff_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.rpm.repository_diff.v1":
+        raise ValueError("HTML RPM repository diff input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    left = report.get("left", {})
+    right = report.get("right", {})
+    heading = f"{_dict_value(left, 'root')} -> {_dict_value(right, 'root')}"
+    return _document(
+        "EDGP RPM Repository Diff",
+        [
+            _generic_hero(
+                eyebrow="rpm",
+                heading=heading,
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Added", summary.get("addedPackages", 0)),
+                    ("Removed", summary.get("removedPackages", 0)),
+                    ("Changed", summary.get("changedPackages", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Changed Packages",
+                report.get("changedPackages", []),
+                ["name", "arch", "changedFields"],
+                test_id="rpm-repository-diff-changed-panel",
+            ),
+            _rows_panel(
+                "Added Packages",
+                report.get("addedPackages", []),
+                ["name", "version", "release", "arch", "sourceRpm"],
+                test_id="rpm-repository-diff-added-panel",
+            ),
+            _rows_panel(
+                "Removed Packages",
+                report.get("removedPackages", []),
+                ["name", "version", "release", "arch", "sourceRpm"],
+                test_id="rpm-repository-diff-removed-panel",
             ),
         ],
         scripts=[_table_sort_script()],

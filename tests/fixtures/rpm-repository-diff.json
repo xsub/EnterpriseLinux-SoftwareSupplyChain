@@ -1,0 +1,104 @@
+{
+  "addedPackages": [
+    {
+      "arch": "noarch",
+      "epoch": "0",
+      "key": "nginx-filesystem|noarch",
+      "name": "nginx-filesystem",
+      "nodeId": "nginx-filesystem==1.20.1-17.el9_4.2.noarch",
+      "release": "17.el9_4.2",
+      "sourceRpm": "nginx-1.20.1-17.el9_4.2.src.rpm",
+      "summary": "web server filesystem layout",
+      "version": "1.20.1"
+    }
+  ],
+  "changedPackages": [
+    {
+      "arch": "x86_64",
+      "changedFields": [
+        "release",
+        "sourceRpm",
+        "summary",
+        "nodeId"
+      ],
+      "key": "nginx|x86_64",
+      "left": {
+        "arch": "x86_64",
+        "epoch": "0",
+        "key": "nginx|x86_64",
+        "name": "nginx",
+        "nodeId": "nginx==1.20.1-16.el9_4.1.x86_64",
+        "release": "16.el9_4.1",
+        "sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm",
+        "summary": "web server",
+        "version": "1.20.1"
+      },
+      "name": "nginx",
+      "right": {
+        "arch": "x86_64",
+        "epoch": "0",
+        "key": "nginx|x86_64",
+        "name": "nginx",
+        "nodeId": "nginx==1.20.1-17.el9_4.2.x86_64",
+        "release": "17.el9_4.2",
+        "sourceRpm": "nginx-1.20.1-17.el9_4.2.src.rpm",
+        "summary": "web server security update",
+        "version": "1.20.1"
+      }
+    }
+  ],
+  "ecosystem": "rpm",
+  "left": {
+    "architectures": [
+      "x86_64"
+    ],
+    "packages": 2,
+    "primaryLocation": "tests/fixtures/rpm-primary.xml",
+    "root": "rpm-repository==left-rpm-repository",
+    "sourceLabel": "tests/fixtures/rpm-primary.xml",
+    "sourceRpms": 1
+  },
+  "removedPackages": [
+    {
+      "arch": "x86_64",
+      "epoch": "0",
+      "key": "nginx-core|x86_64",
+      "name": "nginx-core",
+      "nodeId": "nginx-core==1.20.1-16.el9_4.1.x86_64",
+      "release": "16.el9_4.1",
+      "sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm",
+      "summary": "web server core",
+      "version": "1.20.1"
+    }
+  ],
+  "right": {
+    "architectures": [
+      "noarch",
+      "x86_64"
+    ],
+    "packages": 2,
+    "primaryLocation": "tests/fixtures/rpm-primary-updated.xml",
+    "root": "rpm-repository==right-rpm-repository",
+    "sourceLabel": "tests/fixtures/rpm-primary-updated.xml",
+    "sourceRpms": 1
+  },
+  "schema": "edgp.rpm.repository_diff.v1",
+  "sourceRpmDelta": {
+    "added": [
+      "nginx-1.20.1-17.el9_4.2.src.rpm"
+    ],
+    "removed": [
+      "nginx-1.20.1-16.el9_4.1.src.rpm"
+    ]
+  },
+  "summary": {
+    "addedPackages": 1,
+    "addedSourceRpms": 1,
+    "changedPackages": 1,
+    "leftPackages": 2,
+    "removedPackages": 1,
+    "removedSourceRpms": 1,
+    "rightPackages": 2,
+    "unchangedPackages": 0
+  }
+}

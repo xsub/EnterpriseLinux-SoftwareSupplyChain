@@ -34,9 +34,9 @@ EDGP focuses on local, inspectable graph workflows:
   metadata.
 - Analyze: query reachability, dependents, shortest paths,
   most-depended-upon packages, npm path conflicts, advisory overlays, and
-  reverse impact. Public ALBS reports compare builds, summarize release
-  coverage, extract log signals, and join installed RPMs back to build
-  artifacts.
+  reverse impact. Public RPM reports summarize and compare repository
+  snapshots. Public ALBS reports compare builds, summarize release coverage,
+  extract log signals, and join installed RPMs back to build artifacts.
 - Export: emit deterministic EDGP JSON, CycloneDX, Neo4j Cypher, static HTML
   reports, report bundles, and bundle verification manifests.
 - Validate: run smoke checks from the installed project environment, schema
@@ -104,6 +104,7 @@ edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format json
 edgp rpm-repo-summary --source repodata/repomd.xml
+edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml
 edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc
 edgp albs-build --build-id 17812 --format json
 edgp albs-artifact-inventory --build-id 17812
@@ -213,6 +214,7 @@ class AlbsBuildAdapter {
 class PublicReports {
   +build_albs_build_diff_report()
   +build_rpm_albs_provenance_report()
+  +build_rpm_repository_diff_report()
   +build_albs_log_intelligence_report()
   +build_albs_release_completeness_report()
   +build_libsolv_bridge_report()
@@ -350,7 +352,7 @@ else Resolved lockfile ingestion
   Builder->>CSR: Add lockfile package vertices
   Builder->>CSR: Add edges via node_modules lookup
 else Public RPM repository metadata
-  CLI->>Builder: parse_primary(primary.xml)
+  CLI->>Builder: parse_source(repomd.xml or primary.xml)
   Builder->>CSR: Add package and capability vertices
   Builder->>CSR: Link requires to providers
 else Public ALBS build metadata
@@ -450,6 +452,8 @@ RPM universe graph from package, provides, and requires records. Resolved
 requirements point at provider packages; unresolved requirements become
 explicit capability nodes. `edgp rpm-repo-summary` reports package counts,
 source RPM concentration, architecture coverage, and unresolved requirements.
+`edgp rpm-repo-diff` compares two repository snapshots by package name and
+architecture, surfacing added, removed, and changed EVR/source-RPM records.
 `edgp rpm-repo-bundle` writes the graph, summary, optional impact reports,
 static HTML, and a verification manifest. This is the public-resource path
 toward distribution-scale graph size without private repositories.

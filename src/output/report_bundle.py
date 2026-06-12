@@ -577,6 +577,8 @@ def _report_title(payload: dict[str, Any]) -> str:
         return "RPM to ALBS Provenance"
     if schema == "edgp.rpm.repository_summary.v1":
         return f"RPM Repository Summary - {payload.get('root') or 'repository'}"
+    if schema == "edgp.rpm.repository_diff.v1":
+        return "RPM Repository Diff"
     if schema == "edgp.albs.log_intelligence.v1":
         return f"ALBS Log Intelligence - {payload.get('root') or 'build'}"
     if schema == "edgp.albs.release_completeness.v1":
