@@ -139,6 +139,7 @@ edgp impact --source rpm-repo --path repodata/repomd.xml --node glibc
 edgp advisory --path package-lock.json --advisories advisories.json
 edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisories.json --ecosystem rpm
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed-url https://example.com/osv.json --ecosystem rpm
+edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --fail-on-findings
 edgp npm-diagnostics --path package-lock.json
 edgp diff --left before.json --right after.json
 ```
@@ -566,6 +567,8 @@ embeds an `edgp.impact.report.v1` result for every matched package. For RPM
 graphs, `versions` may use the full node version, the RPM `version-release` EVR
 without architecture, or `epoch:version-release` when epoch is non-zero.
 `ranges` support simple OSV-style bounds for public feed impact reporting;
+`--fail-on-findings` still prints the full JSON report and exits with status `2`
+when matched findings exist, which makes the command usable as a CI gate.
 libsolv remains the production authority for RPM SAT solving and transaction
 decisions.
 

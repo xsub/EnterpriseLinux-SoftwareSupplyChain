@@ -1591,6 +1591,32 @@ def _assert_public_vertical_reports() -> None:
     assert rpm_repo_public_advisory["findings"][0]["advisory"]["ranges"][0][
         "fixed"
     ] == "1.20.1-16.el9_4.2"
+    completed_advisory_gate = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "advisory",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--public-advisory-feed",
+            "tests/fixtures/public-osv-ranges.json",
+            "--ecosystem",
+            "rpm",
+            "--fail-on-findings",
+        ],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed_advisory_gate.returncode == 2
+    gated_advisory = json.loads(completed_advisory_gate.stdout)
+    assert gated_advisory["schema"] == "edgp.advisory.report.v1"
+    assert gated_advisory["summary"]["findings"] == 1
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]

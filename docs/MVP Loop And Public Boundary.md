@@ -229,6 +229,8 @@ surfaces are:
   repository metadata through the shared graph analysis commands.
 - Run advisory analysis directly from public OSV-like feeds without first
   writing a normalized overlay file.
+- Return a CI-friendly non-zero advisory exit status when matched findings
+  exist, while still emitting the JSON report.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style
@@ -279,6 +281,7 @@ python -B -m src.cli query --source rpm-repo --path tests/fixtures/repodata/repo
 python -B -m src.cli impact --source rpm-repo --path tests/fixtures/repodata/repomd.xml --node nginx-core
 python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --advisories tests/fixtures/rpm-repo-advisories.json --ecosystem rpm
 python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --public-advisory-feed tests/fixtures/public-osv-ranges.json --ecosystem rpm
+python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --public-advisory-feed tests/fixtures/public-osv-ranges.json --ecosystem rpm --fail-on-findings
 python -B -m src.cli albs-build --path tests/fixtures/albs-build.json --format json
 python -B -m src.cli albs-build-diff --left-path tests/fixtures/albs-build.json --right-path tests/fixtures/albs-build-updated.json
 python -B -m src.cli albs-log-intelligence --path tests/fixtures/albs-build-updated.json

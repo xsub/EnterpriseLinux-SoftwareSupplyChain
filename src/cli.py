@@ -1291,6 +1291,7 @@ def build_parser() -> argparse.ArgumentParser:
     advisory.add_argument("--advisories", type=Path)
     advisory.add_argument("--public-advisory-feed", type=Path)
     advisory.add_argument("--public-advisory-feed-url")
+    advisory.add_argument("--fail-on-findings", action="store_true")
     advisory.add_argument("--limit", type=int, default=20)
     advisory.add_argument("--rpm-limit", type=int, default=100)
     advisory.add_argument("--max-requirements", type=int, default=40)
@@ -1803,22 +1804,21 @@ def main(argv: list[str] | None = None) -> int:
             package_limit=args.package_limit,
             requirement_limit=args.requirement_limit,
         )
-        print(
-            _json(
-                build_advisory_report(
-                    _load_advisory_payload(
-                        advisory_path=args.advisories,
-                        public_advisory_feed_path=args.public_advisory_feed,
-                        public_advisory_feed_url=args.public_advisory_feed_url,
-                        ecosystem=resolved_ecosystem,
-                    ),
-                    graph,
-                    root=root_identifier,
-                    ecosystem=resolved_ecosystem,
-                    max_paths=args.limit,
-                )
-            )
+        advisory_report = build_advisory_report(
+            _load_advisory_payload(
+                advisory_path=args.advisories,
+                public_advisory_feed_path=args.public_advisory_feed,
+                public_advisory_feed_url=args.public_advisory_feed_url,
+                ecosystem=resolved_ecosystem,
+            ),
+            graph,
+            root=root_identifier,
+            ecosystem=resolved_ecosystem,
+            max_paths=args.limit,
         )
+        print(_json(advisory_report))
+        if args.fail_on_findings and advisory_report["summary"]["findings"]:
+            return 2
         return 0
 
     if args.command == "report":
