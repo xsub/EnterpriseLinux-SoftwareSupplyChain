@@ -219,6 +219,7 @@ surfaces are:
 - Discover primary metadata from public RPM `repomd.xml` files and repository
   base URLs.
 - Generate RPM repository summary reports and static graph/summary bundles.
+- Include local advisory overlays in generated RPM repository graph bundles.
 - Compare two public RPM repository snapshots and report added, removed, and
   changed package EVR/source-RPM records.
 - Render RPM repository snapshot diff reports as static, verifiable HTML
@@ -263,7 +264,7 @@ python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-
 python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --output-dir /tmp/edgp-rpm-installed-bundle
 python -B -m src.cli rpm-repo --source tests/fixtures/repodata/repomd.xml --format json
 python -B -m src.cli rpm-repo-summary --source tests/fixtures/repodata/repomd.xml
-python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --output-dir /tmp/edgp-rpm-repo-bundle
+python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --advisories tests/fixtures/rpm-repo-advisories.json --output-dir /tmp/edgp-rpm-repo-bundle
 python -B -m src.cli query --source rpm-repo --path tests/fixtures/repodata/repomd.xml --operation dependencies --node nginx
 python -B -m src.cli impact --source rpm-repo --path tests/fixtures/repodata/repomd.xml --node nginx-core
 python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --advisories tests/fixtures/rpm-repo-advisories.json --ecosystem rpm

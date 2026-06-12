@@ -105,7 +105,7 @@ edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format json
 edgp rpm-repo-summary --source repodata/repomd.xml
 edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml
-edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc
+edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc --advisories advisories.json
 edgp albs-build --build-id 17812 --format json
 edgp albs-artifact-inventory --build-id 17812
 edgp albs-build-timing --build-id 17812
@@ -463,9 +463,9 @@ with a verifiable manifest for browser review.
 The same repository input can also feed `edgp query`, `edgp impact`, and
 `edgp advisory` via `--source rpm-repo`, which makes public repo metadata usable
 in the generic traversal and advisory workflows.
-`edgp rpm-repo-bundle` writes the graph, summary, optional impact reports,
-static HTML, and a verification manifest. This is the public-resource path
-toward distribution-scale graph size without private repositories.
+`edgp rpm-repo-bundle` writes the graph, summary, optional impact and advisory
+reports, static HTML, and a verification manifest. This is the public-resource
+path toward distribution-scale graph size without private repositories.
 
 `edgp sbom-bundle` renders CycloneDX JSON SBOMs into static local bundles with
 `sbom-graph.json`, optional impact reports, HTML, `index.html`, and

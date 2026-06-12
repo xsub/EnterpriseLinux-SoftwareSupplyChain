@@ -304,6 +304,8 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
             str(output_dir),
             "--impact-node",
             "nginx-core",
+            "--advisories",
+            "tests/fixtures/rpm-repo-advisories.json",
         ]
     ) == 0
 
@@ -315,10 +317,20 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     assert manifest["reports"][2]["href"] == (
         "003-impact-nginx-core-1.20.1-16.el9_4.1.x86_64.html"
     )
+    assert manifest["reports"][3]["href"] == "004-advisory-report.html"
     summary = json.loads(
         (output_dir / "rpm-repository-summary.json").read_text(encoding="utf-8")
     )
     assert summary["schema"] == "edgp.rpm.repository_summary.v1"
+    advisory = json.loads(
+        (output_dir / "advisory-report.json").read_text(encoding="utf-8")
+    )
+    assert advisory["schema"] == "edgp.advisory.report.v1"
+    assert advisory["summary"]["findings"] == 1
+    advisory_html = (output_dir / "004-advisory-report.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'data-testid="advisory-findings-panel"' in advisory_html
 
 
 def test_cli_rpm_repo_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:

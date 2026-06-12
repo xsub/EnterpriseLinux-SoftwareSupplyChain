@@ -418,6 +418,7 @@ def _write_rpm_repo_bundle(
     package_limit: int = 5000,
     requirement_limit: int = 40,
     impact_nodes: list[str] | None = None,
+    advisory_path: Path | None = None,
     max_paths: int = 20,
     command: str | None = None,
 ) -> Path:
@@ -438,6 +439,23 @@ def _write_rpm_repo_bundle(
         ),
         encoding="utf-8",
     )
+    final_reports = []
+    if advisory_path is not None:
+        advisory_report_path = output_dir / "advisory-report.json"
+        advisory_report_path.write_text(
+            _json(
+                build_advisory_report_from_file(
+                    advisory_path,
+                    resolved.graph,
+                    root=resolved.root_identifier,
+                    ecosystem=resolved.ecosystem,
+                    max_paths=max_paths,
+                )
+            ),
+            encoding="utf-8",
+        )
+        final_reports.append(advisory_report_path)
+
     return write_graph_report_bundle(
         resolved,
         output_dir,
@@ -446,6 +464,7 @@ def _write_rpm_repo_bundle(
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
         extra_reports_after_graph=[summary_path],
+        extra_reports=final_reports,
         bundle_metadata={"sourceKind": "rpm-repository", "command": command},
     )
 
@@ -1000,6 +1019,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_bundle.add_argument("--requirement-limit", type=int, default=40)
     rpm_repo_bundle.add_argument("--output-dir", type=Path, required=True)
     rpm_repo_bundle.add_argument("--impact-node", action="append", default=[])
+    rpm_repo_bundle.add_argument("--advisories", type=Path)
     rpm_repo_bundle.add_argument("--report-limit", type=int, default=20)
 
     rpm_repo_diff = subparsers.add_parser(
@@ -1485,6 +1505,7 @@ def main(argv: list[str] | None = None) -> int:
                 package_limit=args.package_limit,
                 requirement_limit=args.requirement_limit,
                 impact_nodes=args.impact_node,
+                advisory_path=args.advisories,
                 max_paths=args.report_limit,
                 command=command,
             )

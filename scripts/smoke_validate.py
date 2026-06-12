@@ -1603,6 +1603,8 @@ def _assert_public_vertical_reports() -> None:
                 "tests/fixtures/repodata/repomd.xml",
                 "--impact-node",
                 "nginx-core",
+                "--advisories",
+                "tests/fixtures/rpm-repo-advisories.json",
                 "--output-dir",
                 str(output_dir),
             ],
@@ -1617,6 +1619,12 @@ def _assert_public_vertical_reports() -> None:
         _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "rpm-repository"
         assert manifest["reports"][1]["href"] == "002-rpm-repository-summary.html"
+        assert manifest["reports"][3]["href"] == "004-advisory-report.html"
+        advisory = json.loads(
+            (output_dir / "advisory-report.json").read_text(encoding="utf-8")
+        )
+        assert advisory["schema"] == "edgp.advisory.report.v1"
+        assert advisory["summary"]["findings"] == 1
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "rpm-repo-diff-bundle"
