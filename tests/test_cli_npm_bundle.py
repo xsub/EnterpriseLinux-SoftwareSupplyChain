@@ -59,6 +59,34 @@ def test_cli_npm_bundle_writes_json_html_index_and_manifest(tmp_path, capsys) ->
     assert triage["summary"]["reports"] == 2
 
 
+def test_cli_npm_bundle_can_fail_on_triage_status(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "npm-bundle"
+
+    assert (
+        main(
+            [
+                "npm-bundle",
+                "--path",
+                "tests/fixtures/package-lock-conflict.json",
+                "--output-dir",
+                str(output_dir),
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    triage = json.loads(
+        (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+    )
+    assert triage["schema"] == "edgp.triage.summary.v1"
+    assert triage["status"] == "warn"
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["triageSummary"]["href"] == "triage-summary.html"
+
+
 def test_cli_npm_bundle_can_include_impact_and_advisory_reports(
     tmp_path, capsys
 ) -> None:

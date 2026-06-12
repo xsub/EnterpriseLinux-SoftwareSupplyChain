@@ -150,7 +150,7 @@ edgp diff --left before.json --right after.json
 Generate browser-friendly reports and verifiable static bundles:
 
 ```bash
-edgp npm-bundle --path package-lock.json --impact-node left-pad --advisories advisories.json --deny-license GPL-3.0-only --output-dir reports/npm --triage-summary
+edgp npm-bundle --path package-lock.json --impact-node left-pad --advisories advisories.json --deny-license GPL-3.0-only --output-dir reports/npm --fail-on-status fail
 edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
 edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
 edgp sbom-bundle --path bom.json --impact-node left-pad --deny-license WTFPL --fail-on-denied --output-dir reports/sbom
@@ -158,7 +158,7 @@ edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-in
 edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff
 edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
 edgp report --snapshot graph.json --output graph-report.html
-edgp report-bundle --input graph.json --input impact.json --output-dir reports --triage-summary
+edgp report-bundle --input graph.json --input impact.json --output-dir reports --fail-on-status fail
 edgp verify-bundle --path reports
 edgp triage-summary --bundle reports --fail-on-status fail
 edgp validate --path graph.json
@@ -596,6 +596,9 @@ license report automatically. Adding `--fail-on-denied` preserves the generated
 bundle artifacts and returns status `2` when denied licenses are present.
 Graph bundle commands also accept `--triage-summary` to write and link
 `triage-summary.json` and `triage-summary.html` beside the original reports.
+Passing `--fail-on-status warn|fail` implies `--triage-summary`, preserves the
+generated bundle artifacts, prints the bundle index path, and returns status `2`
+when the generated rollup reaches the selected threshold.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
 reachable traversal, and most-depended-upon timings. It is intended as a
@@ -708,6 +711,8 @@ With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and
 `triage-summary.html`, links the rollup from the bundle index, and records both
 artifact digests in `manifest.triageSummary` without adding the generated
 summary back into the input `reports` list.
+`--fail-on-status warn|fail` applies the same artifact-preserving gate directly
+to `report-bundle`.
 
 `edgp triage-summary` turns a report bundle, or a list of EDGP JSON reports, into
 one `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status,

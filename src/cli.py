@@ -582,11 +582,34 @@ def _write_license_report_if_requested(
     return [report_path]
 
 
-def _print_bundle_result(index_path: Path, *, fail_on_denied: bool = False) -> int:
+def _print_bundle_result(
+    index_path: Path,
+    *,
+    fail_on_denied: bool = False,
+    fail_on_status: str | None = None,
+) -> int:
     print(index_path)
     if fail_on_denied and _bundle_license_report_should_fail(index_path.parent):
         return 2
+    if _bundle_triage_summary_should_fail(index_path.parent, min_status=fail_on_status):
+        return 2
     return 0
+
+
+def _bundle_triage_summary_should_fail(
+    output_dir: Path,
+    *,
+    min_status: str | None = None,
+) -> bool:
+    if min_status is None:
+        return False
+    report_path = output_dir / "triage-summary.json"
+    if not report_path.exists():
+        return False
+    return _triage_summary_should_fail(
+        json.loads(report_path.read_text(encoding="utf-8")),
+        min_status=min_status,
+    )
 
 
 def _bundle_license_report_should_fail(output_dir: Path) -> bool:
@@ -1167,6 +1190,18 @@ def _add_triage_bundle_option(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="include generated triage-summary JSON and HTML artifacts in the bundle",
     )
+    parser.add_argument(
+        "--fail-on-status",
+        choices=["warn", "fail"],
+        help=(
+            "include a triage summary and return status 2 when it reaches this "
+            "severity"
+        ),
+    )
+
+
+def _include_triage_summary(args: argparse.Namespace) -> bool:
+    return bool(args.triage_summary or args.fail_on_status is not None)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1699,9 +1734,10 @@ def main(argv: list[str] | None = None) -> int:
                 denied_licenses=args.deny_license,
                 max_paths=args.limit,
                 command=command,
-                include_triage_summary=args.triage_summary,
+                include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_denied=args.fail_on_denied,
+            fail_on_status=args.fail_on_status,
         )
 
     if args.command == "dot":
@@ -1717,7 +1753,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "dot-bundle":
-        print(
+        return _print_bundle_result(
             _write_dot_bundle(
                 args.path,
                 args.output_dir,
@@ -1725,10 +1761,10 @@ def main(argv: list[str] | None = None) -> int:
                 impact_nodes=args.impact_node,
                 max_paths=args.limit,
                 command=command,
-                include_triage_summary=args.triage_summary,
-            )
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
         )
-        return 0
 
     if args.command == "sbom":
         resolved = CycloneDXAdapter().parse_graph(args.path)
@@ -1752,9 +1788,10 @@ def main(argv: list[str] | None = None) -> int:
                 denied_licenses=args.deny_license,
                 max_paths=args.limit,
                 command=command,
-                include_triage_summary=args.triage_summary,
+                include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_denied=args.fail_on_denied,
+            fail_on_status=args.fail_on_status,
         )
 
     if args.command == "maven-tree":
@@ -1770,17 +1807,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "maven-bundle":
-        print(
+        return _print_bundle_result(
             _write_maven_bundle(
                 args.path,
                 args.output_dir,
                 impact_nodes=args.impact_node,
                 max_paths=args.limit,
                 command=command,
-                include_triage_summary=args.triage_summary,
-            )
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
         )
-        return 0
 
     if args.command == "rpm-installed":
         resolved = InstalledRpmAdapter().parse_installed(
@@ -1808,9 +1845,10 @@ def main(argv: list[str] | None = None) -> int:
                 denied_licenses=args.deny_license,
                 max_paths=args.report_limit,
                 command=command,
-                include_triage_summary=args.triage_summary,
+                include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_denied=args.fail_on_denied,
+            fail_on_status=args.fail_on_status,
         )
 
     if args.command == "rpm-repo":
@@ -1863,9 +1901,10 @@ def main(argv: list[str] | None = None) -> int:
                 denied_licenses=args.deny_license,
                 max_paths=args.report_limit,
                 command=command,
-                include_triage_summary=args.triage_summary,
+                include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_denied=args.fail_on_denied,
+            fail_on_status=args.fail_on_status,
         )
 
     if args.command == "rpm-repo-diff":
@@ -1884,7 +1923,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "rpm-repo-diff-bundle":
-        print(
+        return _print_bundle_result(
             _write_rpm_repo_diff_bundle(
                 _rpm_repo_diff_source(args.left_primary, args.left_source, "left"),
                 _rpm_repo_diff_source(args.right_primary, args.right_source, "right"),
@@ -1894,10 +1933,10 @@ def main(argv: list[str] | None = None) -> int:
                 package_limit=args.package_limit,
                 requirement_limit=args.requirement_limit,
                 command=command,
-                include_triage_summary=args.triage_summary,
-            )
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
         )
-        return 0
 
     if args.command == "albs-build":
         root_identifier, graph, resolved_ecosystem = _load_albs_build_project_graph(
@@ -1950,7 +1989,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "albs-build-bundle":
-        print(
+        return _print_bundle_result(
             _write_albs_build_bundle(
                 args.output_dir,
                 build_id=args.build_id,
@@ -1963,10 +2002,10 @@ def main(argv: list[str] | None = None) -> int:
                 impact_nodes=args.impact_node,
                 max_paths=args.report_limit,
                 command=command,
-                include_triage_summary=args.triage_summary,
-            )
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
         )
-        return 0
 
     if args.command == "albs-build-diff":
         left = _load_albs_build_metadata(
@@ -2141,10 +2180,9 @@ def main(argv: list[str] | None = None) -> int:
             index_name=args.index_name,
             manifest_name=args.manifest_name,
             bundle_metadata={"sourceKind": "edgp-json", "command": command},
-            include_triage_summary=args.triage_summary,
+            include_triage_summary=_include_triage_summary(args),
         )
-        print(index_path)
-        return 0
+        return _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
 
     if args.command == "verify-bundle":
         report = verify_report_bundle(args.path, manifest_name=args.manifest_name)

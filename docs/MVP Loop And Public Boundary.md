@@ -254,6 +254,8 @@ surfaces are:
 - Embed the same generated triage summary artifacts into graph bundle commands
   for npm, Maven, DOT, CycloneDX SBOM, public RPM repository, installed RPM,
   RPM repository diff, and ALBS build inputs.
+- Return CI-friendly non-zero bundle exit status when generated triage summary
+  status reaches a selected warn/fail threshold.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

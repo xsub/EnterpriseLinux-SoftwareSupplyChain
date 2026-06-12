@@ -2684,13 +2684,15 @@ def _assert_npm_bundle() -> None:
                 "tests/fixtures/package-lock-conflict.json",
                 "--output-dir",
                 str(output_dir),
-                "--triage-summary",
+                "--fail-on-status",
+                "warn",
             ],
-            check=True,
+            check=False,
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
         )
+        assert completed.returncode == 2
         assert completed.stdout.strip() == str(output_dir / "index.html")
         graph = json.loads((output_dir / "npm-graph.json").read_text(encoding="utf-8"))
         diagnostics = json.loads(

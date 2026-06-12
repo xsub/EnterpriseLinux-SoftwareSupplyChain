@@ -171,7 +171,9 @@ def test_cli_report_bundle_can_include_triage_summary(tmp_path, capsys) -> None:
         encoding="utf-8"
     )
 
-    triage = json.loads((output_dir / "triage-summary.json").read_text(encoding="utf-8"))
+    triage = json.loads(
+        (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+    )
     assert triage["schema"] == "edgp.triage.summary.v1"
     assert triage["status"] == "fail"
     assert triage["summary"]["reports"] == 2
@@ -181,6 +183,32 @@ def test_cli_report_bundle_can_include_triage_summary(tmp_path, capsys) -> None:
     assert manifest["triageSummary"]["href"] == "triage-summary.html"
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+
+
+def test_cli_report_bundle_can_fail_on_triage_status(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "bundle"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output-dir",
+                str(output_dir),
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    triage = json.loads((output_dir / "triage-summary.json").read_text(encoding="utf-8"))
+    assert triage["schema"] == "edgp.triage.summary.v1"
+    assert triage["status"] == "warn"
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
 
 
 def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
