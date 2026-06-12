@@ -26,7 +26,7 @@ surfaces are:
 - public RPM repository `primary.xml`, `primary.xml.gz`, `repomd.xml`, or
   repository base URLs;
 - public ALBS build metadata and build-log metadata embedded in ALBS payloads;
-- public OSV-like advisory JSON payloads;
+- public OSV-like advisory JSON payloads from local files or URLs;
 - libsolv command discovery and saved transaction transcripts;
 - local graph traversal, impact reporting, diffing, and JSON/Cypher/CycloneDX
   export.
@@ -230,7 +230,10 @@ surfaces are:
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style
   transaction transcripts.
-- Normalize OSV-like public advisory feeds into EDGP advisory overlays.
+- Normalize OSV-like public advisory feeds from files or URLs into EDGP
+  advisory overlays.
+- Include normalized public advisory feeds and graph-matched advisory reports in
+  generated RPM repository graph bundles.
 - Generate performance reports for deterministic NumPy-backed CSR benchmark
   scenarios.
 
@@ -276,6 +279,7 @@ python -B -m src.cli albs-log-intelligence --path tests/fixtures/albs-build-upda
 python -B -m src.cli albs-release-completeness --path tests/fixtures/albs-build.json --path tests/fixtures/albs-build-updated.json
 python -B -m src.cli libsolv-bridge --transaction tests/fixtures/libsolv-transaction.txt
 python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv.json --ecosystem rpm
+python -B -m src.cli public-advisory-feed --url file://$PWD/tests/fixtures/public-osv.json --ecosystem rpm
 python -B -m src.cli performance-report --scenario 1000:3 --scenario 10000:5
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
 python -B -m src.cli impact --path tests/fixtures/package-lock.json --node left-pad

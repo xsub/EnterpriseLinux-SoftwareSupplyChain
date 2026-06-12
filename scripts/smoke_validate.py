@@ -1583,6 +1583,15 @@ def _assert_public_vertical_reports() -> None:
     )
     assert advisory["schema"] == "edgp.public.advisory_feed.v1"
     assert advisory["overlay"]["schema"] == "edgp.advisory.overlay.v1"
+    advisory_url = _run_cli(
+        [
+            "public-advisory-feed",
+            "--url",
+            (REPO_ROOT / "tests" / "fixtures" / "public-osv.json").as_uri(),
+        ]
+    )
+    assert advisory_url["schema"] == "edgp.public.advisory_feed.v1"
+    assert advisory_url["summary"]["advisories"] == 1
 
     performance = _run_cli(
         ["performance-report", "--scenario", "16:2", "--scenario", "32:3"]
@@ -1605,8 +1614,8 @@ def _assert_public_vertical_reports() -> None:
                 "nginx-core",
                 "--advisories",
                 "tests/fixtures/rpm-repo-advisories.json",
-                "--public-advisory-feed",
-                "tests/fixtures/public-osv.json",
+                "--public-advisory-feed-url",
+                (REPO_ROOT / "tests" / "fixtures" / "public-osv.json").as_uri(),
                 "--output-dir",
                 str(output_dir),
             ],

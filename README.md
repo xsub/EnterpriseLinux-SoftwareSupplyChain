@@ -115,6 +115,7 @@ edgp albs-log-intelligence --build-id 17813
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
 edgp libsolv-bridge --transaction solver-transaction.txt
 edgp public-advisory-feed --path osv.json --ecosystem rpm
+edgp public-advisory-feed --url https://example.com/osv.json --ecosystem rpm
 ```
 
 ### Query And Analyze
@@ -502,9 +503,10 @@ resources:
   inline build-log metadata when present.
 - `edgp albs-release-completeness` summarizes release, architecture, sign, and
   test coverage across a batch of public builds.
-- `edgp public-advisory-feed` normalizes OSV-like public advisory payloads into
-  EDGP advisory overlays; RPM repository bundles can now include that feed and
-  a graph-matched advisory impact report in the same static review artifact.
+- `edgp public-advisory-feed` normalizes OSV-like public advisory payloads from
+  local JSON files or URLs into EDGP advisory overlays; RPM repository bundles
+  can include that feed and a graph-matched advisory impact report in the same
+  static review artifact.
 - `edgp libsolv-bridge` reports local libsolv command availability and parses
   transaction transcripts so EDGP can explain solved RPM actions while leaving
   SAT solving to libsolv.

@@ -8,6 +8,7 @@ import shlex
 import sys
 from pathlib import Path
 from typing import Any, Sequence
+from urllib.request import Request, urlopen
 
 from src.albs_build_diff import build_albs_build_diff_report
 from src.albs_build_timing import build_albs_build_timing_report
@@ -420,6 +421,7 @@ def _write_rpm_repo_bundle(
     impact_nodes: list[str] | None = None,
     advisory_path: Path | None = None,
     public_advisory_feed_path: Path | None = None,
+    public_advisory_feed_url: str | None = None,
     max_paths: int = 20,
     command: str | None = None,
 ) -> Path:
@@ -456,10 +458,13 @@ def _write_rpm_repo_bundle(
             encoding="utf-8",
         )
         final_reports.append(advisory_report_path)
-    if public_advisory_feed_path is not None:
+    if public_advisory_feed_path is not None or public_advisory_feed_url is not None:
         public_feed_report_path = output_dir / "public-advisory-feed.json"
         public_feed_report = build_public_advisory_feed_report(
-            _load_public_json(public_advisory_feed_path),
+            _load_public_json_source(
+                path=public_advisory_feed_path,
+                url=public_advisory_feed_url,
+            ),
             ecosystem=resolved.ecosystem,
         )
         public_feed_report_path.write_text(
@@ -676,6 +681,26 @@ def _write_albs_build_bundle(
 
 def _load_public_json(path: Path) -> object:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _load_public_json_url(url: str) -> object:
+    request = Request(url, headers={"User-Agent": "edgp-public-advisory-feed/0.1"})
+    with urlopen(request, timeout=30.0) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def _load_public_json_source(
+    *,
+    path: Path | None = None,
+    url: str | None = None,
+) -> object:
+    if (path is None) == (url is None):
+        raise ValueError("Exactly one public advisory feed source is required")
+    if url is not None:
+        return _load_public_json_url(url)
+    if path is None:
+        raise ValueError("Public advisory feed path is required")
+    return _load_public_json(path)
 
 
 def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) -> list[tuple[int, int]]:
@@ -1048,6 +1073,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_bundle.add_argument("--impact-node", action="append", default=[])
     rpm_repo_bundle.add_argument("--advisories", type=Path)
     rpm_repo_bundle.add_argument("--public-advisory-feed", type=Path)
+    rpm_repo_bundle.add_argument("--public-advisory-feed-url")
     rpm_repo_bundle.add_argument("--report-limit", type=int, default=20)
 
     rpm_repo_diff = subparsers.add_parser(
@@ -1181,7 +1207,8 @@ def build_parser() -> argparse.ArgumentParser:
         "public-advisory-feed",
         help="Normalize a public advisory feed into an EDGP advisory overlay",
     )
-    public_advisory_feed.add_argument("--path", type=Path, required=True)
+    public_advisory_feed.add_argument("--path", type=Path)
+    public_advisory_feed.add_argument("--url")
     public_advisory_feed.add_argument("--ecosystem", default="rpm")
     public_advisory_feed.add_argument(
         "--format", choices=["report", "overlay"], default="report"
@@ -1535,6 +1562,7 @@ def main(argv: list[str] | None = None) -> int:
                 impact_nodes=args.impact_node,
                 advisory_path=args.advisories,
                 public_advisory_feed_path=args.public_advisory_feed,
+                public_advisory_feed_url=args.public_advisory_feed_url,
                 max_paths=args.report_limit,
                 command=command,
             )
@@ -1690,7 +1718,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "public-advisory-feed":
         report = build_public_advisory_feed_report(
-            _load_public_json(args.path),
+            _load_public_json_source(path=args.path, url=args.url),
             ecosystem=args.ecosystem,
         )
         if args.format == "overlay":

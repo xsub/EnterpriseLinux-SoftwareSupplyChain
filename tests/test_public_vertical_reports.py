@@ -291,6 +291,17 @@ def test_cli_public_vertical_commands(capsys) -> None:
     ) == 0
     assert json.loads(capsys.readouterr().out)["schema"] == "edgp.advisory.overlay.v1"
 
+    assert main(
+        [
+            "public-advisory-feed",
+            "--url",
+            Path("tests/fixtures/public-osv.json").resolve().as_uri(),
+        ]
+    ) == 0
+    public_feed = json.loads(capsys.readouterr().out)
+    assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
+    assert public_feed["summary"]["advisories"] == 1
+
 
 def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     output_dir = tmp_path / "rpm-repo-bundle"
@@ -306,8 +317,8 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
             "nginx-core",
             "--advisories",
             "tests/fixtures/rpm-repo-advisories.json",
-            "--public-advisory-feed",
-            "tests/fixtures/public-osv.json",
+            "--public-advisory-feed-url",
+            Path("tests/fixtures/public-osv.json").resolve().as_uri(),
         ]
     ) == 0
 
