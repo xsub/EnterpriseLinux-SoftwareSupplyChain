@@ -243,6 +243,8 @@ surfaces are:
   metadata matches a denied license.
 - Include license inventory and deny-list reports in generated npm, CycloneDX,
   public RPM repository, and installed RPM graph bundles.
+- Return CI-friendly non-zero bundle exit status for denied license findings
+  after writing the static report artifacts.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

@@ -566,6 +566,22 @@ def _write_license_report_if_requested(
     return [report_path]
 
 
+def _print_bundle_result(index_path: Path, *, fail_on_denied: bool = False) -> int:
+    print(index_path)
+    if fail_on_denied and _bundle_license_report_should_fail(index_path.parent):
+        return 2
+    return 0
+
+
+def _bundle_license_report_should_fail(output_dir: Path) -> bool:
+    report_path = output_dir / "license-report.json"
+    if not report_path.exists():
+        return False
+    return _license_report_should_fail(
+        json.loads(report_path.read_text(encoding="utf-8"))
+    )
+
+
 def _build_rpm_repo_diff_report(
     left_source: str,
     right_source: str,
@@ -1104,6 +1120,7 @@ def _add_rpm_repo_source_options(parser: argparse.ArgumentParser) -> None:
 def _add_license_bundle_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--license-report", action="store_true")
     parser.add_argument("--deny-license", action="append", default=[])
+    parser.add_argument("--fail-on-denied", action="store_true")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1603,19 +1620,19 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "npm-bundle":
-        print(
+        return _print_bundle_result(
             _write_npm_bundle(
                 args.path,
                 args.output_dir,
                 impact_nodes=args.impact_node,
                 advisory_path=args.advisories,
-                include_license_report=args.license_report,
+                include_license_report=args.license_report or args.fail_on_denied,
                 denied_licenses=args.deny_license,
                 max_paths=args.limit,
                 command=command,
-            )
+            ),
+            fail_on_denied=args.fail_on_denied,
         )
-        return 0
 
     if args.command == "dot":
         resolved = DotAdapter().parse_graph(args.path, ecosystem=args.ecosystem)
@@ -1655,18 +1672,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "sbom-bundle":
-        print(
+        return _print_bundle_result(
             _write_sbom_bundle(
                 args.path,
                 args.output_dir,
                 impact_nodes=args.impact_node,
-                include_license_report=args.license_report,
+                include_license_report=args.license_report or args.fail_on_denied,
                 denied_licenses=args.deny_license,
                 max_paths=args.limit,
                 command=command,
-            )
+            ),
+            fail_on_denied=args.fail_on_denied,
         )
-        return 0
 
     if args.command == "maven-tree":
         resolved = MavenTreeAdapter().parse_tree(args.path)
@@ -1708,19 +1725,19 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "rpm-installed-bundle":
-        print(
+        return _print_bundle_result(
             _write_rpm_installed_bundle(
                 args.output_dir,
                 limit=args.limit,
                 max_requirements=args.max_requirements,
                 impact_nodes=args.impact_node,
-                include_license_report=args.license_report,
+                include_license_report=args.license_report or args.fail_on_denied,
                 denied_licenses=args.deny_license,
                 max_paths=args.report_limit,
                 command=command,
-            )
+            ),
+            fail_on_denied=args.fail_on_denied,
         )
-        return 0
 
     if args.command == "rpm-repo":
         resolved = _load_rpm_repo_project_graph(
@@ -1757,7 +1774,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "rpm-repo-bundle":
-        print(
+        return _print_bundle_result(
             _write_rpm_repo_bundle(
                 _rpm_repo_source(args.primary, args.source),
                 args.output_dir,
@@ -1768,13 +1785,13 @@ def main(argv: list[str] | None = None) -> int:
                 advisory_path=args.advisories,
                 public_advisory_feed_path=args.public_advisory_feed,
                 public_advisory_feed_url=args.public_advisory_feed_url,
-                include_license_report=args.license_report,
+                include_license_report=args.license_report or args.fail_on_denied,
                 denied_licenses=args.deny_license,
                 max_paths=args.report_limit,
                 command=command,
-            )
+            ),
+            fail_on_denied=args.fail_on_denied,
         )
-        return 0
 
     if args.command == "rpm-repo-diff":
         print(

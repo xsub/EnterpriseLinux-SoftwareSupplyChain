@@ -153,7 +153,7 @@ Generate browser-friendly reports and verifiable static bundles:
 edgp npm-bundle --path package-lock.json --impact-node left-pad --advisories advisories.json --deny-license GPL-3.0-only --output-dir reports/npm
 edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
 edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
-edgp sbom-bundle --path bom.json --impact-node left-pad --deny-license WTFPL --output-dir reports/sbom
+edgp sbom-bundle --path bom.json --impact-node left-pad --deny-license WTFPL --fail-on-denied --output-dir reports/sbom
 edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --license-report --output-dir reports/rpm-installed
 edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff
 edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
@@ -589,7 +589,8 @@ RPM metadata when licenses are visible in the source.
 Graph bundle commands for npm lockfiles, CycloneDX SBOMs, public RPM
 repositories, and installed RPM databases can also include the same report with
 `--license-report`; passing `--deny-license` to a bundle command includes the
-license report automatically.
+license report automatically. Adding `--fail-on-denied` preserves the generated
+bundle artifacts and returns status `2` when denied licenses are present.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
 reachable traversal, and most-depended-upon timings. It is intended as a

@@ -1883,14 +1883,16 @@ def _assert_sbom_bundle() -> None:
                 "left-pad",
                 "--deny-license",
                 "WTFPL",
+                "--fail-on-denied",
                 "--output-dir",
                 str(output_dir),
             ],
-            check=True,
+            check=False,
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
         )
+        assert completed.returncode == 2
         assert completed.stdout.strip() == str(output_dir / "index.html")
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)

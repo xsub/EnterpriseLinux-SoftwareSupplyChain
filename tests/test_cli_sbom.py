@@ -112,3 +112,36 @@ def test_cli_sbom_bundle_can_include_license_report(tmp_path, capsys) -> None:
         "edgp.license.report.v1",
     ]
     assert (output_dir / "002-license-report.html").exists()
+
+
+def test_cli_sbom_bundle_can_fail_on_denied_license_after_writing_bundle(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "sbom-bundle"
+
+    assert (
+        main(
+            [
+                "sbom-bundle",
+                "--path",
+                "tests/fixtures/sample-bom.json",
+                "--deny-license",
+                "WTFPL",
+                "--fail-on-denied",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 2
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    license_report = json.loads(
+        (output_dir / "license-report.json").read_text(encoding="utf-8")
+    )
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+
+    assert license_report["summary"]["deniedFindings"] == 1
+    assert manifest["reports"][1]["schema"] == "edgp.license.report.v1"
+    assert (output_dir / "002-license-report.html").exists()
