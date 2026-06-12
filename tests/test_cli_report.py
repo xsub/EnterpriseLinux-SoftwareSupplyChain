@@ -146,6 +146,43 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert text.startswith("OK reports=2 failures=0 bundleSha256=")
 
 
+def test_cli_report_bundle_can_include_triage_summary(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "bundle"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/advisory-report.json",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+
+    index_path = Path(capsys.readouterr().out.strip())
+    assert index_path == output_dir / "index.html"
+    assert 'data-testid="report-bundle-triage-summary"' in index_path.read_text(
+        encoding="utf-8"
+    )
+
+    triage = json.loads((output_dir / "triage-summary.json").read_text(encoding="utf-8"))
+    assert triage["schema"] == "edgp.triage.summary.v1"
+    assert triage["status"] == "fail"
+    assert triage["summary"]["reports"] == 2
+
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["reportCount"] == 2
+    assert manifest["triageSummary"]["href"] == "triage-summary.html"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+
+
 def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     output_dir = tmp_path / "bundle"
     assert (

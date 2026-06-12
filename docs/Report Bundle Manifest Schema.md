@@ -24,6 +24,9 @@ use `--format text` for a concise terminal summary.
   `htmlSha256`, `schema`, `source`, `sourceSha256`, `summary`, and `title`.
   The digests are SHA-256 hashes of the rendered HTML bytes and source JSON
   bytes used for that member report.
+- `triageSummary`: optional generated aggregate triage summary artifact. It
+  mirrors report-entry digest fields, but is kept outside `reports` so the
+  summary describes the original bundle inputs rather than summarizing itself.
 
 ## Source Kinds
 

@@ -915,6 +915,9 @@ def _assert_report_bundle_manifest_contract(
     report_schema = schema["properties"]["reports"]["items"]
     required_report_keys = set(report_schema["required"])
     allowed_report_keys = set(report_schema["properties"])
+    triage_schema = schema["properties"]["triageSummary"]
+    required_triage_keys = set(triage_schema["required"])
+    allowed_triage_keys = set(triage_schema["properties"])
 
     assert manifest["schema"] == schema["properties"]["schema"]["const"]
     assert isinstance(manifest["index"], str) and manifest["index"]
@@ -938,6 +941,24 @@ def _assert_report_bundle_manifest_contract(
             source_path = _resolve_manifest_source(bundle_dir, report["source"])
             assert report["htmlSha256"] == _sha256_path(html_path)
             assert report["sourceSha256"] == _sha256_path(source_path)
+
+    triage_summary = manifest.get("triageSummary")
+    if triage_summary is not None:
+        assert isinstance(triage_summary, dict)
+        assert required_triage_keys <= set(triage_summary)
+        assert set(triage_summary) <= allowed_triage_keys
+        assert isinstance(triage_summary["href"], str) and triage_summary["href"]
+        assert _is_sha256(triage_summary["htmlSha256"])
+        assert triage_summary["schema"] == "edgp.triage.summary.v1"
+        assert isinstance(triage_summary["source"], str) and triage_summary["source"]
+        assert _is_sha256(triage_summary["sourceSha256"])
+        assert isinstance(triage_summary["summary"], dict)
+        assert isinstance(triage_summary["title"], str) and triage_summary["title"]
+        if bundle_dir is not None:
+            html_path = bundle_dir / triage_summary["href"]
+            source_path = _resolve_manifest_source(bundle_dir, triage_summary["source"])
+            assert triage_summary["htmlSha256"] == _sha256_path(html_path)
+            assert triage_summary["sourceSha256"] == _sha256_path(source_path)
 
     bundle = manifest.get("bundle")
     if bundle is not None:
@@ -2216,6 +2237,7 @@ def _assert_report_bundle() -> None:
                 "tests/fixtures/npm-diagnostics-report.json",
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -2227,7 +2249,9 @@ def _assert_report_bundle() -> None:
         index_html = index_path.read_text(encoding="utf-8")
         assert 'data-testid="report-bundle-index"' in index_html
         assert 'data-testid="report-bundle-verification"' in index_html
+        assert 'data-testid="report-bundle-triage-summary"' in index_html
         assert "002-npm-diagnostics-report.html" in index_html
+        assert "triage-summary.html" in index_html
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
         _assert_verify_bundle_command(output_dir)
@@ -2242,6 +2266,11 @@ def _assert_report_bundle() -> None:
         assert manifest["bundle"]["command"].startswith("edgp report-bundle ")
         assert manifest["bundleSha256"][:12] in index_html
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics-report.html"
+        assert manifest["triageSummary"]["href"] == "triage-summary.html"
+        triage = json.loads((output_dir / "triage-summary.json").read_text(encoding="utf-8"))
+        assert triage["schema"] == "edgp.triage.summary.v1"
+        assert triage["status"] == "warn"
+        assert triage["summary"]["reports"] == 2
         npm_html = (output_dir / "002-npm-diagnostics-report.html").read_text(
             encoding="utf-8"
         )

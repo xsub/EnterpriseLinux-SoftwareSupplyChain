@@ -1527,6 +1527,11 @@ def build_parser() -> argparse.ArgumentParser:
     report_bundle.add_argument("--output-dir", type=Path, required=True)
     report_bundle.add_argument("--index-name", default="index.html")
     report_bundle.add_argument("--manifest-name", default="manifest.json")
+    report_bundle.add_argument(
+        "--triage-summary",
+        action="store_true",
+        help="include generated triage-summary JSON and HTML artifacts in the bundle",
+    )
 
     verify_bundle = subparsers.add_parser(
         "verify-bundle",
@@ -2100,6 +2105,7 @@ def main(argv: list[str] | None = None) -> int:
             index_name=args.index_name,
             manifest_name=args.manifest_name,
             bundle_metadata={"sourceKind": "edgp-json", "command": command},
+            include_triage_summary=args.triage_summary,
         )
         print(index_path)
         return 0

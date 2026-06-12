@@ -50,6 +50,46 @@ def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
     assert "missing" in npm_html
 
 
+def test_write_report_bundle_can_include_triage_summary(tmp_path) -> None:
+    index_path = write_report_bundle(
+        [
+            Path("tests/fixtures/advisory-report.json"),
+            Path("tests/fixtures/npm-diagnostics-report.json"),
+        ],
+        tmp_path,
+        include_triage_summary=True,
+    )
+
+    index_html = index_path.read_text(encoding="utf-8")
+    assert 'data-testid="report-bundle-triage-summary"' in index_html
+    assert "triage-summary.html" in index_html
+
+    triage_json_path = tmp_path / "triage-summary.json"
+    triage_html_path = tmp_path / "triage-summary.html"
+    triage = json.loads(triage_json_path.read_text(encoding="utf-8"))
+    assert triage["schema"] == "edgp.triage.summary.v1"
+    assert triage["status"] == "fail"
+    assert triage["summary"]["reports"] == 2
+    assert triage["summary"]["failedChecks"] == 1
+    assert 'data-testid="triage-checks-panel"' in triage_html_path.read_text(
+        encoding="utf-8"
+    )
+
+    manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundleSha256"] == _manifest_sha256(manifest)
+    assert manifest["reportCount"] == 2
+    assert manifest["triageSummary"]["href"] == "triage-summary.html"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    assert manifest["triageSummary"]["schema"] == "edgp.triage.summary.v1"
+    assert manifest["triageSummary"]["sourceSha256"] == hashlib.sha256(
+        triage_json_path.read_bytes()
+    ).hexdigest()
+    assert manifest["triageSummary"]["htmlSha256"] == hashlib.sha256(
+        triage_html_path.read_bytes()
+    ).hexdigest()
+    assert verify_report_bundle(tmp_path)["ok"] is True
+
+
 def test_verify_report_bundle_reports_tampered_member_html(tmp_path) -> None:
     write_report_bundle(
         [
@@ -70,6 +110,29 @@ def test_verify_report_bundle_reports_tampered_member_html(tmp_path) -> None:
     assert report["ok"] is False
     assert report["summary"]["failures"] == 1
     assert report["failures"][0]["code"] == "htmlDigestMismatch"
+
+
+def test_verify_report_bundle_reports_tampered_triage_summary_html(tmp_path) -> None:
+    write_report_bundle(
+        [
+            Path("tests/fixtures/advisory-report.json"),
+            Path("tests/fixtures/npm-diagnostics-report.json"),
+        ],
+        tmp_path,
+        include_triage_summary=True,
+    )
+
+    assert verify_report_bundle(tmp_path)["ok"] is True
+
+    (tmp_path / "triage-summary.html").write_text(
+        "<!doctype html><title>tampered triage</title>",
+        encoding="utf-8",
+    )
+
+    report = verify_report_bundle(tmp_path)
+    assert report["ok"] is False
+    assert report["summary"]["failures"] == 1
+    assert report["failures"][0]["code"] == "triageSummaryHtmlDigestMismatch"
 
 
 def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:

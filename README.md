@@ -158,7 +158,7 @@ edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-in
 edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff
 edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
 edgp report --snapshot graph.json --output graph-report.html
-edgp report-bundle --input graph.json --input impact.json --output-dir reports
+edgp report-bundle --input graph.json --input impact.json --output-dir reports --triage-summary
 edgp verify-bundle --path reports
 edgp triage-summary --bundle reports --fail-on-status fail
 edgp validate --path graph.json
@@ -700,6 +700,10 @@ with the machine-readable JSON Schema at
 provides a normalized machine-readable example of the verification report.
 The bundle `index.html` also includes a compact verification summary showing
 report count, manifest schema, and a shortened bundle fingerprint.
+With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and
+`triage-summary.html`, links the rollup from the bundle index, and records both
+artifact digests in `manifest.triageSummary` without adding the generated
+summary back into the input `reports` list.
 
 `edgp triage-summary` turns a report bundle, or a list of EDGP JSON reports, into
 one `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status,

@@ -249,6 +249,8 @@ surfaces are:
   report bundles for CI/workbench consumption.
 - Return CI-friendly non-zero triage-summary exit status when aggregate bundle
   status reaches a selected warn/fail threshold.
+- Embed generated triage summary JSON and HTML artifacts into static report
+  bundles with manifest-recorded digests.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

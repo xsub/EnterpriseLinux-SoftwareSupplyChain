@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from src.output.html_report import render_report
+from src.triage_summary import build_triage_summary_report
 
 BUNDLE_SHA256_KEY = "bundleSha256"
 MANIFEST_SCHEMA = "edgp.report.bundle.v1"
@@ -34,7 +35,17 @@ _MANIFEST_REQUIRED_KEYS = {
     "reportCount",
     "reports",
 }
-_MANIFEST_ALLOWED_KEYS = _MANIFEST_REQUIRED_KEYS | {"bundle"}
+_MANIFEST_ALLOWED_KEYS = _MANIFEST_REQUIRED_KEYS | {"bundle", "triageSummary"}
+_TRIAGE_SUMMARY_REQUIRED_KEYS = {
+    "href",
+    "htmlSha256",
+    "schema",
+    "source",
+    "sourceSha256",
+    "summary",
+    "title",
+}
+_TRIAGE_SUMMARY_ALLOWED_KEYS = _TRIAGE_SUMMARY_REQUIRED_KEYS
 _REPORT_REQUIRED_KEYS = {
     "href",
     "htmlSha256",
@@ -65,15 +76,19 @@ def write_report_bundle(
     index_name: str = "index.html",
     manifest_name: str = "manifest.json",
     bundle_metadata: Mapping[str, object] | None = None,
+    include_triage_summary: bool = False,
+    triage_summary_name: str = "triage-summary.json",
 ) -> Path:
     if not input_paths:
         raise ValueError("At least one --input is required for a report bundle")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     entries = []
+    payloads = []
     for index, input_path in enumerate(input_paths, start=1):
         source_bytes = input_path.read_bytes()
         payload = json.loads(source_bytes.decode("utf-8"))
+        payloads.append(payload)
         html = render_report(payload)
         html_bytes = html.encode("utf-8")
         output_path = output_dir / f"{index:03d}-{_safe_stem(input_path)}.html"
@@ -90,14 +105,23 @@ def write_report_bundle(
             )
         )
 
+    triage_summary = None
+    if include_triage_summary:
+        triage_summary = _write_triage_summary_artifact(
+            payloads,
+            output_dir,
+            source_name=triage_summary_name,
+        )
+
     manifest = render_bundle_manifest(
         entries,
         index_name=index_name,
         bundle_metadata=bundle_metadata,
+        triage_summary=triage_summary,
     )
     index_path = output_dir / index_name
     index_path.write_text(
-        render_bundle_index(entries, manifest=manifest),
+        render_bundle_index(entries, manifest=manifest, triage_summary=triage_summary),
         encoding="utf-8",
     )
     manifest_path = output_dir / manifest_name
@@ -113,23 +137,13 @@ def render_bundle_manifest(
     *,
     index_name: str = "index.html",
     bundle_metadata: Mapping[str, object] | None = None,
+    triage_summary: BundleEntry | None = None,
 ) -> dict[str, Any]:
     manifest: dict[str, Any] = {
         "schema": MANIFEST_SCHEMA,
         "index": index_name,
         "reportCount": len(entries),
-        "reports": [
-            {
-                "href": entry.output_path.name,
-                "htmlSha256": entry.html_sha256,
-                "schema": entry.schema,
-                "source": _source_label(entry),
-                "sourceSha256": entry.source_sha256,
-                "summary": entry.summary,
-                "title": entry.title,
-            }
-            for entry in entries
-        ],
+        "reports": [_manifest_entry(entry) for entry in entries],
     }
     if bundle_metadata:
         manifest["bundle"] = {
@@ -137,8 +151,50 @@ def render_bundle_manifest(
             for key, value in sorted(bundle_metadata.items())
             if value is not None
         }
+    if triage_summary is not None:
+        manifest["triageSummary"] = _manifest_entry(triage_summary)
     manifest[BUNDLE_SHA256_KEY] = _manifest_sha256(manifest)
     return manifest
+
+
+def _write_triage_summary_artifact(
+    payloads: Sequence[dict[str, Any]],
+    output_dir: Path,
+    *,
+    source_name: str,
+) -> BundleEntry:
+    triage_report = build_triage_summary_report(
+        payloads,
+        source={"kind": "report-bundle-input", "reports": len(payloads)},
+    )
+    source_path = output_dir / source_name
+    source_bytes = json.dumps(triage_report, indent=2, sort_keys=True).encode("utf-8")
+    source_path.write_bytes(source_bytes)
+    html = render_report(triage_report)
+    html_bytes = html.encode("utf-8")
+    output_path = output_dir / f"{_safe_stem(source_path)}.html"
+    output_path.write_bytes(html_bytes)
+    return BundleEntry(
+        source_path=source_path,
+        output_path=output_path,
+        schema=str(triage_report.get("schema", "")),
+        title=_report_title(triage_report),
+        summary=_report_summary(triage_report),
+        source_sha256=_sha256(source_bytes),
+        html_sha256=_sha256(html_bytes),
+    )
+
+
+def _manifest_entry(entry: BundleEntry) -> dict[str, Any]:
+    return {
+        "href": entry.output_path.name,
+        "htmlSha256": entry.html_sha256,
+        "schema": entry.schema,
+        "source": _source_label(entry),
+        "sourceSha256": entry.source_sha256,
+        "summary": entry.summary,
+        "title": entry.title,
+    }
 
 
 def verify_report_bundle(
@@ -346,6 +402,81 @@ def _verify_manifest_shape(
                 manifest_path,
             )
 
+    triage_summary = manifest.get("triageSummary")
+    if triage_summary is not None:
+        _verify_triage_summary_shape(triage_summary, failures, manifest_path)
+
+
+def _verify_triage_summary_shape(
+    triage_summary: object,
+    failures: list[dict[str, str]],
+    manifest_path: Path,
+) -> None:
+    if not isinstance(triage_summary, dict):
+        _add_failure(
+            failures,
+            "triageSummaryInvalid",
+            "triageSummary must be an object when present",
+            manifest_path,
+        )
+        return
+    missing_keys = sorted(_TRIAGE_SUMMARY_REQUIRED_KEYS - set(triage_summary))
+    extra_keys = sorted(set(triage_summary) - _TRIAGE_SUMMARY_ALLOWED_KEYS)
+    for key in missing_keys:
+        _add_failure(
+            failures,
+            "triageSummaryMissingField",
+            f"triageSummary missing field: {key}",
+            manifest_path,
+        )
+    for key in extra_keys:
+        _add_failure(
+            failures,
+            "triageSummaryUnknownField",
+            f"triageSummary has unsupported field: {key}",
+            manifest_path,
+        )
+    for key in ("href", "schema", "source", "title"):
+        if not isinstance(triage_summary.get(key), str) or not triage_summary.get(key):
+            _add_failure(
+                failures,
+                "triageSummaryFieldInvalid",
+                f"triageSummary.{key} must be a non-empty string",
+                manifest_path,
+            )
+    if triage_summary.get("schema") != "edgp.triage.summary.v1":
+        _add_failure(
+            failures,
+            "triageSummarySchemaMismatch",
+            "triageSummary.schema must be edgp.triage.summary.v1",
+            manifest_path,
+        )
+    if isinstance(triage_summary.get("href"), str) and _bundle_member_path(
+        bundle_dir=manifest_path.parent,
+        label=triage_summary["href"],
+    ) is None:
+        _add_failure(
+            failures,
+            "triageSummaryHrefInvalid",
+            "triageSummary.href must be a bundle-local relative path",
+            manifest_path,
+        )
+    for key in ("htmlSha256", "sourceSha256"):
+        if not _is_sha256(triage_summary.get(key)):
+            _add_failure(
+                failures,
+                "triageSummaryDigestInvalid",
+                f"triageSummary.{key} must be a SHA-256 hex digest",
+                manifest_path,
+            )
+    if not isinstance(triage_summary.get("summary"), dict):
+        _add_failure(
+            failures,
+            "triageSummarySummaryInvalid",
+            "triageSummary.summary must be an object",
+            manifest_path,
+        )
+
 
 def _verify_manifest_fingerprint(
     manifest: Mapping[str, Any],
@@ -397,6 +528,30 @@ def _verify_manifest_files(
             path=source_path,
             report_index=index,
         )
+    triage_summary = manifest.get("triageSummary")
+    if isinstance(triage_summary, dict):
+        html_path = _bundle_member_path(bundle_dir, str(triage_summary.get("href", "")))
+        if html_path is not None:
+            _verify_file_digest(
+                failures,
+                code_prefix="triageSummaryHtml",
+                expected=triage_summary.get("htmlSha256"),
+                path=html_path,
+                report_index=0,
+                subject="triageSummary",
+            )
+        source_path = _resolve_manifest_source(
+            bundle_dir,
+            str(triage_summary.get("source", "")),
+        )
+        _verify_file_digest(
+            failures,
+            code_prefix="triageSummarySource",
+            expected=triage_summary.get("sourceSha256"),
+            path=source_path,
+            report_index=0,
+            subject="triageSummary",
+        )
 
 
 def _verify_file_digest(
@@ -406,12 +561,14 @@ def _verify_file_digest(
     expected: object,
     path: Path,
     report_index: int,
+    subject: str | None = None,
 ) -> None:
+    label = subject or f"reports[{report_index}]"
     if not path.exists():
         _add_failure(
             failures,
             f"{code_prefix}Missing",
-            f"reports[{report_index}] referenced file is missing",
+            f"{label} referenced file is missing",
             path,
         )
         return
@@ -422,7 +579,7 @@ def _verify_file_digest(
         _add_failure(
             failures,
             f"{code_prefix}DigestMismatch",
-            f"reports[{report_index}] digest mismatch",
+            f"{label} digest mismatch",
             path,
         )
 
@@ -494,9 +651,11 @@ def render_bundle_index(
     entries: Sequence[BundleEntry],
     *,
     manifest: Mapping[str, Any],
+    triage_summary: BundleEntry | None = None,
 ) -> str:
     cards = "\n".join(_entry_card(entry) for entry in entries)
     verification = _verification_summary(manifest)
+    triage = _triage_summary_card(triage_summary)
     return "\n".join(
         [
             "<!doctype html>",
@@ -517,6 +676,7 @@ def render_bundle_index(
             f"<p>{len(entries)} reports rendered for local dependency triage.</p>",
             "</section>",
             verification,
+            triage,
             '<section class="reports">',
             cards,
             "</section>",
@@ -524,6 +684,54 @@ def render_bundle_index(
             "</body>",
             "</html>",
         ]
+    )
+
+
+def _triage_summary_card(entry: BundleEntry | None) -> str:
+    if entry is None:
+        return ""
+    summary = entry.summary
+    metrics = [
+        ("Status", _read_generated_triage_status(entry.source_path)),
+        ("Failed Checks", summary.get("failedChecks", 0)),
+        ("Advisories", summary.get("advisoryFindings", 0)),
+        ("Denied Licenses", summary.get("deniedLicenseFindings", 0)),
+        ("npm Signals", _npm_signal_count(summary)),
+    ]
+    metric_items = "".join(
+        "<li>"
+        f"<span>{escape(label)}</span>"
+        f"<strong>{escape(str(value))}</strong>"
+        "</li>"
+        for label, value in metrics
+    )
+    return f"""
+<section class="triage-summary" data-testid="report-bundle-triage-summary">
+  <div>
+    <p class="schema">{escape(entry.schema)}</p>
+    <h2><a href="{escape(entry.output_path.name)}">{escape(entry.title)}</a></h2>
+    <p class="source">{escape(entry.source_path.name)}</p>
+  </div>
+  <ul>{metric_items}</ul>
+</section>""".strip()
+
+
+def _read_generated_triage_status(path: Path) -> str:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return "n/a"
+    return str(payload.get("status", "n/a"))
+
+
+def _npm_signal_count(summary: Mapping[str, Any]) -> int:
+    return sum(
+        int(summary.get(key, 0))
+        for key in (
+            "npmDuplicatePackageNames",
+            "npmNestedResolutionConflicts",
+            "npmUnresolvedDependencies",
+        )
     )
 
 
@@ -655,7 +863,7 @@ body {
   margin: 0 auto;
   padding: 28px 0 40px;
 }
-.hero, .verification, .report-card {
+.hero, .verification, .triage-summary, .report-card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -704,12 +912,13 @@ a { color: var(--blue); text-decoration-thickness: 2px; text-underline-offset: 3
   overflow-wrap: anywhere;
 }
 .reports { display: grid; gap: 14px; margin-top: 18px; }
-.report-card {
+.triage-summary, .report-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, auto);
   gap: 20px;
   padding: 18px;
 }
+.triage-summary { margin-top: 14px; border-top: 5px solid var(--blue); }
 .source { color: var(--muted); margin-bottom: 0; overflow-wrap: anywhere; }
 ul {
   display: grid;
@@ -729,7 +938,7 @@ li span { display: block; color: var(--muted); font-size: 12px; }
 li strong { display: block; margin-top: 2px; font-size: 18px; overflow-wrap: anywhere; }
 @media (max-width: 760px) {
   .bundle-shell { width: min(100vw - 20px, 1120px); padding-top: 10px; }
-  .hero, .report-card { grid-template-columns: 1fr; display: grid; }
+  .hero, .triage-summary, .report-card { grid-template-columns: 1fr; display: grid; }
   .verification { grid-template-columns: 1fr; }
   .verification div { border-left: 0; border-top: 1px solid var(--line); }
   .verification div:first-child { border-top: 0; }

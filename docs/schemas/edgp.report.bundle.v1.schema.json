@@ -105,6 +105,55 @@
     "schema": {
       "const": "edgp.report.bundle.v1",
       "description": "Manifest schema identifier."
+    },
+    "triageSummary": {
+      "additionalProperties": false,
+      "description": "Optional generated aggregate triage summary artifact for this bundle.",
+      "properties": {
+        "href": {
+          "description": "Triage summary HTML path relative to the bundle directory.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "htmlSha256": {
+          "description": "SHA-256 digest of the rendered triage summary HTML bytes.",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "schema": {
+          "const": "edgp.triage.summary.v1",
+          "description": "EDGP JSON schema identifier for the generated triage summary."
+        },
+        "source": {
+          "description": "Generated triage summary JSON path relative to the bundle directory.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "sourceSha256": {
+          "description": "SHA-256 digest of the generated triage summary JSON bytes.",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "summary": {
+          "description": "Aggregate triage summary metrics copied from the generated report.",
+          "type": "object"
+        },
+        "title": {
+          "description": "Human-readable title rendered in the bundle index.",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "href",
+        "htmlSha256",
+        "schema",
+        "source",
+        "sourceSha256",
+        "summary",
+        "title"
+      ],
+      "type": "object"
     }
   },
   "required": [
