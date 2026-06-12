@@ -572,6 +572,8 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
             "tests/fixtures/rpm-repo-advisories.json",
             "--public-advisory-feed-url",
             Path("tests/fixtures/public-osv-ranges.json").resolve().as_uri(),
+            "--libsolv-transaction",
+            "tests/fixtures/libsolv-transaction.txt",
             "--triage-summary",
         ]
     ) == 0
@@ -587,6 +589,7 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     assert manifest["reports"][3]["href"] == "004-advisory-report.html"
     assert manifest["reports"][4]["href"] == "005-public-advisory-feed.html"
     assert manifest["reports"][5]["href"] == "006-public-advisory-report.html"
+    assert manifest["reports"][6]["href"] == "007-libsolv-bridge.html"
     assert manifest["triageSummary"]["href"] == "triage-summary.html"
     summary = json.loads(
         (output_dir / "rpm-repository-summary.json").read_text(encoding="utf-8")
@@ -622,12 +625,19 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
         encoding="utf-8"
     )
     assert 'data-testid="advisory-findings-panel"' in public_advisory_html
+    libsolv = json.loads(
+        (output_dir / "libsolv-bridge.json").read_text(encoding="utf-8")
+    )
+    assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
+    assert libsolv["summary"]["graphExactActions"] == 1
+    libsolv_html = (output_dir / "007-libsolv-bridge.html").read_text(encoding="utf-8")
+    assert 'data-testid="libsolv-transaction-panel"' in libsolv_html
     triage = json.loads(
         (output_dir / "triage-summary.json").read_text(encoding="utf-8")
     )
     assert triage["schema"] == "edgp.triage.summary.v1"
     assert triage["status"] == "fail"
-    assert triage["summary"]["reports"] == 6
+    assert triage["summary"]["reports"] == 7
     assert triage["summary"]["advisoryFindings"] == 2
 
 

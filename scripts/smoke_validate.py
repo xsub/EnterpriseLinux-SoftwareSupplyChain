@@ -1912,6 +1912,8 @@ def _assert_public_vertical_reports() -> None:
                 (
                     REPO_ROOT / "tests" / "fixtures" / "public-osv-ranges.json"
                 ).as_uri(),
+                "--libsolv-transaction",
+                "tests/fixtures/libsolv-transaction.txt",
                 "--output-dir",
                 str(output_dir),
                 "--triage-summary",
@@ -1930,6 +1932,7 @@ def _assert_public_vertical_reports() -> None:
         assert manifest["reports"][3]["href"] == "004-advisory-report.html"
         assert manifest["reports"][4]["href"] == "005-public-advisory-feed.html"
         assert manifest["reports"][5]["href"] == "006-public-advisory-report.html"
+        assert manifest["reports"][6]["href"] == "007-libsolv-bridge.html"
         assert manifest["triageSummary"]["href"] == "triage-summary.html"
         advisory = json.loads(
             (output_dir / "advisory-report.json").read_text(encoding="utf-8")
@@ -1950,7 +1953,12 @@ def _assert_public_vertical_reports() -> None:
         )
         assert triage["schema"] == "edgp.triage.summary.v1"
         assert triage["status"] == "fail"
-        assert triage["summary"]["reports"] == 6
+        assert triage["summary"]["reports"] == 7
+        libsolv = json.loads(
+            (output_dir / "libsolv-bridge.json").read_text(encoding="utf-8")
+        )
+        assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
+        assert libsolv["summary"]["graphExactActions"] == 1
         public_advisory = json.loads(
             (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
         )
