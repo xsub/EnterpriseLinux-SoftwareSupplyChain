@@ -73,3 +73,53 @@ def test_cli_triage_summary_from_bundle(tmp_path, capsys) -> None:
     assert payload["bundle"]["sourceKind"] == "cyclonedx-sbom"
     assert payload["status"] == "fail"
     assert payload["summary"]["deniedLicenseFindings"] == 1
+
+
+def test_cli_triage_summary_can_fail_on_status(capsys) -> None:
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                "tests/fixtures/advisory-report.json",
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["schema"] == "edgp.triage.summary.v1"
+    assert payload["status"] == "fail"
+
+
+def test_cli_triage_summary_warn_threshold(capsys) -> None:
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "warn"
+
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+    assert json.loads(capsys.readouterr().out)["status"] == "warn"

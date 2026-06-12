@@ -160,7 +160,7 @@ edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output
 edgp report --snapshot graph.json --output graph-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports
 edgp verify-bundle --path reports
-edgp triage-summary --bundle reports
+edgp triage-summary --bundle reports --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
 ```
@@ -706,6 +706,8 @@ one `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status,
 graph size, advisory findings, denied license findings, npm diagnostic signals,
 and the source report list so CI systems and workbench/RAG contexts can read one
 compact artifact instead of stitching together every report manually.
+`--fail-on-status warn|fail` still prints the JSON rollup and returns status `2`
+when the computed status reaches the selected threshold.
 
 ## Roadmap
 

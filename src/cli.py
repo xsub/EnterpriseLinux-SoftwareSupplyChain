@@ -880,6 +880,24 @@ def _license_report_should_fail(report: dict[str, Any]) -> bool:
     return int(summary.get("deniedFindings", 0)) > 0
 
 
+_TRIAGE_STATUS_RANKS = {
+    "pass": 0,
+    "warn": 1,
+    "fail": 2,
+}
+
+
+def _triage_summary_should_fail(
+    report: dict[str, Any],
+    *,
+    min_status: str | None = None,
+) -> bool:
+    if min_status is None:
+        return False
+    status = str(report.get("status", "pass")).lower()
+    return _TRIAGE_STATUS_RANKS.get(status, 0) >= _TRIAGE_STATUS_RANKS[min_status]
+
+
 def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) -> list[tuple[int, int]]:
     if not values:
         return [(nodes, fanout)]
@@ -1490,6 +1508,11 @@ def build_parser() -> argparse.ArgumentParser:
     triage_input.add_argument("--bundle", type=Path)
     triage_input.add_argument("--input", type=Path, action="append", default=[])
     triage_summary.add_argument("--manifest-name", default="manifest.json")
+    triage_summary.add_argument(
+        "--fail-on-status",
+        choices=["warn", "fail"],
+        help="return status 2 when the triage status is at least this severity",
+    )
 
     report = subparsers.add_parser("report", help="Render a local HTML JSON report")
     report_input = report.add_mutually_exclusive_group(required=True)
@@ -2051,16 +2074,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "triage-summary":
         if args.bundle is not None:
-            print(
-                _json(
-                    build_triage_summary_from_bundle(
-                        args.bundle,
-                        manifest_name=args.manifest_name,
-                    )
-                )
+            triage_report = build_triage_summary_from_bundle(
+                args.bundle,
+                manifest_name=args.manifest_name,
             )
         else:
-            print(_json(build_triage_summary_from_paths(args.input)))
+            triage_report = build_triage_summary_from_paths(args.input)
+        print(_json(triage_report))
+        if _triage_summary_should_fail(
+            triage_report,
+            min_status=args.fail_on_status,
+        ):
+            return 2
         return 0
 
     if args.command == "report":

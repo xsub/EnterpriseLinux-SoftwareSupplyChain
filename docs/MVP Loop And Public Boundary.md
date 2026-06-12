@@ -247,6 +247,8 @@ surfaces are:
   after writing the static report artifacts.
 - Generate aggregate triage summaries from report lists or existing static
   report bundles for CI/workbench consumption.
+- Return CI-friendly non-zero triage-summary exit status when aggregate bundle
+  status reaches a selected warn/fail threshold.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

@@ -1749,6 +1749,27 @@ def _assert_public_vertical_reports() -> None:
     assert triage["schema"] == "edgp.triage.summary.v1"
     assert triage["status"] == "fail"
     assert triage["summary"]["failedChecks"] == 2
+    completed_triage_gate = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "triage-summary",
+            "--input",
+            "tests/fixtures/advisory-report.json",
+            "--fail-on-status",
+            "fail",
+        ],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed_triage_gate.returncode == 2
+    gated_triage = json.loads(completed_triage_gate.stdout)
+    assert gated_triage["schema"] == "edgp.triage.summary.v1"
+    assert gated_triage["status"] == "fail"
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]
