@@ -138,6 +138,7 @@ edgp impact --path package-lock.json --node left-pad
 edgp impact --source rpm-repo --path repodata/repomd.xml --node glibc
 edgp advisory --path package-lock.json --advisories advisories.json
 edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisories.json --ecosystem rpm
+edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed-url https://example.com/osv.json --ecosystem rpm
 edgp npm-diagnostics --path package-lock.json
 edgp diff --left before.json --right after.json
 ```
@@ -557,14 +558,16 @@ affected dependents, and shortest dependency chains back to the selected
 component. This is the public-input stand-in for future advisory or curated
 risk feeds.
 
-`edgp advisory` accepts a small local JSON overlay with `id`, `package`,
-optional `versions`, `ranges`, `severity`, `summary`, and `references` fields.
-It matches those records against graph nodes and embeds an
-`edgp.impact.report.v1` result for every matched package. For RPM graphs,
-`versions` may use the full node version, the RPM `version-release` EVR without
-architecture, or `epoch:version-release` when epoch is non-zero. `ranges`
-support simple OSV-style bounds for public feed impact reporting; libsolv
-remains the production authority for RPM SAT solving and transaction decisions.
+`edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
+optional `versions`, `ranges`, `severity`, `summary`, and `references` fields,
+or a public OSV-like advisory feed from `--public-advisory-feed` or
+`--public-advisory-feed-url`. It matches those records against graph nodes and
+embeds an `edgp.impact.report.v1` result for every matched package. For RPM
+graphs, `versions` may use the full node version, the RPM `version-release` EVR
+without architecture, or `epoch:version-release` when epoch is non-zero.
+`ranges` support simple OSV-style bounds for public feed impact reporting;
+libsolv remains the production authority for RPM SAT solving and transaction
+decisions.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
 reachable traversal, and most-depended-upon timings. It is intended as a

@@ -296,6 +296,26 @@ def test_cli_public_vertical_commands(capsys) -> None:
 
     assert main(
         [
+            "advisory",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--public-advisory-feed-url",
+            Path("tests/fixtures/public-osv-ranges.json").resolve().as_uri(),
+            "--ecosystem",
+            "rpm",
+        ]
+    ) == 0
+    public_advisory = json.loads(capsys.readouterr().out)
+    assert public_advisory["schema"] == "edgp.advisory.report.v1"
+    assert public_advisory["summary"]["findings"] == 1
+    assert public_advisory["findings"][0]["advisory"]["ranges"][0]["fixed"] == (
+        "1.20.1-16.el9_4.2"
+    )
+
+    assert main(
+        [
             "public-advisory-feed",
             "--path",
             "tests/fixtures/public-osv.json",

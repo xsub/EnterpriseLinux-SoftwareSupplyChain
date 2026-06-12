@@ -1571,6 +1571,26 @@ def _assert_public_vertical_reports() -> None:
     )
     assert rpm_repo_advisory["schema"] == "edgp.advisory.report.v1"
     assert rpm_repo_advisory["summary"]["findings"] == 1
+    rpm_repo_public_advisory = _run_cli(
+        [
+            "advisory",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--public-advisory-feed-url",
+            (
+                REPO_ROOT / "tests" / "fixtures" / "public-osv-ranges.json"
+            ).as_uri(),
+            "--ecosystem",
+            "rpm",
+        ]
+    )
+    assert rpm_repo_public_advisory["schema"] == "edgp.advisory.report.v1"
+    assert rpm_repo_public_advisory["summary"]["findings"] == 1
+    assert rpm_repo_public_advisory["findings"][0]["advisory"]["ranges"][0][
+        "fixed"
+    ] == "1.20.1-16.el9_4.2"
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]

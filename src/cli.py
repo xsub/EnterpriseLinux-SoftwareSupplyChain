@@ -703,6 +703,38 @@ def _load_public_json_source(
     return _load_public_json(path)
 
 
+def _load_advisory_payload(
+    *,
+    advisory_path: Path | None = None,
+    public_advisory_feed_path: Path | None = None,
+    public_advisory_feed_url: str | None = None,
+    ecosystem: str,
+) -> object:
+    source_count = sum(
+        value is not None
+        for value in (
+            advisory_path,
+            public_advisory_feed_path,
+            public_advisory_feed_url,
+        )
+    )
+    if source_count != 1:
+        raise ValueError(
+            "Exactly one of --advisories, --public-advisory-feed, "
+            "or --public-advisory-feed-url is required"
+        )
+    if advisory_path is not None:
+        return _load_public_json(advisory_path)
+    public_feed_report = build_public_advisory_feed_report(
+        _load_public_json_source(
+            path=public_advisory_feed_path,
+            url=public_advisory_feed_url,
+        ),
+        ecosystem=ecosystem,
+    )
+    return public_feed_report["overlay"]
+
+
 def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) -> list[tuple[int, int]]:
     if not values:
         return [(nodes, fanout)]
@@ -1240,7 +1272,7 @@ def build_parser() -> argparse.ArgumentParser:
     impact.add_argument("--max-requirements", type=int, default=40)
     _add_rpm_repo_source_options(impact)
 
-    advisory = subparsers.add_parser("advisory", help="Overlay local advisories on a graph")
+    advisory = subparsers.add_parser("advisory", help="Overlay advisories on a graph")
     advisory.add_argument(
         "--source",
         choices=[
@@ -1256,7 +1288,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     advisory.add_argument("--path", type=Path)
     advisory.add_argument("--ecosystem", default="npm")
-    advisory.add_argument("--advisories", type=Path, required=True)
+    advisory.add_argument("--advisories", type=Path)
+    advisory.add_argument("--public-advisory-feed", type=Path)
+    advisory.add_argument("--public-advisory-feed-url")
     advisory.add_argument("--limit", type=int, default=20)
     advisory.add_argument("--rpm-limit", type=int, default=100)
     advisory.add_argument("--max-requirements", type=int, default=40)
@@ -1771,8 +1805,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(
             _json(
-                build_advisory_report_from_file(
-                    args.advisories,
+                build_advisory_report(
+                    _load_advisory_payload(
+                        advisory_path=args.advisories,
+                        public_advisory_feed_path=args.public_advisory_feed,
+                        public_advisory_feed_url=args.public_advisory_feed_url,
+                        ecosystem=resolved_ecosystem,
+                    ),
                     graph,
                     root=root_identifier,
                     ecosystem=resolved_ecosystem,
