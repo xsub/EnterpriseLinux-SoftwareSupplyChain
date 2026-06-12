@@ -241,6 +241,8 @@ surfaces are:
   to package-name and version matching.
 - Generate license inventory reports and fail CI-style checks when public graph
   metadata matches a denied license.
+- Include license inventory and deny-list reports in generated npm, CycloneDX,
+  public RPM repository, and installed RPM graph bundles.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

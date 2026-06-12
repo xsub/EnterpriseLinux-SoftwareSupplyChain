@@ -1881,6 +1881,8 @@ def _assert_sbom_bundle() -> None:
                 "tests/fixtures/sample-bom.json",
                 "--impact-node",
                 "left-pad",
+                "--deny-license",
+                "WTFPL",
                 "--output-dir",
                 str(output_dir),
             ],
@@ -1897,10 +1899,16 @@ def _assert_sbom_bundle() -> None:
         assert manifest["bundle"]["command"].startswith("edgp sbom-bundle ")
         assert manifest["reports"][0]["href"] == "001-sbom-graph.html"
         assert manifest["reports"][1]["href"] == "002-impact-left-pad-1.3.0.html"
+        assert manifest["reports"][2]["href"] == "003-license-report.html"
         impact = json.loads(
             (output_dir / "impact-left-pad-1.3.0.json").read_text(encoding="utf-8")
         )
         assert impact["node"] == "left-pad==1.3.0"
+        license_report = json.loads(
+            (output_dir / "license-report.json").read_text(encoding="utf-8")
+        )
+        assert license_report["schema"] == "edgp.license.report.v1"
+        assert license_report["summary"]["deniedFindings"] == 1
 
 
 def _assert_snapshot_diff() -> None:

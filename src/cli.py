@@ -272,6 +272,8 @@ def _write_npm_bundle(
     *,
     impact_nodes: list[str] | None = None,
     advisory_path: Path | None = None,
+    include_license_report: bool = False,
+    denied_licenses: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
 ) -> Path:
@@ -298,6 +300,15 @@ def _write_npm_bundle(
             encoding="utf-8",
         )
         final_reports.append(advisory_report_path)
+
+    final_reports.extend(
+        _write_license_report_if_requested(
+            output_dir,
+            resolved,
+            include_license_report=include_license_report,
+            denied_licenses=denied_licenses,
+        )
+    )
 
     return write_graph_report_bundle(
         resolved,
@@ -358,6 +369,8 @@ def _write_sbom_bundle(
     output_dir: Path,
     *,
     impact_nodes: list[str] | None = None,
+    include_license_report: bool = False,
+    denied_licenses: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
 ) -> Path:
@@ -369,6 +382,12 @@ def _write_sbom_bundle(
         impact_nodes=impact_nodes,
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
+        extra_reports=_write_license_report_if_requested(
+            output_dir,
+            resolved,
+            include_license_report=include_license_report,
+            denied_licenses=denied_licenses,
+        ),
         bundle_metadata={"sourceKind": "cyclonedx-sbom", "command": command},
     )
 
@@ -379,6 +398,8 @@ def _write_rpm_installed_bundle(
     limit: int = 100,
     max_requirements: int = 40,
     impact_nodes: list[str] | None = None,
+    include_license_report: bool = False,
+    denied_licenses: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
 ) -> Path:
@@ -393,6 +414,12 @@ def _write_rpm_installed_bundle(
         impact_nodes=impact_nodes,
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
+        extra_reports=_write_license_report_if_requested(
+            output_dir,
+            resolved,
+            include_license_report=include_license_report,
+            denied_licenses=denied_licenses,
+        ),
         bundle_metadata={"sourceKind": "rpm-installed", "command": command},
     )
 
@@ -423,6 +450,8 @@ def _write_rpm_repo_bundle(
     advisory_path: Path | None = None,
     public_advisory_feed_path: Path | None = None,
     public_advisory_feed_url: str | None = None,
+    include_license_report: bool = False,
+    denied_licenses: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
 ) -> Path:
@@ -489,6 +518,15 @@ def _write_rpm_repo_bundle(
         )
         final_reports.append(public_advisory_report_path)
 
+    final_reports.extend(
+        _write_license_report_if_requested(
+            output_dir,
+            resolved,
+            include_license_report=include_license_report,
+            denied_licenses=denied_licenses,
+        )
+    )
+
     return write_graph_report_bundle(
         resolved,
         output_dir,
@@ -500,6 +538,32 @@ def _write_rpm_repo_bundle(
         extra_reports=final_reports,
         bundle_metadata={"sourceKind": "rpm-repository", "command": command},
     )
+
+
+def _write_license_report_if_requested(
+    output_dir: Path,
+    resolved: ResolvedProjectGraph,
+    *,
+    include_license_report: bool = False,
+    denied_licenses: list[str] | None = None,
+) -> list[Path]:
+    denied_licenses = denied_licenses or []
+    if not include_license_report and not denied_licenses:
+        return []
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "license-report.json"
+    report_path.write_text(
+        _json(
+            build_license_report(
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=resolved.ecosystem,
+                denied_licenses=denied_licenses,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return [report_path]
 
 
 def _build_rpm_repo_diff_report(
@@ -1037,6 +1101,11 @@ def _add_rpm_repo_source_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--requirement-limit", type=int, default=40)
 
 
+def _add_license_bundle_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--license-report", action="store_true")
+    parser.add_argument("--deny-license", action="append", default=[])
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="edgp")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1068,6 +1137,7 @@ def build_parser() -> argparse.ArgumentParser:
     npm_bundle.add_argument("--impact-node", action="append", default=[])
     npm_bundle.add_argument("--advisories", type=Path)
     npm_bundle.add_argument("--limit", type=int, default=20)
+    _add_license_bundle_options(npm_bundle)
 
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
     dot.add_argument("--path", type=Path, required=True)
@@ -1094,6 +1164,7 @@ def build_parser() -> argparse.ArgumentParser:
     sbom_bundle.add_argument("--output-dir", type=Path, required=True)
     sbom_bundle.add_argument("--impact-node", action="append", default=[])
     sbom_bundle.add_argument("--limit", type=int, default=20)
+    _add_license_bundle_options(sbom_bundle)
 
     maven_tree = subparsers.add_parser(
         "maven-tree", help="Export a graph from mvn dependency:tree text"
@@ -1129,6 +1200,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_installed_bundle.add_argument("--limit", type=int, default=100)
     rpm_installed_bundle.add_argument("--max-requirements", type=int, default=40)
     rpm_installed_bundle.add_argument("--report-limit", type=int, default=20)
+    _add_license_bundle_options(rpm_installed_bundle)
 
     rpm_repo = subparsers.add_parser(
         "rpm-repo",
@@ -1168,6 +1240,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_bundle.add_argument("--public-advisory-feed", type=Path)
     rpm_repo_bundle.add_argument("--public-advisory-feed-url")
     rpm_repo_bundle.add_argument("--report-limit", type=int, default=20)
+    _add_license_bundle_options(rpm_repo_bundle)
 
     rpm_repo_diff = subparsers.add_parser(
         "rpm-repo-diff",
@@ -1536,6 +1609,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 impact_nodes=args.impact_node,
                 advisory_path=args.advisories,
+                include_license_report=args.license_report,
+                denied_licenses=args.deny_license,
                 max_paths=args.limit,
                 command=command,
             )
@@ -1585,6 +1660,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.path,
                 args.output_dir,
                 impact_nodes=args.impact_node,
+                include_license_report=args.license_report,
+                denied_licenses=args.deny_license,
                 max_paths=args.limit,
                 command=command,
             )
@@ -1637,6 +1714,8 @@ def main(argv: list[str] | None = None) -> int:
                 limit=args.limit,
                 max_requirements=args.max_requirements,
                 impact_nodes=args.impact_node,
+                include_license_report=args.license_report,
+                denied_licenses=args.deny_license,
                 max_paths=args.report_limit,
                 command=command,
             )
@@ -1689,6 +1768,8 @@ def main(argv: list[str] | None = None) -> int:
                 advisory_path=args.advisories,
                 public_advisory_feed_path=args.public_advisory_feed,
                 public_advisory_feed_url=args.public_advisory_feed_url,
+                include_license_report=args.license_report,
+                denied_licenses=args.deny_license,
                 max_paths=args.report_limit,
                 command=command,
             )

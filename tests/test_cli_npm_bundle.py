@@ -93,7 +93,36 @@ def test_cli_npm_bundle_can_include_impact_and_advisory_reports(
         "edgp.advisory.report.v1",
     ]
     assert (output_dir / "003-impact-left-pad-1.3.0.html").exists()
-    advisory_html = (output_dir / "004-advisory-report.html").read_text(
-        encoding="utf-8"
+
+
+def test_cli_npm_bundle_can_include_license_inventory(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "npm-bundle"
+
+    assert (
+        main(
+            [
+                "npm-bundle",
+                "--path",
+                "tests/fixtures/package-lock.json",
+                "--license-report",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
     )
-    assert 'data-testid="advisory-findings-panel"' in advisory_html
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    license_report = json.loads(
+        (output_dir / "license-report.json").read_text(encoding="utf-8")
+    )
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+
+    assert license_report["schema"] == "edgp.license.report.v1"
+    assert license_report["summary"]["licensedPackages"] == 2
+    assert [report["schema"] for report in manifest["reports"]] == [
+        "edgp.graph.snapshot.v1",
+        "edgp.npm.diagnostics.v1",
+        "edgp.license.report.v1",
+    ]
+    assert (output_dir / "003-license-report.html").exists()

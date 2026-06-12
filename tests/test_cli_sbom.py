@@ -79,3 +79,36 @@ def test_cli_sbom_bundle_writes_graph_and_impact_reports(tmp_path, capsys) -> No
     graph_html = (output_dir / "001-sbom-graph.html").read_text(encoding="utf-8")
     assert "left-pad==1.3.0" in graph_html
     assert (output_dir / "002-impact-left-pad-1.3.0.html").exists()
+
+
+def test_cli_sbom_bundle_can_include_license_report(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "sbom-bundle"
+
+    assert (
+        main(
+            [
+                "sbom-bundle",
+                "--path",
+                "tests/fixtures/sample-bom.json",
+                "--deny-license",
+                "WTFPL",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    license_report = json.loads(
+        (output_dir / "license-report.json").read_text(encoding="utf-8")
+    )
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+
+    assert license_report["schema"] == "edgp.license.report.v1"
+    assert license_report["summary"]["deniedFindings"] == 1
+    assert [report["schema"] for report in manifest["reports"]] == [
+        "edgp.graph.snapshot.v1",
+        "edgp.license.report.v1",
+    ]
+    assert (output_dir / "002-license-report.html").exists()
