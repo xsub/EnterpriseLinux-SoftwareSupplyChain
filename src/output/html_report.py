@@ -498,7 +498,7 @@ def render_libsolv_bridge_report(report: dict[str, Any]) -> str:
             _rows_panel(
                 "Transaction Actions",
                 report.get("transactionActions", []),
-                ["action", "package", "oldPackage", "newPackage"],
+                ["action", "packageName", "packageArch", "nodeId", "oldNodeId", "newNodeId", "purl"],
                 test_id="libsolv-transaction-panel",
             ),
         ],

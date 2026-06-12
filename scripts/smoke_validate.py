@@ -1802,6 +1802,16 @@ def _assert_public_vertical_reports() -> None:
     )
     assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
     assert libsolv["summary"]["transactionActions"] == 3
+    assert libsolv["summary"]["parsedPackages"] == 4
+    assert libsolv["transactionActions"][0]["nodeId"] == (
+        "nginx==1.20.1-16.el9_4.1.x86_64"
+    )
+    assert libsolv["transactionActions"][1]["oldNodeId"] == (
+        "openssl==3.0.7-1.el9.x86_64"
+    )
+    assert libsolv["transactionActions"][1]["newNodeId"] == (
+        "openssl==3.0.7-2.el9.x86_64"
+    )
 
     advisory = _run_cli(
         ["public-advisory-feed", "--path", "tests/fixtures/public-osv.json"]

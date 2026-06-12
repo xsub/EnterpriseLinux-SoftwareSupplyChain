@@ -69,7 +69,7 @@
     },
     {
       "contract": "edgp.libsolv.bridge.v1",
-      "description": "libsolv command availability and transaction bridge report.",
+      "description": "libsolv command availability and normalized transaction bridge report.",
       "file": "edgp.libsolv.bridge.v1.schema.json",
       "id": "urn:edgp:schema:libsolv-bridge:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",

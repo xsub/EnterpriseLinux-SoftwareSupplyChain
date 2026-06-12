@@ -2,14 +2,110 @@
   "$id": "urn:edgp:schema:libsolv-bridge:v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": true,
-  "description": "libsolv command availability and transaction bridge report.",
+  "description": "libsolv command availability and normalized transaction bridge report.",
   "properties": {
-    "commands": {"items": {"type": "object"}, "type": "array"},
+    "commands": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "available": {"type": "boolean"},
+          "command": {"type": "string"},
+          "path": {"type": "string"}
+        },
+        "required": ["command", "available", "path"],
+        "type": "object"
+      },
+      "type": "array"
+    },
     "ecosystem": {"const": "rpm"},
     "integration": {"items": {"type": "string"}, "type": "array"},
     "schema": {"const": "edgp.libsolv.bridge.v1"},
-    "summary": {"type": "object"},
-    "transactionActions": {"items": {"type": "object"}, "type": "array"}
+    "summary": {
+      "additionalProperties": true,
+      "properties": {
+        "architectures": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "actions": {"type": "integer"},
+              "arch": {"type": "string"}
+            },
+            "required": ["arch", "actions"],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "commandsAvailable": {"type": "integer"},
+        "erases": {"type": "integer"},
+        "installs": {"type": "integer"},
+        "parsedPackages": {"type": "integer"},
+        "transactionActions": {"type": "integer"},
+        "upgrades": {"type": "integer"}
+      },
+      "required": [
+        "commandsAvailable",
+        "transactionActions",
+        "parsedPackages",
+        "installs",
+        "erases",
+        "upgrades",
+        "architectures"
+      ],
+      "type": "object"
+    },
+    "transactionActions": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "action": {"type": "string"},
+          "newNodeId": {"type": "string"},
+          "newPackage": {"type": "string"},
+          "newPackageMetadata": {"$ref": "#/$defs/packageMetadata"},
+          "nodeId": {"type": "string"},
+          "oldNodeId": {"type": "string"},
+          "oldPackage": {"type": "string"},
+          "oldPackageMetadata": {"$ref": "#/$defs/packageMetadata"},
+          "package": {"type": "string"},
+          "packageArch": {"type": "string"},
+          "packageMetadata": {"$ref": "#/$defs/packageMetadata"},
+          "packageName": {"type": "string"},
+          "packageRelease": {"type": "string"},
+          "packageVersion": {"type": "string"},
+          "purl": {"type": "string"}
+        },
+        "required": ["action", "package", "oldPackage", "newPackage"],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "$defs": {
+    "packageMetadata": {
+      "additionalProperties": true,
+      "properties": {
+        "arch": {"type": "string"},
+        "epoch": {"type": "string"},
+        "evr": {"type": "string"},
+        "name": {"type": "string"},
+        "nodeId": {"type": "string"},
+        "purl": {"type": "string"},
+        "raw": {"type": "string"},
+        "release": {"type": "string"},
+        "version": {"type": "string"}
+      },
+      "required": [
+        "raw",
+        "name",
+        "epoch",
+        "version",
+        "release",
+        "evr",
+        "arch",
+        "nodeId",
+        "purl"
+      ],
+      "type": "object"
+    }
   },
   "required": [
     "schema",

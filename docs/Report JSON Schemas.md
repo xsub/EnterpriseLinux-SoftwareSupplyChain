@@ -55,7 +55,8 @@ python -B scripts/generate_schema_index.py --check
   snapshots.
 - `edgp.libsolv.bridge.v1`:
   [`edgp.libsolv.bridge.v1.schema.json`](schemas/edgp.libsolv.bridge.v1.schema.json)
-  documents libsolv command discovery and parsed transaction actions.
+  documents libsolv command discovery, parsed transaction actions, normalized
+  RPM metadata, graph node IDs, and Package URLs.
 - `edgp.license.report.v1`:
   [`edgp.license.report.v1.schema.json`](schemas/edgp.license.report.v1.schema.json)
   documents license inventory and deny-list policy findings.

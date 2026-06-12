@@ -262,6 +262,8 @@ surfaces are:
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style
   transaction transcripts.
+- Normalize saved libsolv-style transaction package names into RPM metadata,
+  EDGP graph node identifiers, and Package URLs.
 - Normalize OSV-like public advisory feeds from files or URLs into EDGP
   advisory overlays.
 - Match normalized public advisory range intervals against RPM repository EVR

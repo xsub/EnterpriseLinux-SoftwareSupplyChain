@@ -515,7 +515,10 @@ resources:
   `fixed`/`limit`, and inclusive `lastAffected` bounds for report matching.
 - `edgp libsolv-bridge` reports local libsolv command availability and parses
   transaction transcripts so EDGP can explain solved RPM actions while leaving
-  SAT solving to libsolv.
+  SAT solving to libsolv. Parsed actions are normalized into RPM package
+  metadata, EDGP graph `nodeId` values, and Package URLs, which gives future
+  traversal/reporting steps a stable bridge from a solver transaction to graph
+  impact analysis.
 - `edgp performance-report` runs deterministic NumPy-backed CSR benchmark
   scenarios and records storage layout evidence.
 
@@ -581,6 +584,12 @@ Severity gates understand both those labels and numeric CVSS-style scores such
 as `9.8`.
 libsolv remains the production authority for RPM SAT solving and transaction
 decisions.
+`edgp libsolv-bridge --transaction ...` normalizes saved solver output into
+action rows with RPM name/version/release/arch fields, old/new node IDs for
+upgrades, and RPM Package URLs. That makes the bridge useful even on public
+infrastructure without invoking a private resolver: libsolv can decide the
+transaction, while EDGP can attach those solved package identities to CSR graph
+snapshots, bundle reports, and later blast-radius traversal.
 
 `edgp license-report` summarizes license metadata from any supported graph
 source and optionally checks a deny-list. `--deny-license` may be repeated; EDGP

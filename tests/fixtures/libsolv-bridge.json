@@ -1,8 +1,129 @@
 {
   "schema": "edgp.libsolv.bridge.v1",
   "ecosystem": "rpm",
-  "summary": {"commandsAvailable": 0, "transactionActions": 3, "installs": 1, "erases": 1, "upgrades": 1},
-  "commands": [],
-  "transactionActions": [],
-  "integration": []
+  "summary": {
+    "commandsAvailable": 0,
+    "transactionActions": 3,
+    "parsedPackages": 4,
+    "installs": 1,
+    "erases": 1,
+    "upgrades": 1,
+    "architectures": [
+      {
+        "arch": "x86_64",
+        "actions": 3
+      }
+    ]
+  },
+  "commands": [
+    {
+      "command": "repo2solv",
+      "available": false,
+      "path": ""
+    },
+    {
+      "command": "rpmmd2solv",
+      "available": false,
+      "path": ""
+    },
+    {
+      "command": "testsolv",
+      "available": false,
+      "path": ""
+    },
+    {
+      "command": "dumpsolv",
+      "available": false,
+      "path": ""
+    }
+  ],
+  "transactionActions": [
+    {
+      "action": "install",
+      "package": "nginx-1.20.1-16.el9_4.1.x86_64",
+      "oldPackage": "",
+      "newPackage": "",
+      "packageName": "nginx",
+      "packageVersion": "1.20.1",
+      "packageRelease": "16.el9_4.1",
+      "packageArch": "x86_64",
+      "nodeId": "nginx==1.20.1-16.el9_4.1.x86_64",
+      "purl": "pkg:rpm/nginx@1.20.1-16.el9_4.1?arch=x86_64",
+      "packageMetadata": {
+        "raw": "nginx-1.20.1-16.el9_4.1.x86_64",
+        "name": "nginx",
+        "epoch": "0",
+        "version": "1.20.1",
+        "release": "16.el9_4.1",
+        "evr": "1.20.1-16.el9_4.1",
+        "arch": "x86_64",
+        "nodeId": "nginx==1.20.1-16.el9_4.1.x86_64",
+        "purl": "pkg:rpm/nginx@1.20.1-16.el9_4.1?arch=x86_64"
+      }
+    },
+    {
+      "action": "upgrade",
+      "package": "openssl-3.0.7-1.el9.x86_64 -> openssl-3.0.7-2.el9.x86_64",
+      "oldPackage": "openssl-3.0.7-1.el9.x86_64",
+      "newPackage": "openssl-3.0.7-2.el9.x86_64",
+      "packageName": "openssl",
+      "packageVersion": "3.0.7",
+      "packageRelease": "2.el9",
+      "packageArch": "x86_64",
+      "nodeId": "openssl==3.0.7-2.el9.x86_64",
+      "oldNodeId": "openssl==3.0.7-1.el9.x86_64",
+      "newNodeId": "openssl==3.0.7-2.el9.x86_64",
+      "purl": "pkg:rpm/openssl@3.0.7-2.el9?arch=x86_64",
+      "oldPackageMetadata": {
+        "raw": "openssl-3.0.7-1.el9.x86_64",
+        "name": "openssl",
+        "epoch": "0",
+        "version": "3.0.7",
+        "release": "1.el9",
+        "evr": "3.0.7-1.el9",
+        "arch": "x86_64",
+        "nodeId": "openssl==3.0.7-1.el9.x86_64",
+        "purl": "pkg:rpm/openssl@3.0.7-1.el9?arch=x86_64"
+      },
+      "newPackageMetadata": {
+        "raw": "openssl-3.0.7-2.el9.x86_64",
+        "name": "openssl",
+        "epoch": "0",
+        "version": "3.0.7",
+        "release": "2.el9",
+        "evr": "3.0.7-2.el9",
+        "arch": "x86_64",
+        "nodeId": "openssl==3.0.7-2.el9.x86_64",
+        "purl": "pkg:rpm/openssl@3.0.7-2.el9?arch=x86_64"
+      }
+    },
+    {
+      "action": "erase",
+      "package": "oldpkg-1.0-1.el9.x86_64",
+      "oldPackage": "",
+      "newPackage": "",
+      "packageName": "oldpkg",
+      "packageVersion": "1.0",
+      "packageRelease": "1.el9",
+      "packageArch": "x86_64",
+      "nodeId": "oldpkg==1.0-1.el9.x86_64",
+      "purl": "pkg:rpm/oldpkg@1.0-1.el9?arch=x86_64",
+      "packageMetadata": {
+        "raw": "oldpkg-1.0-1.el9.x86_64",
+        "name": "oldpkg",
+        "epoch": "0",
+        "version": "1.0",
+        "release": "1.el9",
+        "evr": "1.0-1.el9",
+        "arch": "x86_64",
+        "nodeId": "oldpkg==1.0-1.el9.x86_64",
+        "purl": "pkg:rpm/oldpkg@1.0-1.el9?arch=x86_64"
+      }
+    }
+  ],
+  "integration": [
+    "Use libsolv for RPM SAT solving and transaction explanation.",
+    "Use EDGP to normalize solved packages into CSR graph snapshots and reports.",
+    "Keep solver correctness in libsolv instead of maintaining a custom SAT engine for RPM metadata."
+  ]
 }

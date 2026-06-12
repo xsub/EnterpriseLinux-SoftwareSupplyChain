@@ -168,7 +168,17 @@ def test_libsolv_bridge_parses_transaction_actions() -> None:
 
     assert report["schema"] == "edgp.libsolv.bridge.v1"
     assert report["summary"]["transactionActions"] == 3
+    assert report["summary"]["parsedPackages"] == 4
     assert report["summary"]["upgrades"] == 1
+    assert report["summary"]["architectures"] == [{"arch": "x86_64", "actions": 3}]
+    install = report["transactionActions"][0]
+    assert install["packageName"] == "nginx"
+    assert install["nodeId"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+    assert install["purl"] == "pkg:rpm/nginx@1.20.1-16.el9_4.1?arch=x86_64"
+    upgrade = report["transactionActions"][1]
+    assert upgrade["oldNodeId"] == "openssl==3.0.7-1.el9.x86_64"
+    assert upgrade["newNodeId"] == "openssl==3.0.7-2.el9.x86_64"
+    assert upgrade["newPackageMetadata"]["name"] == "openssl"
 
 
 def test_public_advisory_feed_normalizes_osv_to_overlay() -> None:
