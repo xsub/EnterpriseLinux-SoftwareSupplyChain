@@ -226,6 +226,8 @@ surfaces are:
   bundles.
 - Query public RPM repository graphs and run impact/advisory overlays over
   repository metadata through the shared graph analysis commands.
+- Match RPM advisory versions against full node versions, `version-release`
+  EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style
   transaction transcripts.
 - Normalize OSV-like public advisory feeds into EDGP advisory overlays.

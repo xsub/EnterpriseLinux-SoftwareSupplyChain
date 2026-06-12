@@ -554,7 +554,9 @@ risk feeds.
 `edgp advisory` accepts a small local JSON overlay with `id`, `package`,
 optional `versions`, `severity`, `summary`, and `references` fields. It matches
 those records against graph nodes and embeds an `edgp.impact.report.v1` result
-for every matched package.
+for every matched package. For RPM graphs, `versions` may use the full node
+version, the RPM `version-release` EVR without architecture, or
+`epoch:version-release` when epoch is non-zero.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
 reachable traversal, and most-depended-upon timings. It is intended as a

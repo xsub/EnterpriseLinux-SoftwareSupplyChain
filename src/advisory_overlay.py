@@ -42,7 +42,8 @@ def build_advisory_report(
 
     for advisory in sorted(advisories, key=_advisory_sort_key):
         for package_id in sorted(graph.vertex_map):
-            if not _matches_advisory(advisory, package_id, ecosystem):
+            metadata = graph.get_vertex_metadata(package_id)
+            if not _matches_advisory(advisory, package_id, ecosystem, metadata):
                 continue
             impact = build_impact_report(
                 graph,
@@ -57,7 +58,7 @@ def build_advisory_report(
                 {
                     "advisory": advisory,
                     "package": package_id,
-                    "metadata": graph.get_vertex_metadata(package_id),
+                    "metadata": metadata,
                     "impact": impact,
                 }
             )
@@ -101,7 +102,10 @@ def _extract_advisories(payload: object) -> list[dict[str, Any]]:
 
 
 def _matches_advisory(
-    advisory: dict[str, Any], package_id: str, ecosystem: str
+    advisory: dict[str, Any],
+    package_id: str,
+    ecosystem: str,
+    metadata: dict[str, str],
 ) -> bool:
     advisory_ecosystem = advisory.get("ecosystem")
     if advisory_ecosystem and str(advisory_ecosystem) != ecosystem:
@@ -117,7 +121,32 @@ def _matches_advisory(
     versions = _advisory_versions(advisory)
     if not versions:
         return True
-    return package_version in versions
+    return bool(versions & _version_candidates(package_version, ecosystem, metadata))
+
+
+def _version_candidates(
+    package_version: str,
+    ecosystem: str,
+    metadata: dict[str, str],
+) -> set[str]:
+    candidates = {package_version}
+    if ecosystem != "rpm":
+        return candidates
+
+    version = metadata.get("version", "")
+    release = metadata.get("release", "")
+    epoch = metadata.get("epoch", "")
+    arch = metadata.get("arch", "")
+    if version:
+        candidates.add(version)
+    if version and release:
+        evr = f"{version}-{release}"
+        candidates.add(evr)
+        if epoch and epoch not in ("0", "(none)"):
+            candidates.add(f"{epoch}:{evr}")
+    if arch and package_version.endswith(f".{arch}"):
+        candidates.add(package_version[: -(len(arch) + 1)])
+    return {candidate for candidate in candidates if candidate}
 
 
 def _advisory_package(advisory: dict[str, Any]) -> object | None:
