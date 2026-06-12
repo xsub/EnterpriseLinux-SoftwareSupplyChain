@@ -476,42 +476,68 @@ def render_libsolv_bridge_report(report: dict[str, Any]) -> str:
         raise ValueError("HTML libsolv bridge input must be an EDGP report")
 
     summary = report.get("summary", {})
-    return _document(
-        "EDGP libsolv Bridge",
-        [
-            _generic_hero(
-                eyebrow="rpm",
-                heading="libsolv bridge",
-                schema=str(report.get("schema")),
-                metrics=[
-                    ("Commands", summary.get("commandsAvailable", 0)),
-                    ("Actions", summary.get("transactionActions", 0)),
-                    ("Installs", summary.get("installs", 0)),
-                ],
-            ),
+    metrics = [
+        ("Commands", summary.get("commandsAvailable", 0)),
+        ("Actions", summary.get("transactionActions", 0)),
+        ("Installs", summary.get("installs", 0)),
+    ]
+    if "graphMatchedActions" in summary:
+        metrics.extend(
+            [
+                ("Graph Matches", summary.get("graphMatchedActions", 0)),
+                ("Impacted", summary.get("graphImpactedActions", 0)),
+            ]
+        )
+    sections = [
+        _generic_hero(
+            eyebrow="rpm",
+            heading="libsolv bridge",
+            schema=str(report.get("schema")),
+            metrics=metrics,
+        ),
+        _rows_panel(
+            "libsolv Commands",
+            report.get("commands", []),
+            ["command", "available", "path"],
+            test_id="libsolv-commands-panel",
+        ),
+        _rows_panel(
+            "Transaction Actions",
+            report.get("transactionActions", []),
+            [
+                "action",
+                "packageName",
+                "packageArch",
+                "nodeId",
+                "graphMatchStatus",
+                "graphAffectedDependents",
+                "oldNodeId",
+                "newNodeId",
+                "purl",
+            ],
+            test_id="libsolv-transaction-panel",
+        ),
+    ]
+    if isinstance(report.get("transactionImpact"), list):
+        sections.append(
             _rows_panel(
-                "libsolv Commands",
-                report.get("commands", []),
-                ["command", "available", "path"],
-                test_id="libsolv-commands-panel",
-            ),
-            _rows_panel(
-                "Transaction Actions",
-                report.get("transactionActions", []),
+                "Transaction Graph Impact",
+                report.get("transactionImpact", []),
                 [
+                    "actionIndex",
                     "action",
                     "packageName",
-                    "packageArch",
-                    "nodeId",
-                    "graphMatchStatus",
-                    "graphAffectedDependents",
-                    "oldNodeId",
-                    "newNodeId",
-                    "purl",
+                    "matchStatus",
+                    "directDependents",
+                    "affectedDependents",
+                    "matchedNodeIds",
                 ],
-                test_id="libsolv-transaction-panel",
-            ),
-        ],
+                test_id="libsolv-impact-panel",
+            )
+        )
+    return _document(
+        "EDGP libsolv Bridge",
+        sections,
         scripts=[_table_sort_script()],
     )
 

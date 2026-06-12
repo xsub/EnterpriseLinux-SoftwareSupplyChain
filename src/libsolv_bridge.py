@@ -62,6 +62,7 @@ def build_libsolv_bridge_report(
     }
     if graph_snapshot is not None:
         report["graphContext"] = _graph_context(graph_snapshot, graph_snapshot_path)
+        report["transactionImpact"] = _transaction_impact(actions)
     return report
 
 
@@ -388,6 +389,9 @@ def _graph_match_summary(actions: list[dict[str, Any]]) -> dict[str, Any]:
         "graphMatchedActions": sum(
             1 for status in statuses if status in {"exact", "candidate"}
         ),
+        "graphImpactedActions": sum(
+            1 for action in actions if int(action.get("graphAffectedDependents", 0) or 0)
+        ),
         "graphExactActions": statuses.count("exact"),
         "graphCandidateActions": statuses.count("candidate"),
         "graphUnmatchedActions": statuses.count("unmatched"),
@@ -401,4 +405,59 @@ def _graph_match_summary(actions: list[dict[str, Any]]) -> dict[str, Any]:
             int(action.get("graphAffectedDependents", 0) or 0)
             for action in actions
         ),
+        "maxGraphAffectedDependents": max(
+            (
+                int(action.get("graphAffectedDependents", 0) or 0)
+                for action in actions
+            ),
+            default=0,
+        ),
     }
+
+
+def _transaction_impact(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    for index, action in enumerate(actions, start=1):
+        matches = [
+            match
+            for match in action.get("graphMatches", [])
+            if isinstance(match, dict)
+        ]
+        matched = [match for match in matches if match.get("matched")]
+        rows.append(
+            {
+                "actionIndex": index,
+                "action": str(action.get("action") or ""),
+                "packageName": str(action.get("packageName") or ""),
+                "packageArch": str(action.get("packageArch") or ""),
+                "matchStatus": str(action.get("graphMatchStatus") or "unmatched"),
+                "matchedRoles": sorted(
+                    str(match.get("role") or "") for match in matched
+                ),
+                "matchedNodeIds": sorted(
+                    str(match.get("nodeId") or "")
+                    for match in matched
+                    if match.get("nodeId")
+                ),
+                "directDependents": sum(
+                    int(match.get("directDependents", 0) or 0)
+                    for match in matched
+                ),
+                "affectedDependents": int(
+                    action.get("graphAffectedDependents", 0) or 0
+                ),
+                "purl": str(action.get("purl") or ""),
+            }
+        )
+    return sorted(
+        rows,
+        key=lambda row: (
+            -int(row["affectedDependents"]),
+            _match_status_sort_key(str(row["matchStatus"])),
+            int(row["actionIndex"]),
+        ),
+    )
+
+
+def _match_status_sort_key(status: str) -> int:
+    return {"exact": 0, "candidate": 1, "unmatched": 2}.get(status, 3)

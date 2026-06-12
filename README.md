@@ -597,6 +597,9 @@ transaction, while EDGP can attach those solved package identities to CSR graph
 snapshots, bundle reports, and later blast-radius traversal. Passing
 `--graph-snapshot` enriches each transaction action with graph match status,
 matched node IDs, and dependent counts from an existing EDGP graph snapshot.
+It also emits a flat `transactionImpact` rollup sorted by affected dependents,
+so browser reports and CI/workbench consumers can see the highest-impact solver
+actions without unpacking nested match records.
 `edgp libsolv-bundle` writes the same bridge report into a static, verifiable
 HTML bundle with `manifest.json`, so a saved solver transaction can be reviewed
 in the browser or attached to a CI/workbench artifact set.

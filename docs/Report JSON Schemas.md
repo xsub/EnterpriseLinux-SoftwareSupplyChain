@@ -57,7 +57,7 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.libsolv.bridge.v1.schema.json`](schemas/edgp.libsolv.bridge.v1.schema.json)
   documents libsolv command discovery, parsed transaction actions, normalized
   RPM metadata, graph node IDs, Package URLs, and optional EDGP graph snapshot
-  matches.
+  matches with flat transaction impact rollups.
 - `edgp.license.report.v1`:
   [`edgp.license.report.v1.schema.json`](schemas/edgp.license.report.v1.schema.json)
   documents license inventory and deny-list policy findings.

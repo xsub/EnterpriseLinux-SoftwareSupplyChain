@@ -1831,6 +1831,8 @@ def _assert_public_vertical_reports() -> None:
     assert libsolv_graph["schema"] == "edgp.libsolv.bridge.v1"
     assert libsolv_graph["graphContext"]["schema"] == "edgp.graph.snapshot.v1"
     assert libsolv_graph["summary"]["graphExactActions"] == 1
+    assert libsolv_graph["summary"]["graphImpactedActions"] == 1
+    assert libsolv_graph["transactionImpact"][0]["matchStatus"] == "exact"
     assert libsolv_graph["transactionActions"][0]["graphMatchStatus"] == "exact"
     with tempfile.TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir) / "libsolv-bundle"
@@ -1863,6 +1865,7 @@ def _assert_public_vertical_reports() -> None:
         assert manifest["bundle"]["sourceKind"] == "libsolv-transaction"
         report = json.loads((output_dir / "libsolv-bridge.json").read_text(encoding="utf-8"))
         assert report["summary"]["graphExactActions"] == 1
+        assert report["transactionImpact"][0]["affectedDependents"] == 1
         assert manifest["triageSummary"]["source"] == "triage-summary.json"
 
     advisory = _run_cli(
@@ -1959,6 +1962,7 @@ def _assert_public_vertical_reports() -> None:
         )
         assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
         assert libsolv["summary"]["graphExactActions"] == 1
+        assert libsolv["transactionImpact"][0]["matchStatus"] == "exact"
         public_advisory = json.loads(
             (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
         )

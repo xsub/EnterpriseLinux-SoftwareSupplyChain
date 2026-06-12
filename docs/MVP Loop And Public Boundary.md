@@ -266,6 +266,8 @@ surfaces are:
   EDGP graph node identifiers, and Package URLs.
 - Match normalized libsolv-style transaction actions against an existing EDGP
   graph snapshot and report exact, candidate, and unmatched graph actions.
+- Emit a flat libsolv transaction impact rollup sorted by affected dependents
+  for browser, CI, workbench, and RAG consumers.
 - Render saved libsolv-style transaction bridge reports as static, verifiable
   HTML bundles for browser review.
 - Include graph-matched libsolv-style transaction reports inside generated

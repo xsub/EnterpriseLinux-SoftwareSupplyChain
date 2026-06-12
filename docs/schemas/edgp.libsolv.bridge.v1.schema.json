@@ -55,9 +55,11 @@
         "graphCandidatePackageMatches": {"type": "integer"},
         "graphExactActions": {"type": "integer"},
         "graphExactPackageMatches": {"type": "integer"},
+        "graphImpactedActions": {"type": "integer"},
         "graphMatchedActions": {"type": "integer"},
         "graphUnmatchedActions": {"type": "integer"},
         "installs": {"type": "integer"},
+        "maxGraphAffectedDependents": {"type": "integer"},
         "parsedPackages": {"type": "integer"},
         "transactionActions": {"type": "integer"},
         "upgrades": {"type": "integer"}
@@ -104,6 +106,10 @@
         "type": "object"
       },
       "type": "array"
+    },
+    "transactionImpact": {
+      "items": {"$ref": "#/$defs/transactionImpact"},
+      "type": "array"
     }
   },
   "$defs": {
@@ -129,6 +135,34 @@
         "evr",
         "arch",
         "nodeId",
+        "purl"
+      ],
+      "type": "object"
+    },
+    "transactionImpact": {
+      "additionalProperties": true,
+      "properties": {
+        "action": {"type": "string"},
+        "actionIndex": {"type": "integer"},
+        "affectedDependents": {"type": "integer"},
+        "directDependents": {"type": "integer"},
+        "matchedNodeIds": {"items": {"type": "string"}, "type": "array"},
+        "matchedRoles": {"items": {"type": "string"}, "type": "array"},
+        "matchStatus": {"type": "string"},
+        "packageArch": {"type": "string"},
+        "packageName": {"type": "string"},
+        "purl": {"type": "string"}
+      },
+      "required": [
+        "actionIndex",
+        "action",
+        "packageName",
+        "packageArch",
+        "matchStatus",
+        "matchedRoles",
+        "matchedNodeIds",
+        "directDependents",
+        "affectedDependents",
         "purl"
       ],
       "type": "object"

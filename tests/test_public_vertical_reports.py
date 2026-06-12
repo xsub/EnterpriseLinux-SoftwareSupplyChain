@@ -204,8 +204,16 @@ def test_libsolv_bridge_matches_transaction_actions_to_graph_snapshot(
     assert report["graphContext"]["schema"] == "edgp.graph.snapshot.v1"
     assert report["graphContext"]["nodes"] == 3
     assert report["summary"]["graphMatchedActions"] == 1
+    assert report["summary"]["graphImpactedActions"] == 1
     assert report["summary"]["graphExactActions"] == 1
     assert report["summary"]["graphUnmatchedActions"] == 2
+    assert report["summary"]["maxGraphAffectedDependents"] == 1
+    assert report["transactionImpact"][0]["actionIndex"] == 1
+    assert report["transactionImpact"][0]["matchStatus"] == "exact"
+    assert report["transactionImpact"][0]["matchedNodeIds"] == [
+        "nginx==1.20.1-16.el9_4.1.x86_64"
+    ]
+    assert report["transactionImpact"][0]["affectedDependents"] == 1
     install = report["transactionActions"][0]
     assert install["graphMatchStatus"] == "exact"
     assert install["graphMatchedNodeIds"] == [
@@ -252,6 +260,7 @@ def test_cli_libsolv_bundle_writes_report_bundle(tmp_path: Path, capsys) -> None
     assert report["summary"]["graphExactActions"] == 1
     html = (output_dir / manifest["reports"][0]["href"]).read_text(encoding="utf-8")
     assert 'data-testid="libsolv-transaction-panel"' in html
+    assert 'data-testid="libsolv-impact-panel"' in html
     assert "exact" in html
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
@@ -630,8 +639,10 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     )
     assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
     assert libsolv["summary"]["graphExactActions"] == 1
+    assert libsolv["transactionImpact"][0]["matchStatus"] == "exact"
     libsolv_html = (output_dir / "007-libsolv-bridge.html").read_text(encoding="utf-8")
     assert 'data-testid="libsolv-transaction-panel"' in libsolv_html
+    assert 'data-testid="libsolv-impact-panel"' in libsolv_html
     triage = json.loads(
         (output_dir / "triage-summary.json").read_text(encoding="utf-8")
     )
