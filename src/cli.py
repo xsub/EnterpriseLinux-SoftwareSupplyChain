@@ -280,6 +280,7 @@ def _write_npm_bundle(
     denied_licenses: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     adapter = NpmAdapter()
@@ -324,6 +325,7 @@ def _write_npm_bundle(
         extra_reports_after_graph=[diagnostics_path],
         extra_reports=final_reports,
         bundle_metadata={"sourceKind": "npm-lockfile", "command": command},
+        include_triage_summary=include_triage_summary,
     )
 
 
@@ -334,6 +336,7 @@ def _write_maven_bundle(
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     resolved = MavenTreeAdapter().parse_tree(path)
     return write_graph_report_bundle(
@@ -344,6 +347,7 @@ def _write_maven_bundle(
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
         bundle_metadata={"sourceKind": "maven-dependency-tree", "command": command},
+        include_triage_summary=include_triage_summary,
     )
 
 
@@ -355,6 +359,7 @@ def _write_dot_bundle(
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     resolved = DotAdapter().parse_graph(path, ecosystem=ecosystem)
     return write_graph_report_bundle(
@@ -365,6 +370,7 @@ def _write_dot_bundle(
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
         bundle_metadata={"sourceKind": "dot", "command": command},
+        include_triage_summary=include_triage_summary,
     )
 
 
@@ -377,6 +383,7 @@ def _write_sbom_bundle(
     denied_licenses: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     resolved = CycloneDXAdapter().parse_graph(path)
     return write_graph_report_bundle(
@@ -393,6 +400,7 @@ def _write_sbom_bundle(
             denied_licenses=denied_licenses,
         ),
         bundle_metadata={"sourceKind": "cyclonedx-sbom", "command": command},
+        include_triage_summary=include_triage_summary,
     )
 
 
@@ -406,6 +414,7 @@ def _write_rpm_installed_bundle(
     denied_licenses: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     resolved = InstalledRpmAdapter().parse_installed(
         limit=limit,
@@ -425,6 +434,7 @@ def _write_rpm_installed_bundle(
             denied_licenses=denied_licenses,
         ),
         bundle_metadata={"sourceKind": "rpm-installed", "command": command},
+        include_triage_summary=include_triage_summary,
     )
 
 
@@ -458,6 +468,7 @@ def _write_rpm_repo_bundle(
     denied_licenses: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     resolved = _load_rpm_repo_project_graph(
         source,
@@ -541,6 +552,7 @@ def _write_rpm_repo_bundle(
         extra_reports_after_graph=[summary_path],
         extra_reports=final_reports,
         bundle_metadata={"sourceKind": "rpm-repository", "command": command},
+        include_triage_summary=include_triage_summary,
     )
 
 
@@ -625,6 +637,7 @@ def _write_rpm_repo_diff_bundle(
     package_limit: int = 5000,
     requirement_limit: int = 40,
     command: str | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     diff_path = output_dir / "rpm-repository-diff.json"
@@ -645,6 +658,7 @@ def _write_rpm_repo_diff_bundle(
         [diff_path],
         output_dir,
         bundle_metadata={"sourceKind": "rpm-repository-diff", "command": command},
+        include_triage_summary=include_triage_summary,
     )
 
 
@@ -731,6 +745,7 @@ def _write_albs_build_bundle(
     impact_nodes: list[str] | None = None,
     max_paths: int = 20,
     command: str | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     payload = _load_albs_build_metadata(build_id=build_id, path=path, base_url=base_url)
     resolved = AlbsBuildAdapter().parse_metadata(
@@ -761,6 +776,7 @@ def _write_albs_build_bundle(
         max_paths=max_paths,
         extra_reports_after_graph=[inventory_path, timing_path],
         bundle_metadata={"sourceKind": "albs-build", "command": command},
+        include_triage_summary=include_triage_summary,
     )
 
 
@@ -1145,6 +1161,14 @@ def _add_license_bundle_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--fail-on-denied", action="store_true")
 
 
+def _add_triage_bundle_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--triage-summary",
+        action="store_true",
+        help="include generated triage-summary JSON and HTML artifacts in the bundle",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="edgp")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1177,6 +1201,7 @@ def build_parser() -> argparse.ArgumentParser:
     npm_bundle.add_argument("--advisories", type=Path)
     npm_bundle.add_argument("--limit", type=int, default=20)
     _add_license_bundle_options(npm_bundle)
+    _add_triage_bundle_option(npm_bundle)
 
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
     dot.add_argument("--path", type=Path, required=True)
@@ -1191,6 +1216,7 @@ def build_parser() -> argparse.ArgumentParser:
     dot_bundle.add_argument("--output-dir", type=Path, required=True)
     dot_bundle.add_argument("--impact-node", action="append", default=[])
     dot_bundle.add_argument("--limit", type=int, default=20)
+    _add_triage_bundle_option(dot_bundle)
 
     sbom = subparsers.add_parser("sbom", help="Export a graph from a CycloneDX JSON SBOM")
     sbom.add_argument("--path", type=Path, required=True)
@@ -1204,6 +1230,7 @@ def build_parser() -> argparse.ArgumentParser:
     sbom_bundle.add_argument("--impact-node", action="append", default=[])
     sbom_bundle.add_argument("--limit", type=int, default=20)
     _add_license_bundle_options(sbom_bundle)
+    _add_triage_bundle_option(sbom_bundle)
 
     maven_tree = subparsers.add_parser(
         "maven-tree", help="Export a graph from mvn dependency:tree text"
@@ -1220,6 +1247,7 @@ def build_parser() -> argparse.ArgumentParser:
     maven_bundle.add_argument("--output-dir", type=Path, required=True)
     maven_bundle.add_argument("--impact-node", action="append", default=[])
     maven_bundle.add_argument("--limit", type=int, default=20)
+    _add_triage_bundle_option(maven_bundle)
 
     rpm_installed = subparsers.add_parser(
         "rpm-installed", help="Export a graph from the local RPM database"
@@ -1240,6 +1268,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_installed_bundle.add_argument("--max-requirements", type=int, default=40)
     rpm_installed_bundle.add_argument("--report-limit", type=int, default=20)
     _add_license_bundle_options(rpm_installed_bundle)
+    _add_triage_bundle_option(rpm_installed_bundle)
 
     rpm_repo = subparsers.add_parser(
         "rpm-repo",
@@ -1280,6 +1309,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_bundle.add_argument("--public-advisory-feed-url")
     rpm_repo_bundle.add_argument("--report-limit", type=int, default=20)
     _add_license_bundle_options(rpm_repo_bundle)
+    _add_triage_bundle_option(rpm_repo_bundle)
 
     rpm_repo_diff = subparsers.add_parser(
         "rpm-repo-diff",
@@ -1307,6 +1337,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_diff_bundle.add_argument("--package-limit", type=int, default=5000)
     rpm_repo_diff_bundle.add_argument("--requirement-limit", type=int, default=40)
     rpm_repo_diff_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(rpm_repo_diff_bundle)
 
     albs_build = subparsers.add_parser(
         "albs-build",
@@ -1363,6 +1394,7 @@ def build_parser() -> argparse.ArgumentParser:
     albs_build_bundle.add_argument("--test-task-limit", type=int, default=50)
     albs_build_bundle.add_argument("--include-logs", action="store_true")
     albs_build_bundle.add_argument("--report-limit", type=int, default=20)
+    _add_triage_bundle_option(albs_build_bundle)
 
     albs_build_diff = subparsers.add_parser(
         "albs-build-diff",
@@ -1527,11 +1559,7 @@ def build_parser() -> argparse.ArgumentParser:
     report_bundle.add_argument("--output-dir", type=Path, required=True)
     report_bundle.add_argument("--index-name", default="index.html")
     report_bundle.add_argument("--manifest-name", default="manifest.json")
-    report_bundle.add_argument(
-        "--triage-summary",
-        action="store_true",
-        help="include generated triage-summary JSON and HTML artifacts in the bundle",
-    )
+    _add_triage_bundle_option(report_bundle)
 
     verify_bundle = subparsers.add_parser(
         "verify-bundle",
@@ -1671,6 +1699,7 @@ def main(argv: list[str] | None = None) -> int:
                 denied_licenses=args.deny_license,
                 max_paths=args.limit,
                 command=command,
+                include_triage_summary=args.triage_summary,
             ),
             fail_on_denied=args.fail_on_denied,
         )
@@ -1696,6 +1725,7 @@ def main(argv: list[str] | None = None) -> int:
                 impact_nodes=args.impact_node,
                 max_paths=args.limit,
                 command=command,
+                include_triage_summary=args.triage_summary,
             )
         )
         return 0
@@ -1722,6 +1752,7 @@ def main(argv: list[str] | None = None) -> int:
                 denied_licenses=args.deny_license,
                 max_paths=args.limit,
                 command=command,
+                include_triage_summary=args.triage_summary,
             ),
             fail_on_denied=args.fail_on_denied,
         )
@@ -1746,6 +1777,7 @@ def main(argv: list[str] | None = None) -> int:
                 impact_nodes=args.impact_node,
                 max_paths=args.limit,
                 command=command,
+                include_triage_summary=args.triage_summary,
             )
         )
         return 0
@@ -1776,6 +1808,7 @@ def main(argv: list[str] | None = None) -> int:
                 denied_licenses=args.deny_license,
                 max_paths=args.report_limit,
                 command=command,
+                include_triage_summary=args.triage_summary,
             ),
             fail_on_denied=args.fail_on_denied,
         )
@@ -1830,6 +1863,7 @@ def main(argv: list[str] | None = None) -> int:
                 denied_licenses=args.deny_license,
                 max_paths=args.report_limit,
                 command=command,
+                include_triage_summary=args.triage_summary,
             ),
             fail_on_denied=args.fail_on_denied,
         )
@@ -1860,6 +1894,7 @@ def main(argv: list[str] | None = None) -> int:
                 package_limit=args.package_limit,
                 requirement_limit=args.requirement_limit,
                 command=command,
+                include_triage_summary=args.triage_summary,
             )
         )
         return 0
@@ -1928,6 +1963,7 @@ def main(argv: list[str] | None = None) -> int:
                 impact_nodes=args.impact_node,
                 max_paths=args.report_limit,
                 command=command,
+                include_triage_summary=args.triage_summary,
             )
         )
         return 0

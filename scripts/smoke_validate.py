@@ -1351,6 +1351,7 @@ def _assert_maven_bundle() -> None:
                 "com.example:native-lib:linux-x86_64",
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -1401,6 +1402,7 @@ def _assert_dot_bundle() -> None:
                 "glibc",
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -1408,7 +1410,9 @@ def _assert_dot_bundle() -> None:
             text=True,
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
-        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads(
+            (output_dir / "manifest.json").read_text(encoding="utf-8")
+        )
         _assert_report_bundle_manifest_contract(manifest, output_dir)
         _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "dot"
@@ -1459,6 +1463,7 @@ def _assert_albs_build_bundle() -> None:
                 impact_node,
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -1847,6 +1852,7 @@ def _assert_public_vertical_reports() -> None:
                 ).as_uri(),
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -1862,6 +1868,7 @@ def _assert_public_vertical_reports() -> None:
         assert manifest["reports"][3]["href"] == "004-advisory-report.html"
         assert manifest["reports"][4]["href"] == "005-public-advisory-feed.html"
         assert manifest["reports"][5]["href"] == "006-public-advisory-report.html"
+        assert manifest["triageSummary"]["href"] == "triage-summary.html"
         advisory = json.loads(
             (output_dir / "advisory-report.json").read_text(encoding="utf-8")
         )
@@ -1876,6 +1883,12 @@ def _assert_public_vertical_reports() -> None:
         assert public_feed["advisories"][0]["ranges"][0]["fixed"] == (
             "1.20.1-16.el9_4.2"
         )
+        triage = json.loads(
+            (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
+        assert triage["schema"] == "edgp.triage.summary.v1"
+        assert triage["status"] == "fail"
+        assert triage["summary"]["reports"] == 6
         public_advisory = json.loads(
             (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
         )
@@ -1897,6 +1910,7 @@ def _assert_public_vertical_reports() -> None:
                 "tests/fixtures/rpm-primary-updated.xml",
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -1904,7 +1918,9 @@ def _assert_public_vertical_reports() -> None:
             text=True,
         )
         assert completed.stdout.strip() == str(output_dir / "index.html")
-        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads(
+            (output_dir / "manifest.json").read_text(encoding="utf-8")
+        )
         _assert_report_bundle_manifest_contract(manifest, output_dir)
         _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "rpm-repository-diff"
@@ -2267,7 +2283,9 @@ def _assert_report_bundle() -> None:
         assert manifest["bundleSha256"][:12] in index_html
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics-report.html"
         assert manifest["triageSummary"]["href"] == "triage-summary.html"
-        triage = json.loads((output_dir / "triage-summary.json").read_text(encoding="utf-8"))
+        triage = json.loads(
+            (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
         assert triage["schema"] == "edgp.triage.summary.v1"
         assert triage["status"] == "warn"
         assert triage["summary"]["reports"] == 2
@@ -2666,6 +2684,7 @@ def _assert_npm_bundle() -> None:
                 "tests/fixtures/package-lock-conflict.json",
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -2685,6 +2704,12 @@ def _assert_npm_bundle() -> None:
         assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
         assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
         assert manifest["reports"][1]["href"] == "002-npm-diagnostics.html"
+        assert manifest["triageSummary"]["href"] == "triage-summary.html"
+        triage = json.loads(
+            (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
+        assert triage["schema"] == "edgp.triage.summary.v1"
+        assert triage["status"] == "warn"
 
 
 def _assert_npm_bundle_with_impact_and_advisory() -> None:
@@ -2705,6 +2730,7 @@ def _assert_npm_bundle_with_impact_and_advisory() -> None:
                 "tests/fixtures/advisories.json",
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -2765,6 +2791,7 @@ def _assert_rpm_installed_bundle() -> None:
                 "rpm-installed==local",
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ],
             check=True,
             cwd=REPO_ROOT,
@@ -2779,11 +2806,15 @@ def _assert_rpm_installed_bundle() -> None:
         assert manifest["bundle"]["command"].startswith("edgp rpm-installed-bundle ")
         assert manifest["reports"][0]["href"] == "001-rpm-installed-graph.html"
         assert manifest["reports"][1]["href"] == "002-impact-rpm-installed-local.html"
+        assert manifest["triageSummary"]["href"] == "triage-summary.html"
         graph = json.loads(
             (output_dir / "rpm-installed-graph.json").read_text(encoding="utf-8")
         )
         assert graph["schema"] == "edgp.graph.snapshot.v1"
         assert graph["root"] == "rpm-installed==local"
+        triage = json.loads((output_dir / "triage-summary.json").read_text(encoding="utf-8"))
+        assert triage["schema"] == "edgp.triage.summary.v1"
+        assert triage["source"]["kind"] == "report-bundle-input"
 
 
 def build_parser() -> argparse.ArgumentParser:

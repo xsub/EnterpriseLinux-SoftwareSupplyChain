@@ -28,6 +28,7 @@ def write_graph_report_bundle(
     extra_reports_after_graph: Sequence[Path] = (),
     extra_reports: Sequence[Path] = (),
     bundle_metadata: Mapping[str, object] | None = None,
+    include_triage_summary: bool = False,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     report_paths = []
@@ -66,6 +67,7 @@ def write_graph_report_bundle(
         report_paths,
         output_dir,
         bundle_metadata=bundle_metadata,
+        include_triage_summary=include_triage_summary,
     )
 
 

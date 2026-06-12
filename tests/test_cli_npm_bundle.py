@@ -17,6 +17,7 @@ def test_cli_npm_bundle_writes_json_html_index_and_manifest(tmp_path, capsys) ->
                 "tests/fixtures/package-lock-conflict.json",
                 "--output-dir",
                 str(output_dir),
+                "--triage-summary",
             ]
         )
         == 0
@@ -35,6 +36,8 @@ def test_cli_npm_bundle_writes_json_html_index_and_manifest(tmp_path, capsys) ->
     assert manifest["schema"] == "edgp.report.bundle.v1"
     assert manifest["bundle"]["sourceKind"] == "npm-lockfile"
     assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
+    assert manifest["triageSummary"]["href"] == "triage-summary.html"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.npm.diagnostics.v1",
@@ -48,6 +51,12 @@ def test_cli_npm_bundle_writes_json_html_index_and_manifest(tmp_path, capsys) ->
         encoding="utf-8"
     )
     assert 'data-testid="npm-conflicts-panel"' in diagnostics_html
+    triage = json.loads(
+        (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+    )
+    assert triage["schema"] == "edgp.triage.summary.v1"
+    assert triage["status"] == "warn"
+    assert triage["summary"]["reports"] == 2
 
 
 def test_cli_npm_bundle_can_include_impact_and_advisory_reports(

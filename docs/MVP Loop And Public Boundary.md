@@ -251,6 +251,9 @@ surfaces are:
   status reaches a selected warn/fail threshold.
 - Embed generated triage summary JSON and HTML artifacts into static report
   bundles with manifest-recorded digests.
+- Embed the same generated triage summary artifacts into graph bundle commands
+  for npm, Maven, DOT, CycloneDX SBOM, public RPM repository, installed RPM,
+  RPM repository diff, and ALBS build inputs.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style
