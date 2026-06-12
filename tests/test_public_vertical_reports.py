@@ -327,6 +327,8 @@ def test_cli_public_vertical_commands(capsys) -> None:
                 "--ecosystem",
                 "rpm",
                 "--fail-on-findings",
+                "--fail-min-severity",
+                "high",
             ]
         )
         == 2
@@ -334,6 +336,29 @@ def test_cli_public_vertical_commands(capsys) -> None:
     failing_advisory = json.loads(capsys.readouterr().out)
     assert failing_advisory["schema"] == "edgp.advisory.report.v1"
     assert failing_advisory["summary"]["findings"] == 1
+
+    assert (
+        main(
+            [
+                "advisory",
+                "--source",
+                "rpm-repo",
+                "--path",
+                "tests/fixtures/repodata/repomd.xml",
+                "--public-advisory-feed",
+                "tests/fixtures/public-osv-ranges.json",
+                "--ecosystem",
+                "rpm",
+                "--fail-on-findings",
+                "--fail-min-severity",
+                "critical",
+            ]
+        )
+        == 0
+    )
+    noncritical_advisory = json.loads(capsys.readouterr().out)
+    assert noncritical_advisory["schema"] == "edgp.advisory.report.v1"
+    assert noncritical_advisory["summary"]["findings"] == 1
 
     assert main(
         [

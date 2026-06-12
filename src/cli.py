@@ -735,6 +735,40 @@ def _load_advisory_payload(
     return public_feed_report["overlay"]
 
 
+_ADVISORY_SEVERITY_RANKS = {
+    "unknown": 0,
+    "low": 1,
+    "medium": 2,
+    "moderate": 2,
+    "high": 3,
+    "critical": 4,
+}
+
+
+def _advisory_report_should_fail(
+    report: dict[str, object],
+    *,
+    min_severity: str = "unknown",
+) -> bool:
+    threshold = _ADVISORY_SEVERITY_RANKS[min_severity]
+    findings = report.get("findings", [])
+    if not isinstance(findings, list):
+        return False
+    return any(_finding_severity_rank(finding) >= threshold for finding in findings)
+
+
+def _finding_severity_rank(finding: object) -> int:
+    if not isinstance(finding, dict):
+        return 0
+    advisory = finding.get("advisory", {})
+    if not isinstance(advisory, dict):
+        return 0
+    return _ADVISORY_SEVERITY_RANKS.get(
+        str(advisory.get("severity") or "unknown").lower(),
+        0,
+    )
+
+
 def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) -> list[tuple[int, int]]:
     if not values:
         return [(nodes, fanout)]
@@ -1292,6 +1326,11 @@ def build_parser() -> argparse.ArgumentParser:
     advisory.add_argument("--public-advisory-feed", type=Path)
     advisory.add_argument("--public-advisory-feed-url")
     advisory.add_argument("--fail-on-findings", action="store_true")
+    advisory.add_argument(
+        "--fail-min-severity",
+        choices=["unknown", "low", "medium", "high", "critical"],
+        default="unknown",
+    )
     advisory.add_argument("--limit", type=int, default=20)
     advisory.add_argument("--rpm-limit", type=int, default=100)
     advisory.add_argument("--max-requirements", type=int, default=40)
@@ -1817,7 +1856,10 @@ def main(argv: list[str] | None = None) -> int:
             max_paths=args.limit,
         )
         print(_json(advisory_report))
-        if args.fail_on_findings and advisory_report["summary"]["findings"]:
+        if args.fail_on_findings and _advisory_report_should_fail(
+            advisory_report,
+            min_severity=args.fail_min_severity,
+        ):
             return 2
         return 0
 
