@@ -53,6 +53,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_public_advisory_feed_report(payload)
     if schema == "edgp.performance.report.v1":
         return render_performance_report(payload)
+    if schema == "edgp.license.report.v1":
+        return render_license_report(payload)
     raise ValueError(f"Unsupported HTML report schema: {schema}")
 
 
@@ -554,6 +556,47 @@ def render_performance_report(report: dict[str, Any]) -> str:
                 report.get("results", []),
                 ["nodes", "fanout", "edges", "buildMs", "reachableMs", "mostDependedUponMs", "storage"],
                 test_id="performance-results-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_license_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.license.report.v1":
+        raise ValueError("HTML license report input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP License Report",
+        [
+            _generic_hero(
+                eyebrow=str(report.get("ecosystem", "generic")),
+                heading=str(report.get("root") or "License policy"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Packages", summary.get("packages", 0)),
+                    ("Denied", summary.get("deniedFindings", 0)),
+                    ("Missing", summary.get("missingLicenses", 0)),
+                ],
+            ),
+            _rows_panel(
+                "License Inventory",
+                report.get("licenses", []),
+                ["license", "packages"],
+                test_id="license-inventory-panel",
+            ),
+            _rows_panel(
+                "Denied License Findings",
+                report.get("findings", []),
+                ["package", "license", "matchedDeniedLicenses"],
+                test_id="license-denied-panel",
+            ),
+            _rows_panel(
+                "Missing Licenses",
+                report.get("missingLicenses", []),
+                ["package"],
+                test_id="license-missing-panel",
             ),
         ],
         scripts=[_table_sort_script()],

@@ -31,7 +31,9 @@ surfaces are:
   URL component locators;
 - libsolv command discovery and saved transaction transcripts;
 - local graph traversal, impact reporting, diffing, and JSON/Cypher/CycloneDX
-  export.
+  export;
+- license metadata exposed by public SBOM, lockfile, RPM repository, and
+  installed RPM inputs.
 
 ## Current Capabilities
 
@@ -237,6 +239,8 @@ surfaces are:
 - Interpret numeric CVSS-style advisory severity scores for CI gate decisions.
 - Match SBOM components to public advisories by Package URL before falling back
   to package-name and version matching.
+- Generate license inventory reports and fail CI-style checks when public graph
+  metadata matches a denied license.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

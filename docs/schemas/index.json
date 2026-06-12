@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 19,
+  "schemaCount": 20,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -74,6 +74,14 @@
       "id": "urn:edgp:schema:libsolv-bridge:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP libsolv Bridge v1"
+    },
+    {
+      "contract": "edgp.license.report.v1",
+      "description": "License inventory and deny-list policy report for graph metadata.",
+      "file": "edgp.license.report.v1.schema.json",
+      "id": "urn:edgp:schema:license-report:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP License Report v1"
     },
     {
       "contract": "edgp.npm.diagnostics.v1",

@@ -45,6 +45,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.libsolv.bridge.v1.schema.json"),
         Path("tests/fixtures/libsolv-bridge.json"),
     ),
+    "edgp.license.report.v1": (
+        Path("docs/schemas/edgp.license.report.v1.schema.json"),
+        Path("tests/fixtures/license-report.json"),
+    ),
     "edgp.performance.report.v1": (
         Path("docs/schemas/edgp.performance.report.v1.schema.json"),
         Path("tests/fixtures/performance-report.json"),

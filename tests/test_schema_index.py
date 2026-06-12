@@ -29,6 +29,7 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
         "edgp.libsolv.bridge.v1",
+        "edgp.license.report.v1",
         "edgp.npm.diagnostics.v1",
         "edgp.performance.report.v1",
         "edgp.public.advisory_feed.v1",

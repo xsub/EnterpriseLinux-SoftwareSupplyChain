@@ -414,6 +414,23 @@ def test_cli_public_vertical_commands(capsys) -> None:
 
     assert main(
         [
+            "license-report",
+            "--source",
+            "sbom",
+            "--path",
+            "tests/fixtures/sample-bom.json",
+            "--deny-license",
+            "WTFPL",
+            "--fail-on-denied",
+        ]
+    ) == 2
+    license_report = json.loads(capsys.readouterr().out)
+    assert license_report["schema"] == "edgp.license.report.v1"
+    assert license_report["summary"]["deniedFindings"] == 1
+    assert license_report["findings"][0]["package"] == "left-pad==1.3.0"
+
+    assert main(
+        [
             "public-advisory-feed",
             "--path",
             "tests/fixtures/public-osv.json",

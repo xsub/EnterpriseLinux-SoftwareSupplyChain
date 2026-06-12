@@ -1,0 +1,33 @@
+{
+  "$id": "urn:edgp:schema:license-report:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "License inventory and deny-list policy report for graph metadata.",
+  "properties": {
+    "ecosystem": {"type": "string"},
+    "findings": {"items": {"type": "object"}, "type": "array"},
+    "licenses": {"items": {"type": "object"}, "type": "array"},
+    "missingLicenses": {"items": {"type": "object"}, "type": "array"},
+    "policy": {"type": "object"},
+    "root": {
+      "oneOf": [
+        {"type": "string"},
+        {"type": "null"}
+      ]
+    },
+    "schema": {"const": "edgp.license.report.v1"},
+    "summary": {"type": "object"}
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "policy",
+    "summary",
+    "licenses",
+    "findings",
+    "missingLicenses"
+  ],
+  "title": "EDGP License Report v1",
+  "type": "object"
+}

@@ -81,6 +81,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.libsolv.bridge.v1.schema.json",
+    "edgp.license.report.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.license.report.v1.schema.json",
     "edgp.performance.report.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -137,6 +141,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "libsolv-bridge.json",
+    "edgp.license.report.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "license-report.json",
     "edgp.performance.report.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -429,6 +437,7 @@ def _assert_schema_index_document() -> None:
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
         "edgp.libsolv.bridge.v1",
+        "edgp.license.report.v1",
         "edgp.npm.diagnostics.v1",
         "edgp.performance.report.v1",
         "edgp.public.advisory_feed.v1",
@@ -1690,6 +1699,31 @@ def _assert_public_vertical_reports() -> None:
     assert purl_advisory["schema"] == "edgp.advisory.report.v1"
     assert purl_advisory["summary"]["findings"] == 1
     assert purl_advisory["findings"][0]["package"] == "left-pad==1.3.0"
+    completed_license_gate = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "license-report",
+            "--source",
+            "sbom",
+            "--path",
+            "tests/fixtures/sample-bom.json",
+            "--deny-license",
+            "WTFPL",
+            "--fail-on-denied",
+        ],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed_license_gate.returncode == 2
+    license_gate = json.loads(completed_license_gate.stdout)
+    assert license_gate["schema"] == "edgp.license.report.v1"
+    assert license_gate["summary"]["deniedFindings"] == 1
+    assert license_gate["findings"][0]["package"] == "left-pad==1.3.0"
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]

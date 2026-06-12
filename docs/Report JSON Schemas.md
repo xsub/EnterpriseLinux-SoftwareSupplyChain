@@ -56,6 +56,9 @@ python -B scripts/generate_schema_index.py --check
 - `edgp.libsolv.bridge.v1`:
   [`edgp.libsolv.bridge.v1.schema.json`](schemas/edgp.libsolv.bridge.v1.schema.json)
   documents libsolv command discovery and parsed transaction actions.
+- `edgp.license.report.v1`:
+  [`edgp.license.report.v1.schema.json`](schemas/edgp.license.report.v1.schema.json)
+  documents license inventory and deny-list policy findings.
 - `edgp.public.advisory_feed.v1`:
   [`edgp.public.advisory_feed.v1.schema.json`](schemas/edgp.public.advisory_feed.v1.schema.json)
   documents normalized public advisory feeds and generated EDGP overlays.

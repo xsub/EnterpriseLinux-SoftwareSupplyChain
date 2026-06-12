@@ -31,6 +31,7 @@ from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
 from src.libsolv_bridge import build_libsolv_bridge_report
+from src.license_policy import build_license_report
 from src.output.cypher_export import CypherExporter
 from src.output.graph_bundle import write_graph_report_bundle
 from src.output.html_report import write_report_file
@@ -788,6 +789,13 @@ def _cvss_score_rank(score: float) -> int:
     return _ADVISORY_SEVERITY_RANKS["critical"]
 
 
+def _license_report_should_fail(report: dict[str, Any]) -> bool:
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        return False
+    return int(summary.get("deniedFindings", 0)) > 0
+
+
 def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) -> list[tuple[int, int]]:
     if not values:
         return [(nodes, fanout)]
@@ -1355,6 +1363,31 @@ def build_parser() -> argparse.ArgumentParser:
     advisory.add_argument("--max-requirements", type=int, default=40)
     _add_rpm_repo_source_options(advisory)
 
+    license_report = subparsers.add_parser(
+        "license-report",
+        help="Summarize licenses and optionally fail on denied licenses",
+    )
+    license_report.add_argument(
+        "--source",
+        choices=[
+            "lockfile",
+            "dot",
+            "sbom",
+            "maven-tree",
+            "rpm-installed",
+            "rpm-repo",
+            "albs-build",
+        ],
+        default="lockfile",
+    )
+    license_report.add_argument("--path", type=Path)
+    license_report.add_argument("--ecosystem", default="npm")
+    license_report.add_argument("--deny-license", action="append", default=[])
+    license_report.add_argument("--fail-on-denied", action="store_true")
+    license_report.add_argument("--rpm-limit", type=int, default=100)
+    license_report.add_argument("--max-requirements", type=int, default=40)
+    _add_rpm_repo_source_options(license_report)
+
     report = subparsers.add_parser("report", help="Render a local HTML JSON report")
     report_input = report.add_mutually_exclusive_group(required=True)
     report_input.add_argument("--snapshot", type=Path)
@@ -1879,6 +1912,29 @@ def main(argv: list[str] | None = None) -> int:
             advisory_report,
             min_severity=args.fail_min_severity,
         ):
+            return 2
+        return 0
+
+    if args.command == "license-report":
+        root_identifier, graph, resolved_ecosystem = _load_source_project_graph(
+            args.source,
+            args.path,
+            args.ecosystem,
+            rpm_limit=args.rpm_limit,
+            max_requirements=args.max_requirements,
+            rpm_repo_source=args.rpm_repo_source,
+            repo_id=args.repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
+        )
+        license_report = build_license_report(
+            graph,
+            root=root_identifier,
+            ecosystem=resolved_ecosystem,
+            denied_licenses=args.deny_license,
+        )
+        print(_json(license_report))
+        if args.fail_on_denied and _license_report_should_fail(license_report):
             return 2
         return 0
 

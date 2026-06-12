@@ -140,6 +140,7 @@ edgp advisory --path package-lock.json --advisories advisories.json
 edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisories.json --ecosystem rpm
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed-url https://example.com/osv.json --ecosystem rpm
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --fail-on-findings --fail-min-severity high
+edgp license-report --source sbom --path bom.json --deny-license GPL-3.0-only --fail-on-denied
 edgp npm-diagnostics --path package-lock.json
 edgp diff --left before.json --right after.json
 ```
@@ -577,6 +578,14 @@ Severity gates understand both those labels and numeric CVSS-style scores such
 as `9.8`.
 libsolv remains the production authority for RPM SAT solving and transaction
 decisions.
+
+`edgp license-report` summarizes license metadata from any supported graph
+source and optionally checks a deny-list. `--deny-license` may be repeated; EDGP
+matches exact license strings and simple SPDX-expression tokens, emits the full
+`edgp.license.report.v1` JSON report, and exits with status `2` when
+`--fail-on-denied` finds a denied license. This works with public CycloneDX
+SBOMs, lockfile-derived metadata, public RPM repository metadata, and installed
+RPM metadata when licenses are visible in the source.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
 reachable traversal, and most-depended-upon timings. It is intended as a
