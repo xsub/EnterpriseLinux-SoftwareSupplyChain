@@ -1488,6 +1488,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Report libsolv command availability and parse transaction output",
     )
     libsolv_bridge.add_argument("--transaction", type=Path)
+    libsolv_bridge.add_argument(
+        "--graph-snapshot",
+        type=Path,
+        help="EDGP graph snapshot used to match transaction packages to graph nodes",
+    )
 
     public_advisory_feed = subparsers.add_parser(
         "public-advisory-feed",
@@ -2072,7 +2077,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "libsolv-bridge":
-        print(_json(build_libsolv_bridge_report(args.transaction)))
+        print(_json(build_libsolv_bridge_report(args.transaction, args.graph_snapshot)))
         return 0
 
     if args.command == "public-advisory-feed":

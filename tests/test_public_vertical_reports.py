@@ -10,6 +10,7 @@ from src.adapters.rpm_repository import RpmRepositoryAdapter
 from src.cli import main
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.libsolv_bridge import build_libsolv_bridge_report
+from src.output.json_export import GraphJsonExporter
 from src.performance_report import build_performance_report
 from src.public_advisory_feed import build_public_advisory_feed_report
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
@@ -181,6 +182,40 @@ def test_libsolv_bridge_parses_transaction_actions() -> None:
     assert upgrade["newPackageMetadata"]["name"] == "openssl"
 
 
+def test_libsolv_bridge_matches_transaction_actions_to_graph_snapshot(
+    tmp_path: Path,
+) -> None:
+    resolved = RpmRepositoryAdapter().parse_primary(Path("tests/fixtures/rpm-primary.xml"))
+    snapshot_path = tmp_path / "rpm-repo-snapshot.json"
+    snapshot_path.write_text(
+        GraphJsonExporter.export_to_json(
+            resolved.graph,
+            root=resolved.root_identifier,
+            ecosystem=resolved.ecosystem,
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_libsolv_bridge_report(
+        Path("tests/fixtures/libsolv-transaction.txt"),
+        snapshot_path,
+    )
+
+    assert report["graphContext"]["schema"] == "edgp.graph.snapshot.v1"
+    assert report["graphContext"]["nodes"] == 3
+    assert report["summary"]["graphMatchedActions"] == 1
+    assert report["summary"]["graphExactActions"] == 1
+    assert report["summary"]["graphUnmatchedActions"] == 2
+    install = report["transactionActions"][0]
+    assert install["graphMatchStatus"] == "exact"
+    assert install["graphMatchedNodeIds"] == [
+        "nginx==1.20.1-16.el9_4.1.x86_64"
+    ]
+    assert install["graphMatches"][0]["directDependencies"] == 1
+    assert install["graphMatches"][0]["affectedDependents"] == 1
+    assert report["transactionActions"][1]["graphMatchStatus"] == "unmatched"
+
+
 def test_public_advisory_feed_normalizes_osv_to_overlay() -> None:
     report = build_public_advisory_feed_report(
         _fixture("tests/fixtures/public-osv.json"),
@@ -225,7 +260,7 @@ def test_performance_report_keeps_numpy_storage_visible() -> None:
     assert report["results"][0]["storage"]["layout"] == "numpy.int32.c_contiguous"
 
 
-def test_cli_public_vertical_commands(capsys) -> None:
+def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     assert main(
         [
             "albs-build-diff",
@@ -238,7 +273,23 @@ def test_cli_public_vertical_commands(capsys) -> None:
     assert json.loads(capsys.readouterr().out)["schema"] == "edgp.albs.build_diff.v1"
 
     assert main(["rpm-repo", "--primary", "tests/fixtures/rpm-primary.xml"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema"] == "edgp.graph.snapshot.v1"
+    rpm_repo_snapshot = json.loads(capsys.readouterr().out)
+    assert rpm_repo_snapshot["schema"] == "edgp.graph.snapshot.v1"
+    rpm_repo_snapshot_path = tmp_path / "rpm-repo-snapshot.json"
+    rpm_repo_snapshot_path.write_text(json.dumps(rpm_repo_snapshot), encoding="utf-8")
+
+    assert main(
+        [
+            "libsolv-bridge",
+            "--transaction",
+            "tests/fixtures/libsolv-transaction.txt",
+            "--graph-snapshot",
+            str(rpm_repo_snapshot_path),
+        ]
+    ) == 0
+    libsolv = json.loads(capsys.readouterr().out)
+    assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
+    assert libsolv["summary"]["graphExactActions"] == 1
 
     assert main(
         [

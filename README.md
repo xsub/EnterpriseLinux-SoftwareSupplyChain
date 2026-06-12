@@ -114,6 +114,7 @@ edgp albs-release-completeness --build-id 17812 --build-id 17813
 edgp albs-log-intelligence --build-id 17813
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
 edgp libsolv-bridge --transaction solver-transaction.txt
+edgp libsolv-bridge --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json
 edgp public-advisory-feed --path osv.json --ecosystem rpm
 edgp public-advisory-feed --url https://example.com/osv.json --ecosystem rpm
 ```
@@ -516,9 +517,10 @@ resources:
 - `edgp libsolv-bridge` reports local libsolv command availability and parses
   transaction transcripts so EDGP can explain solved RPM actions while leaving
   SAT solving to libsolv. Parsed actions are normalized into RPM package
-  metadata, EDGP graph `nodeId` values, and Package URLs, which gives future
-  traversal/reporting steps a stable bridge from a solver transaction to graph
-  impact analysis.
+  metadata, EDGP graph `nodeId` values, and Package URLs. With
+  `--graph-snapshot`, the bridge also matches those solved package identities
+  against an existing EDGP snapshot and reports exact, candidate, and unmatched
+  graph actions.
 - `edgp performance-report` runs deterministic NumPy-backed CSR benchmark
   scenarios and records storage layout evidence.
 
@@ -589,7 +591,9 @@ action rows with RPM name/version/release/arch fields, old/new node IDs for
 upgrades, and RPM Package URLs. That makes the bridge useful even on public
 infrastructure without invoking a private resolver: libsolv can decide the
 transaction, while EDGP can attach those solved package identities to CSR graph
-snapshots, bundle reports, and later blast-radius traversal.
+snapshots, bundle reports, and later blast-radius traversal. Passing
+`--graph-snapshot` enriches each transaction action with graph match status,
+matched node IDs, and dependent counts from an existing EDGP graph snapshot.
 
 `edgp license-report` summarizes license metadata from any supported graph
 source and optionally checks a deny-list. `--deny-license` may be repeated; EDGP

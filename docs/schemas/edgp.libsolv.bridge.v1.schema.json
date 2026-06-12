@@ -2,7 +2,7 @@
   "$id": "urn:edgp:schema:libsolv-bridge:v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": true,
-  "description": "libsolv command availability and normalized transaction bridge report.",
+  "description": "libsolv command availability, normalized transaction, and optional graph match report.",
   "properties": {
     "commands": {
       "items": {
@@ -18,6 +18,19 @@
       "type": "array"
     },
     "ecosystem": {"const": "rpm"},
+    "graphContext": {
+      "additionalProperties": true,
+      "properties": {
+        "ecosystem": {"type": "string"},
+        "edges": {"type": "integer"},
+        "nodes": {"type": "integer"},
+        "root": {"type": "string"},
+        "schema": {"type": "string"},
+        "source": {"type": "string"}
+      },
+      "required": ["source", "schema", "ecosystem", "root", "nodes", "edges"],
+      "type": "object"
+    },
     "integration": {"items": {"type": "string"}, "type": "array"},
     "schema": {"const": "edgp.libsolv.bridge.v1"},
     "summary": {
@@ -37,6 +50,13 @@
         },
         "commandsAvailable": {"type": "integer"},
         "erases": {"type": "integer"},
+        "graphAffectedDependents": {"type": "integer"},
+        "graphCandidateActions": {"type": "integer"},
+        "graphCandidatePackageMatches": {"type": "integer"},
+        "graphExactActions": {"type": "integer"},
+        "graphExactPackageMatches": {"type": "integer"},
+        "graphMatchedActions": {"type": "integer"},
+        "graphUnmatchedActions": {"type": "integer"},
         "installs": {"type": "integer"},
         "parsedPackages": {"type": "integer"},
         "transactionActions": {"type": "integer"},
@@ -58,6 +78,13 @@
         "additionalProperties": true,
         "properties": {
           "action": {"type": "string"},
+          "graphAffectedDependents": {"type": "integer"},
+          "graphMatchedNodeIds": {"items": {"type": "string"}, "type": "array"},
+          "graphMatches": {
+            "items": {"$ref": "#/$defs/graphMatch"},
+            "type": "array"
+          },
+          "graphMatchStatus": {"type": "string"},
           "newNodeId": {"type": "string"},
           "newPackage": {"type": "string"},
           "newPackageMetadata": {"$ref": "#/$defs/packageMetadata"},
@@ -103,6 +130,36 @@
         "arch",
         "nodeId",
         "purl"
+      ],
+      "type": "object"
+    },
+    "graphMatch": {
+      "additionalProperties": true,
+      "properties": {
+        "affectedDependents": {"type": "integer"},
+        "candidateNodeIds": {"items": {"type": "string"}, "type": "array"},
+        "directDependencies": {"type": "integer"},
+        "directDependents": {"type": "integer"},
+        "matched": {"type": "boolean"},
+        "matchType": {"type": "string"},
+        "nodeId": {"type": "string"},
+        "packageArch": {"type": "string"},
+        "packageName": {"type": "string"},
+        "requestedNodeId": {"type": "string"},
+        "role": {"type": "string"}
+      },
+      "required": [
+        "role",
+        "matched",
+        "matchType",
+        "requestedNodeId",
+        "packageName",
+        "packageArch",
+        "nodeId",
+        "candidateNodeIds",
+        "directDependencies",
+        "directDependents",
+        "affectedDependents"
       ],
       "type": "object"
     }

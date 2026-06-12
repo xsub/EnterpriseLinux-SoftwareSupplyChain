@@ -1812,6 +1812,25 @@ def _assert_public_vertical_reports() -> None:
     assert libsolv["transactionActions"][1]["newNodeId"] == (
         "openssl==3.0.7-2.el9.x86_64"
     )
+    rpm_repo_snapshot = _run_cli(
+        ["rpm-repo", "--source", "tests/fixtures/repodata/repomd.xml", "--format", "json"]
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        graph_snapshot_path = Path(tmpdir) / "rpm-repo-snapshot.json"
+        graph_snapshot_path.write_text(json.dumps(rpm_repo_snapshot), encoding="utf-8")
+        libsolv_graph = _run_cli(
+            [
+                "libsolv-bridge",
+                "--transaction",
+                "tests/fixtures/libsolv-transaction.txt",
+                "--graph-snapshot",
+                str(graph_snapshot_path),
+            ]
+        )
+    assert libsolv_graph["schema"] == "edgp.libsolv.bridge.v1"
+    assert libsolv_graph["graphContext"]["schema"] == "edgp.graph.snapshot.v1"
+    assert libsolv_graph["summary"]["graphExactActions"] == 1
+    assert libsolv_graph["transactionActions"][0]["graphMatchStatus"] == "exact"
 
     advisory = _run_cli(
         ["public-advisory-feed", "--path", "tests/fixtures/public-osv.json"]
