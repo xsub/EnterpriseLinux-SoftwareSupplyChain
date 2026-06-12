@@ -1646,6 +1646,34 @@ def _assert_public_vertical_reports() -> None:
     noncritical_advisory = json.loads(completed_noncritical_gate.stdout)
     assert noncritical_advisory["schema"] == "edgp.advisory.report.v1"
     assert noncritical_advisory["summary"]["findings"] == 1
+    completed_cvss_gate = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "advisory",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--public-advisory-feed",
+            "tests/fixtures/public-osv-cvss-score.json",
+            "--ecosystem",
+            "rpm",
+            "--fail-on-findings",
+            "--fail-min-severity",
+            "critical",
+        ],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed_cvss_gate.returncode == 2
+    cvss_advisory = json.loads(completed_cvss_gate.stdout)
+    assert cvss_advisory["schema"] == "edgp.advisory.report.v1"
+    assert cvss_advisory["findings"][0]["advisory"]["severity"] == "9.8"
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]

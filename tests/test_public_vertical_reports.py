@@ -194,6 +194,11 @@ def test_public_advisory_feed_normalizes_osv_to_overlay() -> None:
             "fixed": "1.20.1-16.el9_4.2",
         }
     ]
+    cvss_report = build_public_advisory_feed_report(
+        _fixture("tests/fixtures/public-osv-cvss-score.json"),
+        ecosystem="rpm",
+    )
+    assert cvss_report["advisories"][0]["severity"] == "9.8"
 
 
 def test_performance_report_keeps_numpy_storage_visible() -> None:
@@ -359,6 +364,29 @@ def test_cli_public_vertical_commands(capsys) -> None:
     noncritical_advisory = json.loads(capsys.readouterr().out)
     assert noncritical_advisory["schema"] == "edgp.advisory.report.v1"
     assert noncritical_advisory["summary"]["findings"] == 1
+
+    assert (
+        main(
+            [
+                "advisory",
+                "--source",
+                "rpm-repo",
+                "--path",
+                "tests/fixtures/repodata/repomd.xml",
+                "--public-advisory-feed",
+                "tests/fixtures/public-osv-cvss-score.json",
+                "--ecosystem",
+                "rpm",
+                "--fail-on-findings",
+                "--fail-min-severity",
+                "critical",
+            ]
+        )
+        == 2
+    )
+    critical_advisory = json.loads(capsys.readouterr().out)
+    assert critical_advisory["schema"] == "edgp.advisory.report.v1"
+    assert critical_advisory["findings"][0]["advisory"]["severity"] == "9.8"
 
     assert main(
         [

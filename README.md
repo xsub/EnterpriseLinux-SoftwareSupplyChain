@@ -570,6 +570,8 @@ without architecture, or `epoch:version-release` when epoch is non-zero.
 `--fail-on-findings` still prints the full JSON report and exits with status `2`
 when matched findings exist. `--fail-min-severity` can raise that gate to
 `low`, `medium`, `high`, or `critical` while leaving the report unfiltered.
+Severity gates understand both those labels and numeric CVSS-style scores such
+as `9.8`.
 libsolv remains the production authority for RPM SAT solving and transaction
 decisions.
 

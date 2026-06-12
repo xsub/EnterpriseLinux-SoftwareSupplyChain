@@ -1,0 +1,37 @@
+{
+  "vulns": [
+    {
+      "id": "OSV-2026-0004",
+      "summary": "Demo public advisory with numeric CVSS-style severity.",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "9.8"
+        }
+      ],
+      "affected": [
+        {
+          "package": {
+            "ecosystem": "rpm",
+            "name": "nginx"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {"introduced": "1.20.1-16.el9_4.0"},
+                {"fixed": "1.20.1-16.el9_4.2"}
+              ]
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "type": "ADVISORY",
+          "url": "https://example.com/advisories/OSV-2026-0004"
+        }
+      ]
+    }
+  ]
+}

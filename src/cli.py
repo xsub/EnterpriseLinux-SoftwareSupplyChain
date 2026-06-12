@@ -763,10 +763,29 @@ def _finding_severity_rank(finding: object) -> int:
     advisory = finding.get("advisory", {})
     if not isinstance(advisory, dict):
         return 0
-    return _ADVISORY_SEVERITY_RANKS.get(
-        str(advisory.get("severity") or "unknown").lower(),
-        0,
-    )
+    return _severity_rank(advisory.get("severity"))
+
+
+def _severity_rank(severity: object) -> int:
+    normalized = str(severity or "unknown").strip().lower()
+    if normalized in _ADVISORY_SEVERITY_RANKS:
+        return _ADVISORY_SEVERITY_RANKS[normalized]
+    try:
+        return _cvss_score_rank(float(normalized))
+    except ValueError:
+        return 0
+
+
+def _cvss_score_rank(score: float) -> int:
+    if score <= 0:
+        return 0
+    if score < 4.0:
+        return _ADVISORY_SEVERITY_RANKS["low"]
+    if score < 7.0:
+        return _ADVISORY_SEVERITY_RANKS["medium"]
+    if score < 9.0:
+        return _ADVISORY_SEVERITY_RANKS["high"]
+    return _ADVISORY_SEVERITY_RANKS["critical"]
 
 
 def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) -> list[tuple[int, int]]:

@@ -233,6 +233,7 @@ surfaces are:
   exist, while still emitting the JSON report.
 - Apply a minimum severity threshold to advisory CI gates without filtering the
   emitted report.
+- Interpret numeric CVSS-style advisory severity scores for CI gate decisions.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style
