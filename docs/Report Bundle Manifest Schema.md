@@ -35,6 +35,7 @@ The public source-kind values are:
 - `dot`
 - `cyclonedx-sbom`
 - `rpm-installed`
+- `rpm-repository`
 - `edgp-json`
 
 ## Example

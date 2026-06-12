@@ -102,7 +102,9 @@ edgp sbom --path bom.json --format json
 edgp dot --path repograph.dot --ecosystem rpm --format json
 edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
-edgp rpm-repo --primary repodata/primary.xml.gz --repo-id alma-public --format json
+edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format json
+edgp rpm-repo-summary --source repodata/repomd.xml
+edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc
 edgp albs-build --build-id 17812 --format json
 edgp albs-artifact-inventory --build-id 17812
 edgp albs-build-timing --build-id 17812
@@ -201,6 +203,7 @@ class InstalledRpmAdapter {
   +parse_installed(limit) ResolvedProjectGraph
 }
 class RpmRepositoryAdapter {
+  +parse_source(source) ResolvedProjectGraph
   +parse_primary(path) ResolvedProjectGraph
 }
 class AlbsBuildAdapter {
@@ -442,9 +445,13 @@ HTML, `index.html`, and `manifest.json`. The manifest records `bundle.sourceKind
 as `dot` and includes the generating command.
 
 `edgp rpm-repo` parses public RPM `primary.xml` or `primary.xml.gz` repository
-metadata and builds an RPM universe graph from package, provides, and requires
-records. Resolved requirements point at provider packages; unresolved
-requirements become explicit capability nodes. This is the public-resource path
+metadata, local or remote `repomd.xml`, or a repository base URL and builds an
+RPM universe graph from package, provides, and requires records. Resolved
+requirements point at provider packages; unresolved requirements become
+explicit capability nodes. `edgp rpm-repo-summary` reports package counts,
+source RPM concentration, architecture coverage, and unresolved requirements.
+`edgp rpm-repo-bundle` writes the graph, summary, optional impact reports,
+static HTML, and a verification manifest. This is the public-resource path
 toward distribution-scale graph size without private repositories.
 
 `edgp sbom-bundle` renders CycloneDX JSON SBOMs into static local bundles with

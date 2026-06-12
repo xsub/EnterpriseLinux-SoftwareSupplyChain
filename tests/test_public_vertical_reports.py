@@ -13,6 +13,7 @@ from src.libsolv_bridge import build_libsolv_bridge_report
 from src.performance_report import build_performance_report
 from src.public_advisory_feed import build_public_advisory_feed_report
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
+from src.rpm_repository_summary import build_rpm_repository_summary_report
 
 
 def _fixture(path: str) -> dict:
@@ -96,6 +97,36 @@ def test_rpm_repository_adapter_links_requires_to_providers() -> None:
     )
 
 
+def test_rpm_repository_adapter_discovers_primary_from_repomd() -> None:
+    resolved = RpmRepositoryAdapter().parse_source(
+        Path("tests/fixtures/repodata/repomd.xml")
+    )
+
+    root_metadata = resolved.graph.get_vertex_metadata(resolved.root_identifier)
+    assert root_metadata["primary_location"].endswith("tests/fixtures/rpm-primary.xml")
+    assert resolved.graph.get_dependencies("rpm-repository==public-rpm-repository")
+
+
+def test_rpm_repository_summary_counts_arches_and_source_rpms() -> None:
+    resolved = RpmRepositoryAdapter().parse_primary(
+        Path("tests/fixtures/rpm-primary.xml")
+    )
+    report = build_rpm_repository_summary_report(
+        resolved.graph,
+        root=resolved.root_identifier,
+    )
+
+    assert report["schema"] == "edgp.rpm.repository_summary.v1"
+    assert report["summary"] == {
+        "packages": 2,
+        "sourceRpms": 1,
+        "architectures": 1,
+        "requirementEdges": 1,
+        "unresolvedRequirements": 0,
+    }
+    assert report["architectures"] == [{"arch": "x86_64", "packages": 2}]
+
+
 def test_libsolv_bridge_parses_transaction_actions() -> None:
     report = build_libsolv_bridge_report(Path("tests/fixtures/libsolv-transaction.txt"))
 
@@ -140,6 +171,17 @@ def test_cli_public_vertical_commands(capsys) -> None:
 
     assert main(
         [
+            "rpm-repo-summary",
+            "--source",
+            "tests/fixtures/repodata/repomd.xml",
+        ]
+    ) == 0
+    assert json.loads(capsys.readouterr().out)["schema"] == (
+        "edgp.rpm.repository_summary.v1"
+    )
+
+    assert main(
+        [
             "public-advisory-feed",
             "--path",
             "tests/fixtures/public-osv.json",
@@ -148,3 +190,32 @@ def test_cli_public_vertical_commands(capsys) -> None:
         ]
     ) == 0
     assert json.loads(capsys.readouterr().out)["schema"] == "edgp.advisory.overlay.v1"
+
+
+def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "rpm-repo-bundle"
+
+    assert main(
+        [
+            "rpm-repo-bundle",
+            "--source",
+            "tests/fixtures/repodata/repomd.xml",
+            "--output-dir",
+            str(output_dir),
+            "--impact-node",
+            "nginx-core",
+        ]
+    ) == 0
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "rpm-repository"
+    assert manifest["reports"][0]["href"] == "001-rpm-repository-graph.html"
+    assert manifest["reports"][1]["href"] == "002-rpm-repository-summary.html"
+    assert manifest["reports"][2]["href"] == (
+        "003-impact-nginx-core-1.20.1-16.el9_4.1.x86_64.html"
+    )
+    summary = json.loads(
+        (output_dir / "rpm-repository-summary.json").read_text(encoding="utf-8")
+    )
+    assert summary["schema"] == "edgp.rpm.repository_summary.v1"

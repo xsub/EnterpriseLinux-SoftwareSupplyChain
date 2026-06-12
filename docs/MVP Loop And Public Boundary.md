@@ -23,7 +23,8 @@ surfaces are:
 - local advisory overlay JSON;
 - directed DOT graphs, including `dnf repograph`-style block edges;
 - installed RPM database inspection on AlmaLinux via the public `rpm` command;
-- public RPM repository `primary.xml` or `primary.xml.gz` metadata;
+- public RPM repository `primary.xml`, `primary.xml.gz`, `repomd.xml`, or
+  repository base URLs;
 - public ALBS build metadata and build-log metadata embedded in ALBS payloads;
 - public OSV-like advisory JSON payloads;
 - libsolv command discovery and saved transaction transcripts;
@@ -215,6 +216,9 @@ surfaces are:
   metadata.
 - Parse public RPM repository primary metadata into package/provider/requirement
   graphs.
+- Discover primary metadata from public RPM `repomd.xml` files and repository
+  base URLs.
+- Generate RPM repository summary reports and static graph/summary bundles.
 - Report libsolv command availability and parse saved libsolv-style
   transaction transcripts.
 - Normalize OSV-like public advisory feeds into EDGP advisory overlays.
@@ -251,7 +255,9 @@ python -B -m src.cli dot-bundle --path tests/fixtures/repograph.dot --ecosystem 
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-node left-pad --output-dir /tmp/edgp-sbom-bundle
 python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --output-dir /tmp/edgp-rpm-installed-bundle
-python -B -m src.cli rpm-repo --primary tests/fixtures/rpm-primary.xml --format json
+python -B -m src.cli rpm-repo --source tests/fixtures/repodata/repomd.xml --format json
+python -B -m src.cli rpm-repo-summary --source tests/fixtures/repodata/repomd.xml
+python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --output-dir /tmp/edgp-rpm-repo-bundle
 python -B -m src.cli albs-build --path tests/fixtures/albs-build.json --format json
 python -B -m src.cli albs-build-diff --left-path tests/fixtures/albs-build.json --right-path tests/fixtures/albs-build-updated.json
 python -B -m src.cli albs-log-intelligence --path tests/fixtures/albs-build-updated.json

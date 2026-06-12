@@ -39,6 +39,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_albs_build_diff_report(payload)
     if schema == "edgp.rpm.albs_provenance.v1":
         return render_rpm_albs_provenance_report(payload)
+    if schema == "edgp.rpm.repository_summary.v1":
+        return render_rpm_repository_summary_report(payload)
     if schema == "edgp.albs.log_intelligence.v1":
         return render_albs_log_intelligence_report(payload)
     if schema == "edgp.albs.release_completeness.v1":
@@ -307,6 +309,47 @@ def render_rpm_albs_provenance_report(report: dict[str, Any]) -> str:
                 report.get("unmatchedInstalledPackages", []),
                 ["nodeId", "name", "version", "release", "arch"],
                 test_id="rpm-albs-provenance-unmatched-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_rpm_repository_summary_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.rpm.repository_summary.v1":
+        raise ValueError("HTML RPM repository summary input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP RPM Repository Summary",
+        [
+            _generic_hero(
+                eyebrow="rpm",
+                heading=str(report.get("root") or "RPM repository"),
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Packages", summary.get("packages", 0)),
+                    ("Source RPMs", summary.get("sourceRpms", 0)),
+                    ("Unresolved", summary.get("unresolvedRequirements", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Architectures",
+                report.get("architectures", []),
+                ["arch", "packages"],
+                test_id="rpm-repository-architectures-panel",
+            ),
+            _rows_panel(
+                "Top Source RPMs",
+                report.get("topSourceRpms", []),
+                ["sourceRpm", "packages"],
+                test_id="rpm-repository-source-rpms-panel",
+            ),
+            _rows_panel(
+                "Unresolved Requirements",
+                report.get("unresolvedRequirements", []),
+                ["package", "capability"],
+                test_id="rpm-repository-unresolved-panel",
             ),
         ],
         scripts=[_table_sort_script()],

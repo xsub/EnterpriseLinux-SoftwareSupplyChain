@@ -24,7 +24,8 @@
             "edgp-json",
             "maven-dependency-tree",
             "npm-lockfile",
-            "rpm-installed"
+            "rpm-installed",
+            "rpm-repository"
           ],
           "type": "string"
         }

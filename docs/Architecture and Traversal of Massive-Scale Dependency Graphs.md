@@ -37,12 +37,13 @@ The concurrency decision changes with Python 3.14's free-threaded build (`3.14t`
 
 The current public-resource MVP applies that research boundary to sources that
 can be validated without private infrastructure: public ALBS build metadata,
-local AlmaLinux RPM databases, public RPM repository `primary.xml` metadata,
-OSV-like advisory JSON, and saved libsolv transaction transcripts. libsolv
-remains the correct production tool for RPM SAT solving; EDGP uses its outputs
-as graph evidence, normalizes the solved or observed package universe into CSR,
-and then performs traversal, impact, provenance, completeness, and static report
-generation over the same memory-efficient graph representation.
+local AlmaLinux RPM databases, public RPM repository `repomd.xml` and
+`primary.xml(.gz)` metadata, OSV-like advisory JSON, and saved libsolv
+transaction transcripts. libsolv remains the correct production tool for RPM
+SAT solving; EDGP uses its outputs as graph evidence, normalizes the solved or
+observed package universe into CSR, and then performs traversal, impact,
+provenance, completeness, repository summary, and static report generation over
+the same memory-efficient graph representation.
 
 Advanced libraries optimize this foundation further. The Stanford Network Analysis Platform (SNAP), an open-source C++ library for manipulating large-scale networks, combines hash tables for average-time node lookups with sorted vectors for incoming and outgoing edges. This sorting facilitates fast binary searches during graph mutation operations, keeping the memory footprint compact while accelerating edge insertion and deletion processes. Similarly, specialized quantum computation libraries, such as qutip, ensure all quantum object (Qobj) instances store their underlying operational dependency graphs as sparse matrices, dramatically reducing overhead when evaluating execution distance and commuting gate dependencies.
 

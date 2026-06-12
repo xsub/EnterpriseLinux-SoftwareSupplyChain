@@ -93,6 +93,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.rpm.albs_provenance.v1.schema.json",
+    "edgp.rpm.repository_summary.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.rpm.repository_summary.v1.schema.json",
 }
 REPORT_JSON_SCHEMA_FIXTURES = {
     "edgp.albs.build_diff.v1": REPO_ROOT
@@ -141,6 +145,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "rpm-albs-provenance.json",
+    "edgp.rpm.repository_summary.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "rpm-repository-summary.json",
 }
 
 
@@ -307,6 +315,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "maven-dependency-tree",
         "npm-lockfile",
         "rpm-installed",
+        "rpm-repository",
     }
 
 
@@ -417,6 +426,7 @@ def _assert_schema_index_document() -> None:
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
         "edgp.rpm.albs_provenance.v1",
+        "edgp.rpm.repository_summary.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
     } <= contracts
@@ -1475,10 +1485,22 @@ def _assert_public_vertical_reports() -> None:
     assert completeness["summary"]["builds"] == 2
 
     rpm_repo = _run_cli(
-        ["rpm-repo", "--primary", "tests/fixtures/rpm-primary.xml", "--format", "json"]
+        [
+            "rpm-repo",
+            "--source",
+            "tests/fixtures/repodata/repomd.xml",
+            "--format",
+            "json",
+        ]
     )
     assert rpm_repo["schema"] == "edgp.graph.snapshot.v1"
     assert rpm_repo["stats"] == {"edges": 3, "nodes": 3}
+
+    rpm_repo_summary = _run_cli(
+        ["rpm-repo-summary", "--source", "tests/fixtures/repodata/repomd.xml"]
+    )
+    assert rpm_repo_summary["schema"] == "edgp.rpm.repository_summary.v1"
+    assert rpm_repo_summary["summary"]["packages"] == 2
 
     libsolv = _run_cli(
         ["libsolv-bridge", "--transaction", "tests/fixtures/libsolv-transaction.txt"]
@@ -1497,6 +1519,34 @@ def _assert_public_vertical_reports() -> None:
     )
     assert performance["schema"] == "edgp.performance.report.v1"
     assert performance["summary"]["allContiguous"] is True
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "rpm-repo-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-repo-bundle",
+                "--source",
+                "tests/fixtures/repodata/repomd.xml",
+                "--impact-node",
+                "nginx-core",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "rpm-repository"
+        assert manifest["reports"][1]["href"] == "002-rpm-repository-summary.html"
 
 
 def _assert_sbom_query() -> None:

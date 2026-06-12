@@ -1,0 +1,9 @@
+{
+  "schema": "edgp.rpm.repository_summary.v1",
+  "ecosystem": "rpm",
+  "root": "rpm-repository==public-rpm-repository",
+  "summary": {"packages": 2, "sourceRpms": 1, "architectures": 1, "requirementEdges": 1, "unresolvedRequirements": 0},
+  "architectures": [{"arch": "x86_64", "packages": 2}],
+  "topSourceRpms": [{"sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm", "packages": 2}],
+  "unresolvedRequirements": []
+}

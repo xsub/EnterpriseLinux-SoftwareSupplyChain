@@ -1,10 +1,13 @@
-"""Public RPM repository metadata ingestion from primary.xml documents."""
+"""Public RPM repository metadata ingestion from repomd.xml and primary metadata."""
 
 from __future__ import annotations
 
 import gzip
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urljoin
+from urllib.request import Request, urlopen
 
 from src.adapters.base import ResolvedProjectGraph
 from src.core_graph.sparse_matrix import CSRDependencyGraph
@@ -18,6 +21,24 @@ class RpmRepositoryAdapter:
 
     ecosystem = "rpm"
 
+    def parse_source(
+        self,
+        source: str | Path,
+        *,
+        repo_id: str = "public-rpm-repository",
+        package_limit: int = 5000,
+        requirement_limit: int = 40,
+    ) -> ResolvedProjectGraph:
+        metadata = load_repository_metadata(source)
+        return self.parse_primary_bytes(
+            metadata.primary_bytes,
+            repo_id=repo_id,
+            package_limit=package_limit,
+            requirement_limit=requirement_limit,
+            source_label=metadata.source_label,
+            primary_location=metadata.primary_location,
+        )
+
     def parse_primary(
         self,
         path: Path,
@@ -26,7 +47,24 @@ class RpmRepositoryAdapter:
         package_limit: int = 5000,
         requirement_limit: int = 40,
     ) -> ResolvedProjectGraph:
-        packages = _parse_primary_packages(path, package_limit=package_limit)
+        return self.parse_source(
+            path,
+            repo_id=repo_id,
+            package_limit=package_limit,
+            requirement_limit=requirement_limit,
+        )
+
+    def parse_primary_bytes(
+        self,
+        data: bytes,
+        *,
+        repo_id: str = "public-rpm-repository",
+        package_limit: int = 5000,
+        requirement_limit: int = 40,
+        source_label: str = "rpm-primary",
+        primary_location: str = "",
+    ) -> ResolvedProjectGraph:
+        packages = _parse_primary_packages(data, package_limit=package_limit)
         graph = CSRDependencyGraph()
         root = f"rpm-repository=={repo_id}"
         graph.add_vertex(
@@ -36,6 +74,8 @@ class RpmRepositoryAdapter:
                 "source": "rpm-primary",
                 "node_type": "root",
                 "repo_id": repo_id,
+                "source_label": source_label,
+                "primary_location": primary_location,
             },
         )
         provider_index = _provider_index(packages)
@@ -72,7 +112,18 @@ class RpmRepositoryAdapter:
                     capability_id,
                     REL_RPM_UNRESOLVED_REQUIRES,
                 )
-        return ResolvedProjectGraph(root_identifier=root, graph=graph, ecosystem=self.ecosystem)
+        return ResolvedProjectGraph(
+            root_identifier=root,
+            graph=graph,
+            ecosystem=self.ecosystem,
+        )
+
+
+@dataclass(frozen=True)
+class RepositoryMetadata:
+    primary_bytes: bytes
+    primary_location: str
+    source_label: str
 
 
 class _RpmRepoPackage:
@@ -128,8 +179,56 @@ class _RpmCapability:
         self.name = name
 
 
-def _parse_primary_packages(path: Path, *, package_limit: int) -> list[_RpmRepoPackage]:
-    root = ET.fromstring(_read_primary_bytes(path))
+def load_repository_metadata(source: str | Path) -> RepositoryMetadata:
+    """Load primary metadata from a local/remote primary file or repomd source."""
+
+    source_text = str(source)
+    if _is_url(source_text):
+        return _load_remote_repository_metadata(source_text)
+    return _load_local_repository_metadata(Path(source))
+
+
+def _load_local_repository_metadata(path: Path) -> RepositoryMetadata:
+    if _looks_like_repomd(path.name):
+        repomd = path.read_bytes()
+        primary_href = _primary_href(repomd)
+        if not primary_href:
+            raise ValueError(f"repomd.xml does not reference primary metadata: {path}")
+        primary_path = (path.parent / primary_href).resolve()
+        return RepositoryMetadata(
+            primary_bytes=_maybe_decompress(primary_path.read_bytes(), str(primary_path)),
+            primary_location=str(primary_path),
+            source_label=str(path),
+        )
+    return RepositoryMetadata(
+        primary_bytes=_maybe_decompress(path.read_bytes(), str(path)),
+        primary_location=str(path),
+        source_label=str(path),
+    )
+
+
+def _load_remote_repository_metadata(source: str) -> RepositoryMetadata:
+    if _looks_like_primary(source):
+        return RepositoryMetadata(
+            primary_bytes=_maybe_decompress(_fetch_bytes(source), source),
+            primary_location=source,
+            source_label=source,
+        )
+    repomd_url = _remote_repomd_url(source)
+    repomd = _fetch_bytes(repomd_url)
+    primary_href = _primary_href(repomd)
+    if not primary_href:
+        raise ValueError(f"repomd.xml does not reference primary metadata: {repomd_url}")
+    primary_url = urljoin(repomd_url, primary_href)
+    return RepositoryMetadata(
+        primary_bytes=_maybe_decompress(_fetch_bytes(primary_url), primary_url),
+        primary_location=primary_url,
+        source_label=repomd_url,
+    )
+
+
+def _parse_primary_packages(data: bytes, *, package_limit: int) -> list[_RpmRepoPackage]:
+    root = ET.fromstring(data)
     packages: list[_RpmRepoPackage] = []
     for package_element in root.findall(".//{*}package"):
         if len(packages) >= max(package_limit, 0):
@@ -154,11 +253,51 @@ def _parse_primary_packages(path: Path, *, package_limit: int) -> list[_RpmRepoP
     return packages
 
 
-def _read_primary_bytes(path: Path) -> bytes:
-    data = path.read_bytes()
-    if path.suffix == ".gz":
+def _primary_href(repomd_bytes: bytes) -> str:
+    root = ET.fromstring(repomd_bytes)
+    for data in root.findall(".//{*}data"):
+        if data.attrib.get("type") != "primary":
+            continue
+        location = data.find("{*}location")
+        if location is not None:
+            href = location.attrib.get("href", "")
+            if href:
+                return href
+    return ""
+
+
+def _maybe_decompress(data: bytes, location: str) -> bytes:
+    if location.endswith(".gz"):
         return gzip.decompress(data)
     return data
+
+
+def _fetch_bytes(url: str, *, timeout: float = 30.0) -> bytes:
+    request = Request(url, headers={"User-Agent": "edgp-rpm-repository/0.1"})
+    with urlopen(request, timeout=timeout) as response:
+        return response.read()
+
+
+def _remote_repomd_url(source: str) -> str:
+    if source.endswith("/repodata/repomd.xml") or source.endswith("repomd.xml"):
+        return source
+    return f"{source.rstrip('/')}/repodata/repomd.xml"
+
+
+def _looks_like_repomd(name: str) -> bool:
+    return name.endswith("repomd.xml")
+
+
+def _looks_like_primary(value: str) -> bool:
+    return (
+        value.endswith("primary.xml")
+        or value.endswith("primary.xml.gz")
+        or "-primary.xml.gz" in value
+    )
+
+
+def _is_url(value: str) -> bool:
+    return value.startswith(("http://", "https://"))
 
 
 def _capabilities(parent: ET.Element | None) -> list[_RpmCapability]:

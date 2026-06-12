@@ -57,6 +57,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.rpm.albs_provenance.v1.schema.json"),
         Path("tests/fixtures/rpm-albs-provenance.json"),
     ),
+    "edgp.rpm.repository_summary.v1": (
+        Path("docs/schemas/edgp.rpm.repository_summary.v1.schema.json"),
+        Path("tests/fixtures/rpm-repository-summary.json"),
+    ),
 }
 
 

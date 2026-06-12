@@ -45,6 +45,10 @@ python -B scripts/generate_schema_index.py --check
 - `edgp.rpm.albs_provenance.v1`:
   [`edgp.rpm.albs_provenance.v1.schema.json`](schemas/edgp.rpm.albs_provenance.v1.schema.json)
   documents installed RPM to ALBS artifact joins.
+- `edgp.rpm.repository_summary.v1`:
+  [`edgp.rpm.repository_summary.v1.schema.json`](schemas/edgp.rpm.repository_summary.v1.schema.json)
+  documents public RPM repository package, source RPM, architecture, and
+  unresolved requirement coverage.
 - `edgp.libsolv.bridge.v1`:
   [`edgp.libsolv.bridge.v1.schema.json`](schemas/edgp.libsolv.bridge.v1.schema.json)
   documents libsolv command discovery and parsed transaction actions.

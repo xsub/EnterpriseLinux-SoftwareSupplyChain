@@ -41,6 +41,7 @@ from src.public_advisory_feed import build_public_advisory_feed_report
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
+from src.rpm_repository_summary import build_rpm_repository_summary_report
 from src.schema_validation import validate_target
 from scripts.generate_failure_example_index import (
     build_failure_example_filter_listing,
@@ -393,6 +394,61 @@ def _write_rpm_installed_bundle(
     )
 
 
+def _load_rpm_repo_project_graph(
+    source: str,
+    *,
+    repo_id: str = "public-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
+) -> ResolvedProjectGraph:
+    return RpmRepositoryAdapter().parse_source(
+        source,
+        repo_id=repo_id,
+        package_limit=package_limit,
+        requirement_limit=requirement_limit,
+    )
+
+
+def _write_rpm_repo_bundle(
+    source: str,
+    output_dir: Path,
+    *,
+    repo_id: str = "public-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
+    impact_nodes: list[str] | None = None,
+    max_paths: int = 20,
+    command: str | None = None,
+) -> Path:
+    resolved = _load_rpm_repo_project_graph(
+        source,
+        repo_id=repo_id,
+        package_limit=package_limit,
+        requirement_limit=requirement_limit,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = output_dir / "rpm-repository-summary.json"
+    summary_path.write_text(
+        _json(
+            build_rpm_repository_summary_report(
+                resolved.graph,
+                root=resolved.root_identifier,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_graph_report_bundle(
+        resolved,
+        output_dir,
+        graph_name="rpm-repository-graph",
+        impact_nodes=impact_nodes,
+        node_resolver=_resolve_impact_node,
+        max_paths=max_paths,
+        extra_reports_after_graph=[summary_path],
+        bundle_metadata={"sourceKind": "rpm-repository", "command": command},
+    )
+
+
 def _load_albs_build_project_graph(
     *,
     build_id: str | None = None,
@@ -523,6 +579,14 @@ def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) ->
             raise ValueError("--scenario must use NODES:FANOUT")
         scenarios.append((int(left), int(right)))
     return scenarios
+
+
+def _rpm_repo_source(primary: Path | None, source: str | None) -> str:
+    if source:
+        return source
+    if primary is not None:
+        return str(primary)
+    raise ValueError("Either --source or --primary is required for RPM repository input")
 
 
 def _load_lockfile_graph(path: Path, ecosystem: str) -> tuple[str, CSRDependencyGraph]:
@@ -787,15 +851,39 @@ def build_parser() -> argparse.ArgumentParser:
 
     rpm_repo = subparsers.add_parser(
         "rpm-repo",
-        help="Export a graph from public RPM primary.xml repository metadata",
+        help="Export a graph from public RPM repomd.xml or primary metadata",
     )
-    rpm_repo.add_argument("--primary", type=Path, required=True)
+    rpm_repo.add_argument("--primary", type=Path)
+    rpm_repo.add_argument("--source")
     rpm_repo.add_argument("--repo-id", default="public-rpm-repository")
     rpm_repo.add_argument("--package-limit", type=int, default=5000)
     rpm_repo.add_argument("--requirement-limit", type=int, default=40)
     rpm_repo.add_argument(
         "--format", choices=["cypher", "cyclonedx", "json"], default="json"
     )
+
+    rpm_repo_summary = subparsers.add_parser(
+        "rpm-repo-summary",
+        help="Summarize public RPM repository metadata coverage",
+    )
+    rpm_repo_summary.add_argument("--primary", type=Path)
+    rpm_repo_summary.add_argument("--source")
+    rpm_repo_summary.add_argument("--repo-id", default="public-rpm-repository")
+    rpm_repo_summary.add_argument("--package-limit", type=int, default=5000)
+    rpm_repo_summary.add_argument("--requirement-limit", type=int, default=40)
+
+    rpm_repo_bundle = subparsers.add_parser(
+        "rpm-repo-bundle",
+        help="Render public RPM repository graph and summary bundle",
+    )
+    rpm_repo_bundle.add_argument("--primary", type=Path)
+    rpm_repo_bundle.add_argument("--source")
+    rpm_repo_bundle.add_argument("--repo-id", default="public-rpm-repository")
+    rpm_repo_bundle.add_argument("--package-limit", type=int, default=5000)
+    rpm_repo_bundle.add_argument("--requirement-limit", type=int, default=40)
+    rpm_repo_bundle.add_argument("--output-dir", type=Path, required=True)
+    rpm_repo_bundle.add_argument("--impact-node", action="append", default=[])
+    rpm_repo_bundle.add_argument("--report-limit", type=int, default=20)
 
     albs_build = subparsers.add_parser(
         "albs-build",
@@ -1205,8 +1293,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "rpm-repo":
-        resolved = RpmRepositoryAdapter().parse_primary(
-            args.primary,
+        resolved = _load_rpm_repo_project_graph(
+            _rpm_repo_source(args.primary, args.source),
             repo_id=args.repo_id,
             package_limit=args.package_limit,
             requirement_limit=args.requirement_limit,
@@ -1217,6 +1305,38 @@ def main(argv: list[str] | None = None) -> int:
                 resolved.graph,
                 root=resolved.root_identifier,
                 ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "rpm-repo-summary":
+        resolved = _load_rpm_repo_project_graph(
+            _rpm_repo_source(args.primary, args.source),
+            repo_id=args.repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
+        )
+        print(
+            _json(
+                build_rpm_repository_summary_report(
+                    resolved.graph,
+                    root=resolved.root_identifier,
+                )
+            )
+        )
+        return 0
+
+    if args.command == "rpm-repo-bundle":
+        print(
+            _write_rpm_repo_bundle(
+                _rpm_repo_source(args.primary, args.source),
+                args.output_dir,
+                repo_id=args.repo_id,
+                package_limit=args.package_limit,
+                requirement_limit=args.requirement_limit,
+                impact_nodes=args.impact_node,
+                max_paths=args.report_limit,
+                command=command,
             )
         )
         return 0

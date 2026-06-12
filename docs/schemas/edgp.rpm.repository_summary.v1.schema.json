@@ -1,0 +1,26 @@
+{
+  "$id": "urn:edgp:schema:rpm-repository-summary:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "RPM repository graph summary for public primary metadata.",
+  "properties": {
+    "architectures": {"items": {"type": "object"}, "type": "array"},
+    "ecosystem": {"const": "rpm"},
+    "root": {"type": "string"},
+    "schema": {"const": "edgp.rpm.repository_summary.v1"},
+    "summary": {"type": "object"},
+    "topSourceRpms": {"items": {"type": "object"}, "type": "array"},
+    "unresolvedRequirements": {"items": {"type": "object"}, "type": "array"}
+  },
+  "required": [
+    "schema",
+    "ecosystem",
+    "root",
+    "summary",
+    "architectures",
+    "topSourceRpms",
+    "unresolvedRequirements"
+  ],
+  "title": "EDGP RPM Repository Summary v1",
+  "type": "object"
+}

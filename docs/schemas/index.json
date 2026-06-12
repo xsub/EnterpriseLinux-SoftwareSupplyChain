@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 17,
+  "schemaCount": 18,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -122,6 +122,14 @@
       "id": "urn:edgp:schema:rpm-albs-provenance:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP RPM ALBS Provenance v1"
+    },
+    {
+      "contract": "edgp.rpm.repository_summary.v1",
+      "description": "RPM repository graph summary for public primary metadata.",
+      "file": "edgp.rpm.repository_summary.v1.schema.json",
+      "id": "urn:edgp:schema:rpm-repository-summary:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP RPM Repository Summary v1"
     },
     {
       "contract": "edgp.validation.failure.example.filters.v1",

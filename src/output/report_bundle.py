@@ -23,6 +23,7 @@ SOURCE_KINDS = {
     "maven-dependency-tree",
     "npm-lockfile",
     "rpm-installed",
+    "rpm-repository",
 }
 
 _MANIFEST_REQUIRED_KEYS = {
@@ -574,6 +575,8 @@ def _report_title(payload: dict[str, Any]) -> str:
         return "ALBS Build Diff"
     if schema == "edgp.rpm.albs_provenance.v1":
         return "RPM to ALBS Provenance"
+    if schema == "edgp.rpm.repository_summary.v1":
+        return f"RPM Repository Summary - {payload.get('root') or 'repository'}"
     if schema == "edgp.albs.log_intelligence.v1":
         return f"ALBS Log Intelligence - {payload.get('root') or 'build'}"
     if schema == "edgp.albs.release_completeness.v1":
