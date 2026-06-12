@@ -410,6 +410,7 @@ def _write_rpm_installed_bundle(
     limit: int = 100,
     max_requirements: int = 40,
     impact_nodes: list[str] | None = None,
+    libsolv_transaction_path: Path | None = None,
     include_license_report: bool = False,
     denied_licenses: list[str] | None = None,
     max_paths: int = 20,
@@ -420,6 +421,29 @@ def _write_rpm_installed_bundle(
         limit=limit,
         max_requirements=max_requirements,
     )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    graph_path = output_dir / "rpm-installed-graph.json"
+    graph_path.write_text(
+        GraphJsonExporter.export_to_json(
+            resolved.graph,
+            root=resolved.root_identifier,
+            ecosystem=resolved.ecosystem,
+        ),
+        encoding="utf-8",
+    )
+    final_reports = _write_license_report_if_requested(
+        output_dir,
+        resolved,
+        include_license_report=include_license_report,
+        denied_licenses=denied_licenses,
+    )
+    if libsolv_transaction_path is not None:
+        libsolv_report_path = output_dir / "libsolv-bridge.json"
+        libsolv_report_path.write_text(
+            _json(build_libsolv_bridge_report(libsolv_transaction_path, graph_path)),
+            encoding="utf-8",
+        )
+        final_reports.append(libsolv_report_path)
     return write_graph_report_bundle(
         resolved,
         output_dir,
@@ -427,12 +451,7 @@ def _write_rpm_installed_bundle(
         impact_nodes=impact_nodes,
         node_resolver=_resolve_impact_node,
         max_paths=max_paths,
-        extra_reports=_write_license_report_if_requested(
-            output_dir,
-            resolved,
-            include_license_report=include_license_report,
-            denied_licenses=denied_licenses,
-        ),
+        extra_reports=final_reports,
         bundle_metadata={"sourceKind": "rpm-installed", "command": command},
         include_triage_summary=include_triage_summary,
     )
@@ -1355,6 +1374,11 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_installed_bundle.add_argument("--impact-node", action="append", default=[])
     rpm_installed_bundle.add_argument("--limit", type=int, default=100)
     rpm_installed_bundle.add_argument("--max-requirements", type=int, default=40)
+    rpm_installed_bundle.add_argument(
+        "--libsolv-transaction",
+        type=Path,
+        help="saved libsolv transaction transcript to match against installed RPM graph",
+    )
     rpm_installed_bundle.add_argument("--report-limit", type=int, default=20)
     _add_license_bundle_options(rpm_installed_bundle)
     _add_triage_bundle_option(rpm_installed_bundle)
@@ -1923,6 +1947,7 @@ def main(argv: list[str] | None = None) -> int:
                 limit=args.limit,
                 max_requirements=args.max_requirements,
                 impact_nodes=args.impact_node,
+                libsolv_transaction_path=args.libsolv_transaction,
                 include_license_report=args.license_report or args.fail_on_denied,
                 denied_licenses=args.deny_license,
                 max_paths=args.report_limit,

@@ -2887,6 +2887,8 @@ def _assert_rpm_installed_bundle() -> None:
                 "10",
                 "--impact-node",
                 "rpm-installed==local",
+                "--libsolv-transaction",
+                "tests/fixtures/libsolv-transaction.txt",
                 "--output-dir",
                 str(output_dir),
                 "--triage-summary",
@@ -2904,13 +2906,21 @@ def _assert_rpm_installed_bundle() -> None:
         assert manifest["bundle"]["command"].startswith("edgp rpm-installed-bundle ")
         assert manifest["reports"][0]["href"] == "001-rpm-installed-graph.html"
         assert manifest["reports"][1]["href"] == "002-impact-rpm-installed-local.html"
+        assert manifest["reports"][2]["href"] == "003-libsolv-bridge.html"
         assert manifest["triageSummary"]["href"] == "triage-summary.html"
         graph = json.loads(
             (output_dir / "rpm-installed-graph.json").read_text(encoding="utf-8")
         )
         assert graph["schema"] == "edgp.graph.snapshot.v1"
         assert graph["root"] == "rpm-installed==local"
-        triage = json.loads((output_dir / "triage-summary.json").read_text(encoding="utf-8"))
+        libsolv = json.loads(
+            (output_dir / "libsolv-bridge.json").read_text(encoding="utf-8")
+        )
+        assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
+        assert libsolv["graphContext"]["schema"] == "edgp.graph.snapshot.v1"
+        triage = json.loads(
+            (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
         assert triage["schema"] == "edgp.triage.summary.v1"
         assert triage["source"]["kind"] == "report-bundle-input"
 

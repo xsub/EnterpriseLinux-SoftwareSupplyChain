@@ -43,6 +43,11 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
 ) -> None:
     monkeypatch.setattr(cli, "InstalledRpmAdapter", FakeInstalledRpmAdapter)
     output_dir = tmp_path / "rpm-installed-bundle"
+    transaction_path = tmp_path / "libsolv-transaction.txt"
+    transaction_path.write_text(
+        "install glibc-2.39-1.el10.x86_64\n",
+        encoding="utf-8",
+    )
 
     assert (
         cli.main(
@@ -50,6 +55,8 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
                 "rpm-installed-bundle",
                 "--impact-node",
                 "glibc",
+                "--libsolv-transaction",
+                str(transaction_path),
                 "--output-dir",
                 str(output_dir),
             ]
@@ -65,16 +72,23 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
         (output_dir / "impact-glibc-2.39-1.el10.json").read_text(encoding="utf-8")
     )
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    libsolv = json.loads((output_dir / "libsolv-bridge.json").read_text(encoding="utf-8"))
 
     assert graph["schema"] == "edgp.graph.snapshot.v1"
     assert graph["ecosystem"] == "rpm"
     assert impact["node"] == "glibc==2.39-1.el10"
     assert impact["summary"]["affectedDependents"] == 2
+    assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
+    assert libsolv["transactionActions"][0]["graphMatchStatus"] == "candidate"
+    assert libsolv["transactionImpact"][0]["matchedNodeIds"] == ["glibc==2.39-1.el10"]
+    assert libsolv["transactionImpact"][0]["affectedDependents"] == 2
     assert manifest["bundle"]["sourceKind"] == "rpm-installed"
     assert manifest["bundle"]["command"].startswith("edgp rpm-installed-bundle ")
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
+        "edgp.libsolv.bridge.v1",
     ]
     assert (output_dir / "001-rpm-installed-graph.html").exists()
     assert (output_dir / "002-impact-glibc-2.39-1.el10.html").exists()
+    assert (output_dir / "003-libsolv-bridge.html").exists()

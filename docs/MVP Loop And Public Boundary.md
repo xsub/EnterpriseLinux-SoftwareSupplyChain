@@ -56,6 +56,8 @@ surfaces are:
 - Generate CycloneDX SBOM graph bundle directories with optional impact reports.
 - Generate bounded installed RPM database bundle directories with optional
   impact reports on AlmaLinux-compatible hosts.
+- Include graph-matched libsolv-style transaction reports inside generated
+  installed RPM database bundles on AlmaLinux-compatible hosts.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
@@ -310,7 +312,7 @@ python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli dot-bundle --path tests/fixtures/repograph.dot --ecosystem rpm --impact-node glibc --output-dir /tmp/edgp-dot-bundle
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-node left-pad --output-dir /tmp/edgp-sbom-bundle
-python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --output-dir /tmp/edgp-rpm-installed-bundle
+python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-installed-bundle
 python -B -m src.cli rpm-repo --source tests/fixtures/repodata/repomd.xml --format json
 python -B -m src.cli rpm-repo-summary --source tests/fixtures/repodata/repomd.xml
 python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --advisories tests/fixtures/rpm-repo-advisories.json --public-advisory-feed tests/fixtures/public-osv-ranges.json --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-repo-bundle
