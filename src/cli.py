@@ -410,6 +410,9 @@ def _write_rpm_installed_bundle(
     limit: int = 100,
     max_requirements: int = 40,
     impact_nodes: list[str] | None = None,
+    advisory_path: Path | None = None,
+    public_advisory_feed_path: Path | None = None,
+    public_advisory_feed_url: str | None = None,
     libsolv_transaction_path: Path | None = None,
     include_license_report: bool = False,
     denied_licenses: list[str] | None = None,
@@ -431,11 +434,13 @@ def _write_rpm_installed_bundle(
         ),
         encoding="utf-8",
     )
-    final_reports = _write_license_report_if_requested(
+    final_reports = _write_advisory_reports_if_requested(
         output_dir,
         resolved,
-        include_license_report=include_license_report,
-        denied_licenses=denied_licenses,
+        advisory_path=advisory_path,
+        public_advisory_feed_path=public_advisory_feed_path,
+        public_advisory_feed_url=public_advisory_feed_url,
+        max_paths=max_paths,
     )
     if libsolv_transaction_path is not None:
         libsolv_report_path = output_dir / "libsolv-bridge.json"
@@ -444,6 +449,14 @@ def _write_rpm_installed_bundle(
             encoding="utf-8",
         )
         final_reports.append(libsolv_report_path)
+    final_reports.extend(
+        _write_license_report_if_requested(
+            output_dir,
+            resolved,
+            include_license_report=include_license_report,
+            denied_licenses=denied_licenses,
+        )
+    )
     return write_graph_report_bundle(
         resolved,
         output_dir,
@@ -516,51 +529,14 @@ def _write_rpm_repo_bundle(
         ),
         encoding="utf-8",
     )
-    final_reports = []
-    if advisory_path is not None:
-        advisory_report_path = output_dir / "advisory-report.json"
-        advisory_report_path.write_text(
-            _json(
-                build_advisory_report_from_file(
-                    advisory_path,
-                    resolved.graph,
-                    root=resolved.root_identifier,
-                    ecosystem=resolved.ecosystem,
-                    max_paths=max_paths,
-                )
-            ),
-            encoding="utf-8",
-        )
-        final_reports.append(advisory_report_path)
-    if public_advisory_feed_path is not None or public_advisory_feed_url is not None:
-        public_feed_report_path = output_dir / "public-advisory-feed.json"
-        public_feed_report = build_public_advisory_feed_report(
-            _load_public_json_source(
-                path=public_advisory_feed_path,
-                url=public_advisory_feed_url,
-            ),
-            ecosystem=resolved.ecosystem,
-        )
-        public_feed_report_path.write_text(
-            _json(public_feed_report),
-            encoding="utf-8",
-        )
-        final_reports.append(public_feed_report_path)
-
-        public_advisory_report_path = output_dir / "public-advisory-report.json"
-        public_advisory_report_path.write_text(
-            _json(
-                build_advisory_report(
-                    public_feed_report["overlay"],
-                    resolved.graph,
-                    root=resolved.root_identifier,
-                    ecosystem=resolved.ecosystem,
-                    max_paths=max_paths,
-                )
-            ),
-            encoding="utf-8",
-        )
-        final_reports.append(public_advisory_report_path)
+    final_reports = _write_advisory_reports_if_requested(
+        output_dir,
+        resolved,
+        advisory_path=advisory_path,
+        public_advisory_feed_path=public_advisory_feed_path,
+        public_advisory_feed_url=public_advisory_feed_url,
+        max_paths=max_paths,
+    )
 
     if libsolv_transaction_path is not None:
         libsolv_report_path = output_dir / "libsolv-bridge.json"
@@ -617,6 +593,65 @@ def _write_license_report_if_requested(
         encoding="utf-8",
     )
     return [report_path]
+
+
+def _write_advisory_reports_if_requested(
+    output_dir: Path,
+    resolved: ResolvedProjectGraph,
+    *,
+    advisory_path: Path | None = None,
+    public_advisory_feed_path: Path | None = None,
+    public_advisory_feed_url: str | None = None,
+    max_paths: int = 20,
+) -> list[Path]:
+    final_reports = []
+    if advisory_path is not None:
+        advisory_report_path = output_dir / "advisory-report.json"
+        advisory_report_path.write_text(
+            _json(
+                build_advisory_report_from_file(
+                    advisory_path,
+                    resolved.graph,
+                    root=resolved.root_identifier,
+                    ecosystem=resolved.ecosystem,
+                    max_paths=max_paths,
+                )
+            ),
+            encoding="utf-8",
+        )
+        final_reports.append(advisory_report_path)
+
+    if public_advisory_feed_path is not None or public_advisory_feed_url is not None:
+        public_feed_report_path = output_dir / "public-advisory-feed.json"
+        public_feed_report = build_public_advisory_feed_report(
+            _load_public_json_source(
+                path=public_advisory_feed_path,
+                url=public_advisory_feed_url,
+            ),
+            ecosystem=resolved.ecosystem,
+        )
+        public_feed_report_path.write_text(
+            _json(public_feed_report),
+            encoding="utf-8",
+        )
+        final_reports.append(public_feed_report_path)
+
+        public_advisory_report_path = output_dir / "public-advisory-report.json"
+        public_advisory_report_path.write_text(
+            _json(
+                build_advisory_report(
+                    public_feed_report["overlay"],
+                    resolved.graph,
+                    root=resolved.root_identifier,
+                    ecosystem=resolved.ecosystem,
+                    max_paths=max_paths,
+                )
+            ),
+            encoding="utf-8",
+        )
+        final_reports.append(public_advisory_report_path)
+
+    return final_reports
 
 
 def _print_bundle_result(
@@ -1374,6 +1409,9 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_installed_bundle.add_argument("--impact-node", action="append", default=[])
     rpm_installed_bundle.add_argument("--limit", type=int, default=100)
     rpm_installed_bundle.add_argument("--max-requirements", type=int, default=40)
+    rpm_installed_bundle.add_argument("--advisories", type=Path)
+    rpm_installed_bundle.add_argument("--public-advisory-feed", type=Path)
+    rpm_installed_bundle.add_argument("--public-advisory-feed-url")
     rpm_installed_bundle.add_argument(
         "--libsolv-transaction",
         type=Path,
@@ -1947,6 +1985,9 @@ def main(argv: list[str] | None = None) -> int:
                 limit=args.limit,
                 max_requirements=args.max_requirements,
                 impact_nodes=args.impact_node,
+                advisory_path=args.advisories,
+                public_advisory_feed_path=args.public_advisory_feed,
+                public_advisory_feed_url=args.public_advisory_feed_url,
                 libsolv_transaction_path=args.libsolv_transaction,
                 include_license_report=args.license_report or args.fail_on_denied,
                 denied_licenses=args.deny_license,

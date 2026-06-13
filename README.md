@@ -156,7 +156,7 @@ edgp npm-bundle --path package-lock.json --impact-node left-pad --advisories adv
 edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
 edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
 edgp sbom-bundle --path bom.json --impact-node left-pad --deny-license WTFPL --fail-on-denied --output-dir reports/sbom
-edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --libsolv-transaction solver-transaction.txt --license-report --output-dir reports/rpm-installed --triage-summary
+edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --advisories advisories.json --public-advisory-feed osv.json --libsolv-transaction solver-transaction.txt --license-report --output-dir reports/rpm-installed --triage-summary
 edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff
 edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
@@ -484,9 +484,10 @@ and includes the generating command.
 
 `edgp rpm-installed-bundle` renders a bounded local RPM database graph on hosts
 with an RPM database into a static bundle with `rpm-installed-graph.json`,
-optional impact reports, optional graph-matched libsolv transaction reports,
-HTML, `index.html`, and `manifest.json`. The manifest records
-`bundle.sourceKind` as `rpm-installed` and includes the generating command.
+optional impact reports, local advisory overlays, normalized public advisory
+feed reports, optional graph-matched libsolv transaction reports, HTML,
+`index.html`, and `manifest.json`. The manifest records `bundle.sourceKind` as
+`rpm-installed` and includes the generating command.
 
 `edgp albs-build` fetches public ALBS build metadata by build ID or reads an
 ALBS JSON file and turns source package, repository, commit, build task,

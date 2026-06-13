@@ -2887,6 +2887,10 @@ def _assert_rpm_installed_bundle() -> None:
                 "10",
                 "--impact-node",
                 "rpm-installed==local",
+                "--advisories",
+                "tests/fixtures/rpm-advisories.json",
+                "--public-advisory-feed",
+                "tests/fixtures/public-osv.json",
                 "--libsolv-transaction",
                 "tests/fixtures/libsolv-transaction.txt",
                 "--output-dir",
@@ -2906,7 +2910,10 @@ def _assert_rpm_installed_bundle() -> None:
         assert manifest["bundle"]["command"].startswith("edgp rpm-installed-bundle ")
         assert manifest["reports"][0]["href"] == "001-rpm-installed-graph.html"
         assert manifest["reports"][1]["href"] == "002-impact-rpm-installed-local.html"
-        assert manifest["reports"][2]["href"] == "003-libsolv-bridge.html"
+        assert manifest["reports"][2]["href"] == "003-advisory-report.html"
+        assert manifest["reports"][3]["href"] == "004-public-advisory-feed.html"
+        assert manifest["reports"][4]["href"] == "005-public-advisory-report.html"
+        assert manifest["reports"][5]["href"] == "006-libsolv-bridge.html"
         assert manifest["triageSummary"]["href"] == "triage-summary.html"
         graph = json.loads(
             (output_dir / "rpm-installed-graph.json").read_text(encoding="utf-8")
@@ -2918,6 +2925,18 @@ def _assert_rpm_installed_bundle() -> None:
         )
         assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
         assert libsolv["graphContext"]["schema"] == "edgp.graph.snapshot.v1"
+        advisory = json.loads(
+            (output_dir / "advisory-report.json").read_text(encoding="utf-8")
+        )
+        assert advisory["schema"] == "edgp.advisory.report.v1"
+        public_feed = json.loads(
+            (output_dir / "public-advisory-feed.json").read_text(encoding="utf-8")
+        )
+        assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
+        public_advisory = json.loads(
+            (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
+        )
+        assert public_advisory["schema"] == "edgp.advisory.report.v1"
         triage = json.loads(
             (output_dir / "triage-summary.json").read_text(encoding="utf-8")
         )

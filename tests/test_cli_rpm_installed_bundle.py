@@ -48,6 +48,17 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
         "install glibc-2.39-1.el10.x86_64\n",
         encoding="utf-8",
     )
+    public_feed_path = tmp_path / "public-osv.json"
+    public_feed_path.write_text(
+        json.dumps(
+            {
+                "id": "OSV-RPM-LOCAL-0001",
+                "summary": "Demo public advisory for installed glibc.",
+                "affected": [{"package": {"ecosystem": "rpm", "name": "glibc"}}],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     assert (
         cli.main(
@@ -55,6 +66,10 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
                 "rpm-installed-bundle",
                 "--impact-node",
                 "glibc",
+                "--advisories",
+                "tests/fixtures/rpm-advisories.json",
+                "--public-advisory-feed",
+                str(public_feed_path),
                 "--libsolv-transaction",
                 str(transaction_path),
                 "--output-dir",
@@ -72,12 +87,27 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
         (output_dir / "impact-glibc-2.39-1.el10.json").read_text(encoding="utf-8")
     )
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    advisory = json.loads(
+        (output_dir / "advisory-report.json").read_text(encoding="utf-8")
+    )
+    public_feed = json.loads(
+        (output_dir / "public-advisory-feed.json").read_text(encoding="utf-8")
+    )
+    public_advisory = json.loads(
+        (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
+    )
     libsolv = json.loads((output_dir / "libsolv-bridge.json").read_text(encoding="utf-8"))
 
     assert graph["schema"] == "edgp.graph.snapshot.v1"
     assert graph["ecosystem"] == "rpm"
     assert impact["node"] == "glibc==2.39-1.el10"
     assert impact["summary"]["affectedDependents"] == 2
+    assert advisory["schema"] == "edgp.advisory.report.v1"
+    assert advisory["summary"]["findings"] == 1
+    assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
+    assert public_feed["summary"]["advisories"] == 1
+    assert public_advisory["schema"] == "edgp.advisory.report.v1"
+    assert public_advisory["summary"]["findings"] == 1
     assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
     assert libsolv["transactionActions"][0]["graphMatchStatus"] == "candidate"
     assert libsolv["transactionImpact"][0]["matchedNodeIds"] == ["glibc==2.39-1.el10"]
@@ -87,8 +117,14 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
     assert [report["schema"] for report in manifest["reports"]] == [
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
+        "edgp.advisory.report.v1",
+        "edgp.public.advisory_feed.v1",
+        "edgp.advisory.report.v1",
         "edgp.libsolv.bridge.v1",
     ]
     assert (output_dir / "001-rpm-installed-graph.html").exists()
     assert (output_dir / "002-impact-glibc-2.39-1.el10.html").exists()
-    assert (output_dir / "003-libsolv-bridge.html").exists()
+    assert (output_dir / "003-advisory-report.html").exists()
+    assert (output_dir / "004-public-advisory-feed.html").exists()
+    assert (output_dir / "005-public-advisory-report.html").exists()
+    assert (output_dir / "006-libsolv-bridge.html").exists()
