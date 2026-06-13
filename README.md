@@ -113,6 +113,7 @@ edgp albs-build-diff --left-build-id 17812 --right-build-id 17813
 edgp albs-release-completeness --build-id 17812 --build-id 17813
 edgp albs-log-intelligence --build-id 17813
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
+edgp rpm-albs-provenance-bundle --build-id 17812 --rpm-limit 200 --output-dir reports/rpm-albs-provenance --triage-summary
 edgp libsolv-bridge --transaction solver-transaction.txt
 edgp libsolv-bridge --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
@@ -507,7 +508,9 @@ resources:
 - `edgp albs-build-diff` compares two builds for artifact, source commit, and
   timing changes.
 - `edgp rpm-albs-provenance` joins installed RPMs from the local RPM database to
-  artifacts from one public ALBS build.
+  artifacts from one public ALBS build. `edgp rpm-albs-provenance-bundle`
+  renders that join as static HTML with `manifest.json` for browser review and
+  bundle verification.
 - `edgp albs-log-intelligence` extracts warning/error/failure signals from
   inline build-log metadata when present.
 - `edgp albs-release-completeness` summarizes release, architecture, sign, and

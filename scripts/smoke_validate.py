@@ -339,6 +339,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "libsolv-transaction",
         "maven-dependency-tree",
         "npm-lockfile",
+        "rpm-albs-provenance",
         "rpm-installed",
         "rpm-repository",
         "rpm-repository-diff",
@@ -2944,6 +2945,54 @@ def _assert_rpm_installed_bundle() -> None:
         assert triage["source"]["kind"] == "report-bundle-input"
 
 
+def _assert_rpm_albs_provenance_bundle() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "rpm-albs-provenance-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-albs-provenance-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--rpm-limit",
+                "5",
+                "--max-requirements",
+                "10",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "rpm-albs-provenance"
+        assert manifest["bundle"]["command"].startswith(
+            "edgp rpm-albs-provenance-bundle "
+        )
+        assert manifest["reports"][0]["href"] == "001-rpm-albs-provenance.html"
+        assert manifest["reports"][0]["schema"] == "edgp.rpm.albs_provenance.v1"
+        assert manifest["triageSummary"]["href"] == "triage-summary.html"
+        provenance = json.loads(
+            (output_dir / "rpm-albs-provenance.json").read_text(encoding="utf-8")
+        )
+        assert provenance["schema"] == "edgp.rpm.albs_provenance.v1"
+        assert provenance["root"] == "rpm-installed==local"
+        html = (output_dir / "001-rpm-albs-provenance.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="rpm-albs-provenance-matches-panel"' in html
+        assert 'data-testid="rpm-albs-provenance-unmatched-panel"' in html
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -3050,6 +3099,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))
         checks.append(("installed rpm bundle", _assert_rpm_installed_bundle))
+        checks.append(
+            ("rpm albs provenance bundle", _assert_rpm_albs_provenance_bundle)
+        )
 
     for label, check in checks:
         check()

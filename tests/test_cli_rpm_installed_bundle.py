@@ -28,8 +28,16 @@ class FakeInstalledRpmAdapter:
             "glibc==2.39-1.el10",
             metadata={"ecosystem": "rpm", "source": "rpmdb", "arch": "x86_64"},
         )
+        graph.add_vertex(
+            "nginx-core==1.20.1-16.el9_4.1",
+            metadata={"ecosystem": "rpm", "source": "rpmdb", "arch": "x86_64"},
+        )
         graph.add_dependency_edge("rpm-installed==local", "bash==5.2.26-6.el10")
         graph.add_dependency_edge("rpm-installed==local", "glibc==2.39-1.el10")
+        graph.add_dependency_edge(
+            "rpm-installed==local",
+            "nginx-core==1.20.1-16.el9_4.1",
+        )
         graph.add_dependency_edge("bash==5.2.26-6.el10", "glibc==2.39-1.el10")
         return ResolvedProjectGraph(
             root_identifier="rpm-installed==local",
@@ -128,3 +136,53 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
     assert (output_dir / "004-public-advisory-feed.html").exists()
     assert (output_dir / "005-public-advisory-report.html").exists()
     assert (output_dir / "006-libsolv-bridge.html").exists()
+
+
+def test_cli_rpm_albs_provenance_bundle_writes_static_report(
+    tmp_path, capsys, monkeypatch
+) -> None:
+    monkeypatch.setattr(cli, "InstalledRpmAdapter", FakeInstalledRpmAdapter)
+    output_dir = tmp_path / "rpm-albs-provenance-bundle"
+
+    assert (
+        cli.main(
+            [
+                "rpm-albs-provenance-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--rpm-limit",
+                "10",
+                "--max-requirements",
+                "10",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    report = json.loads(
+        (output_dir / "rpm-albs-provenance.json").read_text(encoding="utf-8")
+    )
+
+    assert manifest["bundle"]["sourceKind"] == "rpm-albs-provenance"
+    assert manifest["reports"][0]["href"] == "001-rpm-albs-provenance.html"
+    assert manifest["reports"][0]["schema"] == "edgp.rpm.albs_provenance.v1"
+    assert manifest["triageSummary"]["href"] == "triage-summary.html"
+    assert report["schema"] == "edgp.rpm.albs_provenance.v1"
+    assert report["summary"]["matchedPackages"] == 1
+    assert report["matches"][0]["installedPackage"]["nodeId"] == (
+        "nginx-core==1.20.1-16.el9_4.1"
+    )
+    assert report["matches"][0]["albsArtifact"]["filename"] == (
+        "nginx-core-1.20.1-16.el9_4.1.x86_64.rpm"
+    )
+    html = (output_dir / "001-rpm-albs-provenance.html").read_text(encoding="utf-8")
+    assert 'data-testid="rpm-albs-provenance-matches-panel"' in html
+
+    assert cli.main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True

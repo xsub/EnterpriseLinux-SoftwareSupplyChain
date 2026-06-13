@@ -37,6 +37,7 @@ The public source-kind values are:
 - `maven-dependency-tree`
 - `dot`
 - `cyclonedx-sbom`
+- `rpm-albs-provenance`
 - `rpm-installed`
 - `rpm-repository`
 - `rpm-repository-diff`

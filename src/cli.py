@@ -793,6 +793,40 @@ def _write_libsolv_bundle(
     )
 
 
+def _write_rpm_albs_provenance_bundle(
+    output_dir: Path,
+    *,
+    build_id: str | None = None,
+    path: Path | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+    rpm_limit: int = 100,
+    max_requirements: int = 40,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    albs_payload = _load_albs_build_metadata(
+        build_id=build_id,
+        path=path,
+        base_url=base_url,
+    )
+    installed = InstalledRpmAdapter().parse_installed(
+        limit=rpm_limit,
+        max_requirements=max_requirements,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "rpm-albs-provenance.json"
+    report_path.write_text(
+        _json(build_rpm_albs_provenance_report(installed.graph, albs_payload)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "rpm-albs-provenance", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _load_albs_build_project_graph(
     *,
     build_id: str | None = None,
@@ -1590,6 +1624,21 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_albs_provenance.add_argument("--rpm-limit", type=int, default=100)
     rpm_albs_provenance.add_argument("--max-requirements", type=int, default=40)
 
+    rpm_albs_provenance_bundle = subparsers.add_parser(
+        "rpm-albs-provenance-bundle",
+        help="Render installed RPM to public ALBS artifact provenance as a bundle",
+    )
+    rpm_albs_bundle_input = rpm_albs_provenance_bundle.add_mutually_exclusive_group(
+        required=True
+    )
+    rpm_albs_bundle_input.add_argument("--build-id")
+    rpm_albs_bundle_input.add_argument("--path", type=Path)
+    rpm_albs_provenance_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    rpm_albs_provenance_bundle.add_argument("--rpm-limit", type=int, default=100)
+    rpm_albs_provenance_bundle.add_argument("--max-requirements", type=int, default=40)
+    rpm_albs_provenance_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(rpm_albs_provenance_bundle)
+
     libsolv_bridge = subparsers.add_parser(
         "libsolv-bridge",
         help="Report libsolv command availability and parse transaction output",
@@ -2200,6 +2249,21 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(_json(build_rpm_albs_provenance_report(installed.graph, albs_payload)))
         return 0
+
+    if args.command == "rpm-albs-provenance-bundle":
+        return _print_bundle_result(
+            _write_rpm_albs_provenance_bundle(
+                args.output_dir,
+                build_id=args.build_id,
+                path=args.path,
+                base_url=args.base_url,
+                rpm_limit=args.rpm_limit,
+                max_requirements=args.max_requirements,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "libsolv-bridge":
         print(_json(build_libsolv_bridge_report(args.transaction, args.graph_snapshot)))
