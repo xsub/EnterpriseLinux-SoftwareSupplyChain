@@ -125,6 +125,42 @@ def test_cli_albs_artifact_inventory_exports_json(capsys) -> None:
     }
 
 
+def test_cli_albs_artifact_inventory_bundle_writes_report_bundle(
+    tmp_path, capsys
+) -> None:
+    output_dir = tmp_path / "albs-artifact-inventory-bundle"
+
+    assert (
+        main(
+            [
+                "albs-artifact-inventory-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    report = json.loads(
+        (output_dir / "albs-artifact-inventory.json").read_text(encoding="utf-8")
+    )
+    html = (output_dir / "001-albs-artifact-inventory.html").read_text(
+        encoding="utf-8"
+    )
+
+    assert manifest["bundle"]["sourceKind"] == "albs-artifact-inventory"
+    assert manifest["reports"][0]["schema"] == "edgp.albs.artifact_inventory.v1"
+    assert manifest["reports"][0]["href"] == "001-albs-artifact-inventory.html"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    assert report["summary"]["artifacts"] == 4
+    assert 'data-testid="albs-artifact-table-panel"' in html
+
+
 def test_cli_albs_build_timing_exports_json(capsys) -> None:
     assert (
         main(
@@ -145,6 +181,38 @@ def test_cli_albs_build_timing_exports_json(capsys) -> None:
         "sign_packages_time": 22.0,
         "upload_packages_time": 187.0,
     }
+
+
+def test_cli_albs_build_timing_bundle_writes_report_bundle(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "albs-build-timing-bundle"
+
+    assert (
+        main(
+            [
+                "albs-build-timing-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    report = json.loads(
+        (output_dir / "albs-build-timing.json").read_text(encoding="utf-8")
+    )
+    html = (output_dir / "001-albs-build-timing.html").read_text(encoding="utf-8")
+
+    assert manifest["bundle"]["sourceKind"] == "albs-build-timing"
+    assert manifest["reports"][0]["schema"] == "edgp.albs.build_timing.v1"
+    assert manifest["reports"][0]["href"] == "001-albs-build-timing.html"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    assert report["summary"]["criticalBuildTaskWallSeconds"] == 371.070048
+    assert 'data-testid="albs-artifact-timing-panel"' in html
 
 
 def test_cli_query_albs_build_source(capsys) -> None:

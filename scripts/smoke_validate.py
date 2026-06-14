@@ -373,6 +373,8 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "advisory-report",
         "albs-build",
         "albs-build-diff",
+        "albs-artifact-inventory",
+        "albs-build-timing",
         "albs-log-intelligence",
         "albs-release-completeness",
         "cyclonedx-sbom",
@@ -1558,6 +1560,80 @@ def _assert_albs_build_bundle() -> None:
 
 
 def _assert_public_vertical_reports() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "albs-artifact-inventory-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-artifact-inventory-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "albs-artifact-inventory"
+        assert manifest["reports"][0]["href"] == "001-albs-artifact-inventory.html"
+        assert manifest["reports"][0]["schema"] == "edgp.albs.artifact_inventory.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        inventory = json.loads(
+            (output_dir / "albs-artifact-inventory.json").read_text(encoding="utf-8")
+        )
+        assert inventory["summary"]["artifacts"] == 4
+        inventory_html = (output_dir / "001-albs-artifact-inventory.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="albs-artifact-table-panel"' in inventory_html
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "albs-build-timing-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-build-timing-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "albs-build-timing"
+        assert manifest["reports"][0]["href"] == "001-albs-build-timing.html"
+        assert manifest["reports"][0]["schema"] == "edgp.albs.build_timing.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        timing = json.loads(
+            (output_dir / "albs-build-timing.json").read_text(encoding="utf-8")
+        )
+        assert timing["summary"]["criticalBuildTaskWallSeconds"] == 371.070048
+        timing_html = (output_dir / "001-albs-build-timing.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="albs-artifact-timing-panel"' in timing_html
+
     diff = _run_cli(
         [
             "albs-build-diff",

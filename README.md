@@ -109,7 +109,9 @@ edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repo
 edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc --advisories advisories.json --public-advisory-feed osv.json --libsolv-transaction solver-transaction.txt --license-report --triage-summary
 edgp albs-build --build-id 17812 --format json
 edgp albs-artifact-inventory --build-id 17812
+edgp albs-artifact-inventory-bundle --build-id 17812 --output-dir reports/albs-artifact-inventory --triage-summary
 edgp albs-build-timing --build-id 17812
+edgp albs-build-timing-bundle --build-id 17812 --output-dir reports/albs-build-timing --triage-summary
 edgp albs-build-diff --left-build-id 17812 --right-build-id 17813
 edgp albs-build-diff-bundle --left-build-id 17812 --right-build-id 17813 --output-dir reports/albs-build-diff --triage-summary
 edgp albs-release-completeness --build-id 17812 --build-id 17813
@@ -508,9 +510,11 @@ ALBS JSON file and turns source package, repository, commit, build task,
 environment, RPM artifact, sign task, test task, and release records into the
 same CSR snapshot format. `edgp albs-artifact-inventory` emits a build-output
 inventory grouped by architecture and package. `edgp albs-build-timing` emits
-task, sign, and artifact timing derived from the same ALBS metadata. `edgp
-albs-build-bundle` renders that real build provenance graph into a static bundle
-with `albs-build-graph.json`, `albs-artifact-inventory.json`,
+task, sign, and artifact timing derived from the same ALBS metadata. The
+standalone `albs-artifact-inventory-bundle` and `albs-build-timing-bundle`
+commands render those focused views as static, verifiable report bundles.
+`edgp albs-build-bundle` renders that real build provenance graph into a static
+bundle with `albs-build-graph.json`, `albs-artifact-inventory.json`,
 `albs-build-timing.json`, optional impact reports, HTML, `index.html`, and
 `manifest.json`. The manifest records `bundle.sourceKind` as `albs-build` and
 includes the generating command.

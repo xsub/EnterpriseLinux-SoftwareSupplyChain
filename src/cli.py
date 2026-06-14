@@ -1331,6 +1331,79 @@ def _write_albs_build_bundle(
     )
 
 
+def _write_albs_artifact_inventory_bundle(
+    output_dir: Path,
+    *,
+    build_id: str | None = None,
+    path: Path | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+    task_limit: int = 50,
+    artifact_limit: int = 200,
+    test_task_limit: int = 50,
+    include_logs: bool = False,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    root_identifier, graph, _ = _load_albs_build_project_graph(
+        build_id=build_id,
+        path=path,
+        base_url=base_url,
+        task_limit=task_limit,
+        artifact_limit=artifact_limit,
+        test_task_limit=test_task_limit,
+        include_logs=include_logs,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "albs-artifact-inventory.json"
+    report_path.write_text(
+        _json(build_albs_artifact_inventory(graph, root=root_identifier)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={
+            "sourceKind": "albs-artifact-inventory",
+            "command": command,
+        },
+        include_triage_summary=include_triage_summary,
+    )
+
+
+def _write_albs_build_timing_bundle(
+    output_dir: Path,
+    *,
+    build_id: str | None = None,
+    path: Path | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    payload = _load_albs_build_metadata(
+        build_id=build_id,
+        path=path,
+        base_url=base_url,
+    )
+    build_id_value = str(payload.get("build_id") or payload.get("id") or "unknown")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "albs-build-timing.json"
+    report_path.write_text(
+        _json(
+            build_albs_build_timing_report(
+                payload,
+                root=f"albs-build:{build_id_value}",
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "albs-build-timing", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _load_public_json(path: Path) -> object:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -1970,6 +2043,34 @@ def build_parser() -> argparse.ArgumentParser:
     albs_artifact_inventory.add_argument("--test-task-limit", type=int, default=50)
     albs_artifact_inventory.add_argument("--include-logs", action="store_true")
 
+    albs_artifact_inventory_bundle = subparsers.add_parser(
+        "albs-artifact-inventory-bundle",
+        help="Render public ALBS artifact inventory as a static bundle",
+    )
+    albs_inventory_bundle_input = albs_artifact_inventory_bundle.add_mutually_exclusive_group(
+        required=True
+    )
+    albs_inventory_bundle_input.add_argument("--build-id")
+    albs_inventory_bundle_input.add_argument("--path", type=Path)
+    albs_artifact_inventory_bundle.add_argument(
+        "--base-url",
+        default=DEFAULT_ALBS_BASE_URL,
+    )
+    albs_artifact_inventory_bundle.add_argument("--task-limit", type=int, default=50)
+    albs_artifact_inventory_bundle.add_argument("--artifact-limit", type=int, default=200)
+    albs_artifact_inventory_bundle.add_argument(
+        "--test-task-limit",
+        type=int,
+        default=50,
+    )
+    albs_artifact_inventory_bundle.add_argument("--include-logs", action="store_true")
+    albs_artifact_inventory_bundle.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+    )
+    _add_triage_bundle_option(albs_artifact_inventory_bundle)
+
     albs_build_timing = subparsers.add_parser(
         "albs-build-timing",
         help="Export ALBS build task and artifact timing from public build metadata",
@@ -1978,6 +2079,19 @@ def build_parser() -> argparse.ArgumentParser:
     albs_timing_input.add_argument("--build-id")
     albs_timing_input.add_argument("--path", type=Path)
     albs_build_timing.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+
+    albs_build_timing_bundle = subparsers.add_parser(
+        "albs-build-timing-bundle",
+        help="Render public ALBS build timing as a static bundle",
+    )
+    albs_timing_bundle_input = albs_build_timing_bundle.add_mutually_exclusive_group(
+        required=True
+    )
+    albs_timing_bundle_input.add_argument("--build-id")
+    albs_timing_bundle_input.add_argument("--path", type=Path)
+    albs_build_timing_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_build_timing_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(albs_build_timing_bundle)
 
     albs_build_bundle = subparsers.add_parser(
         "albs-build-bundle",
@@ -2773,6 +2887,23 @@ def main(argv: list[str] | None = None) -> int:
         print(_json(build_albs_artifact_inventory(graph, root=root_identifier)))
         return 0
 
+    if args.command == "albs-artifact-inventory-bundle":
+        return _print_bundle_result(
+            _write_albs_artifact_inventory_bundle(
+                args.output_dir,
+                build_id=args.build_id,
+                path=args.path,
+                base_url=args.base_url,
+                task_limit=args.task_limit,
+                artifact_limit=args.artifact_limit,
+                test_task_limit=args.test_task_limit,
+                include_logs=args.include_logs,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
+
     if args.command == "albs-build-timing":
         payload = _load_albs_build_metadata(
             build_id=args.build_id,
@@ -2789,6 +2920,19 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+
+    if args.command == "albs-build-timing-bundle":
+        return _print_bundle_result(
+            _write_albs_build_timing_bundle(
+                args.output_dir,
+                build_id=args.build_id,
+                path=args.path,
+                base_url=args.base_url,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "albs-build-bundle":
         return _print_bundle_result(

@@ -35,6 +35,8 @@ The public source-kind values are:
 - `advisory-report`
 - `albs-build`
 - `albs-build-diff`
+- `albs-artifact-inventory`
+- `albs-build-timing`
 - `albs-log-intelligence`
 - `albs-release-completeness`
 - `npm-diagnostics`

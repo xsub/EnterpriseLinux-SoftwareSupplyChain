@@ -64,6 +64,8 @@ surfaces are:
   generated installed RPM database bundles.
 - Render installed RPM to public ALBS artifact provenance joins as static,
   verifiable bundles.
+- Render public ALBS artifact inventory reports as static, verifiable bundles.
+- Render public ALBS build timing reports as static, verifiable bundles.
 - Render public ALBS build comparisons as static, verifiable bundles.
 - Render public ALBS build-log intelligence reports as static, verifiable
   bundles.
@@ -232,6 +234,8 @@ surfaces are:
 - Build public ALBS provenance graphs from build metadata.
 - Generate ALBS artifact inventory, build timing, build diff, log intelligence,
   and release completeness reports.
+- Render ALBS artifact inventory and build timing reports as static,
+  verifiable bundles.
 - Join installed RPM database nodes to artifacts from public ALBS build
   metadata.
 - Parse public RPM repository primary metadata into package/provider/requirement
@@ -350,6 +354,8 @@ python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/r
 python -B -m src.cli advisory-bundle --source rpm-repo --path tests/fixtures/repodata/repomd.xml --public-advisory-feed tests/fixtures/public-osv-ranges.json --ecosystem rpm --output-dir /tmp/edgp-advisory-bundle
 python -B -m src.cli license-report-bundle --source sbom --path tests/fixtures/sample-bom.json --deny-license WTFPL --output-dir /tmp/edgp-license-report-bundle
 python -B -m src.cli albs-build --path tests/fixtures/albs-build.json --format json
+python -B -m src.cli albs-artifact-inventory-bundle --path tests/fixtures/albs-build.json --output-dir /tmp/edgp-albs-artifact-inventory-bundle
+python -B -m src.cli albs-build-timing-bundle --path tests/fixtures/albs-build.json --output-dir /tmp/edgp-albs-build-timing-bundle
 python -B -m src.cli albs-build-diff --left-path tests/fixtures/albs-build.json --right-path tests/fixtures/albs-build-updated.json
 python -B -m src.cli albs-log-intelligence --path tests/fixtures/albs-build-updated.json
 python -B -m src.cli albs-release-completeness --path tests/fixtures/albs-build.json --path tests/fixtures/albs-build-updated.json

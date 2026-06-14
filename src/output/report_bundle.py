@@ -20,6 +20,8 @@ SOURCE_KINDS = {
     "advisory-report",
     "albs-build",
     "albs-build-diff",
+    "albs-artifact-inventory",
+    "albs-build-timing",
     "albs-log-intelligence",
     "albs-release-completeness",
     "cyclonedx-sbom",
