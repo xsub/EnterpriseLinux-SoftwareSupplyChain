@@ -746,3 +746,42 @@ def test_cli_albs_log_intelligence_bundle_writes_report_bundle(
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)
     assert verification["ok"] is True
+
+
+def test_cli_albs_release_completeness_bundle_writes_report_bundle(
+    tmp_path, capsys
+) -> None:
+    output_dir = tmp_path / "albs-release-completeness-bundle"
+
+    assert main(
+        [
+            "albs-release-completeness-bundle",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+            "--output-dir",
+            str(output_dir),
+            "--triage-summary",
+        ]
+    ) == 0
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "albs-release-completeness"
+    assert manifest["reports"][0]["href"] == "001-albs-release-completeness.html"
+    assert manifest["reports"][0]["schema"] == "edgp.albs.release_completeness.v1"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    report = json.loads(
+        (output_dir / "albs-release-completeness.json").read_text(encoding="utf-8")
+    )
+    assert report["schema"] == "edgp.albs.release_completeness.v1"
+    assert report["summary"]["builds"] == 2
+    html = (output_dir / "001-albs-release-completeness.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'data-testid="albs-release-completeness-panel"' in html
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True

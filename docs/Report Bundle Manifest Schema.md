@@ -35,6 +35,7 @@ The public source-kind values are:
 - `albs-build`
 - `albs-build-diff`
 - `albs-log-intelligence`
+- `albs-release-completeness`
 - `npm-lockfile`
 - `maven-dependency-tree`
 - `dot`

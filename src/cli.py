@@ -869,6 +869,37 @@ def _write_albs_log_intelligence_bundle(
     )
 
 
+def _write_albs_release_completeness_bundle(
+    output_dir: Path,
+    *,
+    build_ids: list[str] | None = None,
+    paths: list[Path] | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    payloads = _load_albs_build_metadata_list(
+        build_ids=build_ids or [],
+        paths=paths or [],
+        base_url=base_url,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "albs-release-completeness.json"
+    report_path.write_text(
+        _json(build_albs_release_completeness_report(payloads)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={
+            "sourceKind": "albs-release-completeness",
+            "command": command,
+        },
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_libsolv_bundle(
     transaction_path: Path,
     output_dir: Path,
@@ -1743,6 +1774,32 @@ def build_parser() -> argparse.ArgumentParser:
     albs_release_completeness.add_argument("--path", type=Path, action="append", default=[])
     albs_release_completeness.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
 
+    albs_release_completeness_bundle = subparsers.add_parser(
+        "albs-release-completeness-bundle",
+        help="Render public ALBS release coverage as a static bundle",
+    )
+    albs_release_completeness_bundle.add_argument(
+        "--build-id",
+        action="append",
+        default=[],
+    )
+    albs_release_completeness_bundle.add_argument(
+        "--path",
+        type=Path,
+        action="append",
+        default=[],
+    )
+    albs_release_completeness_bundle.add_argument(
+        "--base-url",
+        default=DEFAULT_ALBS_BASE_URL,
+    )
+    albs_release_completeness_bundle.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+    )
+    _add_triage_bundle_option(albs_release_completeness_bundle)
+
     rpm_albs_provenance = subparsers.add_parser(
         "rpm-albs-provenance",
         help="Join installed RPMs to artifacts from a public ALBS build",
@@ -2397,6 +2454,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(_json(build_albs_release_completeness_report(payloads)))
         return 0
+
+    if args.command == "albs-release-completeness-bundle":
+        return _print_bundle_result(
+            _write_albs_release_completeness_bundle(
+                args.output_dir,
+                build_ids=args.build_id,
+                paths=args.path,
+                base_url=args.base_url,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "rpm-albs-provenance":
         albs_payload = _load_albs_build_metadata(

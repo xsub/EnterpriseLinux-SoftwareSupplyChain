@@ -20,6 +20,7 @@ SOURCE_KINDS = {
     "albs-build",
     "albs-build-diff",
     "albs-log-intelligence",
+    "albs-release-completeness",
     "cyclonedx-sbom",
     "dot",
     "edgp-json",

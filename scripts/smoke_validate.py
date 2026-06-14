@@ -335,6 +335,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "albs-build",
         "albs-build-diff",
         "albs-log-intelligence",
+        "albs-release-completeness",
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
@@ -1615,6 +1616,44 @@ def _assert_public_vertical_reports() -> None:
     )
     assert completeness["schema"] == "edgp.albs.release_completeness.v1"
     assert completeness["summary"]["builds"] == 2
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "albs-release-completeness-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-release-completeness-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--path",
+                "tests/fixtures/albs-build-updated.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "albs-release-completeness"
+        assert manifest["reports"][0]["href"] == "001-albs-release-completeness.html"
+        assert manifest["reports"][0]["schema"] == "edgp.albs.release_completeness.v1"
+        assert manifest["triageSummary"]["href"] == "triage-summary.html"
+        completeness_report = json.loads(
+            (output_dir / "albs-release-completeness.json").read_text(encoding="utf-8")
+        )
+        assert completeness_report["summary"]["builds"] == 2
+        completeness_html = (
+            output_dir / "001-albs-release-completeness.html"
+        ).read_text(encoding="utf-8")
+        assert 'data-testid="albs-release-completeness-panel"' in completeness_html
 
     rpm_repo = _run_cli(
         [

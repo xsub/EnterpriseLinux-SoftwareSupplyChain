@@ -114,6 +114,7 @@ edgp albs-build-diff-bundle --left-build-id 17812 --right-build-id 17813 --outpu
 edgp albs-release-completeness --build-id 17812 --build-id 17813
 edgp albs-log-intelligence --build-id 17813
 edgp albs-log-intelligence-bundle --build-id 17813 --output-dir reports/albs-log-intelligence --triage-summary
+edgp albs-release-completeness-bundle --build-id 17812 --build-id 17813 --output-dir reports/albs-release-completeness --triage-summary
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
 edgp rpm-albs-provenance-bundle --build-id 17812 --rpm-limit 200 --output-dir reports/rpm-albs-provenance --triage-summary
 edgp libsolv-bridge --transaction solver-transaction.txt
@@ -519,7 +520,9 @@ resources:
   inline build-log metadata when present. `edgp albs-log-intelligence-bundle`
   renders those signals as static HTML with a verifiable manifest.
 - `edgp albs-release-completeness` summarizes release, architecture, sign, and
-  test coverage across a batch of public builds.
+  test coverage across a batch of public builds. `edgp
+  albs-release-completeness-bundle` renders that release coverage as static
+  HTML with a verifiable manifest.
 - `edgp public-advisory-feed` normalizes OSV-like public advisory payloads from
   local JSON files or URLs into EDGP advisory overlays; RPM repository bundles
   can include that feed and a graph-matched advisory impact report in the same
