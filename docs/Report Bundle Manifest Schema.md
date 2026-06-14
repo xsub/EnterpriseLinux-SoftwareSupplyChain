@@ -32,6 +32,7 @@ use `--format text` for a concise terminal summary.
 
 The public source-kind values are:
 
+- `advisory-report`
 - `albs-build`
 - `albs-build-diff`
 - `albs-log-intelligence`

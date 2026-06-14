@@ -332,6 +332,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "sourceSha256",
     } <= set(schema["properties"]["reports"]["items"]["required"])
     assert set(schema["properties"]["bundle"]["properties"]["sourceKind"]["enum"]) == {
+        "advisory-report",
         "albs-build",
         "albs-build-diff",
         "albs-log-intelligence",
@@ -1783,6 +1784,51 @@ def _assert_public_vertical_reports() -> None:
     gated_advisory = json.loads(completed_advisory_gate.stdout)
     assert gated_advisory["schema"] == "edgp.advisory.report.v1"
     assert gated_advisory["summary"]["findings"] == 1
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "advisory-bundle"
+        completed_advisory_bundle = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "advisory-bundle",
+                "--source",
+                "rpm-repo",
+                "--path",
+                "tests/fixtures/repodata/repomd.xml",
+                "--public-advisory-feed",
+                "tests/fixtures/public-osv-ranges.json",
+                "--ecosystem",
+                "rpm",
+                "--fail-on-findings",
+                "--fail-min-severity",
+                "high",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_advisory_bundle.returncode == 2
+        assert completed_advisory_bundle.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "advisory-report"
+        assert manifest["reports"][0]["href"] == "001-advisory-report.html"
+        assert manifest["reports"][0]["schema"] == "edgp.advisory.report.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        bundled_advisory = json.loads(
+            (output_dir / "advisory-report.json").read_text(encoding="utf-8")
+        )
+        assert bundled_advisory["summary"]["findings"] == 1
+        assert 'data-testid="advisory-findings-panel"' in (
+            output_dir / "001-advisory-report.html"
+        ).read_text(encoding="utf-8")
     completed_noncritical_gate = subprocess.run(
         [
             sys.executable,

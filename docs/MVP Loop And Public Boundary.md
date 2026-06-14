@@ -245,6 +245,7 @@ surfaces are:
   repository metadata through the shared graph analysis commands.
 - Run advisory analysis directly from public OSV-like feeds without first
   writing a normalized overlay file.
+- Render advisory analysis reports as static, verifiable report bundles.
 - Return a CI-friendly non-zero advisory exit status when matched findings
   exist, while still emitting the JSON report.
 - Apply a minimum severity threshold to advisory CI gates without filtering the
@@ -340,6 +341,7 @@ python -B -m src.cli impact --source rpm-repo --path tests/fixtures/repodata/rep
 python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --advisories tests/fixtures/rpm-repo-advisories.json --ecosystem rpm
 python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --public-advisory-feed tests/fixtures/public-osv-ranges.json --ecosystem rpm
 python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --public-advisory-feed tests/fixtures/public-osv-ranges.json --ecosystem rpm --fail-on-findings --fail-min-severity high
+python -B -m src.cli advisory-bundle --source rpm-repo --path tests/fixtures/repodata/repomd.xml --public-advisory-feed tests/fixtures/public-osv-ranges.json --ecosystem rpm --output-dir /tmp/edgp-advisory-bundle
 python -B -m src.cli license-report-bundle --source sbom --path tests/fixtures/sample-bom.json --deny-license WTFPL --output-dir /tmp/edgp-license-report-bundle
 python -B -m src.cli albs-build --path tests/fixtures/albs-build.json --format json
 python -B -m src.cli albs-build-diff --left-path tests/fixtures/albs-build.json --right-path tests/fixtures/albs-build-updated.json

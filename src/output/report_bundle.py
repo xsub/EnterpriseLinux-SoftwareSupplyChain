@@ -17,6 +17,7 @@ BUNDLE_SHA256_KEY = "bundleSha256"
 MANIFEST_SCHEMA = "edgp.report.bundle.v1"
 VERIFICATION_SCHEMA = "edgp.report.bundle.verification.v1"
 SOURCE_KINDS = {
+    "advisory-report",
     "albs-build",
     "albs-build-diff",
     "albs-log-intelligence",

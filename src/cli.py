@@ -998,6 +998,59 @@ def _write_license_report_bundle(
     )
 
 
+def _write_advisory_report_bundle(
+    output_dir: Path,
+    *,
+    source: str,
+    path: Path | None = None,
+    ecosystem: str = "npm",
+    advisory_path: Path | None = None,
+    public_advisory_feed_path: Path | None = None,
+    public_advisory_feed_url: str | None = None,
+    max_paths: int = 20,
+    rpm_limit: int = 100,
+    max_requirements: int = 40,
+    rpm_repo_source: str | None = None,
+    repo_id: str = "public-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    root_identifier, graph, resolved_ecosystem = _load_source_project_graph(
+        source,
+        path,
+        ecosystem,
+        rpm_limit=rpm_limit,
+        max_requirements=max_requirements,
+        rpm_repo_source=rpm_repo_source,
+        repo_id=repo_id,
+        package_limit=package_limit,
+        requirement_limit=requirement_limit,
+    )
+    report = build_advisory_report(
+        _load_advisory_payload(
+            advisory_path=advisory_path,
+            public_advisory_feed_path=public_advisory_feed_path,
+            public_advisory_feed_url=public_advisory_feed_url,
+            ecosystem=resolved_ecosystem,
+        ),
+        graph,
+        root=root_identifier,
+        ecosystem=resolved_ecosystem,
+        max_paths=max_paths,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "advisory-report.json"
+    report_path.write_text(_json(report), encoding="utf-8")
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "advisory-report", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_performance_report_bundle(
     output_dir: Path,
     *,
@@ -2023,6 +2076,41 @@ def build_parser() -> argparse.ArgumentParser:
     advisory.add_argument("--max-requirements", type=int, default=40)
     _add_rpm_repo_source_options(advisory)
 
+    advisory_bundle = subparsers.add_parser(
+        "advisory-bundle",
+        help="Render advisory impact analysis as a static report bundle",
+    )
+    advisory_bundle.add_argument(
+        "--source",
+        choices=[
+            "lockfile",
+            "dot",
+            "sbom",
+            "maven-tree",
+            "rpm-installed",
+            "rpm-repo",
+            "albs-build",
+        ],
+        default="lockfile",
+    )
+    advisory_bundle.add_argument("--path", type=Path)
+    advisory_bundle.add_argument("--ecosystem", default="npm")
+    advisory_bundle.add_argument("--advisories", type=Path)
+    advisory_bundle.add_argument("--public-advisory-feed", type=Path)
+    advisory_bundle.add_argument("--public-advisory-feed-url")
+    advisory_bundle.add_argument("--fail-on-findings", action="store_true")
+    advisory_bundle.add_argument(
+        "--fail-min-severity",
+        choices=["unknown", "low", "medium", "high", "critical"],
+        default="unknown",
+    )
+    advisory_bundle.add_argument("--limit", type=int, default=20)
+    advisory_bundle.add_argument("--rpm-limit", type=int, default=100)
+    advisory_bundle.add_argument("--max-requirements", type=int, default=40)
+    advisory_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_rpm_repo_source_options(advisory_bundle)
+    _add_triage_bundle_option(advisory_bundle)
+
     license_report = subparsers.add_parser(
         "license-report",
         help="Summarize licenses and optionally fail on denied licenses",
@@ -2744,6 +2832,35 @@ def main(argv: list[str] | None = None) -> int:
         ):
             return 2
         return 0
+
+    if args.command == "advisory-bundle":
+        index_path = _write_advisory_report_bundle(
+            args.output_dir,
+            source=args.source,
+            path=args.path,
+            ecosystem=args.ecosystem,
+            advisory_path=args.advisories,
+            public_advisory_feed_path=args.public_advisory_feed,
+            public_advisory_feed_url=args.public_advisory_feed_url,
+            max_paths=args.limit,
+            rpm_limit=args.rpm_limit,
+            max_requirements=args.max_requirements,
+            rpm_repo_source=args.rpm_repo_source,
+            repo_id=args.repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
+            command=command,
+            include_triage_summary=_include_triage_summary(args),
+        )
+        report_path = index_path.parent / "advisory-report.json"
+        advisory_report = json.loads(report_path.read_text(encoding="utf-8"))
+        if args.fail_on_findings and _advisory_report_should_fail(
+            advisory_report,
+            min_severity=args.fail_min_severity,
+        ):
+            print(index_path)
+            return 2
+        return _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
 
     if args.command == "license-report":
         root_identifier, graph, resolved_ecosystem = _load_source_project_graph(
