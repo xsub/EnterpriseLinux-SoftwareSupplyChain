@@ -841,6 +841,34 @@ def _write_albs_build_diff_bundle(
     )
 
 
+def _write_albs_log_intelligence_bundle(
+    output_dir: Path,
+    *,
+    build_id: str | None = None,
+    path: Path | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    payload = _load_albs_build_metadata(
+        build_id=build_id,
+        path=path,
+        base_url=base_url,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "albs-log-intelligence.json"
+    report_path.write_text(
+        _json(build_albs_log_intelligence_report(payload)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "albs-log-intelligence", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_libsolv_bundle(
     transaction_path: Path,
     output_dir: Path,
@@ -1691,6 +1719,22 @@ def build_parser() -> argparse.ArgumentParser:
     albs_log_input.add_argument("--path", type=Path)
     albs_log_intelligence.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
 
+    albs_log_intelligence_bundle = subparsers.add_parser(
+        "albs-log-intelligence-bundle",
+        help="Render public ALBS build-log signals as a static bundle",
+    )
+    albs_log_bundle_input = albs_log_intelligence_bundle.add_mutually_exclusive_group(
+        required=True
+    )
+    albs_log_bundle_input.add_argument("--build-id")
+    albs_log_bundle_input.add_argument("--path", type=Path)
+    albs_log_intelligence_bundle.add_argument(
+        "--base-url",
+        default=DEFAULT_ALBS_BASE_URL,
+    )
+    albs_log_intelligence_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(albs_log_intelligence_bundle)
+
     albs_release_completeness = subparsers.add_parser(
         "albs-release-completeness",
         help="Summarize architecture, signing, and test coverage across ALBS builds",
@@ -2331,6 +2375,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(_json(build_albs_log_intelligence_report(payload)))
         return 0
+
+    if args.command == "albs-log-intelligence-bundle":
+        return _print_bundle_result(
+            _write_albs_log_intelligence_bundle(
+                args.output_dir,
+                build_id=args.build_id,
+                path=args.path,
+                base_url=args.base_url,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "albs-release-completeness":
         payloads = _load_albs_build_metadata_list(

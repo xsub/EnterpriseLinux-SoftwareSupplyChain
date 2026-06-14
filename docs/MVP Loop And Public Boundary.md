@@ -65,6 +65,8 @@ surfaces are:
 - Render installed RPM to public ALBS artifact provenance joins as static,
   verifiable bundles.
 - Render public ALBS build comparisons as static, verifiable bundles.
+- Render public ALBS build-log intelligence reports as static, verifiable
+  bundles.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
@@ -325,6 +327,7 @@ python -B -m src.cli rpm-repo-summary --source tests/fixtures/repodata/repomd.xm
 python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --advisories tests/fixtures/rpm-repo-advisories.json --public-advisory-feed tests/fixtures/public-osv-ranges.json --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-repo-bundle
 python -B -m src.cli rpm-albs-provenance-bundle --path tests/fixtures/albs-build.json --rpm-limit 5 --max-requirements 10 --output-dir /tmp/edgp-rpm-albs-provenance-bundle
 python -B -m src.cli albs-build-diff-bundle --left-path tests/fixtures/albs-build.json --right-path tests/fixtures/albs-build-updated.json --output-dir /tmp/edgp-albs-build-diff-bundle
+python -B -m src.cli albs-log-intelligence-bundle --path tests/fixtures/albs-build-updated.json --output-dir /tmp/edgp-albs-log-intelligence-bundle
 python -B -m src.cli query --source rpm-repo --path tests/fixtures/repodata/repomd.xml --operation dependencies --node nginx
 python -B -m src.cli impact --source rpm-repo --path tests/fixtures/repodata/repomd.xml --node nginx-core
 python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/repomd.xml --advisories tests/fixtures/rpm-repo-advisories.json --ecosystem rpm

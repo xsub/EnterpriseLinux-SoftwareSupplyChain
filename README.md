@@ -113,6 +113,7 @@ edgp albs-build-diff --left-build-id 17812 --right-build-id 17813
 edgp albs-build-diff-bundle --left-build-id 17812 --right-build-id 17813 --output-dir reports/albs-build-diff --triage-summary
 edgp albs-release-completeness --build-id 17812 --build-id 17813
 edgp albs-log-intelligence --build-id 17813
+edgp albs-log-intelligence-bundle --build-id 17813 --output-dir reports/albs-log-intelligence --triage-summary
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
 edgp rpm-albs-provenance-bundle --build-id 17812 --rpm-limit 200 --output-dir reports/rpm-albs-provenance --triage-summary
 edgp libsolv-bridge --transaction solver-transaction.txt
@@ -515,7 +516,8 @@ resources:
   renders that join as static HTML with `manifest.json` for browser review and
   bundle verification.
 - `edgp albs-log-intelligence` extracts warning/error/failure signals from
-  inline build-log metadata when present.
+  inline build-log metadata when present. `edgp albs-log-intelligence-bundle`
+  renders those signals as static HTML with a verifiable manifest.
 - `edgp albs-release-completeness` summarizes release, architecture, sign, and
   test coverage across a batch of public builds.
 - `edgp public-advisory-feed` normalizes OSV-like public advisory payloads from

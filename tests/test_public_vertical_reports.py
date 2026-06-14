@@ -711,3 +711,38 @@ def test_cli_albs_build_diff_bundle_writes_report_bundle(tmp_path, capsys) -> No
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)
     assert verification["ok"] is True
+
+
+def test_cli_albs_log_intelligence_bundle_writes_report_bundle(
+    tmp_path, capsys
+) -> None:
+    output_dir = tmp_path / "albs-log-intelligence-bundle"
+
+    assert main(
+        [
+            "albs-log-intelligence-bundle",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+            "--output-dir",
+            str(output_dir),
+            "--triage-summary",
+        ]
+    ) == 0
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "albs-log-intelligence"
+    assert manifest["reports"][0]["href"] == "001-albs-log-intelligence.html"
+    assert manifest["reports"][0]["schema"] == "edgp.albs.log_intelligence.v1"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    report = json.loads(
+        (output_dir / "albs-log-intelligence.json").read_text(encoding="utf-8")
+    )
+    assert report["schema"] == "edgp.albs.log_intelligence.v1"
+    assert report["signalCounts"]["missing"] == 1
+    html = (output_dir / "001-albs-log-intelligence.html").read_text(encoding="utf-8")
+    assert 'data-testid="albs-log-intelligence-panel"' in html
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True

@@ -19,6 +19,7 @@ VERIFICATION_SCHEMA = "edgp.report.bundle.verification.v1"
 SOURCE_KINDS = {
     "albs-build",
     "albs-build-diff",
+    "albs-log-intelligence",
     "cyclonedx-sbom",
     "dot",
     "edgp-json",

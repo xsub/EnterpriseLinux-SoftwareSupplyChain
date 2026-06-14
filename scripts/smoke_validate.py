@@ -334,6 +334,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
     assert set(schema["properties"]["bundle"]["properties"]["sourceKind"]["enum"]) == {
         "albs-build",
         "albs-build-diff",
+        "albs-log-intelligence",
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
@@ -1566,6 +1567,42 @@ def _assert_public_vertical_reports() -> None:
     )
     assert log["schema"] == "edgp.albs.log_intelligence.v1"
     assert log["signalCounts"]["missing"] == 1
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "albs-log-intelligence-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-log-intelligence-bundle",
+                "--path",
+                "tests/fixtures/albs-build-updated.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "albs-log-intelligence"
+        assert manifest["reports"][0]["href"] == "001-albs-log-intelligence.html"
+        assert manifest["reports"][0]["schema"] == "edgp.albs.log_intelligence.v1"
+        assert manifest["triageSummary"]["href"] == "triage-summary.html"
+        log_report = json.loads(
+            (output_dir / "albs-log-intelligence.json").read_text(encoding="utf-8")
+        )
+        assert log_report["signalCounts"]["missing"] == 1
+        log_html = (output_dir / "001-albs-log-intelligence.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="albs-log-intelligence-panel"' in log_html
 
     completeness = _run_cli(
         [
