@@ -1,0 +1,42 @@
+{
+  "$id": "urn:edgp:schema:query-report:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Graph traversal query report for EDGP dependency graph sources.",
+  "properties": {
+    "direction": {"type": "string"},
+    "ecosystem": {"type": "string"},
+    "limit": {"minimum": 0, "type": "integer"},
+    "node": {"type": "string"},
+    "operation": {"type": "string"},
+    "requestedNode": {"type": "string"},
+    "requestedTarget": {"type": "string"},
+    "result": {"items": {"type": ["object", "string"]}, "type": "array"},
+    "root": {"type": "string"},
+    "schema": {"const": "edgp.query.report.v1"},
+    "source": {"type": "string"},
+    "summary": {
+      "additionalProperties": true,
+      "properties": {
+        "pathFound": {"type": "boolean"},
+        "resultCount": {"minimum": 0, "type": "integer"},
+        "resultKind": {"type": "string"}
+      },
+      "required": ["resultCount", "resultKind"],
+      "type": "object"
+    },
+    "target": {"type": "string"}
+  },
+  "required": [
+    "schema",
+    "source",
+    "root",
+    "ecosystem",
+    "operation",
+    "limit",
+    "summary",
+    "result"
+  ],
+  "title": "EDGP Query Report v1",
+  "type": "object"
+}

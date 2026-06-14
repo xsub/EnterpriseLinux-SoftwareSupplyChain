@@ -21,6 +21,10 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.graph.diff.v1.schema.json`](schemas/edgp.graph.diff.v1.schema.json)
   documents added, removed, and metadata-changed graph elements between two
   EDGP graph snapshots.
+- `edgp.query.report.v1`:
+  [`edgp.query.report.v1.schema.json`](schemas/edgp.query.report.v1.schema.json)
+  documents dependency, dependent, reachability, shortest-path, and
+  most-depended-upon traversal query results.
 - `edgp.impact.report.v1`:
   [`edgp.impact.report.v1.schema.json`](schemas/edgp.impact.report.v1.schema.json)
   documents reverse dependency impact for one selected node.

@@ -55,6 +55,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_public_advisory_feed_report(payload)
     if schema == "edgp.performance.report.v1":
         return render_performance_report(payload)
+    if schema == "edgp.query.report.v1":
+        return render_query_report(payload)
     if schema == "edgp.license.report.v1":
         return render_license_report(payload)
     if schema == "edgp.triage.summary.v1":
@@ -659,6 +661,62 @@ def render_performance_report(report: dict[str, Any]) -> str:
                 ["nodes", "fanout", "edges", "buildMs", "reachableMs", "mostDependedUponMs", "storage"],
                 test_id="performance-results-panel",
             ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_query_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.query.report.v1":
+        raise ValueError("HTML query report input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    operation = str(report.get("operation", "query"))
+    context = [
+        {
+            "source": report.get("source", ""),
+            "ecosystem": report.get("ecosystem", ""),
+            "root": report.get("root", ""),
+            "operation": operation,
+            "direction": report.get("direction", ""),
+            "node": report.get("node", ""),
+            "target": report.get("target", ""),
+        }
+    ]
+    result = report.get("result", [])
+    if operation == "most-depended-upon":
+        result_panel = _rows_panel(
+            "Most Depended Upon",
+            result,
+            ["package", "dependents"],
+            test_id="query-ranking-panel",
+        )
+    else:
+        result_panel = _package_list_panel(
+            "Query Result",
+            result,
+            test_id="query-result-panel",
+        )
+    return _document(
+        "EDGP Query Report",
+        [
+            _generic_hero(
+                eyebrow=str(report.get("source", "graph")),
+                heading=operation,
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Results", summary.get("resultCount", 0)),
+                    ("Kind", summary.get("resultKind", "")),
+                    ("Limit", report.get("limit", "")),
+                ],
+            ),
+            _rows_panel(
+                "Query Context",
+                context,
+                ["source", "ecosystem", "root", "operation", "direction", "node", "target"],
+                test_id="query-context-panel",
+            ),
+            result_panel,
         ],
         scripts=[_table_sort_script()],
     )

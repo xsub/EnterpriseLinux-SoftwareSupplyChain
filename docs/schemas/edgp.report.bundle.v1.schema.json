@@ -37,6 +37,7 @@
             "npm-lockfile",
             "performance-report",
             "public-advisory-feed",
+            "query-report",
             "rpm-albs-provenance",
             "rpm-installed",
             "rpm-repository",

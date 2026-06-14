@@ -1,0 +1,19 @@
+{
+  "direction": "dependencies",
+  "ecosystem": "npm",
+  "limit": 10,
+  "node": "demo-app==1.0.0",
+  "operation": "reachable",
+  "result": [
+    "@scope/tool==2.1.0",
+    "left-pad==1.3.0",
+    "nested==1.0.1"
+  ],
+  "root": "demo-app==1.0.0",
+  "schema": "edgp.query.report.v1",
+  "source": "lockfile",
+  "summary": {
+    "resultCount": 3,
+    "resultKind": "nodes"
+  }
+}

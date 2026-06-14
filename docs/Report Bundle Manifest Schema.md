@@ -55,6 +55,7 @@ The public source-kind values are:
 - `libsolv-transaction`
 - `performance-report`
 - `public-advisory-feed`
+- `query-report`
 - `edgp-json`
 
 ## Example

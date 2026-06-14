@@ -61,6 +61,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.public.advisory_feed.v1.schema.json"),
         Path("tests/fixtures/public-advisory-feed.json"),
     ),
+    "edgp.query.report.v1": (
+        Path("docs/schemas/edgp.query.report.v1.schema.json"),
+        Path("tests/fixtures/query-report.json"),
+    ),
     "edgp.rpm.albs_provenance.v1": (
         Path("docs/schemas/edgp.rpm.albs_provenance.v1.schema.json"),
         Path("tests/fixtures/rpm-albs-provenance.json"),

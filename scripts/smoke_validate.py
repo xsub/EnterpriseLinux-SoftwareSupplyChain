@@ -97,6 +97,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.public.advisory_feed.v1.schema.json",
+    "edgp.query.report.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.query.report.v1.schema.json",
     "edgp.rpm.albs_provenance.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -162,6 +166,7 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "public-advisory-feed.json",
+    "edgp.query.report.v1": REPO_ROOT / "tests" / "fixtures" / "query-report.json",
     "edgp.rpm.albs_provenance.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -394,6 +399,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "npm-lockfile",
         "performance-report",
         "public-advisory-feed",
+        "query-report",
         "rpm-albs-provenance",
         "rpm-installed",
         "rpm-repository",
@@ -508,6 +514,7 @@ def _assert_schema_index_document() -> None:
         "edgp.npm.diagnostics.v1",
         "edgp.performance.report.v1",
         "edgp.public.advisory_feed.v1",
+        "edgp.query.report.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
         "edgp.rpm.albs_provenance.v1",
@@ -1218,6 +1225,53 @@ def _assert_poetry_query() -> None:
         "requests==2.31.0",
         "urllib3==2.2.1",
     ]
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "query-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "query-bundle",
+                "--ecosystem",
+                "poetry",
+                "--path",
+                "tests/fixtures/poetry.lock",
+                "--operation",
+                "path",
+                "--node",
+                "demo-lib",
+                "--target",
+                "urllib3",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "query-report"
+        assert manifest["reports"][0]["href"] == "001-query-report.html"
+        assert manifest["reports"][0]["schema"] == "edgp.query.report.v1"
+        report = json.loads(
+            (output_dir / "query-report.json").read_text(encoding="utf-8")
+        )
+        assert report["summary"] == {
+            "pathFound": True,
+            "resultCount": 3,
+            "resultKind": "path",
+        }
+        assert 'data-testid="query-result-panel"' in (
+            output_dir / "001-query-report.html"
+        ).read_text(encoding="utf-8")
 
 
 def _assert_cargo_lockfile_snapshot() -> None:

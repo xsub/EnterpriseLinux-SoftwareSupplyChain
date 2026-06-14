@@ -76,6 +76,7 @@ surfaces are:
   verifiable report bundle.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
+- Render graph traversal query reports as static, verifiable report bundles.
 - Label Maven optional, omitted, and excluded relationship types in graph
   snapshot HTML reports.
 - Render filterable, windowed, and sortable graph snapshot edge explorer
@@ -226,6 +227,8 @@ surfaces are:
 - Report reverse dependency impact for a selected package.
 - Render reverse dependency impact reports as static, verifiable report
   bundles.
+- Render dependency, dependent, reachability, path, and most-depended-upon
+  query results as static, verifiable report bundles.
 - Diff two EDGP graph snapshots and render the result as a static, verifiable
   report bundle.
 - Use human-friendly node selectors where a package name resolves to one graph
@@ -329,6 +332,7 @@ Manual examples:
 
 ```bash
 python -B -m src.cli lockfile --path tests/fixtures/package-lock.json --format json
+python -B -m src.cli query-bundle --path tests/fixtures/package-lock.json --operation reachable --node demo-app --output-dir /tmp/edgp-query-bundle
 python -B -m src.cli npm-diagnostics --path tests/fixtures/package-lock-conflict.json
 python -B -m src.cli npm-diagnostics-bundle --path tests/fixtures/package-lock-conflict.json --output-dir /tmp/edgp-npm-diagnostics-bundle
 python -B -m src.cli npm-bundle --path tests/fixtures/package-lock-conflict.json --output-dir /tmp/edgp-npm-bundle

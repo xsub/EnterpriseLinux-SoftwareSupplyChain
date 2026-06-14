@@ -180,6 +180,17 @@ def test_render_report_supports_graph_diff_json() -> None:
     assert "core==1.0.0" in html
 
 
+def test_render_report_supports_query_report_json() -> None:
+    report = json.loads(Path("tests/fixtures/query-report.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP Query Report" in html
+    assert 'data-testid="query-context-panel"' in html
+    assert 'data-testid="query-result-panel"' in html
+    assert "left-pad==1.3.0" in html
+
+
 @pytest.mark.parametrize(
     ("fixture", "test_id"),
     [

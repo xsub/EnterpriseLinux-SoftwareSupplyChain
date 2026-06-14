@@ -36,6 +36,7 @@ SOURCE_KINDS = {
     "npm-lockfile",
     "performance-report",
     "public-advisory-feed",
+    "query-report",
     "rpm-albs-provenance",
     "rpm-installed",
     "rpm-repository",
@@ -813,6 +814,8 @@ def _report_title(payload: dict[str, Any]) -> str:
         return "libsolv Bridge"
     if schema == "edgp.public.advisory_feed.v1":
         return "Public Advisory Feed"
+    if schema == "edgp.query.report.v1":
+        return f"Query Report - {payload.get('operation') or 'query'}"
     if schema == "edgp.performance.report.v1":
         return "Performance Report"
     if schema == "edgp.triage.summary.v1":

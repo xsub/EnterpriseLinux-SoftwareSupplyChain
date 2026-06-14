@@ -62,6 +62,45 @@ def test_cli_query_path(capsys) -> None:
     ]
 
 
+def test_cli_query_bundle_writes_report_bundle(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "query-bundle"
+
+    assert (
+        main(
+            [
+                "query-bundle",
+                "--path",
+                "tests/fixtures/package-lock.json",
+                "--operation",
+                "reachable",
+                "--node",
+                "demo-app",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    report = json.loads((output_dir / "query-report.json").read_text(encoding="utf-8"))
+    html = (output_dir / "001-query-report.html").read_text(encoding="utf-8")
+
+    assert manifest["bundle"]["sourceKind"] == "query-report"
+    assert manifest["reports"][0]["schema"] == "edgp.query.report.v1"
+    assert manifest["reports"][0]["href"] == "001-query-report.html"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    assert report["summary"] == {"resultCount": 3, "resultKind": "nodes"}
+    assert report["requestedNode"] == "demo-app"
+    assert 'data-testid="query-result-panel"' in html
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True
+
+
 def test_cli_query_most_depended_upon_excludes_zero_count_nodes(capsys) -> None:
     assert (
         main(

@@ -40,6 +40,7 @@ from src.output.report_bundle import verify_report_bundle, write_report_bundle
 from src.output.sbom_security import CycloneDXExporter
 from src.performance_report import build_performance_report
 from src.public_advisory_feed import build_public_advisory_feed_report
+from src.query_report import build_query_report
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
@@ -1197,6 +1198,67 @@ def _write_performance_report_bundle(
         [report_path],
         output_dir,
         bundle_metadata={"sourceKind": "performance-report", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
+def _write_query_report_bundle(
+    output_dir: Path,
+    *,
+    source: str,
+    path: Path | None = None,
+    ecosystem: str = "npm",
+    operation: str,
+    node: str | None = None,
+    target: str | None = None,
+    direction: str = "dependencies",
+    limit: int = 10,
+    rpm_limit: int = 100,
+    max_requirements: int = 40,
+    rpm_repo_source: str | None = None,
+    repo_id: str = "public-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    root_identifier, graph, resolved_ecosystem = _load_source_project_graph(
+        source,
+        path,
+        ecosystem,
+        rpm_limit=rpm_limit,
+        max_requirements=max_requirements,
+        rpm_repo_source=rpm_repo_source,
+        repo_id=repo_id,
+        package_limit=package_limit,
+        requirement_limit=requirement_limit,
+    )
+    query_result = _query_graph(
+        graph,
+        operation=operation,
+        node=node,
+        target=target,
+        direction=direction,
+        limit=limit,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "query-report.json"
+    report_path.write_text(
+        _json(
+            build_query_report(
+                query_result,
+                source=source,
+                root=root_identifier,
+                ecosystem=resolved_ecosystem,
+                limit=limit,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "query-report", "command": command},
         include_triage_summary=include_triage_summary,
     )
 
@@ -2617,6 +2679,50 @@ def build_parser() -> argparse.ArgumentParser:
     query.add_argument("--max-requirements", type=int, default=40)
     _add_rpm_repo_source_options(query)
 
+    query_bundle = subparsers.add_parser(
+        "query-bundle",
+        help="Render a graph traversal query as a static report bundle",
+    )
+    query_bundle.add_argument(
+        "--source",
+        choices=[
+            "lockfile",
+            "dot",
+            "sbom",
+            "maven-tree",
+            "rpm-installed",
+            "rpm-repo",
+            "albs-build",
+        ],
+        default="lockfile",
+    )
+    query_bundle.add_argument("--path", type=Path)
+    query_bundle.add_argument("--ecosystem", default="npm")
+    query_bundle.add_argument(
+        "--operation",
+        choices=[
+            "dependencies",
+            "dependents",
+            "reachable",
+            "path",
+            "most-depended-upon",
+        ],
+        required=True,
+    )
+    query_bundle.add_argument("--node")
+    query_bundle.add_argument("--target")
+    query_bundle.add_argument(
+        "--direction",
+        choices=["dependencies", "dependents"],
+        default="dependencies",
+    )
+    query_bundle.add_argument("--limit", type=int, default=10)
+    query_bundle.add_argument("--rpm-limit", type=int, default=100)
+    query_bundle.add_argument("--max-requirements", type=int, default=40)
+    query_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_rpm_repo_source_options(query_bundle)
+    _add_triage_bundle_option(query_bundle)
+
     return parser
 
 
@@ -3429,6 +3535,30 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+
+    if args.command == "query-bundle":
+        return _print_bundle_result(
+            _write_query_report_bundle(
+                args.output_dir,
+                source=args.source,
+                path=args.path,
+                ecosystem=args.ecosystem,
+                operation=args.operation,
+                node=args.node,
+                target=args.target,
+                direction=args.direction,
+                limit=args.limit,
+                rpm_limit=args.rpm_limit,
+                max_requirements=args.max_requirements,
+                rpm_repo_source=args.rpm_repo_source,
+                repo_id=args.repo_id,
+                package_limit=args.package_limit,
+                requirement_limit=args.requirement_limit,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "demo":
         registry = _demo_registry()
