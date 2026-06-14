@@ -922,6 +922,27 @@ def _write_libsolv_bundle(
     )
 
 
+def _write_performance_report_bundle(
+    output_dir: Path,
+    *,
+    scenarios: Sequence[tuple[int, int]],
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "performance-report.json"
+    report_path.write_text(
+        _json(build_performance_report(scenarios)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "performance-report", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_rpm_albs_provenance_bundle(
     output_dir: Path,
     *,
@@ -2047,6 +2068,20 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="benchmark scenario as NODES:FANOUT; may be repeated",
     )
+    performance_report_bundle = subparsers.add_parser(
+        "performance-report-bundle",
+        help="Render deterministic CSR benchmark scenarios as a static bundle",
+    )
+    performance_report_bundle.add_argument("--nodes", type=int, default=1000)
+    performance_report_bundle.add_argument("--fanout", type=int, default=3)
+    performance_report_bundle.add_argument(
+        "--scenario",
+        action="append",
+        default=[],
+        help="benchmark scenario as NODES:FANOUT; may be repeated",
+    )
+    performance_report_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(performance_report_bundle)
 
     query = subparsers.add_parser("query", help="Query a resolved graph")
     query.add_argument(
@@ -2701,6 +2736,23 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+
+    if args.command == "performance-report-bundle":
+        return _print_bundle_result(
+            _write_performance_report_bundle(
+                args.output_dir,
+                scenarios=_performance_scenarios(
+                    args.scenario,
+                    nodes=args.nodes,
+                    fanout=args.fanout,
+                ),
+                command=command,
+                include_triage_summary=(
+                    args.triage_summary or args.fail_on_status is not None
+                ),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "query":
         _, graph = _load_source_graph(

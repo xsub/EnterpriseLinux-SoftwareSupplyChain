@@ -27,6 +27,7 @@ SOURCE_KINDS = {
     "libsolv-transaction",
     "maven-dependency-tree",
     "npm-lockfile",
+    "performance-report",
     "rpm-albs-provenance",
     "rpm-installed",
     "rpm-repository",

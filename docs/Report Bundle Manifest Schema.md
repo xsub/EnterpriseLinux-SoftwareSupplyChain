@@ -45,6 +45,7 @@ The public source-kind values are:
 - `rpm-repository`
 - `rpm-repository-diff`
 - `libsolv-transaction`
+- `performance-report`
 - `edgp-json`
 
 ## Example

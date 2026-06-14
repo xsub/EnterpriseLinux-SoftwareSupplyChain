@@ -177,6 +177,7 @@ edgp validate --path reports --format text
 ```bash
 edgp benchmark --nodes 1000 --fanout 3
 edgp performance-report --scenario 1000:3 --scenario 10000:5
+edgp performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir reports/performance --triage-summary
 ```
 
 ## Architecture
@@ -537,7 +538,9 @@ resources:
   against an existing EDGP snapshot and reports exact, candidate, and unmatched
   graph actions.
 - `edgp performance-report` runs deterministic NumPy-backed CSR benchmark
-  scenarios and records storage layout evidence.
+  scenarios and records storage layout evidence. `edgp
+  performance-report-bundle` renders those measurements as static HTML with a
+  verifiable manifest.
 
 ### Graph and Security Egress
 

@@ -293,6 +293,8 @@ surfaces are:
   generated RPM repository graph bundles.
 - Generate performance reports for deterministic NumPy-backed CSR benchmark
   scenarios.
+- Render deterministic performance reports as static, verifiable report
+  bundles.
 
 ## Validation Commands
 
@@ -347,6 +349,7 @@ python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv.json 
 python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv-ranges.json --ecosystem rpm
 python -B -m src.cli public-advisory-feed --url file://$PWD/tests/fixtures/public-osv.json --ecosystem rpm
 python -B -m src.cli performance-report --scenario 1000:3 --scenario 10000:5
+python -B -m src.cli performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir /tmp/edgp-performance-report-bundle
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
 python -B -m src.cli impact --path tests/fixtures/package-lock.json --node left-pad
 python -B -m src.cli advisory --path tests/fixtures/package-lock.json --advisories tests/fixtures/advisories.json

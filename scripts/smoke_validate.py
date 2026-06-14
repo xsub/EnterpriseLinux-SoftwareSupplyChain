@@ -342,6 +342,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "libsolv-transaction",
         "maven-dependency-tree",
         "npm-lockfile",
+        "performance-report",
         "rpm-albs-provenance",
         "rpm-installed",
         "rpm-repository",
@@ -2975,6 +2976,46 @@ def _assert_benchmark() -> None:
     assert payload["stats"]["nodes"] == 64
     assert payload["stats"]["edges"] == 186
     assert payload["stats"]["reachableFromRoot"] == 63
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "performance-report-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "performance-report-bundle",
+                "--scenario",
+                "16:2",
+                "--scenario",
+                "32:3",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "performance-report"
+        assert manifest["reports"][0]["href"] == "001-performance-report.html"
+        assert manifest["reports"][0]["schema"] == "edgp.performance.report.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        report = json.loads(
+            (output_dir / "performance-report.json").read_text(encoding="utf-8")
+        )
+        assert report["schema"] == "edgp.performance.report.v1"
+        assert report["summary"]["scenarios"] == 2
+        assert report["summary"]["allContiguous"] is True
+        assert 'data-testid="performance-results-panel"' in (
+            output_dir / "001-performance-report.html"
+        ).read_text(encoding="utf-8")
 
 
 def _assert_rpm_installed() -> None:
