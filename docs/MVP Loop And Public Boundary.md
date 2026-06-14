@@ -215,6 +215,7 @@ surfaces are:
   most-depended-upon rankings.
 - Diagnose npm package-lock duplicate package names, nested version conflicts,
   and unresolved dependency declarations.
+- Render npm diagnostics reports as static, verifiable report bundles.
 - Generate npm graph and diagnostics bundle directories directly from
   `package-lock.json` inputs.
 - Include optional impact and local advisory reports in generated npm bundles.
@@ -320,6 +321,7 @@ Manual examples:
 ```bash
 python -B -m src.cli lockfile --path tests/fixtures/package-lock.json --format json
 python -B -m src.cli npm-diagnostics --path tests/fixtures/package-lock-conflict.json
+python -B -m src.cli npm-diagnostics-bundle --path tests/fixtures/package-lock-conflict.json --output-dir /tmp/edgp-npm-diagnostics-bundle
 python -B -m src.cli npm-bundle --path tests/fixtures/package-lock-conflict.json --output-dir /tmp/edgp-npm-bundle
 python -B -m src.cli npm-bundle --path tests/fixtures/package-lock.json --impact-node left-pad --advisories tests/fixtures/advisories.json --output-dir /tmp/edgp-npm-advisory-bundle
 python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-classifier.txt --format json

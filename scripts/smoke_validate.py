@@ -258,6 +258,44 @@ def _assert_npm_diagnostics() -> None:
         "unresolvedDependencies": 1,
     }
 
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "npm-diagnostics-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "npm-diagnostics-bundle",
+                "--path",
+                "tests/fixtures/package-lock-conflict.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "npm-diagnostics"
+        assert manifest["reports"][0]["href"] == "001-npm-diagnostics.html"
+        assert manifest["reports"][0]["schema"] == "edgp.npm.diagnostics.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        report = json.loads(
+            (output_dir / "npm-diagnostics.json").read_text(encoding="utf-8")
+        )
+        assert report["schema"] == "edgp.npm.diagnostics.v1"
+        assert report["summary"]["nestedResolutionConflicts"] == 1
+        assert report["summary"]["unresolvedDependencies"] == 1
+        assert 'data-testid="npm-conflicts-panel"' in (
+            output_dir / "001-npm-diagnostics.html"
+        ).read_text(encoding="utf-8")
+
 
 def _assert_validate_command() -> None:
     payload = _run_cli(["validate", "--path", "tests/fixtures/snapshot-right.json"])
@@ -344,6 +382,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "license-report",
         "libsolv-transaction",
         "maven-dependency-tree",
+        "npm-diagnostics",
         "npm-lockfile",
         "performance-report",
         "public-advisory-feed",

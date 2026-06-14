@@ -152,6 +152,7 @@ edgp advisory-bundle --source rpm-repo --path repodata/repomd.xml --public-advis
 edgp license-report --source sbom --path bom.json --deny-license GPL-3.0-only --fail-on-denied
 edgp license-report-bundle --source sbom --path bom.json --deny-license GPL-3.0-only --output-dir reports/license --triage-summary
 edgp npm-diagnostics --path package-lock.json
+edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-diagnostics --triage-summary
 edgp diff --left before.json --right after.json
 ```
 
@@ -574,8 +575,9 @@ generation. Query selectors accept exact package IDs, such as
 
 `edgp npm-diagnostics` inspects `package-lock.json` resolution paths and reports
 duplicate package names, nested version conflicts, and unresolved dependency
-declarations. This helps explain why npm consumers may reach different versions
-of the same package through nested `node_modules` paths.
+declarations. `edgp npm-diagnostics-bundle` renders that diagnosis as static
+HTML with a verifiable manifest. This helps explain why npm consumers may reach
+different versions of the same package through nested `node_modules` paths.
 
 `edgp npm-bundle` turns one `package-lock.json` into a local static triage
 folder containing `npm-graph.json`, `npm-diagnostics.json`, optional impact and

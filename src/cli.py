@@ -329,6 +329,27 @@ def _write_npm_bundle(
     )
 
 
+def _write_npm_diagnostics_bundle(
+    path: Path,
+    output_dir: Path,
+    *,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    diagnostics_path = output_dir / "npm-diagnostics.json"
+    diagnostics_path.write_text(
+        _json(NpmAdapter().diagnose_lockfile(path)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [diagnostics_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "npm-diagnostics", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_maven_bundle(
     path: Path,
     output_dir: Path,
@@ -1699,6 +1720,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     npm_diagnostics.add_argument("--path", type=Path, required=True)
 
+    npm_diagnostics_bundle = subparsers.add_parser(
+        "npm-diagnostics-bundle",
+        help="Render npm package-lock diagnostics as a static report bundle",
+    )
+    npm_diagnostics_bundle.add_argument("--path", type=Path, required=True)
+    npm_diagnostics_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(npm_diagnostics_bundle)
+
     npm_bundle = subparsers.add_parser(
         "npm-bundle", help="Render npm graph and diagnostics bundle from package-lock"
     )
@@ -2415,6 +2444,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "npm-diagnostics":
         print(_json(NpmAdapter().diagnose_lockfile(args.path)))
         return 0
+
+    if args.command == "npm-diagnostics-bundle":
+        return _print_bundle_result(
+            _write_npm_diagnostics_bundle(
+                args.path,
+                args.output_dir,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "npm-bundle":
         return _print_bundle_result(

@@ -29,6 +29,7 @@ SOURCE_KINDS = {
     "license-report",
     "libsolv-transaction",
     "maven-dependency-tree",
+    "npm-diagnostics",
     "npm-lockfile",
     "performance-report",
     "public-advisory-feed",
