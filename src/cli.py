@@ -413,6 +413,9 @@ def _write_rpm_installed_bundle(
     advisory_path: Path | None = None,
     public_advisory_feed_path: Path | None = None,
     public_advisory_feed_url: str | None = None,
+    albs_build_id: str | None = None,
+    albs_build_path: Path | None = None,
+    albs_base_url: str = DEFAULT_ALBS_BASE_URL,
     libsolv_transaction_path: Path | None = None,
     include_license_report: bool = False,
     denied_licenses: list[str] | None = None,
@@ -441,6 +444,15 @@ def _write_rpm_installed_bundle(
         public_advisory_feed_path=public_advisory_feed_path,
         public_advisory_feed_url=public_advisory_feed_url,
         max_paths=max_paths,
+    )
+    final_reports.extend(
+        _write_rpm_albs_provenance_report_if_requested(
+            output_dir,
+            resolved,
+            albs_build_id=albs_build_id,
+            albs_build_path=albs_build_path,
+            albs_base_url=albs_base_url,
+        )
     )
     if libsolv_transaction_path is not None:
         libsolv_report_path = output_dir / "libsolv-bridge.json"
@@ -652,6 +664,29 @@ def _write_advisory_reports_if_requested(
         final_reports.append(public_advisory_report_path)
 
     return final_reports
+
+
+def _write_rpm_albs_provenance_report_if_requested(
+    output_dir: Path,
+    resolved: ResolvedProjectGraph,
+    *,
+    albs_build_id: str | None = None,
+    albs_build_path: Path | None = None,
+    albs_base_url: str = DEFAULT_ALBS_BASE_URL,
+) -> list[Path]:
+    if albs_build_id is None and albs_build_path is None:
+        return []
+    albs_payload = _load_albs_build_metadata(
+        build_id=albs_build_id,
+        path=albs_build_path,
+        base_url=albs_base_url,
+    )
+    report_path = output_dir / "rpm-albs-provenance.json"
+    report_path.write_text(
+        _json(build_rpm_albs_provenance_report(resolved.graph, albs_payload)),
+        encoding="utf-8",
+    )
+    return [report_path]
 
 
 def _print_bundle_result(
@@ -1446,6 +1481,10 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_installed_bundle.add_argument("--advisories", type=Path)
     rpm_installed_bundle.add_argument("--public-advisory-feed", type=Path)
     rpm_installed_bundle.add_argument("--public-advisory-feed-url")
+    rpm_installed_albs_input = rpm_installed_bundle.add_mutually_exclusive_group()
+    rpm_installed_albs_input.add_argument("--albs-build-id")
+    rpm_installed_albs_input.add_argument("--albs-build-path", type=Path)
+    rpm_installed_bundle.add_argument("--albs-base-url", default=DEFAULT_ALBS_BASE_URL)
     rpm_installed_bundle.add_argument(
         "--libsolv-transaction",
         type=Path,
@@ -2037,6 +2076,9 @@ def main(argv: list[str] | None = None) -> int:
                 advisory_path=args.advisories,
                 public_advisory_feed_path=args.public_advisory_feed,
                 public_advisory_feed_url=args.public_advisory_feed_url,
+                albs_build_id=args.albs_build_id,
+                albs_build_path=args.albs_build_path,
+                albs_base_url=args.albs_base_url,
                 libsolv_transaction_path=args.libsolv_transaction,
                 include_license_report=args.license_report or args.fail_on_denied,
                 denied_licenses=args.deny_license,

@@ -2892,6 +2892,8 @@ def _assert_rpm_installed_bundle() -> None:
                 "tests/fixtures/rpm-advisories.json",
                 "--public-advisory-feed",
                 "tests/fixtures/public-osv.json",
+                "--albs-build-path",
+                "tests/fixtures/albs-build.json",
                 "--libsolv-transaction",
                 "tests/fixtures/libsolv-transaction.txt",
                 "--output-dir",
@@ -2914,7 +2916,8 @@ def _assert_rpm_installed_bundle() -> None:
         assert manifest["reports"][2]["href"] == "003-advisory-report.html"
         assert manifest["reports"][3]["href"] == "004-public-advisory-feed.html"
         assert manifest["reports"][4]["href"] == "005-public-advisory-report.html"
-        assert manifest["reports"][5]["href"] == "006-libsolv-bridge.html"
+        assert manifest["reports"][5]["href"] == "006-rpm-albs-provenance.html"
+        assert manifest["reports"][6]["href"] == "007-libsolv-bridge.html"
         assert manifest["triageSummary"]["href"] == "triage-summary.html"
         graph = json.loads(
             (output_dir / "rpm-installed-graph.json").read_text(encoding="utf-8")
@@ -2938,6 +2941,14 @@ def _assert_rpm_installed_bundle() -> None:
             (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
         )
         assert public_advisory["schema"] == "edgp.advisory.report.v1"
+        provenance = json.loads(
+            (output_dir / "rpm-albs-provenance.json").read_text(encoding="utf-8")
+        )
+        assert provenance["schema"] == "edgp.rpm.albs_provenance.v1"
+        provenance_html = (output_dir / "006-rpm-albs-provenance.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="rpm-albs-provenance-matches-panel"' in provenance_html
         triage = json.loads(
             (output_dir / "triage-summary.json").read_text(encoding="utf-8")
         )

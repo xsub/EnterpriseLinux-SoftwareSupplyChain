@@ -60,6 +60,8 @@ surfaces are:
   inside installed RPM database bundles.
 - Include graph-matched libsolv-style transaction reports inside generated
   installed RPM database bundles on AlmaLinux-compatible hosts.
+- Include installed RPM to public ALBS artifact provenance reports inside
+  generated installed RPM database bundles.
 - Render installed RPM to public ALBS artifact provenance joins as static,
   verifiable bundles.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
@@ -316,7 +318,7 @@ python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli dot-bundle --path tests/fixtures/repograph.dot --ecosystem rpm --impact-node glibc --output-dir /tmp/edgp-dot-bundle
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-node left-pad --output-dir /tmp/edgp-sbom-bundle
-python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --advisories tests/fixtures/rpm-advisories.json --public-advisory-feed tests/fixtures/public-osv.json --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-installed-bundle
+python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --advisories tests/fixtures/rpm-advisories.json --public-advisory-feed tests/fixtures/public-osv.json --albs-build-path tests/fixtures/albs-build.json --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-installed-bundle
 python -B -m src.cli rpm-repo --source tests/fixtures/repodata/repomd.xml --format json
 python -B -m src.cli rpm-repo-summary --source tests/fixtures/repodata/repomd.xml
 python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --advisories tests/fixtures/rpm-repo-advisories.json --public-advisory-feed tests/fixtures/public-osv-ranges.json --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-repo-bundle

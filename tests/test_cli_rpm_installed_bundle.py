@@ -78,6 +78,8 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
                 "tests/fixtures/rpm-advisories.json",
                 "--public-advisory-feed",
                 str(public_feed_path),
+                "--albs-build-path",
+                "tests/fixtures/albs-build.json",
                 "--libsolv-transaction",
                 str(transaction_path),
                 "--output-dir",
@@ -104,6 +106,9 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
     public_advisory = json.loads(
         (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
     )
+    provenance = json.loads(
+        (output_dir / "rpm-albs-provenance.json").read_text(encoding="utf-8")
+    )
     libsolv = json.loads((output_dir / "libsolv-bridge.json").read_text(encoding="utf-8"))
 
     assert graph["schema"] == "edgp.graph.snapshot.v1"
@@ -116,6 +121,11 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
     assert public_feed["summary"]["advisories"] == 1
     assert public_advisory["schema"] == "edgp.advisory.report.v1"
     assert public_advisory["summary"]["findings"] == 1
+    assert provenance["schema"] == "edgp.rpm.albs_provenance.v1"
+    assert provenance["summary"]["matchedPackages"] == 1
+    assert provenance["matches"][0]["installedPackage"]["nodeId"] == (
+        "nginx-core==1.20.1-16.el9_4.1"
+    )
     assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
     assert libsolv["transactionActions"][0]["graphMatchStatus"] == "candidate"
     assert libsolv["transactionImpact"][0]["matchedNodeIds"] == ["glibc==2.39-1.el10"]
@@ -128,6 +138,7 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
         "edgp.advisory.report.v1",
         "edgp.public.advisory_feed.v1",
         "edgp.advisory.report.v1",
+        "edgp.rpm.albs_provenance.v1",
         "edgp.libsolv.bridge.v1",
     ]
     assert (output_dir / "001-rpm-installed-graph.html").exists()
@@ -135,7 +146,8 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
     assert (output_dir / "003-advisory-report.html").exists()
     assert (output_dir / "004-public-advisory-feed.html").exists()
     assert (output_dir / "005-public-advisory-report.html").exists()
-    assert (output_dir / "006-libsolv-bridge.html").exists()
+    assert (output_dir / "006-rpm-albs-provenance.html").exists()
+    assert (output_dir / "007-libsolv-bridge.html").exists()
 
 
 def test_cli_rpm_albs_provenance_bundle_writes_static_report(
