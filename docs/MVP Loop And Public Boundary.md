@@ -219,6 +219,8 @@ surfaces are:
   `package-lock.json` inputs.
 - Include optional impact and local advisory reports in generated npm bundles.
 - Report reverse dependency impact for a selected package.
+- Render reverse dependency impact reports as static, verifiable report
+  bundles.
 - Use human-friendly node selectors where a package name resolves to one graph
   node.
 - Produce ecosystem-aware Package URLs for npm and RPM components.
@@ -358,6 +360,7 @@ python -B -m src.cli performance-report --scenario 1000:3 --scenario 10000:5
 python -B -m src.cli performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir /tmp/edgp-performance-report-bundle
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
 python -B -m src.cli impact --path tests/fixtures/package-lock.json --node left-pad
+python -B -m src.cli impact-bundle --path tests/fixtures/package-lock.json --node left-pad --output-dir /tmp/edgp-impact-bundle
 python -B -m src.cli advisory --path tests/fixtures/package-lock.json --advisories tests/fixtures/advisories.json
 python -B -m src.cli diff --left tests/fixtures/snapshot-left.json --right tests/fixtures/snapshot-right.json
 python -B -m src.cli report --snapshot tests/fixtures/snapshot-right.json --output /tmp/edgp-report.html

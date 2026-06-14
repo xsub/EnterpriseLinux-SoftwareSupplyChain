@@ -143,6 +143,7 @@ Impact, advisory overlays, and npm diagnostics cover the main triage flows:
 ```bash
 edgp impact --path package-lock.json --node left-pad
 edgp impact --source rpm-repo --path repodata/repomd.xml --node glibc
+edgp impact-bundle --path package-lock.json --node left-pad --output-dir reports/impact --triage-summary
 edgp advisory --path package-lock.json --advisories advisories.json
 edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisories.json --ecosystem rpm
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed-url https://example.com/osv.json --ecosystem rpm
@@ -588,8 +589,9 @@ same static directory.
 `edgp impact` turns reverse reachability into a vulnerability-style impact
 report. For a selected node it returns direct dependents, all transitive
 affected dependents, and shortest dependency chains back to the selected
-component. This is the public-input stand-in for future advisory or curated
-risk feeds.
+component. `edgp impact-bundle` renders the same analysis as static HTML with a
+verifiable manifest. This is the public-input stand-in for future advisory or
+curated risk feeds.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
 optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`
