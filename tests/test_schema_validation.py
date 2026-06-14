@@ -18,6 +18,30 @@ def test_validate_target_accepts_documented_report_fixture() -> None:
     assert report["failures"] == []
 
 
+def test_validate_target_accepts_bundle_catalog_nullable_fingerprint() -> None:
+    report = validate_target(Path("tests/fixtures/bundle-catalog.json"))
+
+    assert report["ok"] is True
+    assert report["targetType"] == "json-file"
+    assert report["contract"] == "edgp.bundle.catalog.v1"
+
+
+def test_validate_target_enforces_any_of_schema_options(tmp_path) -> None:
+    payload = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
+    payload["bundles"][0]["bundleSha256"] = 42
+    path = tmp_path / "invalid-bundle-catalog.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = validate_target(path)
+
+    assert report["ok"] is False
+    assert {
+        "code": "anyOfMismatch",
+        "message": "Value must match at least one schema",
+        "path": "$.bundles[0].bundleSha256",
+    } in report["failures"]
+
+
 def test_validate_target_reports_contract_mismatch(tmp_path) -> None:
     payload = json.loads(Path("tests/fixtures/snapshot-right.json").read_text())
     payload["stats"].pop("edges")

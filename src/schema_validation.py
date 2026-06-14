@@ -172,6 +172,25 @@ def _validate_value(
         _validate_value(value, target, path, root_schema, failures)
         return
 
+    if "anyOf" in schema:
+        options = schema.get("anyOf")
+        if not isinstance(options, list):
+            _add_failure(failures, "anyOfInvalid", "anyOf must be an array", path)
+            return
+        matches = 0
+        for option in options:
+            option_failures: list[dict[str, str]] = []
+            if isinstance(option, dict):
+                _validate_value(value, option, path, root_schema, option_failures)
+            else:
+                option_failures.append(
+                    {"code": "schemaInvalid", "message": "Invalid anyOf option", "path": path}
+                )
+            if not option_failures:
+                matches += 1
+        if matches < 1:
+            _add_failure(failures, "anyOfMismatch", "Value must match at least one schema", path)
+
     if "oneOf" in schema:
         options = schema.get("oneOf")
         if not isinstance(options, list):

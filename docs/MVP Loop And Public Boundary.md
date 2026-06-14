@@ -132,6 +132,7 @@ surfaces are:
 - Unit-test README architecture research anchors against architecture headings.
 - Validate local EDGP JSON report files and report bundle directories with an
   installed `edgp validate` command.
+- Enforce documented `anyOf` schema branches in the dependency-free validator.
 - Provide committed validation failure examples for common malformed report
   payloads.
 - Provide committed validation and verification failure examples for tampered

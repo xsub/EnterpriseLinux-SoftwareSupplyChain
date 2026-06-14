@@ -361,6 +361,30 @@ def _assert_validate_command() -> None:
     )
     assert _normalize_validation_report(failure_payload) == fixture
 
+    catalog_payload = _run_cli(["validate", "--path", "tests/fixtures/bundle-catalog.json"])
+    assert catalog_payload["ok"] is True
+    assert catalog_payload["contract"] == "edgp.bundle.catalog.v1"
+    with tempfile.TemporaryDirectory() as temp_dir:
+        invalid_catalog_path = Path(temp_dir) / "invalid-bundle-catalog.json"
+        invalid_catalog = json.loads(
+            (REPO_ROOT / "tests" / "fixtures" / "bundle-catalog.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        invalid_catalog["bundles"][0]["bundleSha256"] = 42
+        invalid_catalog_path.write_text(
+            json.dumps(invalid_catalog, sort_keys=True),
+            encoding="utf-8",
+        )
+        invalid_catalog_report = _run_cli_allow_failure(
+            ["validate", "--path", str(invalid_catalog_path)]
+        )
+        assert {
+            "code": "anyOfMismatch",
+            "message": "Value must match at least one schema",
+            "path": "$.bundles[0].bundleSha256",
+        } in invalid_catalog_report["failures"]
+
 
 def _load_report_bundle_manifest_schema() -> dict[str, Any]:
     return json.loads(REPORT_BUNDLE_SCHEMA_PATH.read_text(encoding="utf-8"))
