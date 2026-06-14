@@ -37,6 +37,7 @@ SOURCE_KINDS = {
     "rpm-installed",
     "rpm-repository",
     "rpm-repository-diff",
+    "rpm-repository-summary",
 }
 
 _MANIFEST_REQUIRED_KEYS = {

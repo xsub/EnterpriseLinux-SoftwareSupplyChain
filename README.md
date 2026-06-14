@@ -104,6 +104,7 @@ edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format json
 edgp rpm-repo-summary --source repodata/repomd.xml
+edgp rpm-repo-summary-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo-summary --triage-summary
 edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml
 edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc --advisories advisories.json --public-advisory-feed osv.json --libsolv-transaction solver-transaction.txt --license-report --triage-summary
 edgp albs-build --build-id 17812 --format json
@@ -474,6 +475,8 @@ RPM universe graph from package, provides, and requires records. Resolved
 requirements point at provider packages; unresolved requirements become
 explicit capability nodes. `edgp rpm-repo-summary` reports package counts,
 source RPM concentration, architecture coverage, and unresolved requirements.
+`edgp rpm-repo-summary-bundle` renders that coverage summary as static HTML
+with a verifiable manifest.
 `edgp rpm-repo-diff` compares two repository snapshots by package name and
 architecture, surfacing added, removed, and changed EVR/source-RPM records.
 `edgp rpm-repo-diff-bundle` renders that comparison as a static HTML bundle

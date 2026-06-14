@@ -239,6 +239,7 @@ surfaces are:
 - Discover primary metadata from public RPM `repomd.xml` files and repository
   base URLs.
 - Generate RPM repository summary reports and static graph/summary bundles.
+- Render RPM repository summary reports as static, verifiable report bundles.
 - Include local advisory overlays in generated RPM repository graph bundles.
 - Compare two public RPM repository snapshots and report added, removed, and
   changed package EVR/source-RPM records.
@@ -335,6 +336,7 @@ python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-
 python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --advisories tests/fixtures/rpm-advisories.json --public-advisory-feed tests/fixtures/public-osv.json --albs-build-path tests/fixtures/albs-build.json --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-installed-bundle
 python -B -m src.cli rpm-repo --source tests/fixtures/repodata/repomd.xml --format json
 python -B -m src.cli rpm-repo-summary --source tests/fixtures/repodata/repomd.xml
+python -B -m src.cli rpm-repo-summary-bundle --source tests/fixtures/repodata/repomd.xml --output-dir /tmp/edgp-rpm-repo-summary-bundle
 python -B -m src.cli rpm-repo-bundle --source tests/fixtures/repodata/repomd.xml --impact-node nginx-core --advisories tests/fixtures/rpm-repo-advisories.json --public-advisory-feed tests/fixtures/public-osv-ranges.json --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-repo-bundle
 python -B -m src.cli rpm-albs-provenance-bundle --path tests/fixtures/albs-build.json --rpm-limit 5 --max-requirements 10 --output-dir /tmp/edgp-rpm-albs-provenance-bundle
 python -B -m src.cli albs-build-diff-bundle --left-path tests/fixtures/albs-build.json --right-path tests/fixtures/albs-build-updated.json --output-dir /tmp/edgp-albs-build-diff-bundle

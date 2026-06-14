@@ -354,6 +354,37 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
         "edgp.rpm.repository_summary.v1"
     )
 
+    output_dir = tmp_path / "rpm-repo-summary-bundle"
+    assert (
+        main(
+            [
+                "rpm-repo-summary-bundle",
+                "--source",
+                "tests/fixtures/repodata/repomd.xml",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "rpm-repository-summary"
+    assert manifest["reports"][0]["href"] == "001-rpm-repository-summary.html"
+    assert manifest["reports"][0]["schema"] == "edgp.rpm.repository_summary.v1"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    summary = json.loads(
+        (output_dir / "rpm-repository-summary.json").read_text(encoding="utf-8")
+    )
+    assert summary["schema"] == "edgp.rpm.repository_summary.v1"
+    assert summary["summary"]["packages"] == 2
+    assert 'data-testid="rpm-repository-architectures-panel"' in (
+        output_dir / "001-rpm-repository-summary.html"
+    ).read_text(encoding="utf-8")
+    assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
+    assert capsys.readouterr().out.startswith("OK ")
+
     assert main(
         [
             "rpm-repo-diff",

@@ -390,6 +390,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "rpm-installed",
         "rpm-repository",
         "rpm-repository-diff",
+        "rpm-repository-summary",
     }
 
 
@@ -1716,6 +1717,43 @@ def _assert_public_vertical_reports() -> None:
     )
     assert rpm_repo_summary["schema"] == "edgp.rpm.repository_summary.v1"
     assert rpm_repo_summary["summary"]["packages"] == 2
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "rpm-repo-summary-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-repo-summary-bundle",
+                "--source",
+                "tests/fixtures/repodata/repomd.xml",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "rpm-repository-summary"
+        assert manifest["reports"][0]["href"] == "001-rpm-repository-summary.html"
+        assert manifest["reports"][0]["schema"] == "edgp.rpm.repository_summary.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        summary = json.loads(
+            (output_dir / "rpm-repository-summary.json").read_text(encoding="utf-8")
+        )
+        assert summary["schema"] == "edgp.rpm.repository_summary.v1"
+        assert summary["summary"]["packages"] == 2
+        assert 'data-testid="rpm-repository-architectures-panel"' in (
+            output_dir / "001-rpm-repository-summary.html"
+        ).read_text(encoding="utf-8")
 
     rpm_repo_diff = _run_cli(
         [

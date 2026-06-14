@@ -37,7 +37,8 @@
             "rpm-albs-provenance",
             "rpm-installed",
             "rpm-repository",
-            "rpm-repository-diff"
+            "rpm-repository-diff",
+            "rpm-repository-summary"
           ],
           "type": "string"
         }

@@ -602,6 +602,41 @@ def _write_rpm_repo_bundle(
     )
 
 
+def _write_rpm_repo_summary_bundle(
+    source: str,
+    output_dir: Path,
+    *,
+    repo_id: str = "public-rpm-repository",
+    package_limit: int = 5000,
+    requirement_limit: int = 40,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    resolved = _load_rpm_repo_project_graph(
+        source,
+        repo_id=repo_id,
+        package_limit=package_limit,
+        requirement_limit=requirement_limit,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = output_dir / "rpm-repository-summary.json"
+    summary_path.write_text(
+        _json(
+            build_rpm_repository_summary_report(
+                resolved.graph,
+                root=resolved.root_identifier,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [summary_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "rpm-repository-summary", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_license_report_if_requested(
     output_dir: Path,
     resolved: ResolvedProjectGraph,
@@ -1841,6 +1876,18 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_summary.add_argument("--package-limit", type=int, default=5000)
     rpm_repo_summary.add_argument("--requirement-limit", type=int, default=40)
 
+    rpm_repo_summary_bundle = subparsers.add_parser(
+        "rpm-repo-summary-bundle",
+        help="Render public RPM repository metadata coverage as a static bundle",
+    )
+    rpm_repo_summary_bundle.add_argument("--primary", type=Path)
+    rpm_repo_summary_bundle.add_argument("--source")
+    rpm_repo_summary_bundle.add_argument("--repo-id", default="public-rpm-repository")
+    rpm_repo_summary_bundle.add_argument("--package-limit", type=int, default=5000)
+    rpm_repo_summary_bundle.add_argument("--requirement-limit", type=int, default=40)
+    rpm_repo_summary_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(rpm_repo_summary_bundle)
+
     rpm_repo_bundle = subparsers.add_parser(
         "rpm-repo-bundle",
         help="Render public RPM repository graph and summary bundle",
@@ -2624,6 +2671,20 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+
+    if args.command == "rpm-repo-summary-bundle":
+        return _print_bundle_result(
+            _write_rpm_repo_summary_bundle(
+                _rpm_repo_source(args.primary, args.source),
+                args.output_dir,
+                repo_id=args.repo_id,
+                package_limit=args.package_limit,
+                requirement_limit=args.requirement_limit,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "rpm-repo-bundle":
         return _print_bundle_result(
