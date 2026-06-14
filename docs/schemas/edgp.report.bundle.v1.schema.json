@@ -25,6 +25,7 @@
             "albs-build-timing",
             "albs-log-intelligence",
             "albs-release-completeness",
+            "bundle-catalog",
             "cyclonedx-sbom",
             "dot",
             "edgp-json",

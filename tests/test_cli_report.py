@@ -211,6 +211,72 @@ def test_cli_report_bundle_can_fail_on_triage_status(tmp_path, capsys) -> None:
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
 
 
+def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
+    graph_bundle = tmp_path / "graph-bundle"
+    diagnostics_bundle = tmp_path / "diagnostics-bundle"
+    catalog_dir = tmp_path / "catalog"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(graph_bundle),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "npm-diagnostics-bundle",
+                "--path",
+                "tests/fixtures/package-lock-conflict.json",
+                "--output-dir",
+                str(diagnostics_bundle),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "bundle-catalog",
+                "--bundle",
+                str(graph_bundle),
+                "--bundle",
+                str(diagnostics_bundle),
+                "--output-dir",
+                str(catalog_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == catalog_dir / "index.html"
+    manifest = json.loads((catalog_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "bundle-catalog"
+    assert manifest["reports"][0]["schema"] == "edgp.bundle.catalog.v1"
+    assert manifest["reports"][0]["href"] == "001-bundle-catalog.html"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    catalog = json.loads((catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8"))
+    assert catalog["schema"] == "edgp.bundle.catalog.v1"
+    assert catalog["summary"]["bundles"] == 2
+    assert catalog["summary"]["okBundles"] == 2
+    assert catalog["summary"]["triageWarn"] == 1
+    html = (catalog_dir / "001-bundle-catalog.html").read_text(encoding="utf-8")
+    assert 'data-testid="bundle-catalog-bundles-panel"' in html
+    assert 'data-testid="bundle-catalog-source-kinds-panel"' in html
+    assert main(["verify-bundle", "--path", str(catalog_dir)]) == 0
+
+
 def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     output_dir = tmp_path / "bundle"
     assert (

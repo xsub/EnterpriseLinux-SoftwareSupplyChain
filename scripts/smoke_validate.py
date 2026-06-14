@@ -77,6 +77,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.advisory.report.v1.schema.json",
+    "edgp.bundle.catalog.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.bundle.catalog.v1.schema.json",
     "edgp.npm.diagnostics.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -146,6 +150,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "advisory-report.json",
+    "edgp.bundle.catalog.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "bundle-catalog.json",
     "edgp.npm.diagnostics.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -387,6 +395,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "albs-build-timing",
         "albs-log-intelligence",
         "albs-release-completeness",
+        "bundle-catalog",
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
@@ -506,6 +515,7 @@ def _assert_schema_index_document() -> None:
         "edgp.albs.artifact_inventory.v1",
         "edgp.albs.build_timing.v1",
         "edgp.advisory.report.v1",
+        "edgp.bundle.catalog.v1",
         "edgp.graph.diff.v1",
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
@@ -2927,6 +2937,87 @@ def _assert_report_bundle() -> None:
         assert 'data-testid="npm-unresolved-panel"' in npm_html
 
 
+def _assert_bundle_catalog() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        graph_bundle = temp_path / "graph-bundle"
+        diagnostics_bundle = temp_path / "diagnostics-bundle"
+        catalog_dir = temp_path / "catalog"
+        subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(graph_bundle),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "npm-diagnostics-bundle",
+                "--path",
+                "tests/fixtures/package-lock-conflict.json",
+                "--output-dir",
+                str(diagnostics_bundle),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "bundle-catalog",
+                "--bundle",
+                str(graph_bundle),
+                "--bundle",
+                str(diagnostics_bundle),
+                "--output-dir",
+                str(catalog_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(catalog_dir / "index.html")
+        manifest = json.loads((catalog_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, catalog_dir)
+        _assert_verify_bundle_command(catalog_dir)
+        assert manifest["bundle"]["sourceKind"] == "bundle-catalog"
+        assert manifest["reports"][0]["href"] == "001-bundle-catalog.html"
+        assert manifest["reports"][0]["schema"] == "edgp.bundle.catalog.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        catalog = json.loads(
+            (catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8")
+        )
+        assert catalog["schema"] == "edgp.bundle.catalog.v1"
+        assert catalog["summary"]["bundles"] == 2
+        assert catalog["summary"]["okBundles"] == 2
+        assert catalog["summary"]["triageWarn"] == 1
+        assert 'data-testid="bundle-catalog-bundles-panel"' in (
+            catalog_dir / "001-bundle-catalog.html"
+        ).read_text(encoding="utf-8")
+
+
 def _assert_verify_bundle_detects_tampering() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "bundle"
@@ -3673,6 +3764,7 @@ def main(argv: list[str] | None = None) -> int:
         ("advisory html report", _assert_advisory_html_report),
         ("npm diagnostics html report", _assert_npm_diagnostics_html_report),
         ("report bundle", _assert_report_bundle),
+        ("bundle catalog", _assert_bundle_catalog),
         ("verify bundle tamper detection", _assert_verify_bundle_detects_tampering),
         (
             "bundle validation failure fixtures",

@@ -41,6 +41,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.advisory.report.v1.schema.json"),
         Path("tests/fixtures/advisory-report.json"),
     ),
+    "edgp.bundle.catalog.v1": (
+        Path("docs/schemas/edgp.bundle.catalog.v1.schema.json"),
+        Path("tests/fixtures/bundle-catalog.json"),
+    ),
     "edgp.npm.diagnostics.v1": (
         Path("docs/schemas/edgp.npm.diagnostics.v1.schema.json"),
         Path("tests/fixtures/npm-diagnostics-report.json"),

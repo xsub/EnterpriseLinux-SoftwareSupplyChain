@@ -24,6 +24,7 @@ SOURCE_KINDS = {
     "albs-build-timing",
     "albs-log-intelligence",
     "albs-release-completeness",
+    "bundle-catalog",
     "cyclonedx-sbom",
     "dot",
     "edgp-json",
@@ -816,6 +817,8 @@ def _report_title(payload: dict[str, Any]) -> str:
         return "Public Advisory Feed"
     if schema == "edgp.query.report.v1":
         return f"Query Report - {payload.get('operation') or 'query'}"
+    if schema == "edgp.bundle.catalog.v1":
+        return "Bundle Catalog"
     if schema == "edgp.performance.report.v1":
         return "Performance Report"
     if schema == "edgp.triage.summary.v1":

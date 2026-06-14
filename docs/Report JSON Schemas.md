@@ -31,6 +31,10 @@ python -B scripts/generate_schema_index.py --check
 - `edgp.advisory.report.v1`:
   [`edgp.advisory.report.v1.schema.json`](schemas/edgp.advisory.report.v1.schema.json)
   documents local advisory findings and their embedded impact reports.
+- `edgp.bundle.catalog.v1`:
+  [`edgp.bundle.catalog.v1.schema.json`](schemas/edgp.bundle.catalog.v1.schema.json)
+  documents verified static report-bundle catalogs for batch CI and workbench
+  ingestion.
 - `edgp.npm.diagnostics.v1`:
   [`edgp.npm.diagnostics.v1.schema.json`](schemas/edgp.npm.diagnostics.v1.schema.json)
   documents duplicate package names, nested version conflicts, and unresolved

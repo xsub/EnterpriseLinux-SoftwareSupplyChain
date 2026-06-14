@@ -191,6 +191,17 @@ def test_render_report_supports_query_report_json() -> None:
     assert "left-pad==1.3.0" in html
 
 
+def test_render_report_supports_bundle_catalog_json() -> None:
+    report = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP Bundle Catalog" in html
+    assert 'data-testid="bundle-catalog-bundles-panel"' in html
+    assert 'data-testid="bundle-catalog-source-kinds-panel"' in html
+    assert "htmlDigestMismatch" in html
+
+
 @pytest.mark.parametrize(
     ("fixture", "test_id"),
     [

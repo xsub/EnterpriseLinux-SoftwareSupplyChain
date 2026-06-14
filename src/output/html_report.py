@@ -57,6 +57,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_performance_report(payload)
     if schema == "edgp.query.report.v1":
         return render_query_report(payload)
+    if schema == "edgp.bundle.catalog.v1":
+        return render_bundle_catalog_report(payload)
     if schema == "edgp.license.report.v1":
         return render_license_report(payload)
     if schema == "edgp.triage.summary.v1":
@@ -717,6 +719,52 @@ def render_query_report(report: dict[str, Any]) -> str:
                 test_id="query-context-panel",
             ),
             result_panel,
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_bundle_catalog_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.bundle.catalog.v1":
+        raise ValueError("HTML bundle catalog input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP Bundle Catalog",
+        [
+            _generic_hero(
+                eyebrow="report bundles",
+                heading="Bundle catalog",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Bundles", _dict_value(summary, "bundles")),
+                    ("OK", _dict_value(summary, "okBundles")),
+                    ("Failed", _dict_value(summary, "failedBundles")),
+                    ("Reports", _dict_value(summary, "reports")),
+                ],
+            ),
+            _rows_panel(
+                "Bundle Verification",
+                report.get("bundles", []),
+                [
+                    "path",
+                    "ok",
+                    "sourceKind",
+                    "reportCount",
+                    "triageStatus",
+                    "failureCount",
+                    "failureCodes",
+                    "reportSchemas",
+                    "bundleSha256",
+                ],
+                test_id="bundle-catalog-bundles-panel",
+            ),
+            _rows_panel(
+                "Source Kinds",
+                report.get("sourceKinds", []),
+                ["sourceKind", "bundles", "reports", "failures"],
+                test_id="bundle-catalog-source-kinds-panel",
+            ),
         ],
         scripts=[_table_sort_script()],
     )

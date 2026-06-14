@@ -1,0 +1,63 @@
+{
+  "bundles": [
+    {
+      "bundleSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "command": "edgp report-bundle --input tests/fixtures/snapshot-right.json --output-dir reports/graph",
+      "failureCodes": [],
+      "failureCount": 0,
+      "manifest": "manifest.json",
+      "ok": true,
+      "path": "/tmp/reports/graph",
+      "reportCount": 1,
+      "reportSchemas": [
+        "edgp.graph.snapshot.v1"
+      ],
+      "sourceKind": "edgp-json",
+      "triageStatus": "not-present"
+    },
+    {
+      "bundleSha256": null,
+      "command": "",
+      "failureCodes": [
+        "htmlDigestMismatch"
+      ],
+      "failureCount": 1,
+      "manifest": "manifest.json",
+      "ok": false,
+      "path": "/tmp/reports/tampered",
+      "reportCount": 1,
+      "reportSchemas": [
+        "edgp.npm.diagnostics.v1"
+      ],
+      "sourceKind": "npm-diagnostics",
+      "triageStatus": "warn"
+    }
+  ],
+  "manifestName": "manifest.json",
+  "schema": "edgp.bundle.catalog.v1",
+  "sourceKinds": [
+    {
+      "bundles": 1,
+      "failures": 0,
+      "reports": 1,
+      "sourceKind": "edgp-json"
+    },
+    {
+      "bundles": 1,
+      "failures": 1,
+      "reports": 1,
+      "sourceKind": "npm-diagnostics"
+    }
+  ],
+  "summary": {
+    "bundles": 2,
+    "failedBundles": 1,
+    "failures": 1,
+    "okBundles": 1,
+    "reports": 2,
+    "triageFail": 0,
+    "triagePass": 0,
+    "triageWarn": 1,
+    "withoutTriage": 1
+  }
+}

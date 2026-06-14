@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 23,
+  "schemaCount": 24,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -50,6 +50,14 @@
       "id": "urn:edgp:schema:albs-release-completeness:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP ALBS Release Completeness v1"
+    },
+    {
+      "contract": "edgp.bundle.catalog.v1",
+      "description": "Catalog of verified EDGP static report bundles for batch CI and workbench ingestion.",
+      "file": "edgp.bundle.catalog.v1.schema.json",
+      "id": "urn:edgp:schema:bundle-catalog:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Bundle Catalog v1"
     },
     {
       "contract": "edgp.graph.diff.v1",

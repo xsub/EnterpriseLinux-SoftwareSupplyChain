@@ -27,6 +27,7 @@ from src.adapters.poetry import PoetryAdapter
 from src.adapters.rpm_repository import RpmRepositoryAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.benchmark import run_synthetic_benchmark
+from src.bundle_catalog import build_bundle_catalog_report
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
@@ -1259,6 +1260,33 @@ def _write_query_report_bundle(
         [report_path],
         output_dir,
         bundle_metadata={"sourceKind": "query-report", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
+def _write_bundle_catalog_bundle(
+    output_dir: Path,
+    *,
+    bundle_dirs: Sequence[Path],
+    manifest_name: str = "manifest.json",
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "bundle-catalog.json"
+    report_path.write_text(
+        _json(
+            build_bundle_catalog_report(
+                bundle_dirs,
+                manifest_name=manifest_name,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "bundle-catalog", "command": command},
         include_triage_summary=include_triage_summary,
     )
 
@@ -2553,6 +2581,15 @@ def build_parser() -> argparse.ArgumentParser:
     report_bundle.add_argument("--manifest-name", default="manifest.json")
     _add_triage_bundle_option(report_bundle)
 
+    bundle_catalog = subparsers.add_parser(
+        "bundle-catalog",
+        help="Catalog and verify multiple static EDGP report bundles",
+    )
+    bundle_catalog.add_argument("--bundle", type=Path, action="append", required=True)
+    bundle_catalog.add_argument("--manifest-name", default="manifest.json")
+    bundle_catalog.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(bundle_catalog)
+
     verify_bundle = subparsers.add_parser(
         "verify-bundle",
         help="Verify a static report bundle manifest and member digests",
@@ -3430,6 +3467,18 @@ def main(argv: list[str] | None = None) -> int:
             include_triage_summary=_include_triage_summary(args),
         )
         return _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+
+    if args.command == "bundle-catalog":
+        return _print_bundle_result(
+            _write_bundle_catalog_bundle(
+                args.output_dir,
+                bundle_dirs=args.bundle,
+                manifest_name=args.manifest_name,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "verify-bundle":
         report = verify_report_bundle(args.path, manifest_name=args.manifest_name)

@@ -1,0 +1,184 @@
+{
+  "$id": "urn:edgp:schema:bundle-catalog:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Catalog of verified EDGP static report bundles for batch CI and workbench ingestion.",
+  "properties": {
+    "bundles": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "bundleSha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "command": {
+            "type": "string"
+          },
+          "failureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "failureCount": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "manifest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "reportCount": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "reportSchemas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sourceKind": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "triageStatus": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "manifest",
+          "ok",
+          "sourceKind",
+          "command",
+          "bundleSha256",
+          "reportCount",
+          "failureCount",
+          "failureCodes",
+          "reportSchemas",
+          "triageStatus"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "manifestName": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema": {
+      "const": "edgp.bundle.catalog.v1",
+      "description": "Bundle catalog schema identifier."
+    },
+    "sourceKinds": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "bundles": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "failures": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "reports": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sourceKind": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceKind",
+          "bundles",
+          "reports",
+          "failures"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "bundles": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failedBundles": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failures": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "okBundles": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "reports": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "triageFail": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "triagePass": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "triageWarn": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "withoutTriage": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "bundles",
+        "okBundles",
+        "failedBundles",
+        "reports",
+        "failures",
+        "triagePass",
+        "triageWarn",
+        "triageFail",
+        "withoutTriage"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "manifestName",
+    "summary",
+    "sourceKinds",
+    "bundles"
+  ],
+  "title": "EDGP Bundle Catalog v1",
+  "type": "object"
+}
