@@ -819,6 +819,7 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
     top_findings = report.get("topFindings", {})
     top_findings = top_findings if isinstance(top_findings, dict) else {}
     npm_findings = top_findings.get("npm", [])
+    bundle_catalog_findings = top_findings.get("bundleCatalog", [])
     return _document(
         "EDGP Triage Summary",
         [
@@ -855,6 +856,12 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                 npm_findings,
                 ["kind", "count", "root"],
                 test_id="triage-npm-panel",
+            ),
+            _rows_panel(
+                "Bundle Catalog Findings",
+                bundle_catalog_findings,
+                ["path", "sourceKind", "ok", "failureCount", "triageStatus", "failureCodes"],
+                test_id="triage-bundle-catalog-panel",
             ),
             _rows_panel(
                 "Source Reports",

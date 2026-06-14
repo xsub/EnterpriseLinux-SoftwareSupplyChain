@@ -22,6 +22,7 @@ def build_triage_summary_report(
     advisory_findings = []
     license_findings = []
     npm_findings = []
+    bundle_catalog_findings = []
 
     for report in reports:
         schema = str(report.get("schema", ""))
@@ -44,6 +45,9 @@ def build_triage_summary_report(
             license_findings.extend(_license_findings(report))
         elif schema == "edgp.npm.diagnostics.v1":
             npm_findings.extend(_npm_findings(report, summary))
+        elif schema == "edgp.bundle.catalog.v1":
+            checks.append(_bundle_catalog_check(summary))
+            bundle_catalog_findings.extend(_bundle_catalog_findings(report))
 
     status = _status(rollup)
     return {
@@ -60,6 +64,7 @@ def build_triage_summary_report(
             "advisories": advisory_findings[:10],
             "licenses": license_findings[:10],
             "npm": npm_findings[:10],
+            "bundleCatalog": bundle_catalog_findings[:10],
         },
         "reports": report_entries,
     }
@@ -143,6 +148,12 @@ def _empty_rollup() -> dict[str, int]:
         "npmDuplicatePackageNames": 0,
         "npmNestedResolutionConflicts": 0,
         "npmUnresolvedDependencies": 0,
+        "bundleCatalogReports": 0,
+        "catalogBundles": 0,
+        "catalogFailedBundles": 0,
+        "catalogFailures": 0,
+        "catalogTriageWarn": 0,
+        "catalogTriageFail": 0,
     }
 
 
@@ -175,6 +186,13 @@ def _accumulate_summary(
         rollup["npmUnresolvedDependencies"] += int(
             summary.get("unresolvedDependencies", 0)
         )
+    elif schema == "edgp.bundle.catalog.v1":
+        rollup["bundleCatalogReports"] += 1
+        rollup["catalogBundles"] += int(summary.get("bundles", 0))
+        rollup["catalogFailedBundles"] += int(summary.get("failedBundles", 0))
+        rollup["catalogFailures"] += int(summary.get("failures", 0))
+        rollup["catalogTriageWarn"] += int(summary.get("triageWarn", 0))
+        rollup["catalogTriageFail"] += int(summary.get("triageFail", 0))
 
 
 def _check(kind: str, count: int, count_key: str) -> dict[str, Any]:
@@ -185,14 +203,41 @@ def _check(kind: str, count: int, count_key: str) -> dict[str, Any]:
     }
 
 
+def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
+    failed_bundles = int(summary.get("failedBundles", 0))
+    failures = int(summary.get("failures", 0))
+    triage_fail = int(summary.get("triageFail", 0))
+    triage_warn = int(summary.get("triageWarn", 0))
+    status = "pass"
+    if failed_bundles or failures or triage_fail:
+        status = "fail"
+    elif triage_warn:
+        status = "warn"
+    return {
+        "kind": "bundle-catalog",
+        "status": status,
+        "failedBundles": failed_bundles,
+        "failures": failures,
+        "triageWarn": triage_warn,
+        "triageFail": triage_fail,
+    }
+
+
 def _status(rollup: dict[str, int]) -> str:
-    if rollup["advisoryFindings"] or rollup["deniedLicenseFindings"]:
+    if (
+        rollup["advisoryFindings"]
+        or rollup["deniedLicenseFindings"]
+        or rollup["catalogFailedBundles"]
+        or rollup["catalogFailures"]
+        or rollup["catalogTriageFail"]
+    ):
         return "fail"
     if (
         rollup["missingLicenses"]
         or rollup["npmDuplicatePackageNames"]
         or rollup["npmNestedResolutionConflicts"]
         or rollup["npmUnresolvedDependencies"]
+        or rollup["catalogTriageWarn"]
     ):
         return "warn"
     return "pass"
@@ -247,6 +292,32 @@ def _npm_findings(
         count = int(summary.get(key, 0))
         if count:
             rows.append({"kind": key, "count": count, "root": report.get("root")})
+    return rows
+
+
+def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
+    bundles = report.get("bundles", [])
+    if not isinstance(bundles, list):
+        return []
+    rows = []
+    for bundle in bundles:
+        if not isinstance(bundle, dict):
+            continue
+        if (
+            bundle.get("ok") is True
+            and bundle.get("triageStatus") not in {"warn", "fail"}
+        ):
+            continue
+        rows.append(
+            {
+                "path": bundle.get("path"),
+                "sourceKind": bundle.get("sourceKind"),
+                "ok": bundle.get("ok"),
+                "failureCount": bundle.get("failureCount"),
+                "failureCodes": bundle.get("failureCodes", []),
+                "triageStatus": bundle.get("triageStatus"),
+            }
+        )
     return rows
 
 

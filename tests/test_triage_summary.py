@@ -123,3 +123,86 @@ def test_cli_triage_summary_warn_threshold(capsys) -> None:
         == 2
     )
     assert json.loads(capsys.readouterr().out)["status"] == "warn"
+
+
+def test_triage_summary_includes_bundle_catalog_failures() -> None:
+    report = build_triage_summary_from_paths(
+        [Path("tests/fixtures/bundle-catalog.json")]
+    )
+
+    assert report["status"] == "fail"
+    assert report["summary"]["bundleCatalogReports"] == 1
+    assert report["summary"]["catalogBundles"] == 2
+    assert report["summary"]["catalogFailedBundles"] == 1
+    assert report["summary"]["catalogFailures"] == 1
+    assert report["summary"]["catalogTriageWarn"] == 1
+    assert report["summary"]["failedChecks"] == 1
+    assert report["checks"] == [
+        {
+            "kind": "bundle-catalog",
+            "status": "fail",
+            "failedBundles": 1,
+            "failures": 1,
+            "triageWarn": 1,
+            "triageFail": 0,
+        }
+    ]
+    assert report["topFindings"]["bundleCatalog"][0]["path"] == "/tmp/reports/tampered"
+
+
+def test_triage_summary_warns_on_catalog_underlying_warns(tmp_path, capsys) -> None:
+    graph_bundle = tmp_path / "graph-bundle"
+    diagnostics_bundle = tmp_path / "diagnostics-bundle"
+    catalog_dir = tmp_path / "catalog"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(graph_bundle),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "npm-diagnostics-bundle",
+                "--path",
+                "tests/fixtures/package-lock-conflict.json",
+                "--output-dir",
+                str(diagnostics_bundle),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "bundle-catalog",
+                "--bundle",
+                str(graph_bundle),
+                "--bundle",
+                str(diagnostics_bundle),
+                "--output-dir",
+                str(catalog_dir),
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == catalog_dir / "index.html"
+    triage = json.loads((catalog_dir / "triage-summary.json").read_text(encoding="utf-8"))
+    assert triage["status"] == "warn"
+    assert triage["summary"]["catalogTriageWarn"] == 1
+    assert triage["checks"][0]["kind"] == "bundle-catalog"
+    assert triage["checks"][0]["status"] == "warn"

@@ -61,6 +61,12 @@
   "summary": {
     "advisoryFindings": 1,
     "advisoryReports": 1,
+    "bundleCatalogReports": 0,
+    "catalogBundles": 0,
+    "catalogFailedBundles": 0,
+    "catalogFailures": 0,
+    "catalogTriageFail": 0,
+    "catalogTriageWarn": 0,
     "deniedLicenseFindings": 1,
     "edges": 2,
     "failedChecks": 2,
@@ -84,6 +90,7 @@
         "summary": "Demo advisory for validating local dependency impact reports."
       }
     ],
+    "bundleCatalog": [],
     "licenses": [
       {
         "license": "WTFPL",

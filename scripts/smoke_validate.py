@@ -3013,6 +3013,12 @@ def _assert_bundle_catalog() -> None:
         assert catalog["summary"]["bundles"] == 2
         assert catalog["summary"]["okBundles"] == 2
         assert catalog["summary"]["triageWarn"] == 1
+        triage = json.loads(
+            (catalog_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
+        assert triage["schema"] == "edgp.triage.summary.v1"
+        assert triage["status"] == "warn"
+        assert triage["summary"]["catalogTriageWarn"] == 1
         assert 'data-testid="bundle-catalog-bundles-panel"' in (
             catalog_dir / "001-bundle-catalog.html"
         ).read_text(encoding="utf-8")

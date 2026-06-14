@@ -271,6 +271,9 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
     assert catalog["summary"]["bundles"] == 2
     assert catalog["summary"]["okBundles"] == 2
     assert catalog["summary"]["triageWarn"] == 1
+    triage = json.loads((catalog_dir / "triage-summary.json").read_text(encoding="utf-8"))
+    assert triage["status"] == "warn"
+    assert triage["summary"]["catalogTriageWarn"] == 1
     html = (catalog_dir / "001-bundle-catalog.html").read_text(encoding="utf-8")
     assert 'data-testid="bundle-catalog-bundles-panel"' in html
     assert 'data-testid="bundle-catalog-source-kinds-panel"' in html
