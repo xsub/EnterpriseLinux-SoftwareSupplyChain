@@ -339,6 +339,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
+        "license-report",
         "libsolv-transaction",
         "maven-dependency-tree",
         "npm-lockfile",
@@ -1878,6 +1879,47 @@ def _assert_public_vertical_reports() -> None:
     assert license_gate["schema"] == "edgp.license.report.v1"
     assert license_gate["summary"]["deniedFindings"] == 1
     assert license_gate["findings"][0]["package"] == "left-pad==1.3.0"
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "license-report-bundle"
+        completed_license_bundle = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "license-report-bundle",
+                "--source",
+                "sbom",
+                "--path",
+                "tests/fixtures/sample-bom.json",
+                "--deny-license",
+                "WTFPL",
+                "--fail-on-denied",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_license_bundle.returncode == 2
+        assert completed_license_bundle.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "license-report"
+        assert manifest["reports"][0]["href"] == "001-license-report.html"
+        assert manifest["reports"][0]["schema"] == "edgp.license.report.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        bundle_license = json.loads(
+            (output_dir / "license-report.json").read_text(encoding="utf-8")
+        )
+        assert bundle_license["summary"]["deniedFindings"] == 1
+        assert 'data-testid="license-denied-panel"' in (
+            output_dir / "001-license-report.html"
+        ).read_text(encoding="utf-8")
     triage = _run_cli(
         [
             "triage-summary",

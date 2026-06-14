@@ -24,6 +24,7 @@ SOURCE_KINDS = {
     "cyclonedx-sbom",
     "dot",
     "edgp-json",
+    "license-report",
     "libsolv-transaction",
     "maven-dependency-tree",
     "npm-lockfile",

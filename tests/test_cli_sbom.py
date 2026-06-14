@@ -114,6 +114,49 @@ def test_cli_sbom_bundle_can_include_license_report(tmp_path, capsys) -> None:
     assert (output_dir / "002-license-report.html").exists()
 
 
+def test_cli_license_report_bundle_writes_bundle_before_denied_exit(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "license-report-bundle"
+
+    assert (
+        main(
+            [
+                "license-report-bundle",
+                "--source",
+                "sbom",
+                "--path",
+                "tests/fixtures/sample-bom.json",
+                "--deny-license",
+                "WTFPL",
+                "--fail-on-denied",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "license-report"
+    assert manifest["reports"][0]["href"] == "001-license-report.html"
+    assert manifest["reports"][0]["schema"] == "edgp.license.report.v1"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    license_report = json.loads(
+        (output_dir / "license-report.json").read_text(encoding="utf-8")
+    )
+    assert license_report["summary"]["deniedFindings"] == 1
+    assert 'data-testid="license-denied-panel"' in (
+        output_dir / "001-license-report.html"
+    ).read_text(encoding="utf-8")
+
+    assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
+    assert capsys.readouterr().out.startswith("OK ")
+
+
 def test_cli_sbom_bundle_can_fail_on_denied_license_after_writing_bundle(
     tmp_path,
     capsys,

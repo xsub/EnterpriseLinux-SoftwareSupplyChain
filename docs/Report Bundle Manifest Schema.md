@@ -44,6 +44,7 @@ The public source-kind values are:
 - `rpm-installed`
 - `rpm-repository`
 - `rpm-repository-diff`
+- `license-report`
 - `libsolv-transaction`
 - `performance-report`
 - `public-advisory-feed`

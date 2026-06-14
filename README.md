@@ -148,6 +148,7 @@ edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisori
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed-url https://example.com/osv.json --ecosystem rpm
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --fail-on-findings --fail-min-severity high
 edgp license-report --source sbom --path bom.json --deny-license GPL-3.0-only --fail-on-denied
+edgp license-report-bundle --source sbom --path bom.json --deny-license GPL-3.0-only --output-dir reports/license --triage-summary
 edgp npm-diagnostics --path package-lock.json
 edgp diff --left before.json --right after.json
 ```
@@ -628,7 +629,10 @@ matches exact license strings and simple SPDX-expression tokens, emits the full
 `edgp.license.report.v1` JSON report, and exits with status `2` when
 `--fail-on-denied` finds a denied license. This works with public CycloneDX
 SBOMs, lockfile-derived metadata, public RPM repository metadata, and installed
-RPM metadata when licenses are visible in the source.
+RPM metadata when licenses are visible in the source. `edgp
+license-report-bundle` writes the same license report as static HTML with a
+verifiable manifest and preserves the bundle before returning status `2` for
+`--fail-on-denied`.
 Graph bundle commands for npm lockfiles, CycloneDX SBOMs, public RPM
 repositories, and installed RPM databases can also include the same report with
 `--license-report`; passing `--deny-license` to a bundle command includes the
