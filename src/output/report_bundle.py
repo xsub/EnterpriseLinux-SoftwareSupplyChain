@@ -18,6 +18,7 @@ MANIFEST_SCHEMA = "edgp.report.bundle.v1"
 VERIFICATION_SCHEMA = "edgp.report.bundle.verification.v1"
 SOURCE_KINDS = {
     "albs-build",
+    "albs-build-diff",
     "cyclonedx-sbom",
     "dot",
     "edgp-json",

@@ -110,6 +110,7 @@ edgp albs-build --build-id 17812 --format json
 edgp albs-artifact-inventory --build-id 17812
 edgp albs-build-timing --build-id 17812
 edgp albs-build-diff --left-build-id 17812 --right-build-id 17813
+edgp albs-build-diff-bundle --left-build-id 17812 --right-build-id 17813 --output-dir reports/albs-build-diff --triage-summary
 edgp albs-release-completeness --build-id 17812 --build-id 17813
 edgp albs-log-intelligence --build-id 17813
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
@@ -507,7 +508,8 @@ The public ALBS/report layer adds investigation views that do not need private
 resources:
 
 - `edgp albs-build-diff` compares two builds for artifact, source commit, and
-  timing changes.
+  timing changes. `edgp albs-build-diff-bundle` renders the same comparison as
+  static HTML with `manifest.json` for review and verification.
 - `edgp rpm-albs-provenance` joins installed RPMs from the local RPM database to
   artifacts from one public ALBS build. `edgp rpm-albs-provenance-bundle`
   renders that join as static HTML with `manifest.json` for browser review and

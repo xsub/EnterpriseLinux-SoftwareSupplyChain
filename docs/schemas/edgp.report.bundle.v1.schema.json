@@ -19,6 +19,7 @@
           "description": "Public input surface that produced the bundle.",
           "enum": [
             "albs-build",
+            "albs-build-diff",
             "cyclonedx-sbom",
             "dot",
             "edgp-json",

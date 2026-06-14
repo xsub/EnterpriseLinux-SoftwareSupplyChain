@@ -806,6 +806,41 @@ def _write_rpm_repo_diff_bundle(
     )
 
 
+def _write_albs_build_diff_bundle(
+    output_dir: Path,
+    *,
+    left_build_id: str | None = None,
+    left_path: Path | None = None,
+    right_build_id: str | None = None,
+    right_path: Path | None = None,
+    base_url: str = DEFAULT_ALBS_BASE_URL,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    left = _load_albs_build_metadata(
+        build_id=left_build_id,
+        path=left_path,
+        base_url=base_url,
+    )
+    right = _load_albs_build_metadata(
+        build_id=right_build_id,
+        path=right_path,
+        base_url=base_url,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    diff_path = output_dir / "albs-build-diff.json"
+    diff_path.write_text(
+        _json(build_albs_build_diff_report(left, right)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [diff_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "albs-build-diff", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_libsolv_bundle(
     transaction_path: Path,
     output_dir: Path,
@@ -1635,6 +1670,18 @@ def build_parser() -> argparse.ArgumentParser:
     albs_build_diff.add_argument("--right-path", type=Path)
     albs_build_diff.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
 
+    albs_build_diff_bundle = subparsers.add_parser(
+        "albs-build-diff-bundle",
+        help="Render public ALBS build comparison as a static bundle",
+    )
+    albs_build_diff_bundle.add_argument("--left-build-id")
+    albs_build_diff_bundle.add_argument("--left-path", type=Path)
+    albs_build_diff_bundle.add_argument("--right-build-id")
+    albs_build_diff_bundle.add_argument("--right-path", type=Path)
+    albs_build_diff_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_build_diff_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(albs_build_diff_bundle)
+
     albs_log_intelligence = subparsers.add_parser(
         "albs-log-intelligence",
         help="Extract build-log signals from public ALBS build metadata",
@@ -2260,6 +2307,21 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(_json(build_albs_build_diff_report(left, right)))
         return 0
+
+    if args.command == "albs-build-diff-bundle":
+        return _print_bundle_result(
+            _write_albs_build_diff_bundle(
+                args.output_dir,
+                left_build_id=args.left_build_id,
+                left_path=args.left_path,
+                right_build_id=args.right_build_id,
+                right_path=args.right_path,
+                base_url=args.base_url,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "albs-log-intelligence":
         payload = _load_albs_build_metadata(

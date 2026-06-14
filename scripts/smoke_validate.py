@@ -333,6 +333,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
     } <= set(schema["properties"]["reports"]["items"]["required"])
     assert set(schema["properties"]["bundle"]["properties"]["sourceKind"]["enum"]) == {
         "albs-build",
+        "albs-build-diff",
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
@@ -1521,6 +1522,44 @@ def _assert_public_vertical_reports() -> None:
     )
     assert diff["schema"] == "edgp.albs.build_diff.v1"
     assert diff["summary"]["changedArtifacts"] == 3
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "albs-build-diff-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-build-diff-bundle",
+                "--left-path",
+                "tests/fixtures/albs-build.json",
+                "--right-path",
+                "tests/fixtures/albs-build-updated.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "albs-build-diff"
+        assert manifest["reports"][0]["href"] == "001-albs-build-diff.html"
+        assert manifest["reports"][0]["schema"] == "edgp.albs.build_diff.v1"
+        assert manifest["triageSummary"]["href"] == "triage-summary.html"
+        diff_report = json.loads(
+            (output_dir / "albs-build-diff.json").read_text(encoding="utf-8")
+        )
+        assert diff_report["summary"]["changedArtifacts"] == 3
+        diff_html = (output_dir / "001-albs-build-diff.html").read_text(
+            encoding="utf-8"
+        )
+        assert "EDGP ALBS Build Diff" in diff_html
 
     log = _run_cli(
         ["albs-log-intelligence", "--path", "tests/fixtures/albs-build-updated.json"]

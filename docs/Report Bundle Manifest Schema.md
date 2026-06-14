@@ -33,6 +33,7 @@ use `--format text` for a concise terminal summary.
 The public source-kind values are:
 
 - `albs-build`
+- `albs-build-diff`
 - `npm-lockfile`
 - `maven-dependency-tree`
 - `dot`

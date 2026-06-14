@@ -678,3 +678,36 @@ def test_cli_rpm_repo_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None
     assert diff["summary"]["changedPackages"] == 1
     html = (output_dir / "001-rpm-repository-diff.html").read_text(encoding="utf-8")
     assert 'data-testid="rpm-repository-diff-changed-panel"' in html
+
+
+def test_cli_albs_build_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "albs-build-diff-bundle"
+
+    assert main(
+        [
+            "albs-build-diff-bundle",
+            "--left-path",
+            "tests/fixtures/albs-build.json",
+            "--right-path",
+            "tests/fixtures/albs-build-updated.json",
+            "--output-dir",
+            str(output_dir),
+            "--triage-summary",
+        ]
+    ) == 0
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "albs-build-diff"
+    assert manifest["reports"][0]["href"] == "001-albs-build-diff.html"
+    assert manifest["reports"][0]["schema"] == "edgp.albs.build_diff.v1"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    diff = json.loads((output_dir / "albs-build-diff.json").read_text(encoding="utf-8"))
+    assert diff["schema"] == "edgp.albs.build_diff.v1"
+    assert diff["summary"]["changedArtifacts"] == 3
+    html = (output_dir / "001-albs-build-diff.html").read_text(encoding="utf-8")
+    assert "EDGP ALBS Build Diff" in html
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True
