@@ -922,6 +922,34 @@ def _write_libsolv_bundle(
     )
 
 
+def _write_public_advisory_feed_bundle(
+    output_dir: Path,
+    *,
+    path: Path | None = None,
+    url: str | None = None,
+    ecosystem: str = "rpm",
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "public-advisory-feed.json"
+    report_path.write_text(
+        _json(
+            build_public_advisory_feed_report(
+                _load_public_json_source(path=path, url=url),
+                ecosystem=ecosystem,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "public-advisory-feed", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_performance_report_bundle(
     output_dir: Path,
     *,
@@ -1881,6 +1909,15 @@ def build_parser() -> argparse.ArgumentParser:
     public_advisory_feed.add_argument(
         "--format", choices=["report", "overlay"], default="report"
     )
+    public_advisory_feed_bundle = subparsers.add_parser(
+        "public-advisory-feed-bundle",
+        help="Render a public advisory feed normalization report as a static bundle",
+    )
+    public_advisory_feed_bundle.add_argument("--path", type=Path)
+    public_advisory_feed_bundle.add_argument("--url")
+    public_advisory_feed_bundle.add_argument("--ecosystem", default="rpm")
+    public_advisory_feed_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(public_advisory_feed_bundle)
 
     diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
     diff.add_argument("--left", type=Path, required=True)
@@ -2557,6 +2594,19 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(_json(report))
         return 0
+
+    if args.command == "public-advisory-feed-bundle":
+        return _print_bundle_result(
+            _write_public_advisory_feed_bundle(
+                args.output_dir,
+                path=args.path,
+                url=args.url,
+                ecosystem=args.ecosystem,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "diff":
         print(diff_snapshot_files(args.left, args.right))

@@ -565,6 +565,48 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     assert public_feed["summary"]["advisories"] == 1
 
 
+def test_cli_public_advisory_feed_bundle_writes_report_bundle(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "public-advisory-feed-bundle"
+
+    assert (
+        main(
+            [
+                "public-advisory-feed-bundle",
+                "--url",
+                Path("tests/fixtures/public-osv.json").resolve().as_uri(),
+                "--ecosystem",
+                "rpm",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle"]["sourceKind"] == "public-advisory-feed"
+    assert manifest["reports"][0]["href"] == "001-public-advisory-feed.html"
+    assert manifest["reports"][0]["schema"] == "edgp.public.advisory_feed.v1"
+    assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    report = json.loads(
+        (output_dir / "public-advisory-feed.json").read_text(encoding="utf-8")
+    )
+    assert report["schema"] == "edgp.public.advisory_feed.v1"
+    assert report["summary"]["advisories"] == 1
+    assert report["overlay"]["schema"] == "edgp.advisory.overlay.v1"
+    assert 'data-testid="public-advisory-feed-panel"' in (
+        output_dir / "001-public-advisory-feed.html"
+    ).read_text(encoding="utf-8")
+
+    assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
+    assert capsys.readouterr().out.startswith("OK ")
+
+
 def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     output_dir = tmp_path / "rpm-repo-bundle"
 

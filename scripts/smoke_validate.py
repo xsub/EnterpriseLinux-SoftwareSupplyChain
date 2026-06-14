@@ -343,6 +343,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "maven-dependency-tree",
         "npm-lockfile",
         "performance-report",
+        "public-advisory-feed",
         "rpm-albs-provenance",
         "rpm-installed",
         "rpm-repository",
@@ -2006,6 +2007,45 @@ def _assert_public_vertical_reports() -> None:
     assert advisory_range["advisories"][0]["ranges"][0]["fixed"] == (
         "1.20.1-16.el9_4.2"
     )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "public-advisory-feed-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "public-advisory-feed-bundle",
+                "--path",
+                "tests/fixtures/public-osv.json",
+                "--ecosystem",
+                "rpm",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "public-advisory-feed"
+        assert manifest["reports"][0]["href"] == "001-public-advisory-feed.html"
+        assert manifest["reports"][0]["schema"] == "edgp.public.advisory_feed.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        report = json.loads(
+            (output_dir / "public-advisory-feed.json").read_text(encoding="utf-8")
+        )
+        assert report["schema"] == "edgp.public.advisory_feed.v1"
+        assert report["summary"]["advisories"] == 1
+        assert 'data-testid="public-advisory-feed-panel"' in (
+            output_dir / "001-public-advisory-feed.html"
+        ).read_text(encoding="utf-8")
 
     performance = _run_cli(
         ["performance-report", "--scenario", "16:2", "--scenario", "32:3"]

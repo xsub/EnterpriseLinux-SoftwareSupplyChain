@@ -28,6 +28,7 @@ SOURCE_KINDS = {
     "maven-dependency-tree",
     "npm-lockfile",
     "performance-report",
+    "public-advisory-feed",
     "rpm-albs-provenance",
     "rpm-installed",
     "rpm-repository",

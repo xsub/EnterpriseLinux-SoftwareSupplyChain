@@ -287,6 +287,7 @@ surfaces are:
   public RPM repository bundles.
 - Normalize OSV-like public advisory feeds from files or URLs into EDGP
   advisory overlays.
+- Render normalized public advisory feeds as static, verifiable report bundles.
 - Match normalized public advisory range intervals against RPM repository EVR
   metadata for impact reporting.
 - Include normalized public advisory feeds and graph-matched advisory reports in
@@ -348,6 +349,7 @@ python -B -m src.cli libsolv-bundle --transaction tests/fixtures/libsolv-transac
 python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv.json --ecosystem rpm
 python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv-ranges.json --ecosystem rpm
 python -B -m src.cli public-advisory-feed --url file://$PWD/tests/fixtures/public-osv.json --ecosystem rpm
+python -B -m src.cli public-advisory-feed-bundle --path tests/fixtures/public-osv.json --ecosystem rpm --output-dir /tmp/edgp-public-advisory-feed-bundle
 python -B -m src.cli performance-report --scenario 1000:3 --scenario 10000:5
 python -B -m src.cli performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir /tmp/edgp-performance-report-bundle
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc
