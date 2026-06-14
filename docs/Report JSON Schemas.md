@@ -17,6 +17,10 @@ python -B scripts/generate_schema_index.py --check
 - `edgp.graph.snapshot.v1`:
   [`edgp.graph.snapshot.v1.schema.json`](schemas/edgp.graph.snapshot.v1.schema.json)
   documents graph nodes, directed edges, size counters, and rankings.
+- `edgp.graph.diff.v1`:
+  [`edgp.graph.diff.v1.schema.json`](schemas/edgp.graph.diff.v1.schema.json)
+  documents added, removed, and metadata-changed graph elements between two
+  EDGP graph snapshots.
 - `edgp.impact.report.v1`:
   [`edgp.impact.report.v1.schema.json`](schemas/edgp.impact.report.v1.schema.json)
   documents reverse dependency impact for one selected node.

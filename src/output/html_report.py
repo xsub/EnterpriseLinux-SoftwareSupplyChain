@@ -25,6 +25,8 @@ def render_report(payload: dict[str, Any]) -> str:
     schema = payload.get("schema")
     if schema == "edgp.graph.snapshot.v1":
         return render_snapshot_report(payload)
+    if schema == "edgp.graph.diff.v1":
+        return render_graph_diff_report(payload)
     if schema == "edgp.impact.report.v1":
         return render_impact_report(payload)
     if schema == "edgp.advisory.report.v1":
@@ -93,6 +95,68 @@ def render_snapshot_report(snapshot: dict[str, Any]) -> str:
             "</body>",
             "</html>",
         ]
+    )
+
+
+def render_graph_diff_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.graph.diff.v1":
+        raise ValueError("HTML graph diff input must be an EDGP graph diff report")
+
+    summary = report.get("summary", {})
+    nodes = report.get("nodes", {})
+    edges = report.get("edges", {})
+    if not isinstance(nodes, dict):
+        nodes = {}
+    if not isinstance(edges, dict):
+        edges = {}
+    heading = f"{report.get('leftRoot') or 'left'} -> {report.get('rightRoot') or 'right'}"
+    return _document(
+        "EDGP Graph Diff",
+        [
+            _generic_hero(
+                eyebrow="graph diff",
+                heading=heading,
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Added Nodes", _dict_value(summary, "addedNodes")),
+                    ("Removed Nodes", _dict_value(summary, "removedNodes")),
+                    ("Added Edges", _dict_value(summary, "addedEdges")),
+                    ("Removed Edges", _dict_value(summary, "removedEdges")),
+                    (
+                        "Metadata Changed",
+                        _dict_value(summary, "metadataChangedNodes"),
+                    ),
+                ],
+            ),
+            _package_list_panel(
+                "Added Nodes",
+                nodes.get("added", []),
+                test_id="graph-diff-added-nodes-panel",
+            ),
+            _package_list_panel(
+                "Removed Nodes",
+                nodes.get("removed", []),
+                test_id="graph-diff-removed-nodes-panel",
+            ),
+            _package_list_panel(
+                "Metadata Changed Nodes",
+                nodes.get("metadataChanged", []),
+                test_id="graph-diff-metadata-nodes-panel",
+            ),
+            _rows_panel(
+                "Added Edges",
+                edges.get("added", []),
+                ["source", "target", "relationshipType"],
+                test_id="graph-diff-added-edges-panel",
+            ),
+            _rows_panel(
+                "Removed Edges",
+                edges.get("removed", []),
+                ["source", "target", "relationshipType"],
+                test_id="graph-diff-removed-edges-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
     )
 
 

@@ -169,6 +169,17 @@ def test_render_report_supports_albs_build_timing_json() -> None:
     assert "371.070048" in html
 
 
+def test_render_report_supports_graph_diff_json() -> None:
+    report = json.loads(Path("tests/fixtures/graph-diff.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP Graph Diff" in html
+    assert 'data-testid="graph-diff-added-nodes-panel"' in html
+    assert 'data-testid="graph-diff-added-edges-panel"' in html
+    assert "core==1.0.0" in html
+
+
 @pytest.mark.parametrize(
     ("fixture", "test_id"),
     [

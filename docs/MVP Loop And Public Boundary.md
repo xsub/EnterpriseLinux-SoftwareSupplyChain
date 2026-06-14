@@ -72,6 +72,8 @@ surfaces are:
 - Render public ALBS release completeness reports as static, verifiable
   bundles.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
+- Compare two EDGP graph snapshots and render the generic diff as a static,
+  verifiable report bundle.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
 - Label Maven optional, omitted, and excluded relationship types in graph
@@ -224,6 +226,8 @@ surfaces are:
 - Report reverse dependency impact for a selected package.
 - Render reverse dependency impact reports as static, verifiable report
   bundles.
+- Diff two EDGP graph snapshots and render the result as a static, verifiable
+  report bundle.
 - Use human-friendly node selectors where a package name resolves to one graph
   node.
 - Produce ecosystem-aware Package URLs for npm and RPM components.
@@ -337,6 +341,7 @@ python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli dot-bundle --path tests/fixtures/repograph.dot --ecosystem rpm --impact-node glibc --output-dir /tmp/edgp-dot-bundle
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-node left-pad --output-dir /tmp/edgp-sbom-bundle
+python -B -m src.cli diff-bundle --left tests/fixtures/snapshot-left.json --right tests/fixtures/snapshot-right.json --output-dir /tmp/edgp-graph-diff-bundle
 python -B -m src.cli rpm-installed-bundle --limit 5 --max-requirements 10 --impact-node rpm-installed==local --advisories tests/fixtures/rpm-advisories.json --public-advisory-feed tests/fixtures/public-osv.json --albs-build-path tests/fixtures/albs-build.json --libsolv-transaction tests/fixtures/libsolv-transaction.txt --output-dir /tmp/edgp-rpm-installed-bundle
 python -B -m src.cli rpm-repo --source tests/fixtures/repodata/repomd.xml --format json
 python -B -m src.cli rpm-repo-summary --source tests/fixtures/repodata/repomd.xml

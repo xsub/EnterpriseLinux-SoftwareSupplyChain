@@ -28,6 +28,7 @@
             "cyclonedx-sbom",
             "dot",
             "edgp-json",
+            "graph-diff",
             "impact-report",
             "license-report",
             "libsolv-transaction",

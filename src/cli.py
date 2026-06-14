@@ -1006,6 +1006,28 @@ def _write_public_advisory_feed_bundle(
     )
 
 
+def _write_graph_diff_bundle(
+    left_path: Path,
+    right_path: Path,
+    output_dir: Path,
+    *,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "graph-diff.json"
+    report_path.write_text(
+        diff_snapshot_files(left_path, right_path),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "graph-diff", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_license_report_bundle(
     output_dir: Path,
     *,
@@ -2265,6 +2287,15 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
 
+    diff_bundle = subparsers.add_parser(
+        "diff-bundle",
+        help="Render an EDGP graph snapshot diff as a static report bundle",
+    )
+    diff_bundle.add_argument("--left", type=Path, required=True)
+    diff_bundle.add_argument("--right", type=Path, required=True)
+    diff_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(diff_bundle)
+
     impact = subparsers.add_parser("impact", help="Report reverse dependency impact")
     impact.add_argument(
         "--source",
@@ -3097,6 +3128,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "diff":
         print(diff_snapshot_files(args.left, args.right))
         return 0
+
+    if args.command == "diff-bundle":
+        return _print_bundle_result(
+            _write_graph_diff_bundle(
+                args.left,
+                args.right,
+                args.output_dir,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "impact":
         root_identifier, graph, resolved_ecosystem = _load_source_project_graph(

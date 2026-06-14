@@ -157,6 +157,7 @@ edgp license-report-bundle --source sbom --path bom.json --deny-license GPL-3.0-
 edgp npm-diagnostics --path package-lock.json
 edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-diagnostics --triage-summary
 edgp diff --left before.json --right after.json
+edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --triage-summary
 ```
 
 ### Reports And Bundles
@@ -601,6 +602,12 @@ affected dependents, and shortest dependency chains back to the selected
 component. `edgp impact-bundle` renders the same analysis as static HTML with a
 verifiable manifest. This is the public-input stand-in for future advisory or
 curated risk feeds.
+
+`edgp diff` compares two EDGP graph snapshots and reports added or removed
+nodes, added or removed edges, and node metadata changes. `edgp diff-bundle`
+renders that generic snapshot comparison as static HTML with a verifiable
+manifest, which makes before/after graph changes shareable without rebuilding
+the original input adapters.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
 optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`

@@ -26,6 +26,7 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.albs.artifact_inventory.v1",
         "edgp.albs.build_timing.v1",
         "edgp.advisory.report.v1",
+        "edgp.graph.diff.v1",
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
         "edgp.libsolv.bridge.v1",

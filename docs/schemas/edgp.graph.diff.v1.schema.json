@@ -1,0 +1,51 @@
+{
+  "$id": "urn:edgp:schema:graph-diff:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Graph snapshot diff report for two EDGP graph snapshot JSON documents.",
+  "properties": {
+    "edges": {
+      "additionalProperties": false,
+      "properties": {
+        "added": {"items": {"type": "object"}, "type": "array"},
+        "removed": {"items": {"type": "object"}, "type": "array"}
+      },
+      "required": ["added", "removed"],
+      "type": "object"
+    },
+    "leftRoot": {"type": ["string", "null"]},
+    "nodes": {
+      "additionalProperties": false,
+      "properties": {
+        "added": {"items": {"type": "string"}, "type": "array"},
+        "metadataChanged": {"items": {"type": "string"}, "type": "array"},
+        "removed": {"items": {"type": "string"}, "type": "array"}
+      },
+      "required": ["added", "removed", "metadataChanged"],
+      "type": "object"
+    },
+    "rightRoot": {"type": ["string", "null"]},
+    "schema": {"const": "edgp.graph.diff.v1"},
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "addedEdges": {"minimum": 0, "type": "integer"},
+        "addedNodes": {"minimum": 0, "type": "integer"},
+        "metadataChangedNodes": {"minimum": 0, "type": "integer"},
+        "removedEdges": {"minimum": 0, "type": "integer"},
+        "removedNodes": {"minimum": 0, "type": "integer"}
+      },
+      "required": [
+        "addedNodes",
+        "removedNodes",
+        "addedEdges",
+        "removedEdges",
+        "metadataChangedNodes"
+      ],
+      "type": "object"
+    }
+  },
+  "required": ["schema", "leftRoot", "rightRoot", "summary", "nodes", "edges"],
+  "title": "EDGP Graph Diff v1",
+  "type": "object"
+}

@@ -1,0 +1,43 @@
+{
+  "edges": {
+    "added": [
+      {
+        "relationshipType": 1,
+        "source": "app==1.0.0",
+        "target": "lib==2.0.0"
+      },
+      {
+        "relationshipType": 1,
+        "source": "lib==2.0.0",
+        "target": "core==1.0.0"
+      }
+    ],
+    "removed": [
+      {
+        "relationshipType": 1,
+        "source": "app==1.0.0",
+        "target": "lib==1.0.0"
+      }
+    ]
+  },
+  "leftRoot": "app==1.0.0",
+  "nodes": {
+    "added": [
+      "core==1.0.0",
+      "lib==2.0.0"
+    ],
+    "metadataChanged": [],
+    "removed": [
+      "lib==1.0.0"
+    ]
+  },
+  "rightRoot": "app==1.0.0",
+  "schema": "edgp.graph.diff.v1",
+  "summary": {
+    "addedEdges": 2,
+    "addedNodes": 2,
+    "metadataChangedNodes": 0,
+    "removedEdges": 1,
+    "removedNodes": 1
+  }
+}

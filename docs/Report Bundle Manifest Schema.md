@@ -43,6 +43,7 @@ The public source-kind values are:
 - `npm-lockfile`
 - `maven-dependency-tree`
 - `dot`
+- `graph-diff`
 - `cyclonedx-sbom`
 - `rpm-albs-provenance`
 - `rpm-installed`

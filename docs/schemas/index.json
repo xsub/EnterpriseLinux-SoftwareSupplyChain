@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 21,
+  "schemaCount": 22,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -50,6 +50,14 @@
       "id": "urn:edgp:schema:albs-release-completeness:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP ALBS Release Completeness v1"
+    },
+    {
+      "contract": "edgp.graph.diff.v1",
+      "description": "Graph snapshot diff report for two EDGP graph snapshot JSON documents.",
+      "file": "edgp.graph.diff.v1.schema.json",
+      "id": "urn:edgp:schema:graph-diff:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Graph Diff v1"
     },
     {
       "contract": "edgp.graph.snapshot.v1",

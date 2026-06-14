@@ -27,6 +27,7 @@ SOURCE_KINDS = {
     "cyclonedx-sbom",
     "dot",
     "edgp-json",
+    "graph-diff",
     "impact-report",
     "license-report",
     "libsolv-transaction",
@@ -780,6 +781,8 @@ def _report_title(payload: dict[str, Any]) -> str:
     schema = payload.get("schema")
     if schema == "edgp.graph.snapshot.v1":
         return f"Graph Snapshot - {payload.get('root') or 'graph'}"
+    if schema == "edgp.graph.diff.v1":
+        return "Graph Diff"
     if schema == "edgp.impact.report.v1":
         return f"Impact Report - {payload.get('node') or 'package'}"
     if schema == "edgp.advisory.report.v1":

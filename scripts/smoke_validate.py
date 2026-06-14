@@ -61,6 +61,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.albs.build_timing.v1.schema.json",
+    "edgp.graph.diff.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.graph.diff.v1.schema.json",
     "edgp.graph.snapshot.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -131,6 +135,7 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "albs-build-timing.json",
+    "edgp.graph.diff.v1": REPO_ROOT / "tests" / "fixtures" / "graph-diff.json",
     "edgp.graph.snapshot.v1": REPO_ROOT / "tests" / "fixtures" / "snapshot-right.json",
     "edgp.impact.report.v1": REPO_ROOT / "tests" / "fixtures" / "impact-report.json",
     "edgp.advisory.report.v1": REPO_ROOT
@@ -380,6 +385,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
+        "graph-diff",
         "impact-report",
         "license-report",
         "libsolv-transaction",
@@ -494,6 +500,7 @@ def _assert_schema_index_document() -> None:
         "edgp.albs.artifact_inventory.v1",
         "edgp.albs.build_timing.v1",
         "edgp.advisory.report.v1",
+        "edgp.graph.diff.v1",
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
         "edgp.libsolv.bridge.v1",
@@ -2491,6 +2498,44 @@ def _assert_snapshot_diff() -> None:
         "removedEdges": 1,
         "metadataChangedNodes": 0,
     }
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "graph-diff-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "diff-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "graph-diff"
+        assert manifest["reports"][0]["href"] == "001-graph-diff.html"
+        assert manifest["reports"][0]["schema"] == "edgp.graph.diff.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        bundled_diff = json.loads(
+            (output_dir / "graph-diff.json").read_text(encoding="utf-8")
+        )
+        assert bundled_diff["summary"]["addedNodes"] == 2
+        assert 'data-testid="graph-diff-added-nodes-panel"' in (
+            output_dir / "001-graph-diff.html"
+        ).read_text(encoding="utf-8")
 
 
 def _assert_impact_report() -> None:

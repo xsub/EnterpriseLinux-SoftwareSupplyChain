@@ -25,6 +25,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.albs.build_timing.v1.schema.json"),
         Path("tests/fixtures/albs-build-timing.json"),
     ),
+    "edgp.graph.diff.v1": (
+        Path("docs/schemas/edgp.graph.diff.v1.schema.json"),
+        Path("tests/fixtures/graph-diff.json"),
+    ),
     "edgp.graph.snapshot.v1": (
         Path("docs/schemas/edgp.graph.snapshot.v1.schema.json"),
         Path("tests/fixtures/snapshot-right.json"),
