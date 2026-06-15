@@ -310,6 +310,8 @@ def test_performance_report_keeps_numpy_storage_visible() -> None:
     assert report["schema"] == "edgp.performance.report.v1"
     assert report["summary"]["allContiguous"] is True
     assert report["results"][0]["storage"]["layout"] == "numpy.int32.c_contiguous"
+    assert report["results"][0]["reverseReachableFromTail"] == 9
+    assert report["results"][0]["reverseReachableMs"] >= 0
 
 
 def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:

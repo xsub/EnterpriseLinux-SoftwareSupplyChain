@@ -18,6 +18,9 @@ def test_csr_graph_materializes_neighbors_in_row_order() -> None:
     assert graph.row_pointers.tolist() == [0, 2, 3, 3, 3]
     assert graph.column_indices.tolist() == [1, 2, 3]
     assert graph.values.tolist() == [1, 1, 1]
+    assert graph.reverse_row_pointers.tolist() == [0, 0, 1, 2, 3]
+    assert graph.reverse_column_indices.tolist() == [0, 0, 1]
+    assert graph.reverse_values.tolist() == [1, 1, 1]
 
 
 def test_csr_graph_materializes_numpy_int32_contiguous_arrays() -> None:
@@ -27,7 +30,14 @@ def test_csr_graph_materializes_numpy_int32_contiguous_arrays() -> None:
     graph.add_dependency_edge("app==1.0.0", "tool==2.0.0", relationship_type=7)
 
     assert graph.get_dependencies("app==1.0.0") == ["lib==1.0.0", "tool==2.0.0"]
-    for array in (graph.values, graph.column_indices, graph.row_pointers):
+    for array in (
+        graph.values,
+        graph.column_indices,
+        graph.row_pointers,
+        graph.reverse_values,
+        graph.reverse_column_indices,
+        graph.reverse_row_pointers,
+    ):
         assert isinstance(array, np.ndarray)
         assert array.dtype == np.int32
         assert array.flags.c_contiguous
@@ -37,7 +47,10 @@ def test_csr_graph_materializes_numpy_int32_contiguous_arrays() -> None:
         "dtype": "int32",
         "layout": "numpy.int32.c_contiguous",
         "rowPointersBytes": 16,
-        "totalBytes": 32,
+        "reverseColumnIndicesBytes": 8,
+        "reverseRowPointersBytes": 16,
+        "reverseValuesBytes": 8,
+        "totalBytes": 64,
         "valuesBytes": 8,
     }
 

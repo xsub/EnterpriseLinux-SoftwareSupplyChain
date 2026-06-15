@@ -19,6 +19,9 @@ The design follows the research notes in this workspace:
   incompatibilities;
 - resolved graphs can be exported as Neo4j Cypher or CycloneDX SBOM JSON.
 
+The post-MVP performance path is tracked in
+[`docs/MVP Plus Performance Roadmap.md`](docs/MVP%20Plus%20Performance%20Roadmap.md).
+
 This is intentionally small enough to inspect, test, and extend. It is not a
 drop-in replacement for mature package-manager solvers such as libsolv,
 PubGrub, or Cargo, but it gives the project a concrete architecture for those
@@ -421,11 +424,23 @@ Exporter-->>User: Emit Cypher or CycloneDX
 ### CSR Graph Core
 
 `CSRDependencyGraph` stores nodes in integer maps and materializes directed
-edges into three C-contiguous NumPy `int32` arrays:
+edges into forward and reverse C-contiguous NumPy `int32` arrays. The forward
+CSR arrays are:
 
 - `values`: relationship type identifiers;
 - `column_indices`: destination vertex ids;
 - `row_pointers`: offsets into `column_indices` for each source vertex.
+
+The reverse CSR sidecar mirrors those edges for dependent lookups:
+
+- `reverse_values`: relationship type identifiers for reverse edges;
+- `reverse_column_indices`: source vertex ids;
+- `reverse_row_pointers`: offsets into `reverse_column_indices` for each target
+  vertex.
+
+This avoids full-graph scans for `get_dependents`, reverse reachability,
+impact, advisory, and libsolv bridge workflows while keeping the canonical
+storage model simple enough to inspect and serialize.
 
 This is an intentional productionization step. Native Python lists would store
 boxed integers behind arrays of object pointers. Even when the list container is
@@ -443,7 +458,9 @@ multi-core reachability over these contiguous NumPy arrays using native Python
 threading. That gives us enterprise-grade performance without the overhead of
 maintaining a separate Rust or C++ extension. The current benchmark output
 includes the CSR storage profile (`numpy.int32.c_contiguous`, byte counts, and
-contiguity flag) so this assumption is visible in smoke runs.
+contiguity flag) so this assumption is visible in smoke runs. Performance
+reports also include reverse reachability timing, which tracks the first MVP
+Plus performance vertical.
 
 ### CDCL-Inspired Resolution
 

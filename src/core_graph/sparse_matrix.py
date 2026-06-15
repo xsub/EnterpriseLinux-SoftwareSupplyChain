@@ -31,6 +31,9 @@ class CSRDependencyGraph:
         self.values = np.array([], dtype=_CSR_DTYPE)
         self.column_indices = np.array([], dtype=_CSR_DTYPE)
         self.row_pointers = np.array([0], dtype=_CSR_DTYPE)
+        self.reverse_values = np.array([], dtype=_CSR_DTYPE)
+        self.reverse_column_indices = np.array([], dtype=_CSR_DTYPE)
+        self.reverse_row_pointers = np.array([0], dtype=_CSR_DTYPE)
         self.vertex_metadata: dict[str, dict[str, str]] = {}
 
         self._adjacency: dict[int, dict[int, int]] = {}
@@ -93,15 +96,13 @@ class CSRDependencyGraph:
         self._materialize()
         if package_id not in self.vertex_map:
             return []
-
-        target_id = self.vertex_map[package_id]
-        dependents: list[str] = []
-        for source in range(self.next_vertex_id):
-            start = int(self.row_pointers[source])
-            end = int(self.row_pointers[source + 1])
-            if np.any(self.column_indices[start:end] == target_id):
-                dependents.append(self.reverse_vertex_map[source])
-        return dependents
+        vertex_id = self.vertex_map[package_id]
+        start = int(self.reverse_row_pointers[vertex_id])
+        end = int(self.reverse_row_pointers[vertex_id + 1])
+        return [
+            self.reverse_vertex_map[int(source)]
+            for source in self.reverse_column_indices[start:end]
+        ]
 
     def reachable_dependencies(self, package_id: str) -> list[str]:
         return self._reachable(package_id, self.get_dependencies)
@@ -172,15 +173,24 @@ class CSRDependencyGraph:
             "valuesBytes": int(self.values.nbytes),
             "columnIndicesBytes": int(self.column_indices.nbytes),
             "rowPointersBytes": int(self.row_pointers.nbytes),
+            "reverseValuesBytes": int(self.reverse_values.nbytes),
+            "reverseColumnIndicesBytes": int(self.reverse_column_indices.nbytes),
+            "reverseRowPointersBytes": int(self.reverse_row_pointers.nbytes),
             "totalBytes": int(
                 self.values.nbytes
                 + self.column_indices.nbytes
                 + self.row_pointers.nbytes
+                + self.reverse_values.nbytes
+                + self.reverse_column_indices.nbytes
+                + self.reverse_row_pointers.nbytes
             ),
             "cContiguous": bool(
                 self.values.flags.c_contiguous
                 and self.column_indices.flags.c_contiguous
                 and self.row_pointers.flags.c_contiguous
+                and self.reverse_values.flags.c_contiguous
+                and self.reverse_column_indices.flags.c_contiguous
+                and self.reverse_row_pointers.flags.c_contiguous
             ),
         }
 
@@ -213,17 +223,39 @@ class CSRDependencyGraph:
         values: list[int] = []
         column_indices: list[int] = []
         row_pointers: list[int] = [0]
+        reverse_adjacency: dict[int, dict[int, int]] = {
+            vertex_id: {} for vertex_id in range(self.next_vertex_id)
+        }
 
         for source in range(self.next_vertex_id):
             for target, relationship_type in sorted(self._adjacency.get(source, {}).items()):
                 values.append(relationship_type)
                 column_indices.append(target)
+                reverse_adjacency[target][source] = relationship_type
             if len(column_indices) > _CSR_MAX:
                 raise OverflowError("CSR edge count exceeds np.int32 capacity")
             row_pointers.append(len(column_indices))
 
+        reverse_values: list[int] = []
+        reverse_column_indices: list[int] = []
+        reverse_row_pointers: list[int] = [0]
+        for target in range(self.next_vertex_id):
+            for source, relationship_type in sorted(reverse_adjacency[target].items()):
+                reverse_values.append(relationship_type)
+                reverse_column_indices.append(source)
+            reverse_row_pointers.append(len(reverse_column_indices))
+
         self.values = np.ascontiguousarray(values, dtype=_CSR_DTYPE)
         self.column_indices = np.ascontiguousarray(column_indices, dtype=_CSR_DTYPE)
         self.row_pointers = np.ascontiguousarray(row_pointers, dtype=_CSR_DTYPE)
+        self.reverse_values = np.ascontiguousarray(reverse_values, dtype=_CSR_DTYPE)
+        self.reverse_column_indices = np.ascontiguousarray(
+            reverse_column_indices,
+            dtype=_CSR_DTYPE,
+        )
+        self.reverse_row_pointers = np.ascontiguousarray(
+            reverse_row_pointers,
+            dtype=_CSR_DTYPE,
+        )
 
         self._dirty = False

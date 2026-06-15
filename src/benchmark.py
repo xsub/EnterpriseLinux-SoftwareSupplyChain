@@ -21,6 +21,10 @@ def run_synthetic_benchmark(*, nodes: int = 1000, fanout: int = 3) -> dict[str, 
     reachable = graph.reachable_dependencies("pkg0==1.0.0")
     reachable_ms = _elapsed_ms(reachable_start)
 
+    reverse_reachable_start = perf_counter()
+    reverse_reachable = graph.reachable_dependents(f"pkg{nodes - 1}==1.0.0")
+    reverse_reachable_ms = _elapsed_ms(reverse_reachable_start)
+
     ranking_start = perf_counter()
     ranking = graph.most_depended_upon(limit=10)
     ranking_ms = _elapsed_ms(ranking_start)
@@ -35,10 +39,12 @@ def run_synthetic_benchmark(*, nodes: int = 1000, fanout: int = 3) -> dict[str, 
             "nodes": len(graph),
             "edges": edge_count,
             "reachableFromRoot": len(reachable),
+            "reverseReachableFromTail": len(reverse_reachable),
         },
         "timingsMs": {
             "build": build_ms,
             "reachable": reachable_ms,
+            "reverseReachable": reverse_reachable_ms,
             "mostDependedUpon": ranking_ms,
         },
         "storage": graph.storage_profile(),

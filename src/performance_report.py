@@ -39,8 +39,10 @@ def _result_row(nodes: int, fanout: int) -> dict[str, Any]:
         "fanout": parameters["fanout"],
         "edges": stats["edges"],
         "reachableFromRoot": stats["reachableFromRoot"],
+        "reverseReachableFromTail": stats["reverseReachableFromTail"],
         "buildMs": timings["build"],
         "reachableMs": timings["reachable"],
+        "reverseReachableMs": timings["reverseReachable"],
         "mostDependedUponMs": timings["mostDependedUpon"],
         "storage": benchmark["storage"],
     }

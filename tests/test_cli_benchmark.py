@@ -51,6 +51,7 @@ def test_cli_performance_report_bundle_writes_verifiable_bundle(
     assert report["summary"]["scenarios"] == 2
     assert report["summary"]["allContiguous"] is True
     assert report["summary"]["layout"] == "numpy.int32.c_contiguous"
+    assert report["results"][0]["reverseReachableMs"] >= 0
     assert 'data-testid="performance-results-panel"' in (
         output_dir / "001-performance-report.html"
     ).read_text(encoding="utf-8")

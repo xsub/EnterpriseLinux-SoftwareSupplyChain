@@ -364,6 +364,10 @@ surfaces are:
   scenarios.
 - Render deterministic performance reports as static, verifiable report
   bundles.
+- Track the post-MVP graph performance plan in
+  [`MVP Plus Performance Roadmap.md`](MVP%20Plus%20Performance%20Roadmap.md).
+- Materialize a reverse CSR sidecar for dependent lookups and reverse
+  reachability.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

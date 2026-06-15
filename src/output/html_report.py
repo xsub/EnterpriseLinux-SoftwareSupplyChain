@@ -687,7 +687,16 @@ def render_performance_report(report: dict[str, Any]) -> str:
             _rows_panel(
                 "Benchmark Results",
                 report.get("results", []),
-                ["nodes", "fanout", "edges", "buildMs", "reachableMs", "mostDependedUponMs", "storage"],
+                [
+                    "nodes",
+                    "fanout",
+                    "edges",
+                    "buildMs",
+                    "reachableMs",
+                    "reverseReachableMs",
+                    "mostDependedUponMs",
+                    "storage",
+                ],
                 test_id="performance-results-panel",
             ),
         ],
