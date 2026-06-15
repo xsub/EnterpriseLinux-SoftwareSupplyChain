@@ -62,11 +62,13 @@ def test_failure_example_filter_listing_matches_committed_fixture() -> None:
     assert listing == build_failure_example_filter_listing()
     assert listing["schema"] == "edgp.validation.failure.example.filters.v1"
     assert listing["sourceSchema"] == "edgp.validation.failure.example.index.v1"
-    assert listing["exampleCount"] == 27
+    assert listing["exampleCount"] == 28
     assert "edgp.graph.snapshot.v1" in listing["contracts"]
+    assert "edgp.unknown.report.v1" in listing["contracts"]
     assert "edgp.report.bundle.v1" in listing["contracts"]
     assert "edgp.report.bundle.archive.v1" in listing["contracts"]
     assert "manifest-invalid" in listing["ids"]
+    assert "json-schema-unsupported" in listing["ids"]
 
 
 def test_failure_example_filter_listing_matches_documented_schema() -> None:
@@ -88,8 +90,12 @@ def test_cli_failure_examples_emits_text_summary(capsys) -> None:
 
     text = capsys.readouterr().out
     assert text.startswith(
-        "OK examples=27 schema=edgp.validation.failure.example.index.v1"
+        "OK examples=28 schema=edgp.validation.failure.example.index.v1"
     )
+    assert (
+        "json-schema-unsupported targetType=json-file "
+        "contract=edgp.unknown.report.v1 failureCodes=schemaUnsupported"
+    ) in text
     assert (
         "manifest-invalid targetType=report-bundle "
         "contract=edgp.report.bundle.v1 failureCodes=bundle.manifestInvalid"
@@ -137,8 +143,11 @@ def test_cli_failure_examples_filters_by_target_type(capsys) -> None:
     assert main(["failure-examples", "--target-type", "json-file"]) == 0
 
     payload = json.loads(capsys.readouterr().out)
-    assert payload["exampleCount"] == 1
-    assert payload["examples"][0]["id"] == "graph-missing-edge-count"
+    assert payload["exampleCount"] == 2
+    assert {example["id"] for example in payload["examples"]} == {
+        "graph-missing-edge-count",
+        "json-schema-unsupported",
+    }
 
     assert main(["failure-examples", "--target-type", "report-bundle-archive"]) == 0
     payload = json.loads(capsys.readouterr().out)
@@ -221,8 +230,9 @@ def test_cli_failure_examples_lists_available_filter_values(capsys) -> None:
     assert payload == build_failure_example_filter_listing()
     assert payload["schema"] == "edgp.validation.failure.example.filters.v1"
     assert payload["sourceSchema"] == "edgp.validation.failure.example.index.v1"
-    assert payload["exampleCount"] == 27
+    assert payload["exampleCount"] == 28
     assert "manifest-invalid" in payload["ids"]
+    assert "json-schema-unsupported" in payload["ids"]
     assert "archive-missing" in payload["ids"]
     assert "json-file" in payload["targetTypes"]
     assert "report-bundle" in payload["targetTypes"]
@@ -232,6 +242,7 @@ def test_cli_failure_examples_lists_available_filter_values(capsys) -> None:
     assert "bundle.manifestInvalid" in payload["validationFailureCodes"]
     assert "bundleArchive.archiveMissing" in payload["validationFailureCodes"]
     assert "requiredMissing" in payload["validationFailureCodes"]
+    assert "schemaUnsupported" in payload["validationFailureCodes"]
     assert "manifestInvalid" in payload["verificationFailureCodes"]
     assert "archiveMissing" in payload["verificationFailureCodes"]
 
@@ -256,6 +267,11 @@ def test_cli_failure_examples_filters_by_contract(capsys) -> None:
     assert payload["exampleCount"] == 1
     assert payload["examples"][0]["id"] == "graph-missing-edge-count"
 
+    assert main(["failure-examples", "--contract", "edgp.unknown.report.v1"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["exampleCount"] == 1
+    assert payload["examples"][0]["id"] == "json-schema-unsupported"
+
 
 def test_cli_failure_examples_lists_filtered_filter_values_as_text(capsys) -> None:
     assert (
@@ -274,9 +290,9 @@ def test_cli_failure_examples_lists_filtered_filter_values_as_text(capsys) -> No
 
     text = capsys.readouterr().out
     assert text.startswith(
-        "OK examples=1 schema=edgp.validation.failure.example.filters.v1"
+        "OK examples=2 schema=edgp.validation.failure.example.filters.v1"
     )
-    assert "ids=graph-missing-edge-count" in text
-    assert "contracts=edgp.graph.snapshot.v1" in text
+    assert "ids=graph-missing-edge-count,json-schema-unsupported" in text
+    assert "contracts=edgp.graph.snapshot.v1,edgp.unknown.report.v1" in text
     assert "targetTypes=json-file" in text
-    assert "validationFailureCodes=requiredMissing" in text
+    assert "validationFailureCodes=requiredMissing,schemaUnsupported" in text

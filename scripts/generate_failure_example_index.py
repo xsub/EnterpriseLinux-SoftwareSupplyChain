@@ -30,6 +30,11 @@ EXAMPLES = [
         "tests/fixtures/validation-failure-missing-edge-count.json",
     ),
     FailureExample(
+        "json-schema-unsupported",
+        "tests/fixtures/invalid-report-unsupported-schema.json",
+        "tests/fixtures/validation-failure-unsupported-schema.json",
+    ),
+    FailureExample(
         "bundle-digest-mismatch",
         "tests/fixtures/tampered-report-bundle-manifest",
         "tests/fixtures/validation-failure-tampered-bundle-manifest.json",

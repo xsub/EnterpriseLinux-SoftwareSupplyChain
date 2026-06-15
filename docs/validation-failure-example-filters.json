@@ -2,9 +2,10 @@
   "contracts": [
     "edgp.graph.snapshot.v1",
     "edgp.report.bundle.archive.v1",
-    "edgp.report.bundle.v1"
+    "edgp.report.bundle.v1",
+    "edgp.unknown.report.v1"
   ],
-  "exampleCount": 27,
+  "exampleCount": 28,
   "ids": [
     "archive-missing",
     "bundle-digest-invalid",
@@ -16,6 +17,7 @@
     "html-missing",
     "index-invalid",
     "index-missing",
+    "json-schema-unsupported",
     "manifest-invalid",
     "manifest-invalid-json",
     "manifest-missing",
@@ -68,7 +70,8 @@
     "bundle.sourceDigestMismatch",
     "bundle.sourceMissing",
     "bundleArchive.archiveMissing",
-    "requiredMissing"
+    "requiredMissing",
+    "schemaUnsupported"
   ],
   "verificationFailureCodes": [
     "archiveMissing",

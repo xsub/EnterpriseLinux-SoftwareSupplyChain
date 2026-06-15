@@ -159,15 +159,23 @@ def test_validate_target_reports_contract_mismatch(tmp_path) -> None:
     } in report["failures"]
 
 
-def test_validate_target_matches_committed_failure_fixture() -> None:
-    report = validate_target(Path("tests/fixtures/invalid-snapshot-missing-edge-count.json"))
-    expected = json.loads(
-        Path("tests/fixtures/validation-failure-missing-edge-count.json").read_text(
-            encoding="utf-8"
-        )
-    )
+def test_validate_target_matches_committed_json_failure_fixtures() -> None:
+    cases = [
+        (
+            Path("tests/fixtures/invalid-snapshot-missing-edge-count.json"),
+            Path("tests/fixtures/validation-failure-missing-edge-count.json"),
+        ),
+        (
+            Path("tests/fixtures/invalid-report-unsupported-schema.json"),
+            Path("tests/fixtures/validation-failure-unsupported-schema.json"),
+        ),
+    ]
 
-    assert _normalize_validation_report(report) == expected
+    for target, fixture in cases:
+        report = validate_target(target)
+        expected = json.loads(fixture.read_text(encoding="utf-8"))
+
+        assert _normalize_validation_report(report) == expected
 
 
 def test_validate_target_matches_committed_bundle_failure_fixtures() -> None:

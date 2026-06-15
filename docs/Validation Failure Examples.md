@@ -20,6 +20,7 @@ Regenerate or check it with
 
 - [CLI Index Workflows](#cli-index-workflows)
 - [Missing Required Field](#missing-required-field)
+- [Unsupported Schema](#unsupported-schema)
 - [Missing Report Bundle Archive](#missing-report-bundle-archive)
 - [Tampered Report Bundle Manifest](#tampered-report-bundle-manifest)
 - [Tampered Report Bundle Member](#tampered-report-bundle-member)
@@ -44,11 +45,11 @@ python -B -m src.cli failure-examples --target-type json-file --list-codes --for
 ```
 
 ```text
-OK examples=1 schema=edgp.validation.failure.example.filters.v1
-ids=graph-missing-edge-count
-contracts=edgp.graph.snapshot.v1
+OK examples=2 schema=edgp.validation.failure.example.filters.v1
+ids=graph-missing-edge-count,json-schema-unsupported
+contracts=edgp.graph.snapshot.v1,edgp.unknown.report.v1
 targetTypes=json-file
-validationFailureCodes=requiredMissing
+validationFailureCodes=requiredMissing,schemaUnsupported
 verificationFailureCodes=
 ```
 
@@ -135,6 +136,52 @@ Text output:
 
 ```text
 FAIL targetType=json-file failures=1 contract=edgp.graph.snapshot.v1 firstFailure=requiredMissing
+```
+
+## Unsupported Schema
+
+The fixture
+[`tests/fixtures/invalid-report-unsupported-schema.json`](../tests/fixtures/invalid-report-unsupported-schema.json)
+declares `edgp.unknown.report.v1`, which is intentionally absent from the
+documented schema catalog. This captures the public failure shape for a JSON
+artifact that looks like an EDGP report but cannot be validated because no
+contract has been published for its `schema` value. The normalized validation
+report is committed as
+[`validation-failure-unsupported-schema.json`](../tests/fixtures/validation-failure-unsupported-schema.json).
+
+Run:
+
+```bash
+python -B -m src.cli validate --path tests/fixtures/invalid-report-unsupported-schema.json
+```
+
+Normalized result:
+
+```json
+{
+  "contract": "edgp.unknown.report.v1",
+  "failures": [
+    {
+      "code": "schemaUnsupported",
+      "message": "No documented schema for edgp.unknown.report.v1",
+      "path": "$.schema"
+    }
+  ],
+  "ok": false,
+  "schema": "edgp.validation.report.v1",
+  "schemaFile": "",
+  "summary": {
+    "failures": 1
+  },
+  "target": "<target>",
+  "targetType": "json-file"
+}
+```
+
+Text output:
+
+```text
+FAIL targetType=json-file failures=1 contract=edgp.unknown.report.v1 firstFailure=schemaUnsupported
 ```
 
 ## Missing Report Bundle Archive

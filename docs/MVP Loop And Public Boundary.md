@@ -165,6 +165,8 @@ surfaces are:
   dependency-free validator.
 - Provide committed validation failure examples for common malformed report
   payloads.
+- Provide a committed validation failure example for unsupported JSON schema
+  contracts.
 - Provide committed validation and verification failure examples for tampered
   report bundle manifests and member files.
 - Provide committed validation and verification failure examples for missing
@@ -517,12 +519,15 @@ python -B -m src.cli validate --path tests/fixtures/missing-manifest-report-bund
 python -B -m src.cli validate --path tests/fixtures/invalid-json-manifest-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/missing-report-bundle.tar.gz --format text
+python -B -m src.cli validate --path tests/fixtures/invalid-report-unsupported-schema.json --format text
 python -B -m src.cli validate --path docs/validation-failure-example-index.json
 python -B -m src.cli failure-examples
 python -B -m src.cli failure-examples --format text
 python -B -m src.cli failure-examples --list-codes
 python -B -m src.cli failure-examples --id manifest-invalid
 python -B -m src.cli failure-examples --code bundle.manifestInvalid
+python -B -m src.cli failure-examples --code schemaUnsupported
+python -B -m src.cli failure-examples --contract edgp.unknown.report.v1 --format text
 python -B -m src.cli failure-examples --target-type report-bundle --code manifestInvalid
 python -B -m src.cli failure-examples --target-type report-bundle-archive --code archiveMissing
 python -B -m src.cli report --input docs/validation-failure-example-index.json --output /tmp/edgp-failure-examples.html

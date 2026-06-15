@@ -947,13 +947,21 @@ def _assert_failure_example_index_document() -> None:
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "manifest-invalid"
     filtered_index = _run_cli(["failure-examples", "--target-type", "json-file"])
-    assert filtered_index["exampleCount"] == 1
-    assert filtered_index["examples"][0]["id"] == "graph-missing-edge-count"
+    assert filtered_index["exampleCount"] == 2
+    assert {example["id"] for example in filtered_index["examples"]} == {
+        "graph-missing-edge-count",
+        "json-schema-unsupported",
+    }
     filtered_index = _run_cli(
         ["failure-examples", "--contract", "edgp.graph.snapshot.v1"]
     )
     assert filtered_index["exampleCount"] == 1
     assert filtered_index["examples"][0]["id"] == "graph-missing-edge-count"
+    filtered_index = _run_cli(
+        ["failure-examples", "--contract", "edgp.unknown.report.v1"]
+    )
+    assert filtered_index["exampleCount"] == 1
+    assert filtered_index["examples"][0]["id"] == "json-schema-unsupported"
     filtered_index = _run_cli(
         [
             "failure-examples",
@@ -982,14 +990,17 @@ def _assert_failure_example_index_document() -> None:
     assert filter_summary == filter_fixture
     assert filter_summary["schema"] == "edgp.validation.failure.example.filters.v1"
     assert filter_summary["sourceSchema"] == "edgp.validation.failure.example.index.v1"
-    assert filter_summary["exampleCount"] == 27
+    assert filter_summary["exampleCount"] == 28
     assert "manifest-invalid" in filter_summary["ids"]
+    assert "json-schema-unsupported" in filter_summary["ids"]
     assert "archive-missing" in filter_summary["ids"]
+    assert "edgp.unknown.report.v1" in filter_summary["contracts"]
     assert "edgp.report.bundle.v1" in filter_summary["contracts"]
     assert "edgp.report.bundle.archive.v1" in filter_summary["contracts"]
     assert "report-bundle-archive" in filter_summary["targetTypes"]
     assert "bundle.manifestInvalid" in filter_summary["validationFailureCodes"]
     assert "bundleArchive.archiveMissing" in filter_summary["validationFailureCodes"]
+    assert "schemaUnsupported" in filter_summary["validationFailureCodes"]
     assert "manifestInvalid" in filter_summary["verificationFailureCodes"]
     assert "archiveMissing" in filter_summary["verificationFailureCodes"]
     validation = _run_cli(
@@ -1076,8 +1087,10 @@ def _assert_failure_example_index_document() -> None:
         text=True,
     )
     assert completed.stdout.startswith(
-        "OK examples=27 schema=edgp.validation.failure.example.index.v1"
+        "OK examples=28 schema=edgp.validation.failure.example.index.v1"
     )
+    assert "json-schema-unsupported targetType=json-file" in completed.stdout
+    assert "failureCodes=schemaUnsupported" in completed.stdout
     assert "manifest-invalid targetType=report-bundle" in completed.stdout
     assert "verifierCodes=manifestInvalid" in completed.stdout
     assert "archive-missing targetType=report-bundle-archive" in completed.stdout
@@ -1150,9 +1163,10 @@ def _assert_failure_example_index_document() -> None:
         text=True,
     )
     assert completed.stdout.startswith(
-        "OK examples=1 schema=edgp.validation.failure.example.index.v1"
+        "OK examples=2 schema=edgp.validation.failure.example.index.v1"
     )
     assert "graph-missing-edge-count targetType=json-file" in completed.stdout
+    assert "json-schema-unsupported targetType=json-file" in completed.stdout
     completed = subprocess.run(
         [
             sys.executable,
@@ -1194,11 +1208,11 @@ def _assert_failure_example_index_document() -> None:
         text=True,
     )
     assert completed.stdout.startswith(
-        "OK examples=1 schema=edgp.validation.failure.example.filters.v1"
+        "OK examples=2 schema=edgp.validation.failure.example.filters.v1"
     )
-    assert "ids=graph-missing-edge-count" in completed.stdout
-    assert "contracts=edgp.graph.snapshot.v1" in completed.stdout
-    assert "validationFailureCodes=requiredMissing" in completed.stdout
+    assert "ids=graph-missing-edge-count,json-schema-unsupported" in completed.stdout
+    assert "contracts=edgp.graph.snapshot.v1,edgp.unknown.report.v1" in completed.stdout
+    assert "validationFailureCodes=requiredMissing,schemaUnsupported" in completed.stdout
     assert index["schema"] == "edgp.validation.failure.example.index.v1"
     assert index["generatedBy"] == "scripts/generate_failure_example_index.py"
     assert index["exampleCount"] == len(index["examples"])

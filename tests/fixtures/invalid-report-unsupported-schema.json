@@ -1,0 +1,6 @@
+{
+  "schema": "edgp.unknown.report.v1",
+  "summary": {
+    "note": "This fixture exercises unsupported schema handling."
+  }
+}

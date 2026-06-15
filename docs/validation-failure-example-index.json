@@ -1,5 +1,5 @@
 {
-  "exampleCount": 27,
+  "exampleCount": 28,
   "examples": [
     {
       "commands": {
@@ -18,6 +18,24 @@
         "requiredMissing"
       ],
       "validationFixture": "tests/fixtures/validation-failure-missing-edge-count.json"
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/invalid-report-unsupported-schema.json --format text"
+      },
+      "contract": "edgp.unknown.report.v1",
+      "firstFailure": {
+        "code": "schemaUnsupported",
+        "message": "No documented schema for edgp.unknown.report.v1",
+        "path": "$.schema"
+      },
+      "id": "json-schema-unsupported",
+      "target": "tests/fixtures/invalid-report-unsupported-schema.json",
+      "targetType": "json-file",
+      "validationFailureCodes": [
+        "schemaUnsupported"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-unsupported-schema.json"
     },
     {
       "commands": {

@@ -772,6 +772,7 @@ edgp failure-examples
 edgp failure-examples --format text
 edgp failure-examples --list-codes
 edgp failure-examples --contract edgp.graph.snapshot.v1 --format text
+edgp failure-examples --code schemaUnsupported --format text
 edgp failure-examples --target-type report-bundle --code manifestInvalid
 edgp failure-examples --target-type report-bundle-archive --code archiveMissing
 edgp report --input docs/validation-failure-example-index.json --output failure-examples.html
@@ -785,12 +786,14 @@ edgp report --input docs/validation-failure-example-filters.json --output failur
 | `--id` | stable example ID | `manifest-invalid` |
 | `--contract` | documented schema contract | `edgp.graph.snapshot.v1` |
 | `--target-type` | artifact type | `json-file`, `report-bundle-archive` |
-| `--code` | validation or verifier failure code | `bundle.manifestInvalid` |
+| `--code` | validation or verifier failure code | `schemaUnsupported`, `bundle.manifestInvalid` |
 | `--list-codes` | available IDs, contracts, artifact types, and codes | `--list-codes` |
 
 Common combinations:
 
 ```bash
+edgp failure-examples --target-type json-file --list-codes --format text
+edgp failure-examples --contract edgp.unknown.report.v1 --format text
 edgp failure-examples --target-type report-bundle --contract edgp.report.bundle.v1 --list-codes
 edgp failure-examples --target-type report-bundle --contract edgp.report.bundle.v1 --code manifestInvalid --format text
 edgp failure-examples --target-type report-bundle-archive --contract edgp.report.bundle.archive.v1 --format text
