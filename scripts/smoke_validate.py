@@ -3525,6 +3525,32 @@ def _assert_report_bundle() -> None:
         assert validation["targetType"] == "report-bundle"
         assert validation["bundleVerification"]["ok"] is True
         assert validation["triageSummary"]["status"] == "warn"
+        verification_report_path = Path(temp_dir) / "report-bundle-verification.json"
+        verification_report_path.write_text(
+            json.dumps(validation["bundleVerification"]), encoding="utf-8"
+        )
+        verification_html_path = Path(temp_dir) / "report-bundle-verification.html"
+        completed_verification_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(verification_report_path),
+                "--output",
+                str(verification_html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_verification_report.stdout.strip()) == verification_html_path
+        verification_html = verification_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="report-bundle-verification-report-panel"' in verification_html
+        assert "manifest.json" in verification_html
         completed_validation_text = subprocess.run(
             [
                 sys.executable,
@@ -3623,6 +3649,30 @@ def _assert_report_bundle() -> None:
         assert archive_report["summary"]["files"] == 6
         assert archive_report["summary"]["verificationFailures"] == 0
         assert archive_report["verification"]["ok"] is True
+        archive_report_path = Path(temp_dir) / "report-bundle-archive.json"
+        archive_report_path.write_text(json.dumps(archive_report), encoding="utf-8")
+        archive_html_path = Path(temp_dir) / "report-bundle-archive.html"
+        completed_archive_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(archive_report_path),
+                "--output",
+                str(archive_html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_archive_report.stdout.strip()) == archive_html_path
+        archive_html = archive_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="report-bundle-archive-panel"' in archive_html
+        assert str(archive_path) in archive_html
         archive_verification = _run_cli(
             [
                 "verify-bundle-archive",

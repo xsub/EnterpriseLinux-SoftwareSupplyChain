@@ -63,6 +63,10 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_license_report(payload)
     if schema == "edgp.triage.summary.v1":
         return render_triage_summary_report(payload)
+    if schema == "edgp.report.bundle.verification.v1":
+        return render_report_bundle_verification_report(payload)
+    if schema == "edgp.report.bundle.archive.v1":
+        return render_report_bundle_archive_report(payload)
     if schema == "edgp.export.batch.v1":
         return render_export_batch_report(payload)
     if schema == "edgp.export.batch.verification.v1":
@@ -886,6 +890,106 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
         ],
         scripts=[_table_sort_script()],
     )
+
+
+def render_report_bundle_verification_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.report.bundle.verification.v1":
+        raise ValueError("HTML report bundle verification input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    return _document(
+        "EDGP Report Bundle Verification",
+        [
+            _generic_hero(
+                eyebrow="ok" if report.get("ok") is True else "failed",
+                heading="Report bundle verification",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Reports", _dict_value(summary, "reports")),
+                    ("Failures", _dict_value(summary, "failures")),
+                ],
+            ),
+            _rows_panel(
+                "Verified Bundle",
+                [_report_bundle_verification_row(report)],
+                ["bundleDir", "manifest", "bundleSha256", "ok"],
+                test_id="report-bundle-verification-report-panel",
+            ),
+            _rows_panel(
+                "Failures",
+                report.get("failures", []),
+                ["code", "message", "path"],
+                test_id="report-bundle-verification-failures-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_report_bundle_archive_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.report.bundle.archive.v1":
+        raise ValueError("HTML report bundle archive input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    verification = report.get("verification", {})
+    if not isinstance(verification, dict):
+        verification = {}
+    return _document(
+        "EDGP Report Bundle Archive",
+        [
+            _generic_hero(
+                eyebrow="ok" if report.get("ok") is True else "failed",
+                heading="Deterministic report bundle archive",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Files", _dict_value(summary, "files")),
+                    ("Bytes", _dict_value(summary, "bytes")),
+                    (
+                        "Verification Failures",
+                        _dict_value(summary, "verificationFailures"),
+                    ),
+                ],
+            ),
+            _rows_panel(
+                "Archive",
+                [_report_bundle_archive_row(report)],
+                ["archive", "bundleDir", "ok", "archiveSha256", "bundleSha256"],
+                test_id="report-bundle-archive-panel",
+            ),
+            _rows_panel(
+                "Embedded Verification",
+                [_report_bundle_verification_row(verification)] if verification else [],
+                ["bundleDir", "manifest", "bundleSha256", "ok"],
+                test_id="report-bundle-archive-verification-panel",
+            ),
+            _rows_panel(
+                "Failures",
+                verification.get("failures", []),
+                ["code", "message", "path"],
+                test_id="report-bundle-archive-failures-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def _report_bundle_verification_row(report: dict[str, object]) -> dict[str, object]:
+    return {
+        "bundleDir": report.get("bundleDir", ""),
+        "manifest": report.get("manifest", ""),
+        "bundleSha256": report.get("bundleSha256", ""),
+        "ok": report.get("ok", ""),
+    }
+
+
+def _report_bundle_archive_row(report: dict[str, object]) -> dict[str, object]:
+    return {
+        "archive": report.get("archive", ""),
+        "bundleDir": report.get("bundleDir", ""),
+        "ok": report.get("ok", ""),
+        "archiveSha256": report.get("archiveSha256", ""),
+        "bundleSha256": report.get("bundleSha256", ""),
+    }
 
 
 def render_export_batch_report(report: dict[str, Any]) -> str:

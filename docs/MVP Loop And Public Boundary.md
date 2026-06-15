@@ -83,6 +83,8 @@ surfaces are:
   index without network access or secrets.
 - Render dry-run submission plans and indexes as static HTML reports for
   review and report-bundle inclusion.
+- Render report bundle verification and deterministic archive reports as static
+  HTML for public handoff review.
 - Compare two EDGP graph snapshots and render the generic diff as a static,
   verifiable report bundle.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
@@ -435,6 +437,7 @@ python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json -
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle --triage-summary
 python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
+python -B -m src.cli report --input tests/fixtures/report-bundle-archive.json --output /tmp/edgp-report-bundle-archive.html
 python -B -m src.cli plan-bundle-submission --path /tmp/edgp-report-bundle.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
 python -B -m src.cli submission-plan-index --input tests/fixtures/export-batch-submission-plan.json --input tests/fixtures/report-bundle-submission-plan.json --format text
 python -B -m src.cli report --input tests/fixtures/submission-plan-index.json --output /tmp/edgp-submission-plan-index.html

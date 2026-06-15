@@ -192,6 +192,7 @@ edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --outp
 edgp verify-bundle --path reports
 edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
+edgp report --input report-bundle-archive.json --output report-bundle-archive.html
 edgp plan-bundle-submission --path reports.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
 edgp submission-plan-index --input export-submission.json --input bundle-submission.json --output submission-index.json --format text
 edgp report --input submission-index.json --output submission-index.html
@@ -847,6 +848,9 @@ through the general validation report contract as
 `targetType=report-bundle-archive`, which keeps CI/workbench gates on one
 entrypoint whether they receive raw JSON, a report bundle directory, or a
 deterministic handoff archive.
+Bundle verification reports and deterministic archive reports also render
+through `edgp report`, so the portable handoff can be reviewed as static HTML
+after CI, transfer, or workbench intake.
 `edgp plan-bundle-submission` verifies a report bundle directory or archive and
 emits a dry-run JSON plan for the bundle artifacts that would be submitted to a
 workbench, RAG context builder, or generic collector endpoint. It selects only

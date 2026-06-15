@@ -361,6 +361,54 @@ def test_cli_report_bundle_can_fail_on_triage_status(tmp_path, capsys) -> None:
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
 
 
+def test_cli_report_writes_report_bundle_verification_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "report-bundle-verification.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/report-bundle-verification.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="report-bundle-verification-report-panel"' in html
+    assert 'data-testid="report-bundle-verification-failures-panel"' in html
+    assert "manifest.json" in html
+    assert "edgp.report.bundle.verification.v1" in html
+
+
+def test_cli_report_writes_report_bundle_archive_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "report-bundle-archive.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/report-bundle-archive.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="report-bundle-archive-panel"' in html
+    assert 'data-testid="report-bundle-archive-verification-panel"' in html
+    assert "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" in html
+    assert "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" in html
+
+
 def test_cli_archive_bundle_verifies_and_writes_deterministic_archive(
     tmp_path,
     capsys,
