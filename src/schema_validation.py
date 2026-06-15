@@ -263,7 +263,8 @@ def _validate_value(
                         f"Missing required field {key}",
                         _child_path(path, key),
                     )
-        if schema.get("additionalProperties") is False:
+        additional_properties = schema.get("additionalProperties")
+        if additional_properties is False:
             for key in value:
                 if key not in properties:
                     _add_failure(
@@ -271,6 +272,16 @@ def _validate_value(
                         "fieldUnknown",
                         f"Unsupported field {key}",
                         _child_path(path, key),
+                    )
+        elif isinstance(additional_properties, dict):
+            for key, item in value.items():
+                if key not in properties:
+                    _validate_value(
+                        item,
+                        additional_properties,
+                        _child_path(path, str(key)),
+                        root_schema,
+                        failures,
                     )
         for key, property_schema in properties.items():
             if key in value and isinstance(property_schema, dict):

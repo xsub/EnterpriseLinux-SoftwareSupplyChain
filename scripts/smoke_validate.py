@@ -385,6 +385,50 @@ def _assert_validate_command() -> None:
             "path": "$.bundles[0].bundleSha256",
         } in invalid_catalog_report["failures"]
 
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "bundle"
+        subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        manifest["bundle"]["ciRun"] = "local"
+        manifest_path = Path(temp_dir) / "manifest-with-extra-metadata.json"
+        manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
+        manifest_report = _run_cli(["validate", "--path", str(manifest_path)])
+        assert manifest_report["ok"] is True
+        assert manifest_report["contract"] == "edgp.report.bundle.v1"
+
+        manifest["bundle"]["ciRun"] = {"not": "string"}
+        invalid_manifest_path = (
+            Path(temp_dir) / "manifest-with-invalid-extra-metadata.json"
+        )
+        invalid_manifest_path.write_text(
+            json.dumps(manifest, sort_keys=True),
+            encoding="utf-8",
+        )
+        invalid_manifest_report = _run_cli_allow_failure(
+            ["validate", "--path", str(invalid_manifest_path)]
+        )
+        assert {
+            "code": "typeMismatch",
+            "message": "Expected type string",
+            "path": "$.bundle.ciRun",
+        } in invalid_manifest_report["failures"]
+
 
 def _load_report_bundle_manifest_schema() -> dict[str, Any]:
     return json.loads(REPORT_BUNDLE_SCHEMA_PATH.read_text(encoding="utf-8"))

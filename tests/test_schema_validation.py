@@ -42,6 +42,53 @@ def test_validate_target_enforces_any_of_schema_options(tmp_path) -> None:
     } in report["failures"]
 
 
+def test_validate_target_accepts_schema_typed_additional_properties(tmp_path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    write_report_bundle(
+        [Path("tests/fixtures/snapshot-right.json")],
+        bundle_dir,
+        bundle_metadata={
+            "sourceKind": "edgp-json",
+            "command": "edgp report-bundle --input snapshot",
+        },
+    )
+    manifest = json.loads((bundle_dir / "manifest.json").read_text(encoding="utf-8"))
+    manifest["bundle"]["ciRun"] = "local"
+    path = tmp_path / "manifest-with-extra-metadata.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    report = validate_target(path)
+
+    assert report["ok"] is True
+    assert report["targetType"] == "json-file"
+    assert report["contract"] == "edgp.report.bundle.v1"
+
+
+def test_validate_target_enforces_schema_typed_additional_properties(tmp_path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    write_report_bundle(
+        [Path("tests/fixtures/snapshot-right.json")],
+        bundle_dir,
+        bundle_metadata={
+            "sourceKind": "edgp-json",
+            "command": "edgp report-bundle --input snapshot",
+        },
+    )
+    manifest = json.loads((bundle_dir / "manifest.json").read_text(encoding="utf-8"))
+    manifest["bundle"]["ciRun"] = {"not": "string"}
+    path = tmp_path / "manifest-with-invalid-extra-metadata.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    report = validate_target(path)
+
+    assert report["ok"] is False
+    assert {
+        "code": "typeMismatch",
+        "message": "Expected type string",
+        "path": "$.bundle.ciRun",
+    } in report["failures"]
+
+
 def test_validate_target_reports_contract_mismatch(tmp_path) -> None:
     payload = json.loads(Path("tests/fixtures/snapshot-right.json").read_text())
     payload["stats"].pop("edges")
