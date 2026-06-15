@@ -79,6 +79,8 @@ surfaces are:
   archives without network access or secrets.
 - Aggregate dry-run submission plans into one deterministic CI/workbench status
   index without network access or secrets.
+- Render dry-run submission plans and indexes as static HTML reports for
+  review and report-bundle inclusion.
 - Compare two EDGP graph snapshots and render the generic diff as a static,
   verifiable report bundle.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
@@ -432,6 +434,7 @@ python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli plan-bundle-submission --path /tmp/edgp-report-bundle.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
 python -B -m src.cli submission-plan-index --input tests/fixtures/export-batch-submission-plan.json --input tests/fixtures/report-bundle-submission-plan.json --format text
+python -B -m src.cli report --input tests/fixtures/submission-plan-index.json --output /tmp/edgp-submission-plan-index.html
 python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text --fail-on-status warn
 python -B -m src.cli triage-summary --bundle /tmp/edgp-report-bundle.tar.gz --fail-on-status warn
 python -B -m src.cli bundle-catalog --bundle /tmp/edgp-report-bundle.tar.gz --output-dir /tmp/edgp-bundle-catalog --archive-output /tmp/edgp-bundle-catalog.tar.gz --triage-summary

@@ -777,6 +777,29 @@ def _assert_submission_plan_index() -> None:
         validation = _run_cli(["validate", "--path", str(output_path)])
         assert validation["ok"] is True
         assert validation["contract"] == "edgp.submission.plan.index.v1"
+        html_path = Path(temp_dir) / "submission-plan-index.html"
+        completed_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(output_path),
+                "--output",
+                str(html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_report.stdout.strip()) == html_path
+        html = html_path.read_text(encoding="utf-8")
+        assert 'data-testid="submission-plan-index-panel"' in html
+        assert "dependency-track" in html
+        assert "workbench" in html
 
         completed = subprocess.run(
             [

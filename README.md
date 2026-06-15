@@ -88,6 +88,7 @@ edgp archive-export-batch --path exports --output exports.tar.gz --format text
 edgp verify-export-batch-archive --path exports.tar.gz --format text
 edgp plan-export-batch-submission --path exports.tar.gz --target dependency-track --endpoint https://dependency-track.example/api/v1/bom --format text
 edgp submission-plan-index --input export-submission.json --input bundle-submission.json --format text
+edgp report --input submission-index.json --output submission-index.html
 ```
 
 Use ecosystem-specific adapters when the input format is already resolved:
@@ -192,6 +193,7 @@ edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
 edgp plan-bundle-submission --path reports.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
 edgp submission-plan-index --input export-submission.json --input bundle-submission.json --output submission-index.json --format text
+edgp report --input submission-index.json --output submission-index.html
 edgp triage-summary --bundle reports.tar.gz --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
@@ -850,6 +852,9 @@ perform network calls or require credentials.
 one deterministic JSON status document for CI, workbench intake, or review. It
 summarizes target kinds, source schemas, artifact counts, bytes, and failed
 plans without submitting anything.
+Submission plans and their aggregate indexes also render through `edgp report`,
+so the same dry-run readiness evidence can be reviewed as static HTML or
+included in a report bundle.
 The bundle `index.html` also includes a compact verification summary showing
 report count, manifest schema, and a shortened bundle fingerprint.
 With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and

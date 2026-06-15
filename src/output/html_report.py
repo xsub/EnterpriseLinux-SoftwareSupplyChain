@@ -63,6 +63,13 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_license_report(payload)
     if schema == "edgp.triage.summary.v1":
         return render_triage_summary_report(payload)
+    if schema in {
+        "edgp.export.batch.submission_plan.v1",
+        "edgp.report.bundle.submission_plan.v1",
+    }:
+        return render_submission_plan_report(payload)
+    if schema == "edgp.submission.plan.index.v1":
+        return render_submission_plan_index_report(payload)
     raise ValueError(f"Unsupported HTML report schema: {schema}")
 
 
@@ -873,6 +880,176 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
         ],
         scripts=[_table_sort_script()],
     )
+
+
+def render_submission_plan_report(report: dict[str, Any]) -> str:
+    schemas = {
+        "edgp.export.batch.submission_plan.v1",
+        "edgp.report.bundle.submission_plan.v1",
+    }
+    if report.get("schema") not in schemas:
+        raise ValueError("HTML submission plan input must be an EDGP submission plan")
+
+    summary = report.get("summary", {})
+    source = report.get("source", {})
+    target = report.get("target", {})
+    if not isinstance(source, dict):
+        source = {}
+    if not isinstance(target, dict):
+        target = {}
+    target_kind = str(target.get("kind") or "submission target")
+    title = f"EDGP Submission Plan - {target_kind}"
+    source_rows = [_submission_source_row(source)] if source else []
+    return _document(
+        title,
+        [
+            _generic_hero(
+                eyebrow="submission plan",
+                heading=target_kind,
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Mode", report.get("mode", "")),
+                    ("Target", target.get("endpoint", "")),
+                    ("Artifacts", _dict_value(summary, "artifacts")),
+                    ("Bytes", _dict_value(summary, "bytes")),
+                    ("Failures", _dict_value(summary, "failures")),
+                    ("Reports", _dict_value(summary, "reports")),
+                ],
+            ),
+            _rows_panel(
+                "Selected Artifacts",
+                _submission_artifact_rows(report.get("artifacts", [])),
+                ["kind", "path", "mediaType", "bytes", "action", "method", "endpoint"],
+                test_id="submission-artifacts-panel",
+            ),
+            _rows_panel(
+                "Source",
+                source_rows,
+                [
+                    "inputType",
+                    "path",
+                    "manifest",
+                    "manifestSha256",
+                    "bundleSha256",
+                    "archiveSha256",
+                ],
+                test_id="submission-source-panel",
+            ),
+            _rows_panel(
+                "Failures",
+                report.get("failures", []),
+                ["code", "message", "path"],
+                test_id="submission-failures-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_submission_plan_index_report(index: dict[str, Any]) -> str:
+    if index.get("schema") != "edgp.submission.plan.index.v1":
+        raise ValueError("HTML submission index input must be an EDGP submission index")
+
+    summary = index.get("summary", {})
+    return _document(
+        "EDGP Submission Plan Index",
+        [
+            _generic_hero(
+                eyebrow="submission index",
+                heading="Dry-run submission index",
+                schema=str(index.get("schema")),
+                metrics=[
+                    ("Plans", _dict_value(summary, "plans")),
+                    ("OK Plans", _dict_value(summary, "okPlans")),
+                    ("Failed Plans", _dict_value(summary, "failedPlans")),
+                    ("Artifacts", _dict_value(summary, "artifacts")),
+                    ("Bytes", _dict_value(summary, "bytes")),
+                    ("Failures", _dict_value(summary, "failures")),
+                ],
+            ),
+            _rows_panel(
+                "Plans",
+                _submission_index_plan_rows(index.get("plans", [])),
+                [
+                    "schema",
+                    "ok",
+                    "mode",
+                    "targetKind",
+                    "targetEndpoint",
+                    "artifacts",
+                    "bytes",
+                    "failures",
+                    "path",
+                ],
+                test_id="submission-plan-index-panel",
+            ),
+            _rows_panel(
+                "Failures",
+                index.get("failures", []),
+                ["code", "message", "path"],
+                test_id="submission-index-failures-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def _submission_artifact_rows(artifacts: object) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    if not isinstance(artifacts, list):
+        return rows
+    for artifact in artifacts:
+        if not isinstance(artifact, dict):
+            continue
+        rows.append(
+            {
+                "kind": artifact.get("format") or artifact.get("role") or "",
+                "path": artifact.get("path", ""),
+                "mediaType": artifact.get("mediaType", ""),
+                "bytes": artifact.get("bytes", ""),
+                "action": artifact.get("action", ""),
+                "method": artifact.get("method", ""),
+                "endpoint": artifact.get("endpoint", ""),
+            }
+        )
+    return rows
+
+
+def _submission_source_row(source: dict[str, object]) -> dict[str, object]:
+    return {
+        "inputType": source.get("inputType", ""),
+        "path": source.get("path", ""),
+        "manifest": source.get("manifest", ""),
+        "manifestSha256": source.get("manifestSha256", ""),
+        "bundleSha256": source.get("bundleSha256", ""),
+        "archiveSha256": source.get("archiveSha256", ""),
+    }
+
+
+def _submission_index_plan_rows(plans: object) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    if not isinstance(plans, list):
+        return rows
+    for plan in plans:
+        if not isinstance(plan, dict):
+            continue
+        target = plan.get("target", {})
+        if not isinstance(target, dict):
+            target = {}
+        rows.append(
+            {
+                "schema": plan.get("schema", ""),
+                "ok": plan.get("ok", ""),
+                "mode": plan.get("mode", ""),
+                "targetKind": target.get("kind", ""),
+                "targetEndpoint": target.get("endpoint", ""),
+                "artifacts": plan.get("artifacts", ""),
+                "bytes": plan.get("bytes", ""),
+                "failures": plan.get("failures", ""),
+                "path": plan.get("path", ""),
+            }
+        )
+    return rows
 
 
 def _document(

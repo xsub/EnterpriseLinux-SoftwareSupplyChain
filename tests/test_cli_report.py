@@ -97,6 +97,77 @@ def test_cli_report_writes_html_npm_diagnostics_report_from_input(
     assert "missing" in html
 
 
+def test_cli_report_writes_export_submission_plan_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "export-submission-plan.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/export-batch-submission-plan.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="submission-artifacts-panel"' in html
+    assert 'data-testid="submission-source-panel"' in html
+    assert "dependency-track" in html
+    assert "graph.cyclonedx.json" in html
+
+
+def test_cli_report_writes_bundle_submission_plan_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "bundle-submission-plan.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/report-bundle-submission-plan.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="submission-artifacts-panel"' in html
+    assert 'data-testid="submission-source-panel"' in html
+    assert "workbench" in html
+    assert "001-snapshot-right.html" in html
+
+
+def test_cli_report_writes_submission_plan_index_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "submission-plan-index.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/submission-plan-index.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="submission-plan-index-panel"' in html
+    assert "dependency-track" in html
+    assert "workbench" in html
+
+
 def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> None:
     output_dir = tmp_path / "bundle"
 
