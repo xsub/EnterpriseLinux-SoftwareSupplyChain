@@ -862,6 +862,48 @@ def test_cli_albs_build_timing_bundle_writes_report_bundle(tmp_path, capsys) -> 
     assert verification["ok"] is True
 
 
+def test_cli_albs_commands_accept_public_json_urls(tmp_path, capsys) -> None:
+    build_url = Path("tests/fixtures/albs-build.json").resolve().as_uri()
+    updated_url = Path("tests/fixtures/albs-build-updated.json").resolve().as_uri()
+
+    assert main(["albs-build", "--url", build_url]) == 0
+    graph = json.loads(capsys.readouterr().out)
+    assert graph["schema"] == "edgp.graph.snapshot.v1"
+    assert graph["root"] == "albs-build:17812"
+
+    assert (
+        main(["albs-build-diff", "--left-url", build_url, "--right-url", updated_url])
+        == 0
+    )
+    diff = json.loads(capsys.readouterr().out)
+    assert diff["schema"] == "edgp.albs.build_diff.v1"
+    assert diff["summary"]["changedArtifacts"] == 3
+
+    assert main(
+        ["albs-release-completeness", "--url", build_url, "--url", updated_url]
+    ) == 0
+    completeness = json.loads(capsys.readouterr().out)
+    assert completeness["schema"] == "edgp.albs.release_completeness.v1"
+    assert completeness["summary"]["builds"] == 2
+
+    output_dir = tmp_path / "albs-build-timing-url-bundle"
+    assert main(
+        [
+            "albs-build-timing-bundle",
+            "--url",
+            build_url,
+            "--output-dir",
+            str(output_dir),
+        ]
+    ) == 0
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    report = json.loads(
+        (output_dir / "albs-build-timing.json").read_text(encoding="utf-8")
+    )
+    assert report["schema"] == "edgp.albs.build_timing.v1"
+    assert report["summary"]["criticalBuildTaskWallSeconds"] == 371.070048
+
+
 def test_cli_albs_build_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     output_dir = tmp_path / "albs-build-diff-bundle"
 

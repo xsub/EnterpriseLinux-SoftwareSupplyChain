@@ -12,6 +12,7 @@ from src.adapters.base import ResolvedProjectGraph
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 
 DEFAULT_ALBS_BASE_URL = "https://build.almalinux.org"
+ALBS_USER_AGENT = "edgp-albs-adapter/0.1"
 
 REL_ALBS_SOURCE_PACKAGE = 20
 REL_ALBS_GIT_REPOSITORY = 21
@@ -37,7 +38,15 @@ class AlbsBuildAdapter:
         timeout: float = 30.0,
     ) -> dict[str, Any]:
         url = f"{base_url.rstrip('/')}/api/v1/builds/{build_id}/"
-        request = Request(url, headers={"User-Agent": "edgp-albs-adapter/0.1"})
+        return self.fetch_metadata_url(url, timeout=timeout)
+
+    def fetch_metadata_url(
+        self,
+        url: str,
+        *,
+        timeout: float = 30.0,
+    ) -> dict[str, Any]:
+        request = Request(url, headers={"User-Agent": ALBS_USER_AGENT})
         with urlopen(request, timeout=timeout) as response:
             payload = json.loads(response.read().decode("utf-8"))
         if not isinstance(payload, dict):
@@ -78,6 +87,25 @@ class AlbsBuildAdapter:
     ) -> ResolvedProjectGraph:
         return self.parse_metadata(
             self.fetch_build_metadata(build_id, base_url=base_url),
+            base_url=base_url,
+            task_limit=task_limit,
+            artifact_limit=artifact_limit,
+            test_task_limit=test_task_limit,
+            include_logs=include_logs,
+        )
+
+    def parse_url(
+        self,
+        url: str,
+        *,
+        base_url: str = DEFAULT_ALBS_BASE_URL,
+        task_limit: int = 50,
+        artifact_limit: int = 200,
+        test_task_limit: int = 50,
+        include_logs: bool = False,
+    ) -> ResolvedProjectGraph:
+        return self.parse_metadata(
+            self.fetch_metadata_url(url),
             base_url=base_url,
             task_limit=task_limit,
             artifact_limit=artifact_limit,

@@ -438,6 +438,7 @@ def _write_rpm_installed_bundle(
     public_advisory_feed_url: str | None = None,
     albs_build_id: str | None = None,
     albs_build_path: Path | None = None,
+    albs_build_url: str | None = None,
     albs_base_url: str = DEFAULT_ALBS_BASE_URL,
     libsolv_transaction_path: Path | None = None,
     include_license_report: bool = False,
@@ -474,6 +475,7 @@ def _write_rpm_installed_bundle(
             resolved,
             albs_build_id=albs_build_id,
             albs_build_path=albs_build_path,
+            albs_build_url=albs_build_url,
             albs_base_url=albs_base_url,
         )
     )
@@ -730,13 +732,15 @@ def _write_rpm_albs_provenance_report_if_requested(
     *,
     albs_build_id: str | None = None,
     albs_build_path: Path | None = None,
+    albs_build_url: str | None = None,
     albs_base_url: str = DEFAULT_ALBS_BASE_URL,
 ) -> list[Path]:
-    if albs_build_id is None and albs_build_path is None:
+    if albs_build_id is None and albs_build_path is None and albs_build_url is None:
         return []
     albs_payload = _load_albs_build_metadata(
         build_id=albs_build_id,
         path=albs_build_path,
+        url=albs_build_url,
         base_url=albs_base_url,
     )
     report_path = output_dir / "rpm-albs-provenance.json"
@@ -869,8 +873,10 @@ def _write_albs_build_diff_bundle(
     *,
     left_build_id: str | None = None,
     left_path: Path | None = None,
+    left_url: str | None = None,
     right_build_id: str | None = None,
     right_path: Path | None = None,
+    right_url: str | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
     command: str | None = None,
     include_triage_summary: bool = False,
@@ -878,11 +884,13 @@ def _write_albs_build_diff_bundle(
     left = _load_albs_build_metadata(
         build_id=left_build_id,
         path=left_path,
+        url=left_url,
         base_url=base_url,
     )
     right = _load_albs_build_metadata(
         build_id=right_build_id,
         path=right_path,
+        url=right_url,
         base_url=base_url,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -904,6 +912,7 @@ def _write_albs_log_intelligence_bundle(
     *,
     build_id: str | None = None,
     path: Path | None = None,
+    url: str | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
     command: str | None = None,
     include_triage_summary: bool = False,
@@ -911,6 +920,7 @@ def _write_albs_log_intelligence_bundle(
     payload = _load_albs_build_metadata(
         build_id=build_id,
         path=path,
+        url=url,
         base_url=base_url,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -932,6 +942,7 @@ def _write_albs_release_completeness_bundle(
     *,
     build_ids: list[str] | None = None,
     paths: list[Path] | None = None,
+    urls: list[str] | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
     command: str | None = None,
     include_triage_summary: bool = False,
@@ -939,6 +950,7 @@ def _write_albs_release_completeness_bundle(
     payloads = _load_albs_build_metadata_list(
         build_ids=build_ids or [],
         paths=paths or [],
+        urls=urls or [],
         base_url=base_url,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -1296,6 +1308,7 @@ def _write_rpm_albs_provenance_bundle(
     *,
     build_id: str | None = None,
     path: Path | None = None,
+    url: str | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
     rpm_limit: int = 100,
     max_requirements: int = 40,
@@ -1305,6 +1318,7 @@ def _write_rpm_albs_provenance_bundle(
     albs_payload = _load_albs_build_metadata(
         build_id=build_id,
         path=path,
+        url=url,
         base_url=base_url,
     )
     installed = InstalledRpmAdapter().parse_installed(
@@ -1329,6 +1343,7 @@ def _load_albs_build_project_graph(
     *,
     build_id: str | None = None,
     path: Path | None = None,
+    url: str | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
     task_limit: int = 50,
     artifact_limit: int = 200,
@@ -1345,6 +1360,15 @@ def _load_albs_build_project_graph(
             test_task_limit=test_task_limit,
             include_logs=include_logs,
         )
+    elif url is not None:
+        resolved = adapter.parse_url(
+            url,
+            base_url=base_url,
+            task_limit=task_limit,
+            artifact_limit=artifact_limit,
+            test_task_limit=test_task_limit,
+            include_logs=include_logs,
+        )
     elif build_id is not None:
         resolved = adapter.parse_build(
             build_id,
@@ -1355,7 +1379,9 @@ def _load_albs_build_project_graph(
             include_logs=include_logs,
         )
     else:
-        raise ValueError("Either --build-id or --path is required for ALBS build input")
+        raise ValueError(
+            "Either --build-id, --path, or --url is required for ALBS build input"
+        )
     return resolved.root_identifier, resolved.graph, resolved.ecosystem
 
 
@@ -1363,23 +1389,30 @@ def _load_albs_build_metadata(
     *,
     build_id: str | None = None,
     path: Path | None = None,
+    url: str | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
 ) -> dict[str, Any]:
     adapter = AlbsBuildAdapter()
+    sources = sum(source is not None for source in (build_id, path, url))
+    if sources != 1:
+        raise ValueError("Exactly one ALBS --build-id, --path, or --url is required")
     if path is not None:
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError(f"ALBS build fixture must be a JSON object: {path}")
         return payload
+    if url is not None:
+        return adapter.fetch_metadata_url(url)
     if build_id is not None:
         return adapter.fetch_build_metadata(build_id, base_url=base_url)
-    raise ValueError("Either --build-id or --path is required for ALBS build input")
+    raise ValueError("Exactly one ALBS --build-id, --path, or --url is required")
 
 
 def _load_albs_build_metadata_list(
     *,
     build_ids: Sequence[str],
     paths: Sequence[Path],
+    urls: Sequence[str],
     base_url: str = DEFAULT_ALBS_BASE_URL,
 ) -> list[dict[str, Any]]:
     payloads = [
@@ -1387,11 +1420,15 @@ def _load_albs_build_metadata_list(
         for path in paths
     ]
     payloads.extend(
+        _load_albs_build_metadata(url=url, base_url=base_url)
+        for url in urls
+    )
+    payloads.extend(
         _load_albs_build_metadata(build_id=build_id, base_url=base_url)
         for build_id in build_ids
     )
     if not payloads:
-        raise ValueError("At least one ALBS --path or --build-id is required")
+        raise ValueError("At least one ALBS --path, --url, or --build-id is required")
     return payloads
 
 
@@ -1400,6 +1437,7 @@ def _write_albs_build_bundle(
     *,
     build_id: str | None = None,
     path: Path | None = None,
+    url: str | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
     task_limit: int = 50,
     artifact_limit: int = 200,
@@ -1410,7 +1448,12 @@ def _write_albs_build_bundle(
     command: str | None = None,
     include_triage_summary: bool = False,
 ) -> Path:
-    payload = _load_albs_build_metadata(build_id=build_id, path=path, base_url=base_url)
+    payload = _load_albs_build_metadata(
+        build_id=build_id,
+        path=path,
+        url=url,
+        base_url=base_url,
+    )
     resolved = AlbsBuildAdapter().parse_metadata(
         payload,
         base_url=base_url,
@@ -1448,6 +1491,7 @@ def _write_albs_artifact_inventory_bundle(
     *,
     build_id: str | None = None,
     path: Path | None = None,
+    url: str | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
     task_limit: int = 50,
     artifact_limit: int = 200,
@@ -1459,6 +1503,7 @@ def _write_albs_artifact_inventory_bundle(
     root_identifier, graph, _ = _load_albs_build_project_graph(
         build_id=build_id,
         path=path,
+        url=url,
         base_url=base_url,
         task_limit=task_limit,
         artifact_limit=artifact_limit,
@@ -1487,6 +1532,7 @@ def _write_albs_build_timing_bundle(
     *,
     build_id: str | None = None,
     path: Path | None = None,
+    url: str | None = None,
     base_url: str = DEFAULT_ALBS_BASE_URL,
     command: str | None = None,
     include_triage_summary: bool = False,
@@ -1494,6 +1540,7 @@ def _write_albs_build_timing_bundle(
     payload = _load_albs_build_metadata(
         build_id=build_id,
         path=path,
+        url=url,
         base_url=base_url,
     )
     build_id_value = str(payload.get("build_id") or payload.get("id") or "unknown")
@@ -2028,6 +2075,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_installed_albs_input = rpm_installed_bundle.add_mutually_exclusive_group()
     rpm_installed_albs_input.add_argument("--albs-build-id")
     rpm_installed_albs_input.add_argument("--albs-build-path", type=Path)
+    rpm_installed_albs_input.add_argument("--albs-build-url")
     rpm_installed_bundle.add_argument("--albs-base-url", default=DEFAULT_ALBS_BASE_URL)
     rpm_installed_bundle.add_argument(
         "--libsolv-transaction",
@@ -2131,6 +2179,7 @@ def build_parser() -> argparse.ArgumentParser:
     albs_input = albs_build.add_mutually_exclusive_group(required=True)
     albs_input.add_argument("--build-id")
     albs_input.add_argument("--path", type=Path)
+    albs_input.add_argument("--url")
     albs_build.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     albs_build.add_argument("--task-limit", type=int, default=50)
     albs_build.add_argument("--artifact-limit", type=int, default=200)
@@ -2149,6 +2198,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     albs_inventory_input.add_argument("--build-id")
     albs_inventory_input.add_argument("--path", type=Path)
+    albs_inventory_input.add_argument("--url")
     albs_artifact_inventory.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     albs_artifact_inventory.add_argument("--task-limit", type=int, default=50)
     albs_artifact_inventory.add_argument("--artifact-limit", type=int, default=200)
@@ -2164,6 +2214,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     albs_inventory_bundle_input.add_argument("--build-id")
     albs_inventory_bundle_input.add_argument("--path", type=Path)
+    albs_inventory_bundle_input.add_argument("--url")
     albs_artifact_inventory_bundle.add_argument(
         "--base-url",
         default=DEFAULT_ALBS_BASE_URL,
@@ -2190,6 +2241,7 @@ def build_parser() -> argparse.ArgumentParser:
     albs_timing_input = albs_build_timing.add_mutually_exclusive_group(required=True)
     albs_timing_input.add_argument("--build-id")
     albs_timing_input.add_argument("--path", type=Path)
+    albs_timing_input.add_argument("--url")
     albs_build_timing.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
 
     albs_build_timing_bundle = subparsers.add_parser(
@@ -2201,6 +2253,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     albs_timing_bundle_input.add_argument("--build-id")
     albs_timing_bundle_input.add_argument("--path", type=Path)
+    albs_timing_bundle_input.add_argument("--url")
     albs_build_timing_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     albs_build_timing_bundle.add_argument("--output-dir", type=Path, required=True)
     _add_triage_bundle_option(albs_build_timing_bundle)
@@ -2212,6 +2265,7 @@ def build_parser() -> argparse.ArgumentParser:
     albs_bundle_input = albs_build_bundle.add_mutually_exclusive_group(required=True)
     albs_bundle_input.add_argument("--build-id")
     albs_bundle_input.add_argument("--path", type=Path)
+    albs_bundle_input.add_argument("--url")
     albs_build_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     albs_build_bundle.add_argument("--output-dir", type=Path, required=True)
     albs_build_bundle.add_argument("--impact-node", action="append", default=[])
@@ -2228,8 +2282,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     albs_build_diff.add_argument("--left-build-id")
     albs_build_diff.add_argument("--left-path", type=Path)
+    albs_build_diff.add_argument("--left-url")
     albs_build_diff.add_argument("--right-build-id")
     albs_build_diff.add_argument("--right-path", type=Path)
+    albs_build_diff.add_argument("--right-url")
     albs_build_diff.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
 
     albs_build_diff_bundle = subparsers.add_parser(
@@ -2238,8 +2294,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     albs_build_diff_bundle.add_argument("--left-build-id")
     albs_build_diff_bundle.add_argument("--left-path", type=Path)
+    albs_build_diff_bundle.add_argument("--left-url")
     albs_build_diff_bundle.add_argument("--right-build-id")
     albs_build_diff_bundle.add_argument("--right-path", type=Path)
+    albs_build_diff_bundle.add_argument("--right-url")
     albs_build_diff_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     albs_build_diff_bundle.add_argument("--output-dir", type=Path, required=True)
     _add_triage_bundle_option(albs_build_diff_bundle)
@@ -2251,6 +2309,7 @@ def build_parser() -> argparse.ArgumentParser:
     albs_log_input = albs_log_intelligence.add_mutually_exclusive_group(required=True)
     albs_log_input.add_argument("--build-id")
     albs_log_input.add_argument("--path", type=Path)
+    albs_log_input.add_argument("--url")
     albs_log_intelligence.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
 
     albs_log_intelligence_bundle = subparsers.add_parser(
@@ -2262,6 +2321,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     albs_log_bundle_input.add_argument("--build-id")
     albs_log_bundle_input.add_argument("--path", type=Path)
+    albs_log_bundle_input.add_argument("--url")
     albs_log_intelligence_bundle.add_argument(
         "--base-url",
         default=DEFAULT_ALBS_BASE_URL,
@@ -2275,6 +2335,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     albs_release_completeness.add_argument("--build-id", action="append", default=[])
     albs_release_completeness.add_argument("--path", type=Path, action="append", default=[])
+    albs_release_completeness.add_argument("--url", action="append", default=[])
     albs_release_completeness.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
 
     albs_release_completeness_bundle = subparsers.add_parser(
@@ -2289,6 +2350,11 @@ def build_parser() -> argparse.ArgumentParser:
     albs_release_completeness_bundle.add_argument(
         "--path",
         type=Path,
+        action="append",
+        default=[],
+    )
+    albs_release_completeness_bundle.add_argument(
+        "--url",
         action="append",
         default=[],
     )
@@ -2310,6 +2376,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_albs_input = rpm_albs_provenance.add_mutually_exclusive_group(required=True)
     rpm_albs_input.add_argument("--build-id")
     rpm_albs_input.add_argument("--path", type=Path)
+    rpm_albs_input.add_argument("--url")
     rpm_albs_provenance.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     rpm_albs_provenance.add_argument("--rpm-limit", type=int, default=100)
     rpm_albs_provenance.add_argument("--max-requirements", type=int, default=40)
@@ -2323,6 +2390,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     rpm_albs_bundle_input.add_argument("--build-id")
     rpm_albs_bundle_input.add_argument("--path", type=Path)
+    rpm_albs_bundle_input.add_argument("--url")
     rpm_albs_provenance_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     rpm_albs_provenance_bundle.add_argument("--rpm-limit", type=int, default=100)
     rpm_albs_provenance_bundle.add_argument("--max-requirements", type=int, default=40)
@@ -2914,6 +2982,7 @@ def main(argv: list[str] | None = None) -> int:
                 public_advisory_feed_url=args.public_advisory_feed_url,
                 albs_build_id=args.albs_build_id,
                 albs_build_path=args.albs_build_path,
+                albs_build_url=args.albs_build_url,
                 albs_base_url=args.albs_base_url,
                 libsolv_transaction_path=args.libsolv_transaction,
                 include_license_report=args.license_report or args.fail_on_denied,
@@ -3032,6 +3101,7 @@ def main(argv: list[str] | None = None) -> int:
         root_identifier, graph, resolved_ecosystem = _load_albs_build_project_graph(
             build_id=args.build_id,
             path=args.path,
+            url=args.url,
             base_url=args.base_url,
             task_limit=args.task_limit,
             artifact_limit=args.artifact_limit,
@@ -3052,6 +3122,7 @@ def main(argv: list[str] | None = None) -> int:
         root_identifier, graph, _ = _load_albs_build_project_graph(
             build_id=args.build_id,
             path=args.path,
+            url=args.url,
             base_url=args.base_url,
             task_limit=args.task_limit,
             artifact_limit=args.artifact_limit,
@@ -3067,6 +3138,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 build_id=args.build_id,
                 path=args.path,
+                url=args.url,
                 base_url=args.base_url,
                 task_limit=args.task_limit,
                 artifact_limit=args.artifact_limit,
@@ -3082,6 +3154,7 @@ def main(argv: list[str] | None = None) -> int:
         payload = _load_albs_build_metadata(
             build_id=args.build_id,
             path=args.path,
+            url=args.url,
             base_url=args.base_url,
         )
         build_id = str(payload.get("build_id") or payload.get("id") or "unknown")
@@ -3101,6 +3174,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 build_id=args.build_id,
                 path=args.path,
+                url=args.url,
                 base_url=args.base_url,
                 command=command,
                 include_triage_summary=_include_triage_summary(args),
@@ -3114,6 +3188,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 build_id=args.build_id,
                 path=args.path,
+                url=args.url,
                 base_url=args.base_url,
                 task_limit=args.task_limit,
                 artifact_limit=args.artifact_limit,
@@ -3131,11 +3206,13 @@ def main(argv: list[str] | None = None) -> int:
         left = _load_albs_build_metadata(
             build_id=args.left_build_id,
             path=args.left_path,
+            url=args.left_url,
             base_url=args.base_url,
         )
         right = _load_albs_build_metadata(
             build_id=args.right_build_id,
             path=args.right_path,
+            url=args.right_url,
             base_url=args.base_url,
         )
         print(_json(build_albs_build_diff_report(left, right)))
@@ -3147,8 +3224,10 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 left_build_id=args.left_build_id,
                 left_path=args.left_path,
+                left_url=args.left_url,
                 right_build_id=args.right_build_id,
                 right_path=args.right_path,
+                right_url=args.right_url,
                 base_url=args.base_url,
                 command=command,
                 include_triage_summary=_include_triage_summary(args),
@@ -3160,6 +3239,7 @@ def main(argv: list[str] | None = None) -> int:
         payload = _load_albs_build_metadata(
             build_id=args.build_id,
             path=args.path,
+            url=args.url,
             base_url=args.base_url,
         )
         print(_json(build_albs_log_intelligence_report(payload)))
@@ -3171,6 +3251,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 build_id=args.build_id,
                 path=args.path,
+                url=args.url,
                 base_url=args.base_url,
                 command=command,
                 include_triage_summary=_include_triage_summary(args),
@@ -3182,6 +3263,7 @@ def main(argv: list[str] | None = None) -> int:
         payloads = _load_albs_build_metadata_list(
             build_ids=args.build_id,
             paths=args.path,
+            urls=args.url,
             base_url=args.base_url,
         )
         print(_json(build_albs_release_completeness_report(payloads)))
@@ -3193,6 +3275,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 build_ids=args.build_id,
                 paths=args.path,
+                urls=args.url,
                 base_url=args.base_url,
                 command=command,
                 include_triage_summary=_include_triage_summary(args),
@@ -3204,6 +3287,7 @@ def main(argv: list[str] | None = None) -> int:
         albs_payload = _load_albs_build_metadata(
             build_id=args.build_id,
             path=args.path,
+            url=args.url,
             base_url=args.base_url,
         )
         installed = InstalledRpmAdapter().parse_installed(
@@ -3219,6 +3303,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 build_id=args.build_id,
                 path=args.path,
+                url=args.url,
                 base_url=args.base_url,
                 rpm_limit=args.rpm_limit,
                 max_requirements=args.max_requirements,

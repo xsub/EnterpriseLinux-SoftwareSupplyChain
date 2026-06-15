@@ -95,7 +95,7 @@ edgp maven-tree --path maven-tree.txt --format json
 
 SBOM, DOT/RPM, and installed RPM sources are supported for system-oriented
 investigation. Use bounded limits for local RPM database exploration, or fetch
-public ALBS build metadata by build ID.
+public ALBS build metadata by build ID, local JSON path, or public JSON URL.
 
 ```bash
 edgp sbom --path bom.json --format json
@@ -108,6 +108,7 @@ edgp rpm-repo-summary-bundle --source repodata/repomd.xml --output-dir reports/r
 edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml
 edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc --advisories advisories.json --public-advisory-feed osv.json --libsolv-transaction solver-transaction.txt --license-report --triage-summary
 edgp albs-build --build-id 17812 --format json
+edgp albs-build --url https://build.almalinux.org/api/v1/builds/17812/ --format json
 edgp albs-artifact-inventory --build-id 17812
 edgp albs-artifact-inventory-bundle --build-id 17812 --output-dir reports/albs-artifact-inventory --triage-summary
 edgp albs-build-timing --build-id 17812
@@ -523,7 +524,9 @@ bundle with `albs-build-graph.json`, `albs-artifact-inventory.json`,
 includes the generating command.
 
 The public ALBS/report layer adds investigation views that do not need private
-resources:
+resources. ALBS commands accept `--build-id`, `--path`, or `--url` for build
+metadata, and batch commands such as release completeness can mix repeated
+public URL and local file inputs:
 
 - `edgp albs-build-diff` compares two builds for artifact, source commit, and
   timing changes. `edgp albs-build-diff-bundle` renders the same comparison as

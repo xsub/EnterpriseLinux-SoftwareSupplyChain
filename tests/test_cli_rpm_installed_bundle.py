@@ -51,6 +51,7 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
 ) -> None:
     monkeypatch.setattr(cli, "InstalledRpmAdapter", FakeInstalledRpmAdapter)
     output_dir = tmp_path / "rpm-installed-bundle"
+    albs_build_url = Path("tests/fixtures/albs-build.json").resolve().as_uri()
     transaction_path = tmp_path / "libsolv-transaction.txt"
     transaction_path.write_text(
         "install glibc-2.39-1.el10.x86_64\n",
@@ -78,8 +79,8 @@ def test_cli_rpm_installed_bundle_writes_graph_and_impact_reports(
                 "tests/fixtures/rpm-advisories.json",
                 "--public-advisory-feed",
                 str(public_feed_path),
-                "--albs-build-path",
-                "tests/fixtures/albs-build.json",
+                "--albs-build-url",
+                albs_build_url,
                 "--libsolv-transaction",
                 str(transaction_path),
                 "--output-dir",
@@ -155,13 +156,14 @@ def test_cli_rpm_albs_provenance_bundle_writes_static_report(
 ) -> None:
     monkeypatch.setattr(cli, "InstalledRpmAdapter", FakeInstalledRpmAdapter)
     output_dir = tmp_path / "rpm-albs-provenance-bundle"
+    albs_build_url = Path("tests/fixtures/albs-build.json").resolve().as_uri()
 
     assert (
         cli.main(
             [
                 "rpm-albs-provenance-bundle",
-                "--path",
-                "tests/fixtures/albs-build.json",
+                "--url",
+                albs_build_url,
                 "--rpm-limit",
                 "10",
                 "--max-requirements",

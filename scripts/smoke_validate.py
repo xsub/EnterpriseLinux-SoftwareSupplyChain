@@ -1804,6 +1804,25 @@ def _assert_public_vertical_reports() -> None:
         )
         assert 'data-testid="albs-artifact-timing-panel"' in timing_html
 
+    albs_build_url = (REPO_ROOT / "tests" / "fixtures" / "albs-build.json").as_uri()
+    albs_updated_url = (
+        REPO_ROOT / "tests" / "fixtures" / "albs-build-updated.json"
+    ).as_uri()
+    url_inventory = _run_cli(["albs-artifact-inventory", "--url", albs_build_url])
+    assert url_inventory["schema"] == "edgp.albs.artifact_inventory.v1"
+    assert url_inventory["summary"]["artifacts"] == 4
+    url_release = _run_cli(
+        [
+            "albs-release-completeness",
+            "--url",
+            albs_build_url,
+            "--url",
+            albs_updated_url,
+        ]
+    )
+    assert url_release["schema"] == "edgp.albs.release_completeness.v1"
+    assert url_release["summary"]["builds"] == 2
+
     diff = _run_cli(
         [
             "albs-build-diff",
@@ -3646,6 +3665,7 @@ def _assert_rpm_installed() -> None:
 def _assert_rpm_installed_bundle() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "rpm-installed-bundle"
+        albs_build_url = (REPO_ROOT / "tests" / "fixtures" / "albs-build.json").as_uri()
         completed = subprocess.run(
             [
                 sys.executable,
@@ -3663,8 +3683,8 @@ def _assert_rpm_installed_bundle() -> None:
                 "tests/fixtures/rpm-advisories.json",
                 "--public-advisory-feed",
                 "tests/fixtures/public-osv.json",
-                "--albs-build-path",
-                "tests/fixtures/albs-build.json",
+                "--albs-build-url",
+                albs_build_url,
                 "--libsolv-transaction",
                 "tests/fixtures/libsolv-transaction.txt",
                 "--output-dir",

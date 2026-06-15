@@ -25,7 +25,8 @@ surfaces are:
 - installed RPM database inspection on AlmaLinux via the public `rpm` command;
 - public RPM repository `primary.xml`, `primary.xml.gz`, `repomd.xml`, or
   repository base URLs;
-- public ALBS build metadata and build-log metadata embedded in ALBS payloads;
+- public ALBS build metadata and build-log metadata from build IDs, local JSON
+  payloads, or public JSON URLs;
 - public OSV-like advisory JSON payloads from local files or URLs, including
   explicit vulnerable versions, simple introduced/fixed ranges, and Package
   URL component locators;
@@ -243,6 +244,8 @@ surfaces are:
 - Preserve public RPM origin/build hints including distribution, packager,
   upstream URL, and build host when present.
 - Build public ALBS provenance graphs from build metadata.
+- Load public ALBS build metadata from build IDs, local JSON files, or public
+  JSON URLs across ALBS report commands.
 - Generate ALBS artifact inventory, build timing, build diff, log intelligence,
   and release completeness reports.
 - Render ALBS artifact inventory and build timing reports as static,
