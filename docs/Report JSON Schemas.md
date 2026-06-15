@@ -10,6 +10,7 @@ Run these after editing schema files:
 
 ```bash
 python -B scripts/generate_schema_index.py --check
+python -B -m src.cli validate --path docs/schemas/index.json
 python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-schema-index.html
 ```
 
@@ -93,6 +94,9 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
   [`edgp.rpm.repository_diff.v1.schema.json`](schemas/edgp.rpm.repository_diff.v1.schema.json)
   documents added, removed, and changed packages between public RPM repository
   snapshots.
+- `edgp.schema.index.v1`:
+  [`edgp.schema.index.v1.schema.json`](schemas/edgp.schema.index.v1.schema.json)
+  documents the deterministic catalog of supported EDGP JSON Schema contracts.
 - `edgp.libsolv.bridge.v1`:
   [`edgp.libsolv.bridge.v1.schema.json`](schemas/edgp.libsolv.bridge.v1.schema.json)
   documents libsolv command discovery, parsed transaction actions, normalized

@@ -26,6 +26,16 @@ def test_validate_target_accepts_bundle_catalog_nullable_fingerprint() -> None:
     assert report["contract"] == "edgp.bundle.catalog.v1"
 
 
+def test_validate_target_accepts_schema_index() -> None:
+    report = validate_target(Path("docs/schemas/index.json"))
+
+    assert report["schema"] == "edgp.validation.report.v1"
+    assert report["ok"] is True
+    assert report["targetType"] == "json-file"
+    assert report["contract"] == "edgp.schema.index.v1"
+    assert report["schemaFile"] == "edgp.schema.index.v1.schema.json"
+
+
 def test_validate_target_enforces_any_of_schema_options(tmp_path) -> None:
     payload = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
     payload["bundles"][0]["bundleSha256"] = 42

@@ -1,0 +1,80 @@
+{
+  "$id": "urn:edgp:schema:schema-index:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Deterministic catalog of documented EDGP JSON Schema contracts.",
+  "properties": {
+    "generatedBy": {
+      "const": "scripts/generate_schema_index.py",
+      "description": "Repository script that generated the committed catalog."
+    },
+    "schema": {
+      "const": "edgp.schema.index.v1",
+      "description": "Schema index contract identifier."
+    },
+    "schemaCount": {
+      "description": "Number of schema entries in the catalog.",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "schemas": {
+      "description": "Documented EDGP JSON Schema contracts.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "contract": {
+            "description": "Stable EDGP schema identifier accepted by validation and HTML report rendering.",
+            "minLength": 1,
+            "pattern": "^edgp\\.[a-z0-9_.]+\\.v[0-9]+$",
+            "type": "string"
+          },
+          "description": {
+            "description": "Human-readable contract purpose.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "file": {
+            "description": "Schema file path relative to docs/schemas.",
+            "minLength": 1,
+            "pattern": "^[^/]+\\.schema\\.json$",
+            "type": "string"
+          },
+          "id": {
+            "description": "JSON Schema $id for the contract.",
+            "minLength": 1,
+            "pattern": "^urn:edgp:schema:.+$",
+            "type": "string"
+          },
+          "jsonSchema": {
+            "const": "https://json-schema.org/draft/2020-12/schema",
+            "description": "JSON Schema dialect used by the contract."
+          },
+          "title": {
+            "description": "Human-readable contract title.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "contract",
+          "description",
+          "file",
+          "id",
+          "jsonSchema",
+          "title"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "generatedBy",
+    "schemaCount",
+    "schemas"
+  ],
+  "title": "EDGP Schema Index v1",
+  "type": "object"
+}

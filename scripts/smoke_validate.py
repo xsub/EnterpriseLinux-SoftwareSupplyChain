@@ -145,6 +145,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.rpm.repository_summary.v1.schema.json",
+    "edgp.schema.index.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.schema.index.v1.schema.json",
     "edgp.triage.summary.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -239,6 +243,7 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "rpm-repository-summary.json",
+    "edgp.schema.index.v1": SCHEMA_INDEX_PATH,
     "edgp.triage.summary.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -790,6 +795,7 @@ def _assert_schema_index_document() -> None:
         "edgp.rpm.albs_provenance.v1",
         "edgp.rpm.repository_diff.v1",
         "edgp.rpm.repository_summary.v1",
+        "edgp.schema.index.v1",
         "edgp.submission.plan.index.v1",
         "edgp.triage.summary.v1",
         "edgp.validation.failure.example.filters.v1",
@@ -801,6 +807,10 @@ def _assert_schema_index_document() -> None:
         assert schema["jsonSchema"] == "https://json-schema.org/draft/2020-12/schema"
         assert schema["title"]
         assert schema["description"]
+    validation = _run_cli(["validate", "--path", str(SCHEMA_INDEX_PATH)])
+    assert validation["ok"] is True
+    assert validation["contract"] == "edgp.schema.index.v1"
+    assert validation["schemaFile"] == "edgp.schema.index.v1.schema.json"
     with tempfile.TemporaryDirectory() as temp_dir:
         html_path = Path(temp_dir) / "schema-index.html"
         completed_report = subprocess.run(
