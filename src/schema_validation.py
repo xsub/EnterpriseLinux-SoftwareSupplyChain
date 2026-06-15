@@ -8,6 +8,7 @@ import tarfile
 from pathlib import Path
 from typing import Any, Mapping
 
+from src.export_batch import EXPORT_BATCH_SCHEMA, verify_graph_export_batch
 from src.output.report_bundle import (
     verify_report_bundle,
     verify_report_bundle_archive,
@@ -20,6 +21,8 @@ SCHEMA_INDEX_PATH = SCHEMA_DIR / "index.json"
 
 def validate_target(path: Path, *, manifest_name: str = "manifest.json") -> dict[str, Any]:
     if path.is_dir():
+        if _is_export_batch_dir(path, manifest_name=manifest_name):
+            return _validate_export_batch(path, manifest_name=manifest_name)
         return _validate_bundle(path, manifest_name=manifest_name)
     if _is_report_bundle_archive(path):
         return _validate_bundle_archive(path, manifest_name=manifest_name)
@@ -29,6 +32,37 @@ def validate_target(path: Path, *, manifest_name: str = "manifest.json") -> dict
 def _is_report_bundle_archive(path: Path) -> bool:
     suffixes = path.suffixes
     return path.suffix == ".tgz" or suffixes[-2:] == [".tar", ".gz"]
+
+
+def _is_export_batch_dir(path: Path, *, manifest_name: str) -> bool:
+    try:
+        payload = json.loads((path / manifest_name).read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return False
+    return isinstance(payload, dict) and payload.get("schema") == EXPORT_BATCH_SCHEMA
+
+
+def _validate_export_batch(path: Path, *, manifest_name: str) -> dict[str, Any]:
+    verification = verify_graph_export_batch(path, manifest_name=manifest_name)
+    failures = [
+        {
+            "code": f"exportBatch.{failure.get('code', 'unknown')}",
+            "message": str(failure.get("message", "")),
+            "path": str(failure.get("path", path)),
+        }
+        for failure in verification.get("failures", [])
+        if isinstance(failure, dict)
+    ]
+    return {
+        "schema": VALIDATION_SCHEMA,
+        "target": str(path.resolve()),
+        "targetType": "export-batch",
+        "contract": EXPORT_BATCH_SCHEMA,
+        "ok": not failures,
+        "summary": {"failures": len(failures)},
+        "failures": failures,
+        "exportBatchVerification": verification,
+    }
 
 
 def _validate_bundle(path: Path, *, manifest_name: str) -> dict[str, Any]:

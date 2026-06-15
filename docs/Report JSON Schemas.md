@@ -39,6 +39,10 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.export.batch.v1.schema.json`](schemas/edgp.export.batch.v1.schema.json)
   documents local Cypher, CycloneDX, and snapshot egress artifacts written from
   an EDGP graph snapshot.
+- `edgp.export.batch.verification.v1`:
+  [`edgp.export.batch.verification.v1.schema.json`](schemas/edgp.export.batch.verification.v1.schema.json)
+  documents manifest and artifact fingerprint checks for local graph export
+  batches.
 - `edgp.report.bundle.archive.v1`:
   [`edgp.report.bundle.archive.v1.schema.json`](schemas/edgp.report.bundle.archive.v1.schema.json)
   documents deterministic archive packaging results for verified static report

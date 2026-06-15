@@ -8,8 +8,10 @@ from src.cli import main
 from src.export_batch import (
     DETERMINISTIC_CYCLONEDX_TIMESTAMP,
     graph_from_snapshot,
+    verify_graph_export_batch,
     write_graph_export_batch,
 )
+from src.schema_validation import validate_target
 
 
 def test_graph_from_snapshot_reconstructs_edges_and_metadata() -> None:
@@ -82,3 +84,49 @@ def test_cli_export_batch_writes_selected_formats(tmp_path, capsys) -> None:
     assert (tmp_path / "graph.cyclonedx.json").exists()
     assert not (tmp_path / "graph.snapshot.json").exists()
     assert json.loads((tmp_path / "manifest.json").read_text()) == manifest
+
+
+def test_verify_graph_export_batch_checks_artifact_fingerprints(tmp_path) -> None:
+    write_graph_export_batch(
+        Path("tests/fixtures/snapshot-right.json"),
+        tmp_path,
+        formats=["cypher", "cyclonedx"],
+    )
+
+    report = verify_graph_export_batch(tmp_path)
+
+    assert report["schema"] == "edgp.export.batch.verification.v1"
+    assert report["ok"] is True
+    assert report["summary"]["exports"] == 2
+    assert report["summary"]["failures"] == 0
+    assert report["manifestSha256"]
+
+    (tmp_path / "graph.cypher").write_text("tampered\n", encoding="utf-8")
+
+    tampered = verify_graph_export_batch(tmp_path)
+
+    assert tampered["ok"] is False
+    assert {
+        failure["code"] for failure in tampered["failures"]
+    } == {"exportBytesMismatch", "exportDigestMismatch"}
+
+
+def test_cli_verify_export_batch_and_validate_directory(tmp_path, capsys) -> None:
+    write_graph_export_batch(
+        Path("tests/fixtures/snapshot-right.json"),
+        tmp_path,
+        formats=["cypher", "cyclonedx"],
+    )
+
+    assert (
+        main(["verify-export-batch", "--path", str(tmp_path), "--format", "text"])
+        == 0
+    )
+    assert capsys.readouterr().out.startswith("OK exports=2")
+
+    validation = validate_target(tmp_path)
+
+    assert validation["ok"] is True
+    assert validation["targetType"] == "export-batch"
+    assert validation["contract"] == "edgp.export.batch.v1"
+    assert validation["exportBatchVerification"]["ok"] is True

@@ -1,0 +1,107 @@
+{
+  "$id": "urn:edgp:schema:export-batch-verification:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Verification report for local graph export batches and their artifact fingerprints.",
+  "properties": {
+    "batchDir": {
+      "description": "Resolved export batch directory that was verified.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "failures": {
+      "description": "Ordered verification failures found while checking manifest shape and export file digests.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "Stable machine-readable failure category.",
+            "minLength": 1,
+            "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+            "type": "string"
+          },
+          "message": {
+            "description": "Human-readable failure detail.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "description": "Manifest or export artifact path related to this failure.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "path"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "manifest": {
+      "description": "Manifest filename that was read from the export batch directory.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "manifestSha256": {
+      "description": "SHA-256 digest of the manifest when available, or null when the manifest could not be read.",
+      "oneOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ok": {
+      "description": "True when no verification failures were found.",
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "edgp.export.batch.verification.v1",
+      "description": "Export batch verification schema identifier."
+    },
+    "summary": {
+      "additionalProperties": false,
+      "description": "Compact export-batch verification counters.",
+      "properties": {
+        "bytes": {
+          "description": "Manifest-recorded total export artifact bytes.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exports": {
+          "description": "Number of manifest export entries seen by the verifier.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failures": {
+          "description": "Number of verification failures.",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "exports",
+        "bytes",
+        "failures"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "batchDir",
+    "manifest",
+    "ok",
+    "manifestSha256",
+    "summary",
+    "failures"
+  ],
+  "title": "EDGP Export Batch Verification v1",
+  "type": "object"
+}

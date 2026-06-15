@@ -338,6 +338,7 @@ surfaces are:
   bundles.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
+- Verify local graph export batches before using them as automated egress input.
 
 ## Validation Commands
 
@@ -368,6 +369,7 @@ python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-markers.txt --f
 python -B -m src.cli maven-bundle --path tests/fixtures/maven-tree-classifier.txt --impact-node com.example:native-lib:linux-x86_64 --output-dir /tmp/edgp-maven-bundle
 python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli export-batch --snapshot tests/fixtures/snapshot-right.json --output-dir /tmp/edgp-export-batch --format cypher --format cyclonedx
+python -B -m src.cli verify-export-batch --path /tmp/edgp-export-batch --format text
 python -B -m src.cli dot-bundle --path tests/fixtures/repograph.dot --ecosystem rpm --impact-node glibc --output-dir /tmp/edgp-dot-bundle
 python -B -m src.cli sbom --path tests/fixtures/sample-bom.json --format json
 python -B -m src.cli sbom-bundle --path tests/fixtures/sample-bom.json --impact-node left-pad --output-dir /tmp/edgp-sbom-bundle

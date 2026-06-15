@@ -29,7 +29,7 @@ from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.benchmark import run_synthetic_benchmark
 from src.bundle_catalog import build_bundle_catalog_report
 from src.core_graph.sparse_matrix import CSRDependencyGraph
-from src.export_batch import write_graph_export_batch
+from src.export_batch import verify_graph_export_batch, write_graph_export_batch
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
 from src.libsolv_bridge import build_libsolv_bridge_report
@@ -160,6 +160,29 @@ def _format_bundle_archive_report(report: dict[str, Any]) -> str:
     archive_sha = report.get("archiveSha256")
     if isinstance(archive_sha, str) and archive_sha:
         parts.append(f"archiveSha256={archive_sha}")
+    return " ".join(parts)
+
+
+def _format_export_batch_verification_report(report: dict[str, Any]) -> str:
+    status = "OK" if report.get("ok") else "FAIL"
+    summary = report.get("summary", {})
+    exports = summary.get("exports", 0) if isinstance(summary, dict) else 0
+    bytes_written = summary.get("bytes", 0) if isinstance(summary, dict) else 0
+    failures = summary.get("failures", 0) if isinstance(summary, dict) else 0
+    parts = [
+        status,
+        f"exports={exports}",
+        f"bytes={bytes_written}",
+        f"failures={failures}",
+    ]
+    manifest_sha = report.get("manifestSha256")
+    if isinstance(manifest_sha, str) and manifest_sha:
+        parts.append(f"manifestSha256={manifest_sha}")
+    failure_list = report.get("failures", [])
+    if isinstance(failure_list, list) and failure_list:
+        first_failure = failure_list[0]
+        if isinstance(first_failure, dict):
+            parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
     return " ".join(parts)
 
 
@@ -2736,6 +2759,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     export_batch.add_argument("--manifest-name", default="manifest.json")
 
+    verify_export_batch = subparsers.add_parser(
+        "verify-export-batch",
+        help="Verify a local graph export batch manifest and artifact digests",
+    )
+    verify_export_batch.add_argument("--path", type=Path, required=True)
+    verify_export_batch.add_argument("--manifest-name", default="manifest.json")
+    verify_export_batch.add_argument("--format", choices=["json", "text"], default="json")
+
     report_bundle = subparsers.add_parser(
         "report-bundle", help="Render multiple local HTML JSON reports with an index"
     )
@@ -2841,7 +2872,7 @@ def build_parser() -> argparse.ArgumentParser:
     failure_examples.add_argument(
         "--target-type",
         action="append",
-        choices=["json-file", "report-bundle", "report-bundle-archive"],
+        choices=["json-file", "export-batch", "report-bundle", "report-bundle-archive"],
         default=[],
         help="filter examples by target artifact type",
     )
@@ -3692,6 +3723,14 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(_json(manifest))
         return 0
+
+    if args.command == "verify-export-batch":
+        report = verify_graph_export_batch(args.path, manifest_name=args.manifest_name)
+        if args.format == "text":
+            print(_format_export_batch_verification_report(report))
+        else:
+            print(_json(report))
+        return 0 if report["ok"] else 1
 
     if args.command == "report-bundle":
         index_path = write_report_bundle(

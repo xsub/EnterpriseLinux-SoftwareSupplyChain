@@ -85,6 +85,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.export.batch.v1.schema.json",
+    "edgp.export.batch.verification.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.export.batch.verification.v1.schema.json",
     "edgp.report.bundle.archive.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -166,6 +170,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "export-batch.json",
+    "edgp.export.batch.verification.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "export-batch-verification.json",
     "edgp.report.bundle.archive.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -683,6 +691,7 @@ def _assert_schema_index_document() -> None:
         "edgp.advisory.report.v1",
         "edgp.bundle.catalog.v1",
         "edgp.export.batch.v1",
+        "edgp.export.batch.verification.v1",
         "edgp.graph.diff.v1",
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
@@ -1747,6 +1756,54 @@ def _assert_export_batch() -> None:
         validation = _run_cli(["validate", "--path", str(output_dir / "manifest.json")])
         assert validation["ok"] is True
         assert validation["contract"] == "edgp.export.batch.v1"
+        verification = _run_cli(["verify-export-batch", "--path", str(output_dir)])
+        assert verification["schema"] == "edgp.export.batch.verification.v1"
+        assert verification["ok"] is True
+        assert verification["summary"]["exports"] == 2
+        directory_validation = _run_cli(["validate", "--path", str(output_dir)])
+        assert directory_validation["ok"] is True
+        assert directory_validation["targetType"] == "export-batch"
+        assert directory_validation["exportBatchVerification"]["ok"] is True
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "verify-export-batch",
+                "--path",
+                str(output_dir),
+                "--format",
+                "text",
+            ],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.startswith("OK exports=2")
+        (output_dir / exports["cypher"]["path"]).write_text("tampered\n", encoding="utf-8")
+        failed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "verify-export-batch",
+                "--path",
+                str(output_dir),
+            ],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert failed.returncode == 1
+        tampered = json.loads(failed.stdout)
+        assert tampered["ok"] is False
+        assert {
+            failure["code"] for failure in tampered["failures"]
+        } == {"exportBytesMismatch", "exportDigestMismatch"}
 
 
 def _assert_dot_bundle() -> None:

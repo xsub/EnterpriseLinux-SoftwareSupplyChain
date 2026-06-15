@@ -83,6 +83,7 @@ edgp lockfile --path package-lock.json --format cypher
 edgp lockfile --path package-lock.json --format cyclonedx
 edgp lockfile --path package-lock.json --format json
 edgp export-batch --snapshot graph.json --output-dir exports --format cypher --format cyclonedx
+edgp verify-export-batch --path exports --format text
 ```
 
 Use ecosystem-specific adapters when the input format is already resolved:
@@ -591,8 +592,10 @@ upstream URL, and build host when those fields are present in the RPM database.
 `edgp export-batch` turns an existing `edgp.graph.snapshot.v1` into local
 egress artifacts such as `graph.cypher` and `graph.cyclonedx.json`, plus an
 `edgp.export.batch.v1` manifest with paths, media types, byte counts, and
-SHA-256 fingerprints. This is the offline public-resource foundation for later
-Neo4j, Dependency-Track, or report-submission clients.
+SHA-256 fingerprints. `edgp verify-export-batch` checks that the manifest and
+artifact files still line up before those files are handed to Neo4j,
+Dependency-Track, or report-submission clients. This is the offline
+public-resource foundation for later automated egress flows.
 
 ### Query Layer
 

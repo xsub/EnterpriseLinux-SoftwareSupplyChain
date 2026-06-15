@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 26,
+  "schemaCount": 27,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -66,6 +66,14 @@
       "id": "urn:edgp:schema:export-batch:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Export Batch v1"
+    },
+    {
+      "contract": "edgp.export.batch.verification.v1",
+      "description": "Verification report for local graph export batches and their artifact fingerprints.",
+      "file": "edgp.export.batch.verification.v1.schema.json",
+      "id": "urn:edgp:schema:export-batch-verification:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Export Batch Verification v1"
     },
     {
       "contract": "edgp.graph.diff.v1",
