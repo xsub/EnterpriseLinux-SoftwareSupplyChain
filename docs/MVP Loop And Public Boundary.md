@@ -73,6 +73,8 @@ surfaces are:
 - Render public ALBS release completeness reports as static, verifiable
   bundles.
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
+- Render graph export batch manifests, verification reports, and deterministic
+  archive reports as static HTML.
 - Build dry-run submission plans for verified graph export batch directories
   or archives without network access or secrets.
 - Build dry-run submission plans for verified report bundle directories or
@@ -379,6 +381,7 @@ python -B -m src.cli maven-tree --path tests/fixtures/maven-tree-markers.txt --f
 python -B -m src.cli maven-bundle --path tests/fixtures/maven-tree-classifier.txt --impact-node com.example:native-lib:linux-x86_64 --output-dir /tmp/edgp-maven-bundle
 python -B -m src.cli dot --path tests/fixtures/repograph.dot --format cyclonedx
 python -B -m src.cli export-batch --snapshot tests/fixtures/snapshot-right.json --output-dir /tmp/edgp-export-batch --format cypher --format cyclonedx
+python -B -m src.cli report --input /tmp/edgp-export-batch/manifest.json --output /tmp/edgp-export-batch.html
 python -B -m src.cli verify-export-batch --path /tmp/edgp-export-batch --format text
 python -B -m src.cli archive-export-batch --path /tmp/edgp-export-batch --output /tmp/edgp-export-batch.tar.gz --format text
 python -B -m src.cli verify-export-batch-archive --path /tmp/edgp-export-batch.tar.gz --format text

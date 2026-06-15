@@ -83,6 +83,7 @@ edgp lockfile --path package-lock.json --format cypher
 edgp lockfile --path package-lock.json --format cyclonedx
 edgp lockfile --path package-lock.json --format json
 edgp export-batch --snapshot graph.json --output-dir exports --format cypher --format cyclonedx
+edgp report --input exports/manifest.json --output export-batch.html
 edgp verify-export-batch --path exports --format text
 edgp archive-export-batch --path exports --output exports.tar.gz --format text
 edgp verify-export-batch-archive --path exports.tar.gz --format text
@@ -610,6 +611,9 @@ it verifies a directory or archive and emits a dry-run JSON plan describing
 which Cypher, CycloneDX, or generic artifacts would be POSTed to the selected
 endpoint, without making network calls or requiring secrets. This is the
 public-resource foundation for later automated egress flows.
+Export-batch manifests, verification reports, and deterministic archive reports
+also render through `edgp report`, so egress handoff evidence can be reviewed as
+static HTML before it is submitted or attached to a workbench bundle.
 
 ### Query Layer
 

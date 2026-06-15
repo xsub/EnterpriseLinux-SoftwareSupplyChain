@@ -63,6 +63,12 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_license_report(payload)
     if schema == "edgp.triage.summary.v1":
         return render_triage_summary_report(payload)
+    if schema == "edgp.export.batch.v1":
+        return render_export_batch_report(payload)
+    if schema == "edgp.export.batch.verification.v1":
+        return render_export_batch_verification_report(payload)
+    if schema == "edgp.export.batch.archive.v1":
+        return render_export_batch_archive_report(payload)
     if schema in {
         "edgp.export.batch.submission_plan.v1",
         "edgp.report.bundle.submission_plan.v1",
@@ -882,6 +888,171 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
     )
 
 
+def render_export_batch_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.export.batch.v1":
+        raise ValueError("HTML export batch input must be an EDGP export batch")
+
+    summary = report.get("summary", {})
+    source = report.get("source", {})
+    if not isinstance(source, dict):
+        source = {}
+    heading = str(source.get("root") or "Graph export batch")
+    return _document(
+        "EDGP Export Batch",
+        [
+            _generic_hero(
+                eyebrow=str(source.get("ecosystem", "export batch")),
+                heading=heading,
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Exports", _dict_value(summary, "exports")),
+                    ("Formats", ", ".join(_as_string_list(summary.get("formats")))),
+                    ("Bytes", _dict_value(summary, "bytes")),
+                ],
+            ),
+            _rows_panel(
+                "Source Snapshot",
+                _export_batch_source_rows(source, report.get("command")),
+                ["path", "root", "ecosystem", "nodes", "edges", "command"],
+                test_id="export-batch-source-panel",
+            ),
+            _rows_panel(
+                "Export Artifacts",
+                report.get("exports", []),
+                ["format", "path", "mediaType", "bytes", "sha256"],
+                test_id="export-batch-artifacts-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_export_batch_verification_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.export.batch.verification.v1":
+        raise ValueError("HTML export batch verification input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    heading = "Export batch verification"
+    return _document(
+        "EDGP Export Batch Verification",
+        [
+            _generic_hero(
+                eyebrow="ok" if report.get("ok") is True else "failed",
+                heading=heading,
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Exports", _dict_value(summary, "exports")),
+                    ("Bytes", _dict_value(summary, "bytes")),
+                    ("Failures", _dict_value(summary, "failures")),
+                ],
+            ),
+            _rows_panel(
+                "Verified Batch",
+                [_export_batch_verification_row(report)],
+                ["batchDir", "manifest", "manifestSha256", "ok"],
+                test_id="export-batch-verification-panel",
+            ),
+            _rows_panel(
+                "Failures",
+                report.get("failures", []),
+                ["code", "message", "path"],
+                test_id="export-batch-failures-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_export_batch_archive_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.export.batch.archive.v1":
+        raise ValueError("HTML export batch archive input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    verification = report.get("verification", {})
+    if not isinstance(verification, dict):
+        verification = {}
+    return _document(
+        "EDGP Export Batch Archive",
+        [
+            _generic_hero(
+                eyebrow="ok" if report.get("ok") is True else "failed",
+                heading="Deterministic export batch archive",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Files", _dict_value(summary, "files")),
+                    ("Bytes", _dict_value(summary, "bytes")),
+                    (
+                        "Verification Failures",
+                        _dict_value(summary, "verificationFailures"),
+                    ),
+                ],
+            ),
+            _rows_panel(
+                "Archive",
+                [_export_batch_archive_row(report)],
+                [
+                    "archive",
+                    "batchDir",
+                    "ok",
+                    "archiveSha256",
+                    "manifestSha256",
+                ],
+                test_id="export-batch-archive-panel",
+            ),
+            _rows_panel(
+                "Embedded Verification",
+                [_export_batch_verification_row(verification)] if verification else [],
+                ["batchDir", "manifest", "manifestSha256", "ok"],
+                test_id="export-batch-archive-verification-panel",
+            ),
+            _rows_panel(
+                "Failures",
+                verification.get("failures", []),
+                ["code", "message", "path"],
+                test_id="export-batch-archive-failures-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def _export_batch_source_rows(
+    source: dict[str, object], command: object
+) -> list[dict[str, object]]:
+    stats = source.get("stats", {})
+    if not isinstance(stats, dict):
+        stats = {}
+    return [
+        {
+            "path": source.get("path", ""),
+            "root": source.get("root", ""),
+            "ecosystem": source.get("ecosystem", ""),
+            "nodes": stats.get("nodes", ""),
+            "edges": stats.get("edges", ""),
+            "command": command or "",
+        }
+    ]
+
+
+def _export_batch_verification_row(report: dict[str, object]) -> dict[str, object]:
+    return {
+        "batchDir": report.get("batchDir", ""),
+        "manifest": report.get("manifest", ""),
+        "manifestSha256": report.get("manifestSha256", ""),
+        "ok": report.get("ok", ""),
+    }
+
+
+def _export_batch_archive_row(report: dict[str, object]) -> dict[str, object]:
+    return {
+        "archive": report.get("archive", ""),
+        "batchDir": report.get("batchDir", ""),
+        "ok": report.get("ok", ""),
+        "archiveSha256": report.get("archiveSha256", ""),
+        "manifestSha256": report.get("manifestSha256", ""),
+    }
+
+
 def render_submission_plan_report(report: dict[str, Any]) -> str:
     schemas = {
         "edgp.export.batch.submission_plan.v1",
@@ -1162,6 +1333,12 @@ def _cell(value: object) -> str:
     if isinstance(value, dict | list):
         return json.dumps(value, sort_keys=True)
     return str(value if value is not None else "")
+
+
+def _as_string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value]
 
 
 def _dict_value(value: object, key: str) -> str:

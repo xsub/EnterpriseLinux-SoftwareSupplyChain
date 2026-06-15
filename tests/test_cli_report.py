@@ -97,6 +97,78 @@ def test_cli_report_writes_html_npm_diagnostics_report_from_input(
     assert "missing" in html
 
 
+def test_cli_report_writes_export_batch_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "export-batch.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/export-batch.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="export-batch-source-panel"' in html
+    assert 'data-testid="export-batch-artifacts-panel"' in html
+    assert "graph.cypher" in html
+    assert "graph.cyclonedx.json" in html
+
+
+def test_cli_report_writes_export_batch_verification_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "export-batch-verification.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/export-batch-verification.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="export-batch-verification-panel"' in html
+    assert 'data-testid="export-batch-failures-panel"' in html
+    assert "tests/fixtures/export-batch" in html
+    assert "manifest.json" in html
+
+
+def test_cli_report_writes_export_batch_archive_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "export-batch-archive.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/export-batch-archive.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="export-batch-archive-panel"' in html
+    assert 'data-testid="export-batch-archive-verification-panel"' in html
+    assert "tests/fixtures/export-batch.tar.gz" in html
+    assert "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" in html
+
+
 def test_cli_report_writes_export_submission_plan_html(tmp_path, capsys) -> None:
     output_path = tmp_path / "export-submission-plan.html"
 

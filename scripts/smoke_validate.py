@@ -1863,10 +1863,59 @@ def _assert_export_batch() -> None:
         validation = _run_cli(["validate", "--path", str(output_dir / "manifest.json")])
         assert validation["ok"] is True
         assert validation["contract"] == "edgp.export.batch.v1"
+        manifest_html_path = Path(temp_dir) / "export-batch.html"
+        completed_manifest_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(output_dir / "manifest.json"),
+                "--output",
+                str(manifest_html_path),
+            ],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_manifest_report.stdout.strip()) == manifest_html_path
+        manifest_html = manifest_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="export-batch-artifacts-panel"' in manifest_html
+        assert "graph.cypher" in manifest_html
         verification = _run_cli(["verify-export-batch", "--path", str(output_dir)])
         assert verification["schema"] == "edgp.export.batch.verification.v1"
         assert verification["ok"] is True
         assert verification["summary"]["exports"] == 2
+        verification_path = Path(temp_dir) / "export-batch-verification.json"
+        verification_path.write_text(json.dumps(verification), encoding="utf-8")
+        verification_html_path = Path(temp_dir) / "export-batch-verification.html"
+        completed_verification_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(verification_path),
+                "--output",
+                str(verification_html_path),
+            ],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        assert (
+            Path(completed_verification_report.stdout.strip())
+            == verification_html_path
+        )
+        verification_html = verification_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="export-batch-verification-panel"' in verification_html
+        assert "manifest.json" in verification_html
         directory_validation = _run_cli(["validate", "--path", str(output_dir)])
         assert directory_validation["ok"] is True
         assert directory_validation["targetType"] == "export-batch"
@@ -1950,6 +1999,30 @@ def _assert_export_batch() -> None:
         assert archive_report["schema"] == "edgp.export.batch.archive.v1"
         assert archive_report["ok"] is True
         assert archive_report["summary"]["files"] == 3
+        archive_report_path = Path(temp_dir) / "export-batch-archive.json"
+        archive_report_path.write_text(json.dumps(archive_report), encoding="utf-8")
+        archive_html_path = Path(temp_dir) / "export-batch-archive.html"
+        completed_archive_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(archive_report_path),
+                "--output",
+                str(archive_html_path),
+            ],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_archive_report.stdout.strip()) == archive_html_path
+        archive_html = archive_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="export-batch-archive-panel"' in archive_html
+        assert str(archive_path) in archive_html
         archive_verification = _run_cli(
             ["verify-export-batch-archive", "--path", str(archive_path)]
         )
