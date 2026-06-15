@@ -20,6 +20,7 @@ Regenerate or check it with
 
 - [CLI Index Workflows](#cli-index-workflows)
 - [Missing Required Field](#missing-required-field)
+- [Missing Report Bundle Archive](#missing-report-bundle-archive)
 - [Tampered Report Bundle Manifest](#tampered-report-bundle-manifest)
 - [Tampered Report Bundle Member](#tampered-report-bundle-member)
 - [Manifest Schema Mismatch](#manifest-schema-mismatch)
@@ -83,6 +84,18 @@ python -B -m src.cli failure-examples --code bundle.manifestInvalid --format tex
 python -B -m src.cli failure-examples --code manifestInvalid --format text
 ```
 
+Archive validation examples are indexed under the separate
+`report-bundle-archive` target type:
+
+```bash
+python -B -m src.cli failure-examples --target-type report-bundle-archive --format text
+```
+
+```text
+OK examples=1 schema=edgp.validation.failure.example.index.v1
+archive-missing targetType=report-bundle-archive contract=edgp.report.bundle.archive.v1 failureCodes=bundleArchive.archiveMissing verifierCodes=archiveMissing target=tests/fixtures/missing-report-bundle.tar.gz
+```
+
 ## Missing Required Field
 
 The fixture
@@ -122,6 +135,47 @@ Text output:
 
 ```text
 FAIL targetType=json-file failures=1 contract=edgp.graph.snapshot.v1 firstFailure=requiredMissing
+```
+
+## Missing Report Bundle Archive
+
+The target `tests/fixtures/missing-report-bundle.tar.gz` is intentionally absent.
+This documents the failure shape for CI/workbench handoff jobs that receive a
+path to a deterministic report bundle archive that was never produced or was
+removed before validation.
+
+Run:
+
+```bash
+python -B -m src.cli validate --path tests/fixtures/missing-report-bundle.tar.gz
+```
+
+Normalized result:
+
+```json
+{
+  "contract": "edgp.report.bundle.archive.v1",
+  "failures": [
+    {
+      "code": "bundleArchive.archiveMissing",
+      "message": "Archive file is missing",
+      "path": "<archive>"
+    }
+  ],
+  "ok": false,
+  "schema": "edgp.validation.report.v1",
+  "summary": {
+    "failures": 1
+  },
+  "target": "<target>",
+  "targetType": "report-bundle-archive"
+}
+```
+
+Text output:
+
+```text
+FAIL targetType=report-bundle-archive failures=1 contract=edgp.report.bundle.archive.v1 firstFailure=bundleArchive.archiveMissing
 ```
 
 ## Tampered Report Bundle Manifest

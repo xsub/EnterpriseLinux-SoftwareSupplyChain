@@ -1,10 +1,12 @@
 {
   "contracts": [
     "edgp.graph.snapshot.v1",
+    "edgp.report.bundle.archive.v1",
     "edgp.report.bundle.v1"
   ],
-  "exampleCount": 26,
+  "exampleCount": 27,
   "ids": [
+    "archive-missing",
     "bundle-digest-invalid",
     "bundle-digest-mismatch",
     "bundle-invalid",
@@ -36,7 +38,8 @@
   "sourceSchema": "edgp.validation.failure.example.index.v1",
   "targetTypes": [
     "json-file",
-    "report-bundle"
+    "report-bundle",
+    "report-bundle-archive"
   ],
   "validationFailureCodes": [
     "bundle.bundleDigestInvalid",
@@ -64,9 +67,11 @@
     "bundle.reportsInvalid",
     "bundle.sourceDigestMismatch",
     "bundle.sourceMissing",
+    "bundleArchive.archiveMissing",
     "requiredMissing"
   ],
   "verificationFailureCodes": [
+    "archiveMissing",
     "bundleDigestInvalid",
     "bundleDigestMismatch",
     "bundleInvalid",

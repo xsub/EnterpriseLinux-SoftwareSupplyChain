@@ -1,5 +1,5 @@
 {
-  "exampleCount": 26,
+  "exampleCount": 27,
   "examples": [
     {
       "commands": {
@@ -693,6 +693,33 @@
         "manifestInvalid"
       ],
       "verificationFixture": "tests/fixtures/report-bundle-verification-invalid-manifest-type.json",
+      "verificationSummary": {
+        "failures": 1,
+        "reports": 0
+      }
+    },
+    {
+      "commands": {
+        "validateText": "python -B -m src.cli validate --path tests/fixtures/missing-report-bundle.tar.gz --format text",
+        "verifyText": "python -B -m src.cli verify-bundle-archive --path tests/fixtures/missing-report-bundle.tar.gz --format text"
+      },
+      "contract": "edgp.report.bundle.archive.v1",
+      "firstFailure": {
+        "code": "bundleArchive.archiveMissing",
+        "message": "Archive file is missing",
+        "path": "<archive>"
+      },
+      "id": "archive-missing",
+      "target": "tests/fixtures/missing-report-bundle.tar.gz",
+      "targetType": "report-bundle-archive",
+      "validationFailureCodes": [
+        "bundleArchive.archiveMissing"
+      ],
+      "validationFixture": "tests/fixtures/validation-failure-missing-bundle-archive.json",
+      "verificationFailureCodes": [
+        "archiveMissing"
+      ],
+      "verificationFixture": "tests/fixtures/report-bundle-archive-verification-missing-archive.json",
       "verificationSummary": {
         "failures": 1,
         "reports": 0

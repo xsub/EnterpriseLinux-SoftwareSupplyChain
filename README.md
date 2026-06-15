@@ -711,7 +711,8 @@ machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 schema subset, including `anyOf` fields such as nullable bundle fingerprints,
 `oneOf` nullable fields such as report roots, typed `additionalProperties`
 maps such as bundle metadata, or validates a report bundle directory with the
-bundle verifier.
+bundle verifier. Deterministic report bundle archives are validated through the
+same read-only entrypoint and appear as `targetType=report-bundle-archive`.
 For bundles that already contain `manifest.triageSummary`, `validate
 --fail-on-status warn|fail` also gates on the generated triage status while
 leaving validation itself read-only.
@@ -733,6 +734,7 @@ edgp failure-examples --format text
 edgp failure-examples --list-codes
 edgp failure-examples --contract edgp.graph.snapshot.v1 --format text
 edgp failure-examples --target-type report-bundle --code manifestInvalid
+edgp failure-examples --target-type report-bundle-archive --code archiveMissing
 ```
 
 `failure-examples` filters are composable:
@@ -741,7 +743,7 @@ edgp failure-examples --target-type report-bundle --code manifestInvalid
 | --- | --- | --- |
 | `--id` | stable example ID | `manifest-invalid` |
 | `--contract` | documented schema contract | `edgp.graph.snapshot.v1` |
-| `--target-type` | artifact type | `json-file` |
+| `--target-type` | artifact type | `json-file`, `report-bundle-archive` |
 | `--code` | validation or verifier failure code | `bundle.manifestInvalid` |
 | `--list-codes` | available IDs, contracts, artifact types, and codes | `--list-codes` |
 
@@ -750,6 +752,7 @@ Common combinations:
 ```bash
 edgp failure-examples --target-type report-bundle --contract edgp.report.bundle.v1 --list-codes
 edgp failure-examples --target-type report-bundle --contract edgp.report.bundle.v1 --code manifestInvalid --format text
+edgp failure-examples --target-type report-bundle-archive --contract edgp.report.bundle.archive.v1 --format text
 ```
 
 `scripts/browser_smoke_report_sorting.py` generates a self-checking HTML report

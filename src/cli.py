@@ -2798,7 +2798,7 @@ def build_parser() -> argparse.ArgumentParser:
     failure_examples.add_argument(
         "--target-type",
         action="append",
-        choices=["json-file", "report-bundle"],
+        choices=["json-file", "report-bundle", "report-bundle-archive"],
         default=[],
         help="filter examples by target artifact type",
     )

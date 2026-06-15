@@ -39,7 +39,8 @@
       "items": {
         "enum": [
           "json-file",
-          "report-bundle"
+          "report-bundle",
+          "report-bundle-archive"
         ],
         "type": "string"
       },

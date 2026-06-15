@@ -36,6 +36,7 @@ def test_failure_example_index_matches_committed_fixtures() -> None:
     assert {entry["targetType"] for entry in index["examples"]} == {
         "json-file",
         "report-bundle",
+        "report-bundle-archive",
     }
     validation_codes = {
         code
@@ -45,6 +46,7 @@ def test_failure_example_index_matches_committed_fixtures() -> None:
     assert "requiredMissing" in validation_codes
     assert "bundle.manifestInvalid" in validation_codes
     assert "bundle.sourceDigestMismatch" in validation_codes
+    assert "bundleArchive.archiveMissing" in validation_codes
 
 
 def test_failure_example_index_matches_documented_schema() -> None:
@@ -60,9 +62,10 @@ def test_failure_example_filter_listing_matches_committed_fixture() -> None:
     assert listing == build_failure_example_filter_listing()
     assert listing["schema"] == "edgp.validation.failure.example.filters.v1"
     assert listing["sourceSchema"] == "edgp.validation.failure.example.index.v1"
-    assert listing["exampleCount"] == 26
+    assert listing["exampleCount"] == 27
     assert "edgp.graph.snapshot.v1" in listing["contracts"]
     assert "edgp.report.bundle.v1" in listing["contracts"]
+    assert "edgp.report.bundle.archive.v1" in listing["contracts"]
     assert "manifest-invalid" in listing["ids"]
 
 
@@ -85,13 +88,19 @@ def test_cli_failure_examples_emits_text_summary(capsys) -> None:
 
     text = capsys.readouterr().out
     assert text.startswith(
-        "OK examples=26 schema=edgp.validation.failure.example.index.v1"
+        "OK examples=27 schema=edgp.validation.failure.example.index.v1"
     )
     assert (
         "manifest-invalid targetType=report-bundle "
         "contract=edgp.report.bundle.v1 failureCodes=bundle.manifestInvalid"
     ) in text
     assert "verifierCodes=manifestInvalid" in text
+    assert (
+        "archive-missing targetType=report-bundle-archive "
+        "contract=edgp.report.bundle.archive.v1 "
+        "failureCodes=bundleArchive.archiveMissing"
+    ) in text
+    assert "verifierCodes=archiveMissing" in text
 
 
 def test_cli_failure_examples_filters_by_validation_code(capsys) -> None:
@@ -130,6 +139,11 @@ def test_cli_failure_examples_filters_by_target_type(capsys) -> None:
     payload = json.loads(capsys.readouterr().out)
     assert payload["exampleCount"] == 1
     assert payload["examples"][0]["id"] == "graph-missing-edge-count"
+
+    assert main(["failure-examples", "--target-type", "report-bundle-archive"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["exampleCount"] == 1
+    assert payload["examples"][0]["id"] == "archive-missing"
 
 
 def test_cli_failure_examples_combines_filters(capsys) -> None:
@@ -207,14 +221,19 @@ def test_cli_failure_examples_lists_available_filter_values(capsys) -> None:
     assert payload == build_failure_example_filter_listing()
     assert payload["schema"] == "edgp.validation.failure.example.filters.v1"
     assert payload["sourceSchema"] == "edgp.validation.failure.example.index.v1"
-    assert payload["exampleCount"] == 26
+    assert payload["exampleCount"] == 27
     assert "manifest-invalid" in payload["ids"]
+    assert "archive-missing" in payload["ids"]
     assert "json-file" in payload["targetTypes"]
     assert "report-bundle" in payload["targetTypes"]
+    assert "report-bundle-archive" in payload["targetTypes"]
     assert "edgp.report.bundle.v1" in payload["contracts"]
+    assert "edgp.report.bundle.archive.v1" in payload["contracts"]
     assert "bundle.manifestInvalid" in payload["validationFailureCodes"]
+    assert "bundleArchive.archiveMissing" in payload["validationFailureCodes"]
     assert "requiredMissing" in payload["validationFailureCodes"]
     assert "manifestInvalid" in payload["verificationFailureCodes"]
+    assert "archiveMissing" in payload["verificationFailureCodes"]
 
 
 def test_cli_failure_example_filter_listing_matches_documented_schema(

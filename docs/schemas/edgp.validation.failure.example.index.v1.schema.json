@@ -57,7 +57,8 @@
             "description": "Type of artifact represented by target.",
             "enum": [
               "json-file",
-              "report-bundle"
+              "report-bundle",
+              "report-bundle-archive"
             ],
             "type": "string"
           },
@@ -85,7 +86,7 @@
             "type": "array"
           },
           "verificationFixture": {
-            "description": "Path to the normalized edgp verify-bundle failure fixture when this is a bundle example.",
+            "description": "Path to the normalized edgp verify-bundle or verify-bundle-archive failure fixture when this is a bundle example.",
             "minLength": 1,
             "type": "string"
           },

@@ -229,6 +229,7 @@ def _normalize_validation_report(payload: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(payload)
     bundle_verification = normalized.get("bundleVerification")
     bundle_dir = ""
+    archive_path = ""
     if isinstance(bundle_verification, dict):
         bundle = dict(bundle_verification)
         bundle_dir = str(bundle.get("bundleDir", ""))
@@ -240,11 +241,44 @@ def _normalize_validation_report(payload: dict[str, Any]) -> dict[str, Any]:
             bundle_dir,
         )
         normalized["bundleVerification"] = bundle
+    bundle_archive_verification = normalized.get("bundleArchiveVerification")
+    if isinstance(bundle_archive_verification, dict):
+        archive = _normalize_archive_verification_report(bundle_archive_verification)
+        archive_path = str(bundle_archive_verification.get("archive", ""))
+        bundle_dir = str(bundle_archive_verification.get("bundleDir", ""))
+        normalized["bundleArchiveVerification"] = archive
     normalized["target"] = "<target>"
     normalized["failures"] = _normalize_failure_paths(
         normalized.get("failures", []),
         bundle_dir,
+        archive_path=archive_path,
     )
+    return normalized
+
+
+def _normalize_archive_verification_report(payload: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(payload)
+    archive_path = str(normalized.get("archive", ""))
+    bundle_dir = str(normalized.get("bundleDir", ""))
+    normalized["archive"] = "<archive>"
+    normalized["bundleDir"] = "<bundle-dir>"
+    if normalized.get("archiveSha256") is not None:
+        normalized["archiveSha256"] = "<archiveSha256>"
+    if normalized.get("bundleSha256") is not None:
+        normalized["bundleSha256"] = "<bundleSha256>"
+    verification = normalized.get("verification")
+    if isinstance(verification, dict):
+        nested = dict(verification)
+        nested_bundle_dir = str(nested.get("bundleDir", bundle_dir))
+        nested["bundleDir"] = "<bundle-dir>"
+        if nested.get("bundleSha256") is not None:
+            nested["bundleSha256"] = "<bundleSha256>"
+        nested["failures"] = _normalize_failure_paths(
+            nested.get("failures", []),
+            nested_bundle_dir,
+            archive_path=archive_path,
+        )
+        normalized["verification"] = nested
     return normalized
 
 
@@ -368,6 +402,23 @@ def _assert_validate_command() -> None:
         ).read_text(encoding="utf-8")
     )
     assert _normalize_validation_report(failure_payload) == fixture
+
+    archive_failure_payload = _run_cli_allow_failure(
+        [
+            "validate",
+            "--path",
+            "tests/fixtures/missing-report-bundle.tar.gz",
+        ]
+    )
+    archive_fixture = json.loads(
+        (
+            REPO_ROOT
+            / "tests"
+            / "fixtures"
+            / "validation-failure-missing-bundle-archive.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert _normalize_validation_report(archive_failure_payload) == archive_fixture
 
     catalog_payload = _run_cli(["validate", "--path", "tests/fixtures/bundle-catalog.json"])
     assert catalog_payload["ok"] is True
@@ -703,11 +754,16 @@ def _assert_failure_example_index_document() -> None:
     assert filter_summary == filter_fixture
     assert filter_summary["schema"] == "edgp.validation.failure.example.filters.v1"
     assert filter_summary["sourceSchema"] == "edgp.validation.failure.example.index.v1"
-    assert filter_summary["exampleCount"] == 26
+    assert filter_summary["exampleCount"] == 27
     assert "manifest-invalid" in filter_summary["ids"]
+    assert "archive-missing" in filter_summary["ids"]
     assert "edgp.report.bundle.v1" in filter_summary["contracts"]
+    assert "edgp.report.bundle.archive.v1" in filter_summary["contracts"]
+    assert "report-bundle-archive" in filter_summary["targetTypes"]
     assert "bundle.manifestInvalid" in filter_summary["validationFailureCodes"]
+    assert "bundleArchive.archiveMissing" in filter_summary["validationFailureCodes"]
     assert "manifestInvalid" in filter_summary["verificationFailureCodes"]
+    assert "archiveMissing" in filter_summary["verificationFailureCodes"]
     validation = _run_cli(
         ["validate", "--path", "docs/validation-failure-example-filters.json"]
     )
@@ -746,10 +802,12 @@ def _assert_failure_example_index_document() -> None:
         text=True,
     )
     assert completed.stdout.startswith(
-        "OK examples=26 schema=edgp.validation.failure.example.index.v1"
+        "OK examples=27 schema=edgp.validation.failure.example.index.v1"
     )
     assert "manifest-invalid targetType=report-bundle" in completed.stdout
     assert "verifierCodes=manifestInvalid" in completed.stdout
+    assert "archive-missing targetType=report-bundle-archive" in completed.stdout
+    assert "verifierCodes=archiveMissing" in completed.stdout
     completed = subprocess.run(
         [
             sys.executable,
@@ -821,6 +879,28 @@ def _assert_failure_example_index_document() -> None:
         "OK examples=1 schema=edgp.validation.failure.example.index.v1"
     )
     assert "graph-missing-edge-count targetType=json-file" in completed.stdout
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "failure-examples",
+            "--target-type",
+            "report-bundle-archive",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.startswith(
+        "OK examples=1 schema=edgp.validation.failure.example.index.v1"
+    )
+    assert "archive-missing targetType=report-bundle-archive" in completed.stdout
+    assert "verifierCodes=archiveMissing" in completed.stdout
     completed = subprocess.run(
         [
             sys.executable,
@@ -1251,6 +1331,8 @@ def _normalize_verification_report(payload: dict[str, Any]) -> dict[str, Any]:
 def _normalize_failure_paths(
     failures: object,
     bundle_dir: str,
+    *,
+    archive_path: str = "",
 ) -> list[dict[str, Any]]:
     normalized = []
     if not isinstance(failures, list):
@@ -1259,8 +1341,13 @@ def _normalize_failure_paths(
         if not isinstance(failure, dict):
             continue
         item = dict(failure)
-        if bundle_dir and isinstance(item.get("path"), str):
-            item["path"] = item["path"].replace(bundle_dir, "<bundle-dir>", 1)
+        path = item.get("path")
+        if isinstance(path, str):
+            if archive_path:
+                path = path.replace(archive_path, "<archive>", 1)
+            if bundle_dir:
+                path = path.replace(bundle_dir, "<bundle-dir>", 1)
+            item["path"] = path
         normalized.append(item)
     return normalized
 

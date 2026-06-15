@@ -169,6 +169,8 @@ surfaces are:
   bundle manifests and invalid manifest JSON.
 - Provide committed validation and verification failure examples for non-object
   bundle manifests, with smoke coverage for every stable verifier failure code.
+- Provide committed validation and verification failure examples for missing
+  deterministic report bundle archives.
 - Generate a machine-readable validation failure example index for workbench
   and RAG ingestion.
 - Generate a machine-readable validation failure example filter listing for
@@ -464,6 +466,7 @@ python -B -m src.cli validate --path tests/fixtures/source-digest-mismatch-bundl
 python -B -m src.cli validate --path tests/fixtures/missing-manifest-report-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-json-manifest-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/invalid-manifest-type-bundle --format text
+python -B -m src.cli validate --path tests/fixtures/missing-report-bundle.tar.gz --format text
 python -B -m src.cli validate --path docs/validation-failure-example-index.json
 python -B -m src.cli failure-examples
 python -B -m src.cli failure-examples --format text
@@ -471,6 +474,7 @@ python -B -m src.cli failure-examples --list-codes
 python -B -m src.cli failure-examples --id manifest-invalid
 python -B -m src.cli failure-examples --code bundle.manifestInvalid
 python -B -m src.cli failure-examples --target-type report-bundle --code manifestInvalid
+python -B -m src.cli failure-examples --target-type report-bundle-archive --code archiveMissing
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check

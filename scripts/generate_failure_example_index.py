@@ -179,6 +179,12 @@ EXAMPLES = [
         "tests/fixtures/validation-failure-invalid-manifest-type.json",
         "tests/fixtures/report-bundle-verification-invalid-manifest-type.json",
     ),
+    FailureExample(
+        "archive-missing",
+        "tests/fixtures/missing-report-bundle.tar.gz",
+        "tests/fixtures/validation-failure-missing-bundle-archive.json",
+        "tests/fixtures/report-bundle-archive-verification-missing-archive.json",
+    ),
 ]
 
 
@@ -269,6 +275,19 @@ def _example_entry(example: FailureExample) -> dict[str, Any]:
         entry["verificationSummary"] = bundle_verification.get("summary", {})
         entry["commands"]["verifyText"] = (
             f"python -B -m src.cli verify-bundle --path {example.target} --format text"
+        )
+    archive_verification = validation.get("bundleArchiveVerification")
+    if isinstance(archive_verification, dict):
+        verification = archive_verification.get("verification", {})
+        if not isinstance(verification, dict):
+            verification = {}
+        verifier_failures = _failure_records(verification)
+        entry["verificationFixture"] = example.verification_fixture
+        entry["verificationFailureCodes"] = _failure_codes(verifier_failures)
+        entry["verificationSummary"] = verification.get("summary", {})
+        entry["commands"]["verifyText"] = (
+            "python -B -m src.cli verify-bundle-archive "
+            f"--path {example.target} --format text"
         )
 
     return entry

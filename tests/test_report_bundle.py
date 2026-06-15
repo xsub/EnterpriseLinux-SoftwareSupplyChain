@@ -238,6 +238,19 @@ def test_verify_report_bundle_archive_rejects_unsafe_members(tmp_path) -> None:
     assert report["verification"]["failures"][0]["code"] == "archiveMemberPathInvalid"
 
 
+def test_verify_report_bundle_archive_matches_missing_archive_fixture() -> None:
+    report = verify_report_bundle_archive(
+        Path("tests/fixtures/missing-report-bundle.tar.gz")
+    )
+    expected = json.loads(
+        Path(
+            "tests/fixtures/report-bundle-archive-verification-missing-archive.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert _normalize_archive_verification_report(report) == expected
+
+
 def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:
     cases = [
         (
@@ -428,9 +441,37 @@ def _normalize_verification_report(report: dict[str, object]) -> dict[str, objec
     return normalized
 
 
+def _normalize_archive_verification_report(report: dict[str, object]) -> dict[str, object]:
+    normalized = dict(report)
+    archive_path = str(normalized.get("archive", ""))
+    bundle_dir = str(normalized.get("bundleDir", ""))
+    normalized["archive"] = "<archive>"
+    normalized["bundleDir"] = "<bundle-dir>"
+    if normalized.get("archiveSha256") is not None:
+        normalized["archiveSha256"] = "<archiveSha256>"
+    if normalized.get("bundleSha256") is not None:
+        normalized["bundleSha256"] = "<bundleSha256>"
+    verification = normalized.get("verification")
+    if isinstance(verification, dict):
+        nested = dict(verification)
+        nested_bundle_dir = str(nested.get("bundleDir", bundle_dir))
+        nested["bundleDir"] = "<bundle-dir>"
+        if nested.get("bundleSha256") is not None:
+            nested["bundleSha256"] = "<bundleSha256>"
+        nested["failures"] = _normalize_failure_paths(
+            nested.get("failures", []),
+            nested_bundle_dir,
+            archive_path=archive_path,
+        )
+        normalized["verification"] = nested
+    return normalized
+
+
 def _normalize_failure_paths(
     failures: object,
     bundle_dir: str,
+    *,
+    archive_path: str = "",
 ) -> list[dict[str, object]]:
     normalized = []
     if not isinstance(failures, list):
@@ -439,7 +480,12 @@ def _normalize_failure_paths(
         if not isinstance(failure, dict):
             continue
         item = dict(failure)
-        if bundle_dir and isinstance(item.get("path"), str):
-            item["path"] = item["path"].replace(bundle_dir, "<bundle-dir>", 1)
+        path = item.get("path")
+        if isinstance(path, str):
+            if archive_path:
+                path = path.replace(archive_path, "<archive>", 1)
+            if bundle_dir:
+                path = path.replace(bundle_dir, "<bundle-dir>", 1)
+            item["path"] = path
         normalized.append(item)
     return normalized
