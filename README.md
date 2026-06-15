@@ -464,6 +464,10 @@ read-only copies of the forward and reverse arrays plus package and metadata
 maps. This separates ingestion-time mutation from query-time traversal, so
 benchmark and future server workers can run on a stable object with predictable
 memory accounting.
+Reachability methods accept an optional traversal backend selector. The default
+`python` backend is portable; `auto` uses an installed Numba kernel when
+available and otherwise falls back to Python; `numba` requires installing the
+optional `.[fast]` extra and fails clearly if the accelerator is unavailable.
 
 This is an intentional productionization step. Native Python lists would store
 boxed integers behind arrays of object pointers. Even when the list container is
@@ -761,7 +765,9 @@ when the generated rollup reaches the selected threshold.
 
 `edgp benchmark` builds a deterministic synthetic CSR graph, freezes it into a
 read-only runtime snapshot, and reports build, freeze, reachable traversal,
-reverse traversal, and most-depended-upon timings. It is intended as a small
+reverse traversal, accelerator profile, and most-depended-upon timings. Use
+`--backend python`, `--backend auto`, or `--backend numba` to compare the
+portable path with optional `.[fast]` Numba kernels. It is intended as a small
 smoke benchmark for comparing host environments.
 
 ### JSON Snapshot

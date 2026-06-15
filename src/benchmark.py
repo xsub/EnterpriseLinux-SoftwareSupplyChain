@@ -4,14 +4,21 @@ from __future__ import annotations
 
 from time import perf_counter
 
+from src.core_graph.accelerators import (
+    accelerator_profile,
+    select_traversal_backend,
+)
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 
 
-def run_synthetic_benchmark(*, nodes: int = 1000, fanout: int = 3) -> dict[str, object]:
+def run_synthetic_benchmark(
+    *, nodes: int = 1000, fanout: int = 3, backend: str = "python"
+) -> dict[str, object]:
     if nodes < 1:
         raise ValueError("nodes must be at least 1")
     if fanout < 0:
         raise ValueError("fanout must be non-negative")
+    selected_backend = select_traversal_backend(backend)
 
     build_start = perf_counter()
     graph, edge_count = _build_synthetic_graph(nodes=nodes, fanout=fanout)
@@ -22,11 +29,17 @@ def run_synthetic_benchmark(*, nodes: int = 1000, fanout: int = 3) -> dict[str, 
     freeze_ms = _elapsed_ms(freeze_start)
 
     reachable_start = perf_counter()
-    reachable = frozen_graph.reachable_dependencies("pkg0==1.0.0")
+    reachable = frozen_graph.reachable_dependencies(
+        "pkg0==1.0.0",
+        backend=selected_backend,
+    )
     reachable_ms = _elapsed_ms(reachable_start)
 
     reverse_reachable_start = perf_counter()
-    reverse_reachable = frozen_graph.reachable_dependents(f"pkg{nodes - 1}==1.0.0")
+    reverse_reachable = frozen_graph.reachable_dependents(
+        f"pkg{nodes - 1}==1.0.0",
+        backend=selected_backend,
+    )
     reverse_reachable_ms = _elapsed_ms(reverse_reachable_start)
 
     ranking_start = perf_counter()
@@ -38,7 +51,12 @@ def run_synthetic_benchmark(*, nodes: int = 1000, fanout: int = 3) -> dict[str, 
         "parameters": {
             "nodes": nodes,
             "fanout": fanout,
+            "backend": backend,
         },
+        "accelerators": accelerator_profile(
+            requested_backend=backend,
+            selected_backend=selected_backend,
+        ),
         "stats": {
             "nodes": len(graph),
             "edges": edge_count,

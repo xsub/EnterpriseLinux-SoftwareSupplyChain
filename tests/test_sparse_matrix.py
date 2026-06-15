@@ -126,7 +126,9 @@ def test_csr_graph_int_native_traversal_queries() -> None:
     assert graph.get_dependency_ids(999).tolist() == []
     assert graph.get_dependent_ids(999).tolist() == []
     assert graph.reachable_dependency_ids(app) == [lib, tool, base]
+    assert graph.reachable_dependency_ids(app, backend="auto") == [lib, tool, base]
     assert graph.reachable_dependent_ids(base) == [lib, app, tool]
+    assert graph.reachable_dependent_ids(base, backend="auto") == [lib, app, tool]
     assert graph.shortest_dependency_path_ids(app, base) == [app, lib, base]
     assert graph.shortest_dependency_path_ids(base, app, reverse=True) == [
         base,
@@ -151,6 +153,7 @@ def test_freeze_returns_read_only_snapshot_for_traversal() -> None:
     assert frozen.get_dependencies("app==1.0.0") == ["lib==1.0.0"]
     assert frozen.get_dependents("base==1.0.0") == ["lib==1.0.0"]
     assert frozen.reachable_dependency_ids(app) == [lib, base]
+    assert frozen.reachable_dependency_ids(app, backend="auto") == [lib, base]
     assert frozen.shortest_dependency_path_ids(app, base) == [app, lib, base]
     assert frozen.get_vertex_metadata("app==1.0.0") == {"ecosystem": "test"}
 

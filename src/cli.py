@@ -1372,13 +1372,14 @@ def _write_performance_report_bundle(
     output_dir: Path,
     *,
     scenarios: Sequence[tuple[int, int]],
+    backend: str = "python",
     command: str | None = None,
     include_triage_summary: bool = False,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / "performance-report.json"
     report_path.write_text(
-        _json(build_performance_report(scenarios)),
+        _json(build_performance_report(scenarios, backend=backend)),
         encoding="utf-8",
     )
     return write_report_bundle(
@@ -3070,6 +3071,12 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark = subparsers.add_parser("benchmark", help="Run a synthetic CSR benchmark")
     benchmark.add_argument("--nodes", type=int, default=1000)
     benchmark.add_argument("--fanout", type=int, default=3)
+    benchmark.add_argument(
+        "--backend",
+        choices=["python", "auto", "numba"],
+        default="python",
+        help="traversal backend for benchmark reachability queries",
+    )
 
     performance_report = subparsers.add_parser(
         "performance-report",
@@ -3077,6 +3084,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     performance_report.add_argument("--nodes", type=int, default=1000)
     performance_report.add_argument("--fanout", type=int, default=3)
+    performance_report.add_argument(
+        "--backend",
+        choices=["python", "auto", "numba"],
+        default="python",
+        help="traversal backend for benchmark reachability queries",
+    )
     performance_report.add_argument(
         "--scenario",
         action="append",
@@ -3089,6 +3102,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     performance_report_bundle.add_argument("--nodes", type=int, default=1000)
     performance_report_bundle.add_argument("--fanout", type=int, default=3)
+    performance_report_bundle.add_argument(
+        "--backend",
+        choices=["python", "auto", "numba"],
+        default="python",
+        help="traversal backend for benchmark reachability queries",
+    )
     performance_report_bundle.add_argument(
         "--scenario",
         action="append",
@@ -4082,7 +4101,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "benchmark":
-        print(_json(run_synthetic_benchmark(nodes=args.nodes, fanout=args.fanout)))
+        print(
+            _json(
+                run_synthetic_benchmark(
+                    nodes=args.nodes,
+                    fanout=args.fanout,
+                    backend=args.backend,
+                )
+            )
+        )
         return 0
 
     if args.command == "performance-report":
@@ -4093,7 +4120,8 @@ def main(argv: list[str] | None = None) -> int:
                         args.scenario,
                         nodes=args.nodes,
                         fanout=args.fanout,
-                    )
+                    ),
+                    backend=args.backend,
                 )
             )
         )
@@ -4108,6 +4136,7 @@ def main(argv: list[str] | None = None) -> int:
                     nodes=args.nodes,
                     fanout=args.fanout,
                 ),
+                backend=args.backend,
                 command=command,
                 include_triage_summary=(
                     args.triage_summary or args.fail_on_status is not None

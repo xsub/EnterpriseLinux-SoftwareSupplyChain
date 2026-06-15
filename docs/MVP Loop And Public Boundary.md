@@ -374,6 +374,9 @@ surfaces are:
   column indices.
 - Freeze mutable CSR builders into read-only `FrozenCSRGraph` runtime snapshots
   for stable query-time traversal and explicit freeze timing in benchmarks.
+- Select optional traversal backends for benchmark reachability with
+  `python`, `auto`, or `numba`, while keeping Python as the dependency-light
+  public default.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

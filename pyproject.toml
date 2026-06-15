@@ -13,6 +13,7 @@ dependencies = ["numpy>=2.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+fast = ["numba>=0.61"]
 
 [project.scripts]
 edgp = "src.cli:main"

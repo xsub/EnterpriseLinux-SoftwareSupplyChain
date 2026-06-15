@@ -10,6 +10,11 @@ from typing import Iterator
 
 import numpy as np
 
+from src.core_graph.accelerators import (
+    maybe_numba_reachable_ids,
+    select_traversal_backend,
+)
+
 _CSR_DTYPE = np.int32
 _CSR_MAX = int(np.iinfo(_CSR_DTYPE).max)
 
@@ -94,23 +99,35 @@ class FrozenCSRGraph:
         end = int(self.reverse_row_pointers[vertex_id + 1])
         return self.reverse_column_indices[start:end]
 
-    def reachable_dependencies(self, package_id: str) -> list[str]:
+    def reachable_dependencies(
+        self, package_id: str, *, backend: str = "python"
+    ) -> list[str]:
         vertex_id = self.vertex_map.get(package_id)
         if vertex_id is None:
             return []
-        return self._vertex_labels(self.reachable_dependency_ids(vertex_id))
+        return self._vertex_labels(
+            self.reachable_dependency_ids(vertex_id, backend=backend)
+        )
 
-    def reachable_dependency_ids(self, vertex_id: int) -> list[int]:
-        return self._reachable_ids(vertex_id, reverse=False)
+    def reachable_dependency_ids(
+        self, vertex_id: int, *, backend: str = "python"
+    ) -> list[int]:
+        return self._reachable_ids(vertex_id, reverse=False, backend=backend)
 
-    def reachable_dependents(self, package_id: str) -> list[str]:
+    def reachable_dependents(
+        self, package_id: str, *, backend: str = "python"
+    ) -> list[str]:
         vertex_id = self.vertex_map.get(package_id)
         if vertex_id is None:
             return []
-        return self._vertex_labels(self.reachable_dependent_ids(vertex_id))
+        return self._vertex_labels(
+            self.reachable_dependent_ids(vertex_id, backend=backend)
+        )
 
-    def reachable_dependent_ids(self, vertex_id: int) -> list[int]:
-        return self._reachable_ids(vertex_id, reverse=True)
+    def reachable_dependent_ids(
+        self, vertex_id: int, *, backend: str = "python"
+    ) -> list[int]:
+        return self._reachable_ids(vertex_id, reverse=True, backend=backend)
 
     def shortest_dependency_path(
         self, source_id: str, target_id: str, *, reverse: bool = False
@@ -205,9 +222,26 @@ class FrozenCSRGraph:
         )
         return profile
 
-    def _reachable_ids(self, vertex_id: int, *, reverse: bool) -> list[int]:
+    def _reachable_ids(
+        self, vertex_id: int, *, reverse: bool, backend: str = "python"
+    ) -> list[int]:
         if not self._is_valid_vertex_id(vertex_id):
             return []
+
+        resolved_backend = select_traversal_backend(backend)
+        row_pointers = self.reverse_row_pointers if reverse else self.row_pointers
+        column_indices = (
+            self.reverse_column_indices if reverse else self.column_indices
+        )
+        accelerated = maybe_numba_reachable_ids(
+            row_pointers=row_pointers,
+            column_indices=column_indices,
+            start_vertex=vertex_id,
+            vertex_count=self.next_vertex_id,
+            backend=resolved_backend,
+        )
+        if accelerated is not None:
+            return [int(vertex_id) for vertex_id in accelerated]
 
         neighbor_fn = self.get_dependent_ids if reverse else self.get_dependency_ids
         queue: deque[int] = deque(int(neighbor) for neighbor in neighbor_fn(vertex_id))
@@ -332,25 +366,37 @@ class CSRDependencyGraph:
         end = int(self.reverse_row_pointers[vertex_id + 1])
         return self.reverse_column_indices[start:end]
 
-    def reachable_dependencies(self, package_id: str) -> list[str]:
+    def reachable_dependencies(
+        self, package_id: str, *, backend: str = "python"
+    ) -> list[str]:
         self._materialize()
         vertex_id = self.vertex_map.get(package_id)
         if vertex_id is None:
             return []
-        return self._vertex_labels(self.reachable_dependency_ids(vertex_id))
+        return self._vertex_labels(
+            self.reachable_dependency_ids(vertex_id, backend=backend)
+        )
 
-    def reachable_dependency_ids(self, vertex_id: int) -> list[int]:
-        return self._reachable_ids(vertex_id, reverse=False)
+    def reachable_dependency_ids(
+        self, vertex_id: int, *, backend: str = "python"
+    ) -> list[int]:
+        return self._reachable_ids(vertex_id, reverse=False, backend=backend)
 
-    def reachable_dependents(self, package_id: str) -> list[str]:
+    def reachable_dependents(
+        self, package_id: str, *, backend: str = "python"
+    ) -> list[str]:
         self._materialize()
         vertex_id = self.vertex_map.get(package_id)
         if vertex_id is None:
             return []
-        return self._vertex_labels(self.reachable_dependent_ids(vertex_id))
+        return self._vertex_labels(
+            self.reachable_dependent_ids(vertex_id, backend=backend)
+        )
 
-    def reachable_dependent_ids(self, vertex_id: int) -> list[int]:
-        return self._reachable_ids(vertex_id, reverse=True)
+    def reachable_dependent_ids(
+        self, vertex_id: int, *, backend: str = "python"
+    ) -> list[int]:
+        return self._reachable_ids(vertex_id, reverse=True, backend=backend)
 
     def shortest_dependency_path(
         self, source_id: str, target_id: str, *, reverse: bool = False
@@ -462,10 +508,27 @@ class CSRDependencyGraph:
             vertex_metadata=self.vertex_metadata,
         )
 
-    def _reachable_ids(self, vertex_id: int, *, reverse: bool) -> list[int]:
+    def _reachable_ids(
+        self, vertex_id: int, *, reverse: bool, backend: str = "python"
+    ) -> list[int]:
         self._materialize()
         if not self._is_valid_vertex_id(vertex_id):
             return []
+
+        resolved_backend = select_traversal_backend(backend)
+        row_pointers = self.reverse_row_pointers if reverse else self.row_pointers
+        column_indices = (
+            self.reverse_column_indices if reverse else self.column_indices
+        )
+        accelerated = maybe_numba_reachable_ids(
+            row_pointers=row_pointers,
+            column_indices=column_indices,
+            start_vertex=vertex_id,
+            vertex_count=self.next_vertex_id,
+            backend=resolved_backend,
+        )
+        if accelerated is not None:
+            return [int(vertex_id) for vertex_id in accelerated]
 
         neighbor_fn = self.get_dependent_ids if reverse else self.get_dependency_ids
         queue: deque[int] = deque(int(neighbor) for neighbor in neighbor_fn(vertex_id))

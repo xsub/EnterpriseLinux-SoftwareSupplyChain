@@ -7,7 +7,9 @@ def test_synthetic_benchmark_reports_graph_shape_and_timings() -> None:
     payload = run_synthetic_benchmark(nodes=6, fanout=2)
 
     assert payload["schema"] == "edgp.benchmark.v1"
-    assert payload["parameters"] == {"nodes": 6, "fanout": 2}
+    assert payload["parameters"] == {"nodes": 6, "fanout": 2, "backend": "python"}
+    assert payload["accelerators"]["requestedBackend"] == "python"
+    assert payload["accelerators"]["selectedBackend"] == "python"
     assert payload["stats"] == {
         "nodes": 6,
         "edges": 9,
@@ -27,3 +29,12 @@ def test_synthetic_benchmark_reports_graph_shape_and_timings() -> None:
     assert payload["storage"]["reverseColumnIndicesBytes"] == payload["storage"][
         "columnIndicesBytes"
     ]
+
+
+def test_synthetic_benchmark_reports_auto_backend_selection() -> None:
+    payload = run_synthetic_benchmark(nodes=6, fanout=2, backend="auto")
+
+    assert payload["parameters"]["backend"] == "auto"
+    assert payload["accelerators"]["requestedBackend"] == "auto"
+    assert payload["accelerators"]["selectedBackend"] in {"python", "numba"}
+    assert payload["stats"]["reachableFromRoot"] == 5

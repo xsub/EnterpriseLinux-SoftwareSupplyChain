@@ -92,3 +92,7 @@ one relevant measurement:
 - Frozen graph runtime:
   mutable builders now expose `freeze()` for read-only `FrozenCSRGraph`
   snapshots, and synthetic benchmarks report freeze timing before traversal.
+- Optional Numba kernels:
+  `.[fast]` declares the optional Numba dependency, traversal accepts
+  `python`, `auto`, or `numba` backends, and benchmark JSON reports accelerator
+  availability plus the selected backend.

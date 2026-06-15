@@ -9,10 +9,12 @@ from src.benchmark import run_synthetic_benchmark
 PERFORMANCE_REPORT_SCHEMA = "edgp.performance.report.v1"
 
 
-def build_performance_report(scenarios: Sequence[tuple[int, int]]) -> dict[str, Any]:
+def build_performance_report(
+    scenarios: Sequence[tuple[int, int]], *, backend: str = "python"
+) -> dict[str, Any]:
     """Run deterministic benchmark scenarios and summarize CSR layout evidence."""
 
-    results = [_result_row(nodes, fanout) for nodes, fanout in scenarios]
+    results = [_result_row(nodes, fanout, backend=backend) for nodes, fanout in scenarios]
     return {
         "schema": PERFORMANCE_REPORT_SCHEMA,
         "ecosystem": "generic",
@@ -24,13 +26,20 @@ def build_performance_report(scenarios: Sequence[tuple[int, int]]) -> dict[str, 
                 bool(result.get("storage", {}).get("cContiguous")) for result in results
             ),
             "layout": "numpy.int32.c_contiguous",
+            "backend": backend,
+            "selectedBackends": sorted(
+                {
+                    str(result.get("accelerators", {}).get("selectedBackend", "python"))
+                    for result in results
+                }
+            ),
         },
         "results": results,
     }
 
 
-def _result_row(nodes: int, fanout: int) -> dict[str, Any]:
-    benchmark = run_synthetic_benchmark(nodes=nodes, fanout=fanout)
+def _result_row(nodes: int, fanout: int, *, backend: str) -> dict[str, Any]:
+    benchmark = run_synthetic_benchmark(nodes=nodes, fanout=fanout, backend=backend)
     stats = benchmark["stats"]
     timings = benchmark["timingsMs"]
     parameters = benchmark["parameters"]
@@ -46,4 +55,6 @@ def _result_row(nodes: int, fanout: int) -> dict[str, Any]:
         "reverseReachableMs": timings["reverseReachable"],
         "mostDependedUponMs": timings["mostDependedUpon"],
         "storage": benchmark["storage"],
+        "accelerators": benchmark["accelerators"],
+        "backend": parameters["backend"],
     }

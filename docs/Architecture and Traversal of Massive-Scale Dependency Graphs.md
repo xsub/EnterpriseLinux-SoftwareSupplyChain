@@ -39,6 +39,8 @@ Ranking follows the same principle. Most-depended-upon calculations count incomi
 
 EDGP now separates mutable graph construction from read-only traversal through `CSRDependencyGraph.freeze()`. Builders and adapters can keep Python dictionaries while ingestion is active, then produce a `FrozenCSRGraph` with read-only copies of the forward and reverse NumPy arrays plus package and metadata maps. This gives query workers a stable runtime object, prevents accidental mutation during traversal, and makes benchmark output explicit about the cost of freezing versus the cost of executing reachability and ranking queries.
 
+Optional Numba kernels now sit behind that frozen runtime boundary. The portable Python traversal remains the default, while `backend=auto` can select a compiled reachability kernel when the optional `.[fast]` extra is installed. This keeps the public MVP dependency-light on AlmaLinux but gives production deployments a measured path toward native loop execution without changing the CSR storage contract.
+
 The concurrency decision changes with Python 3.14's free-threaded build (`3.14t`). Historically, the Global Interpreter Lock (GIL) made highly parallel pure-Python graph traversal unattractive and pushed teams toward Rust or C++ extensions for multi-core execution. With a free-threaded Python runtime, EDGP can run parallel reachability workers over contiguous NumPy CSR arrays using native Python threading. This gives us enterprise-grade performance without the overhead of maintaining a separate Rust or C++ extension.
 
 The current public-resource MVP applies that research boundary to sources that
