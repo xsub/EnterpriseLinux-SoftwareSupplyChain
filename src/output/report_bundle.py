@@ -5,15 +5,18 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import tarfile
 from dataclasses import dataclass
+from gzip import GzipFile
 from html import escape
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, BinaryIO, Mapping, Sequence
 
 from src.output.html_report import render_report
 from src.triage_summary import build_triage_summary_report
 
 BUNDLE_SHA256_KEY = "bundleSha256"
+ARCHIVE_SCHEMA = "edgp.report.bundle.archive.v1"
 MANIFEST_SCHEMA = "edgp.report.bundle.v1"
 VERIFICATION_SCHEMA = "edgp.report.bundle.verification.v1"
 SOURCE_KINDS = {
@@ -259,6 +262,89 @@ def verify_report_bundle(
         },
         "failures": failures,
     }
+
+
+def write_report_bundle_archive(
+    bundle_dir: Path,
+    output_path: Path,
+    *,
+    manifest_name: str = "manifest.json",
+) -> dict[str, Any]:
+    verification = verify_report_bundle(bundle_dir, manifest_name=manifest_name)
+    if not verification["ok"]:
+        return {
+            "schema": ARCHIVE_SCHEMA,
+            "bundleDir": str(bundle_dir.resolve()),
+            "archive": str(output_path),
+            "ok": False,
+            "bundleSha256": verification.get("bundleSha256"),
+            "archiveSha256": None,
+            "summary": {
+                "files": 0,
+                "bytes": 0,
+                "verificationFailures": verification["summary"]["failures"],
+            },
+            "verification": verification,
+        }
+
+    members = _bundle_archive_members(bundle_dir, exclude=output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("wb") as raw_output:
+        _write_deterministic_tar_gz(bundle_dir, members, raw_output)
+
+    archive_bytes = output_path.read_bytes()
+    return {
+        "schema": ARCHIVE_SCHEMA,
+        "bundleDir": str(bundle_dir.resolve()),
+        "archive": str(output_path),
+        "ok": True,
+        "bundleSha256": verification.get("bundleSha256"),
+        "archiveSha256": _sha256(archive_bytes),
+        "summary": {
+            "files": len(members),
+            "bytes": len(archive_bytes),
+            "verificationFailures": 0,
+        },
+        "verification": verification,
+    }
+
+
+def _bundle_archive_members(
+    bundle_dir: Path,
+    *,
+    exclude: Path | None = None,
+) -> list[Path]:
+    bundle_dir = bundle_dir.resolve()
+    excluded = exclude.resolve() if exclude is not None else None
+    return sorted(
+        [
+            path
+            for path in bundle_dir.rglob("*")
+            if path.is_file() and path.resolve() != excluded
+        ],
+        key=lambda path: path.relative_to(bundle_dir).as_posix(),
+    )
+
+
+def _write_deterministic_tar_gz(
+    bundle_dir: Path,
+    members: Sequence[Path],
+    output: BinaryIO,
+) -> None:
+    bundle_dir = bundle_dir.resolve()
+    with GzipFile(fileobj=output, mode="wb", filename="", mtime=0) as gzip_file:
+        with tarfile.open(fileobj=gzip_file, mode="w") as archive:
+            for member in members:
+                relative = member.relative_to(bundle_dir).as_posix()
+                info = archive.gettarinfo(str(member), arcname=relative)
+                info.uid = 0
+                info.gid = 0
+                info.uname = ""
+                info.gname = ""
+                info.mtime = 0
+                info.mode = 0o644
+                with member.open("rb") as member_file:
+                    archive.addfile(info, member_file)
 
 
 def _verified_bundle_sha256(manifest: Mapping[str, Any]) -> str | None:

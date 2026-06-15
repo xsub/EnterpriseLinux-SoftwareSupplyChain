@@ -36,6 +36,7 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.performance.report.v1",
         "edgp.public.advisory_feed.v1",
         "edgp.query.report.v1",
+        "edgp.report.bundle.archive.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
         "edgp.rpm.albs_provenance.v1",

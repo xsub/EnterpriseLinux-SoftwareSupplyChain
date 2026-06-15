@@ -1,0 +1,93 @@
+{
+  "$id": "urn:edgp:schema:report-bundle-archive:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Archive report emitted by edgp archive-bundle after verifying and packaging an EDGP static report bundle.",
+  "properties": {
+    "archive": {
+      "description": "Archive path requested by the caller.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "archiveSha256": {
+      "description": "SHA-256 digest of the written archive, or null when verification failed and no archive was produced.",
+      "oneOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "bundleDir": {
+      "description": "Resolved bundle directory that was archived.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "bundleSha256": {
+      "description": "Verified bundle fingerprint from the bundle manifest, or null when the manifest could not provide one.",
+      "oneOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ok": {
+      "description": "True when bundle verification succeeded and the archive was written.",
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "edgp.report.bundle.archive.v1",
+      "description": "Report bundle archive schema identifier."
+    },
+    "summary": {
+      "additionalProperties": false,
+      "description": "Compact archive counters.",
+      "properties": {
+        "bytes": {
+          "description": "Archive size in bytes.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "files": {
+          "description": "Number of bundle files included in the archive.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "verificationFailures": {
+          "description": "Number of bundle verification failures seen before archiving.",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "files",
+        "bytes",
+        "verificationFailures"
+      ],
+      "type": "object"
+    },
+    "verification": {
+      "description": "Embedded edgp.report.bundle.verification.v1 result used as the archive gate.",
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "bundleDir",
+    "archive",
+    "ok",
+    "bundleSha256",
+    "archiveSha256",
+    "summary",
+    "verification"
+  ],
+  "title": "EDGP Report Bundle Archive v1",
+  "type": "object"
+}

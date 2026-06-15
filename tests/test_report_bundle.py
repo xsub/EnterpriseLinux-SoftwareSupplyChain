@@ -2,9 +2,14 @@
 
 import hashlib
 import json
+import tarfile
 from pathlib import Path
 
-from src.output.report_bundle import verify_report_bundle, write_report_bundle
+from src.output.report_bundle import (
+    verify_report_bundle,
+    write_report_bundle,
+    write_report_bundle_archive,
+)
 
 
 def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
@@ -133,6 +138,66 @@ def test_verify_report_bundle_reports_tampered_triage_summary_html(tmp_path) -> 
     assert report["ok"] is False
     assert report["summary"]["failures"] == 1
     assert report["failures"][0]["code"] == "triageSummaryHtmlDigestMismatch"
+
+
+def test_write_report_bundle_archive_is_deterministic_and_verification_gated(
+    tmp_path,
+) -> None:
+    write_report_bundle(
+        [
+            Path("tests/fixtures/snapshot-right.json"),
+            Path("tests/fixtures/npm-diagnostics-report.json"),
+        ],
+        tmp_path,
+        include_triage_summary=True,
+    )
+
+    archive_path = tmp_path / "bundle.tar.gz"
+    report = write_report_bundle_archive(tmp_path, archive_path)
+
+    assert report["schema"] == "edgp.report.bundle.archive.v1"
+    assert report["ok"] is True
+    assert report["archive"] == str(archive_path)
+    assert report["bundleSha256"] == json.loads(
+        (tmp_path / "manifest.json").read_text(encoding="utf-8")
+    )["bundleSha256"]
+    assert report["archiveSha256"] == hashlib.sha256(
+        archive_path.read_bytes()
+    ).hexdigest()
+    assert report["summary"]["files"] == 6
+    assert report["summary"]["verificationFailures"] == 0
+    assert report["verification"]["ok"] is True
+
+    with tarfile.open(archive_path, "r:gz") as archive:
+        names = archive.getnames()
+        infos = {member.name: member for member in archive.getmembers()}
+
+    assert names == [
+        "001-snapshot-right.html",
+        "002-npm-diagnostics-report.html",
+        "index.html",
+        "manifest.json",
+        "triage-summary.html",
+        "triage-summary.json",
+    ]
+    assert "bundle.tar.gz" not in names
+    assert {member.mtime for member in infos.values()} == {0}
+    assert {member.uid for member in infos.values()} == {0}
+    assert {member.gid for member in infos.values()} == {0}
+    assert {member.mode for member in infos.values()} == {0o644}
+
+    second_report = write_report_bundle_archive(tmp_path, archive_path)
+    assert second_report["archiveSha256"] == report["archiveSha256"]
+
+    (tmp_path / "001-snapshot-right.html").write_text(
+        "<!doctype html><title>tampered</title>",
+        encoding="utf-8",
+    )
+    failed_report = write_report_bundle_archive(tmp_path, tmp_path / "failed.tar.gz")
+    assert failed_report["ok"] is False
+    assert failed_report["archiveSha256"] is None
+    assert failed_report["summary"]["verificationFailures"] == 1
+    assert failed_report["verification"]["failures"][0]["code"] == "htmlDigestMismatch"
 
 
 def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:

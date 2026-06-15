@@ -1,0 +1,25 @@
+{
+  "archive": "<archive>",
+  "archiveSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "bundleDir": "<bundle-dir>",
+  "bundleSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "ok": true,
+  "schema": "edgp.report.bundle.archive.v1",
+  "summary": {
+    "bytes": 1024,
+    "files": 4,
+    "verificationFailures": 0
+  },
+  "verification": {
+    "bundleDir": "<bundle-dir>",
+    "bundleSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "failures": [],
+    "manifest": "manifest.json",
+    "ok": true,
+    "schema": "edgp.report.bundle.verification.v1",
+    "summary": {
+      "failures": 0,
+      "reports": 2
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 24,
+  "schemaCount": 25,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -130,6 +130,14 @@
       "id": "urn:edgp:schema:query-report:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Query Report v1"
+    },
+    {
+      "contract": "edgp.report.bundle.archive.v1",
+      "description": "Archive report emitted by edgp archive-bundle after verifying and packaging an EDGP static report bundle.",
+      "file": "edgp.report.bundle.archive.v1.schema.json",
+      "id": "urn:edgp:schema:report-bundle-archive:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Report Bundle Archive v1"
     },
     {
       "contract": "edgp.report.bundle.v1",

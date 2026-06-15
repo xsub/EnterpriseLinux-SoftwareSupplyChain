@@ -103,6 +103,8 @@ surfaces are:
   checks manifest shape, member digests, and the bundle fingerprint.
 - Emit `verify-bundle` results as JSON by default, with a concise text format
   for terminal checks.
+- Package verified report bundles into deterministic `tar.gz` archives for
+  CI/workbench handoff.
 - Document `edgp.report.bundle.verification.v1` with a Draft 2020-12 JSON
   Schema and smoke validation against generated verifier output.
 - Generate a deterministic schema index for documented EDGP JSON Schema
@@ -400,6 +402,7 @@ python -B -m src.cli report --input tests/fixtures/impact-report.json --output /
 python -B -m src.cli report --input tests/fixtures/advisory-report.json --output /tmp/edgp-advisory-report.html
 python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json --output /tmp/edgp-npm-diagnostics-report.html
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle
+python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/tampered-report-bundle-manifest --format text

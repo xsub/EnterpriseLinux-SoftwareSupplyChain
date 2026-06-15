@@ -35,6 +35,10 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.bundle.catalog.v1.schema.json`](schemas/edgp.bundle.catalog.v1.schema.json)
   documents verified static report-bundle catalogs for batch CI and workbench
   ingestion.
+- `edgp.report.bundle.archive.v1`:
+  [`edgp.report.bundle.archive.v1.schema.json`](schemas/edgp.report.bundle.archive.v1.schema.json)
+  documents deterministic archive packaging results for verified static report
+  bundles.
 - `edgp.npm.diagnostics.v1`:
   [`edgp.npm.diagnostics.v1.schema.json`](schemas/edgp.npm.diagnostics.v1.schema.json)
   documents duplicate package names, nested version conflicts, and unresolved

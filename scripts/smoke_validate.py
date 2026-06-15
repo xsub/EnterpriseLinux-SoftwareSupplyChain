@@ -81,6 +81,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.bundle.catalog.v1.schema.json",
+    "edgp.report.bundle.archive.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.report.bundle.archive.v1.schema.json",
     "edgp.npm.diagnostics.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -154,6 +158,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "bundle-catalog.json",
+    "edgp.report.bundle.archive.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "report-bundle-archive.json",
     "edgp.npm.diagnostics.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -3062,6 +3070,47 @@ def _assert_report_bundle() -> None:
         assert validation["targetType"] == "report-bundle"
         assert validation["bundleVerification"]["ok"] is True
         assert validation["triageSummary"]["status"] == "warn"
+        archive_path = Path(temp_dir) / "bundle.tar.gz"
+        archive_report = _run_cli(
+            [
+                "archive-bundle",
+                "--path",
+                str(output_dir),
+                "--output",
+                str(archive_path),
+            ]
+        )
+        assert archive_report["schema"] == "edgp.report.bundle.archive.v1"
+        assert archive_report["ok"] is True
+        assert archive_report["bundleSha256"] == manifest["bundleSha256"]
+        assert archive_report["archiveSha256"] == hashlib.sha256(
+            archive_path.read_bytes()
+        ).hexdigest()
+        assert archive_report["summary"]["files"] == 6
+        assert archive_report["summary"]["verificationFailures"] == 0
+        assert archive_report["verification"]["ok"] is True
+        completed_archive_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "archive-bundle",
+                "--path",
+                str(output_dir),
+                "--output",
+                str(archive_path),
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_archive_text.stdout.startswith("OK files=6 bytes=")
+        assert " verificationFailures=0 " in completed_archive_text.stdout
+        assert " archiveSha256=" in completed_archive_text.stdout
         completed_validation_gate = subprocess.run(
             [
                 sys.executable,

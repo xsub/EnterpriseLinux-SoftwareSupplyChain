@@ -37,7 +37,11 @@ from src.output.cypher_export import CypherExporter
 from src.output.graph_bundle import write_graph_report_bundle
 from src.output.html_report import write_report_file
 from src.output.json_export import GraphJsonExporter
-from src.output.report_bundle import verify_report_bundle, write_report_bundle
+from src.output.report_bundle import (
+    verify_report_bundle,
+    write_report_bundle,
+    write_report_bundle_archive,
+)
 from src.output.sbom_security import CycloneDXExporter
 from src.performance_report import build_performance_report
 from src.public_advisory_feed import build_public_advisory_feed_report
@@ -131,6 +135,29 @@ def _format_verification_report(report: dict[str, Any]) -> str:
         first_failure = failure_list[0]
         if isinstance(first_failure, dict):
             parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
+    return " ".join(parts)
+
+
+def _format_bundle_archive_report(report: dict[str, Any]) -> str:
+    status = "OK" if report.get("ok") else "FAIL"
+    summary = report.get("summary", {})
+    files = summary.get("files", 0) if isinstance(summary, dict) else 0
+    bytes_written = summary.get("bytes", 0) if isinstance(summary, dict) else 0
+    failures = (
+        summary.get("verificationFailures", 0) if isinstance(summary, dict) else 0
+    )
+    parts = [
+        status,
+        f"files={files}",
+        f"bytes={bytes_written}",
+        f"verificationFailures={failures}",
+    ]
+    bundle_sha = report.get("bundleSha256")
+    if isinstance(bundle_sha, str) and bundle_sha:
+        parts.append(f"bundleSha256={bundle_sha}")
+    archive_sha = report.get("archiveSha256")
+    if isinstance(archive_sha, str) and archive_sha:
+        parts.append(f"archiveSha256={archive_sha}")
     return " ".join(parts)
 
 
@@ -2696,6 +2723,15 @@ def build_parser() -> argparse.ArgumentParser:
     verify_bundle.add_argument("--manifest-name", default="manifest.json")
     verify_bundle.add_argument("--format", choices=["json", "text"], default="json")
 
+    archive_bundle = subparsers.add_parser(
+        "archive-bundle",
+        help="Verify and package a static report bundle as deterministic tar.gz",
+    )
+    archive_bundle.add_argument("--path", type=Path, required=True)
+    archive_bundle.add_argument("--output", type=Path, required=True)
+    archive_bundle.add_argument("--manifest-name", default="manifest.json")
+    archive_bundle.add_argument("--format", choices=["json", "text"], default="json")
+
     validate = subparsers.add_parser(
         "validate",
         help="Validate a local EDGP JSON report file or static report bundle",
@@ -3611,6 +3647,18 @@ def main(argv: list[str] | None = None) -> int:
         report = verify_report_bundle(args.path, manifest_name=args.manifest_name)
         if args.format == "text":
             print(_format_verification_report(report))
+        else:
+            print(_json(report))
+        return 0 if report["ok"] else 1
+
+    if args.command == "archive-bundle":
+        report = write_report_bundle_archive(
+            args.path,
+            args.output,
+            manifest_name=args.manifest_name,
+        )
+        if args.format == "text":
+            print(_format_bundle_archive_report(report))
         else:
             print(_json(report))
         return 0 if report["ok"] else 1

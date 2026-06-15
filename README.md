@@ -182,6 +182,7 @@ edgp report --snapshot graph.json --output graph-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports --fail-on-status fail
 edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo --output-dir reports/catalog --triage-summary
 edgp verify-bundle --path reports
+edgp archive-bundle --path reports --output reports.tar.gz
 edgp triage-summary --bundle reports --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
@@ -793,6 +794,16 @@ with the machine-readable JSON Schema at
 [`docs/schemas/edgp.report.bundle.verification.v1.schema.json`](docs/schemas/edgp.report.bundle.verification.v1.schema.json).
 [`tests/fixtures/report-bundle-verification.json`](tests/fixtures/report-bundle-verification.json)
 provides a normalized machine-readable example of the verification report.
+`edgp archive-bundle` verifies a static report bundle and writes a deterministic
+`tar.gz` archive for CI/workbench handoff. Archive member order, timestamps,
+ownership, and file modes are fixed so identical bundle contents produce the
+same archive digest across local and AlmaLinux hosts. The command emits
+`edgp.report.bundle.archive.v1` JSON with the verified bundle SHA-256, archive
+SHA-256, included file count, and embedded verification result, and exits
+non-zero without writing a new archive when verification fails. The schema is
+[`docs/schemas/edgp.report.bundle.archive.v1.schema.json`](docs/schemas/edgp.report.bundle.archive.v1.schema.json)
+with fixture
+[`tests/fixtures/report-bundle-archive.json`](tests/fixtures/report-bundle-archive.json).
 The bundle `index.html` also includes a compact verification summary showing
 report count, manifest schema, and a shortened bundle fingerprint.
 With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and

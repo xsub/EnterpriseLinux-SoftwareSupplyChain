@@ -211,6 +211,91 @@ def test_cli_report_bundle_can_fail_on_triage_status(tmp_path, capsys) -> None:
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
 
 
+def test_cli_archive_bundle_verifies_and_writes_deterministic_archive(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "bundle"
+    archive_path = tmp_path / "bundle.tar.gz"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "archive-bundle",
+                "--path",
+                str(output_dir),
+                "--output",
+                str(archive_path),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["schema"] == "edgp.report.bundle.archive.v1"
+    assert payload["ok"] is True
+    assert payload["archive"] == str(archive_path)
+    assert payload["archiveSha256"]
+    assert payload["summary"]["files"] == 4
+    assert payload["summary"]["verificationFailures"] == 0
+    assert archive_path.exists()
+
+    assert (
+        main(
+            [
+                "archive-bundle",
+                "--path",
+                str(output_dir),
+                "--output",
+                str(archive_path),
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    text = capsys.readouterr().out.strip()
+    assert text.startswith("OK files=4 bytes=")
+    assert " verificationFailures=0 " in text
+    assert "archiveSha256=" in text
+
+    (output_dir / "001-snapshot-right.html").write_text(
+        "<!doctype html><title>tampered</title>",
+        encoding="utf-8",
+    )
+    assert (
+        main(
+            [
+                "archive-bundle",
+                "--path",
+                str(output_dir),
+                "--output",
+                str(tmp_path / "failed.tar.gz"),
+            ]
+        )
+        == 1
+    )
+    failed = json.loads(capsys.readouterr().out)
+    assert failed["ok"] is False
+    assert failed["archiveSha256"] is None
+    assert failed["summary"]["verificationFailures"] == 1
+
+
 def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
     graph_bundle = tmp_path / "graph-bundle"
     diagnostics_bundle = tmp_path / "diagnostics-bundle"
