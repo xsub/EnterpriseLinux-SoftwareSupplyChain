@@ -292,6 +292,8 @@ surfaces are:
   after writing the static report artifacts.
 - Generate aggregate triage summaries from report lists or existing static
   report bundles for CI/workbench consumption.
+- Generate aggregate triage summaries directly from deterministic report bundle
+  archives for CI/workbench handoff.
 - Return CI-friendly non-zero triage-summary exit status when aggregate bundle
   status reaches a selected warn/fail threshold.
 - Embed generated triage summary JSON and HTML artifacts into static report
@@ -411,6 +413,7 @@ python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --
 python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text
+python -B -m src.cli triage-summary --bundle /tmp/edgp-report-bundle.tar.gz --fail-on-status warn
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/tampered-report-bundle-manifest --format text

@@ -2680,10 +2680,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     triage_summary = subparsers.add_parser(
         "triage-summary",
-        help="Aggregate EDGP reports or a report bundle into one triage summary",
+        help=(
+            "Aggregate EDGP reports, a report bundle directory, or a "
+            "deterministic bundle archive into one triage summary"
+        ),
     )
     triage_input = triage_summary.add_mutually_exclusive_group(required=True)
-    triage_input.add_argument("--bundle", type=Path)
+    triage_input.add_argument(
+        "--bundle",
+        type=Path,
+        help="report bundle directory or deterministic .tar.gz/.tgz archive",
+    )
     triage_input.add_argument("--input", type=Path, action="append", default=[])
     triage_summary.add_argument("--manifest-name", default="manifest.json")
     triage_summary.add_argument(

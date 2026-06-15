@@ -75,6 +75,70 @@ def test_cli_triage_summary_from_bundle(tmp_path, capsys) -> None:
     assert payload["summary"]["deniedLicenseFindings"] == 1
 
 
+def test_cli_triage_summary_from_bundle_archive(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "report-bundle"
+    archive_path = tmp_path / "report-bundle.tar.gz"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "archive-bundle",
+                "--path",
+                str(output_dir),
+                "--output",
+                str(archive_path),
+            ]
+        )
+        == 0
+    )
+    archive_report = json.loads(capsys.readouterr().out)
+
+    assert main(["triage-summary", "--bundle", str(archive_path)]) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["schema"] == "edgp.triage.summary.v1"
+    assert payload["source"]["kind"] == "bundle-archive"
+    assert payload["source"]["archive"] == str(archive_path.resolve())
+    assert payload["source"]["archiveSha256"] == archive_report["archiveSha256"]
+    assert payload["source"]["bundleSha256"] == archive_report["bundleSha256"]
+    assert payload["bundle"]["sourceKind"] == "edgp-json"
+    assert payload["status"] == "warn"
+    assert payload["summary"]["reports"] == 2
+    assert payload["summary"]["graphSnapshots"] == 1
+    assert payload["summary"]["npmDiagnosticsReports"] == 1
+    assert payload["summary"]["npmUnresolvedDependencies"] == 1
+
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--bundle",
+                str(archive_path),
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+    assert json.loads(capsys.readouterr().out)["source"]["kind"] == "bundle-archive"
+
+
 def test_cli_triage_summary_can_fail_on_status(capsys) -> None:
     assert (
         main(

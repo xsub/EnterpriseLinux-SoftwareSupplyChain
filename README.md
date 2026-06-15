@@ -184,7 +184,7 @@ edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --outp
 edgp verify-bundle --path reports
 edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
-edgp triage-summary --bundle reports --fail-on-status fail
+edgp triage-summary --bundle reports.tar.gz --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
 edgp validate --path reports.tar.gz --format text
@@ -834,9 +834,10 @@ failure codes, and bundle fingerprints. The catalog can itself be rendered as a
 static, verifiable bundle, which gives CI systems and future workbench/RAG
 ingestion one compact index over a batch of public-input evidence bundles.
 
-`edgp triage-summary` turns a report bundle, or a list of EDGP JSON reports, into
-one `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status,
-graph size, advisory findings, denied license findings, npm diagnostic signals,
+`edgp triage-summary` turns a report bundle directory, a deterministic report
+bundle archive, or a list of EDGP JSON reports into one
+`edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status, graph
+size, advisory findings, denied license findings, npm diagnostic signals,
 bundle-catalog integrity and underlying triage status, and the source report
 list so CI systems and workbench/RAG contexts can read one compact artifact
 instead of stitching together every report manually.

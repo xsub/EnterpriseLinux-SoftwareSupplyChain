@@ -3261,6 +3261,35 @@ def _assert_report_bundle() -> None:
             "OK targetType=report-bundle-archive failures=0 "
             "contract=edgp.report.bundle.archive.v1"
         )
+        archive_triage = _run_cli(["triage-summary", "--bundle", str(archive_path)])
+        assert archive_triage["schema"] == "edgp.triage.summary.v1"
+        assert archive_triage["source"]["kind"] == "bundle-archive"
+        assert archive_triage["source"]["archiveSha256"] == archive_report["archiveSha256"]
+        assert archive_triage["source"]["bundleSha256"] == manifest["bundleSha256"]
+        assert archive_triage["bundle"]["sourceKind"] == "edgp-json"
+        assert archive_triage["status"] == "warn"
+        assert archive_triage["summary"]["reports"] == 2
+        assert archive_triage["summary"]["npmDiagnosticsReports"] == 1
+        completed_archive_triage_gate = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "triage-summary",
+                "--bundle",
+                str(archive_path),
+                "--fail-on-status",
+                "warn",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_archive_triage_gate.returncode == 2
+        gated_archive_triage = json.loads(completed_archive_triage_gate.stdout)
+        assert gated_archive_triage["source"]["kind"] == "bundle-archive"
         completed_validation_gate = subprocess.run(
             [
                 sys.executable,

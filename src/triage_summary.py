@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tarfile
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -85,6 +86,11 @@ def build_triage_summary_from_bundle(
     manifest_name: str = "manifest.json",
 ) -> dict[str, Any]:
     """Load report sources listed in a bundle manifest and summarize them."""
+    if _is_report_bundle_archive(bundle_dir):
+        return build_triage_summary_from_bundle_archive(
+            bundle_dir,
+            manifest_name=manifest_name,
+        )
 
     manifest_path = bundle_dir / manifest_name
     manifest = _load_json(manifest_path)
@@ -114,6 +120,160 @@ def build_triage_summary_from_bundle(
         "reportCount": manifest.get("reportCount", len(report_paths)),
     }
     return summary
+
+
+def build_triage_summary_from_bundle_archive(
+    archive_path: Path,
+    *,
+    manifest_name: str = "manifest.json",
+) -> dict[str, Any]:
+    """Load report sources listed in a verified deterministic bundle archive."""
+
+    from src.output.report_bundle import verify_report_bundle_archive
+
+    archive_path = archive_path.resolve()
+    archive_report = verify_report_bundle_archive(
+        archive_path,
+        manifest_name=manifest_name,
+    )
+    if archive_report.get("ok") is not True:
+        raise ValueError(_archive_failure_message(archive_report))
+
+    manifest = _load_archive_manifest(archive_path, manifest_name=manifest_name)
+    archive_source = _archive_source(
+        archive_path,
+        archive_report=archive_report,
+        manifest=manifest,
+        manifest_name=manifest_name,
+    )
+    embedded_summary = _load_archive_triage_summary(archive_path, manifest)
+    if embedded_summary is not None:
+        embedded_summary["source"] = archive_source
+        embedded_summary["bundle"] = _bundle_summary(manifest)
+        return embedded_summary
+
+    manifest, reports = _load_archive_bundle_reports(
+        archive_path,
+        manifest_name=manifest_name,
+    )
+    summary = build_triage_summary_report(
+        reports,
+        source={**archive_source, "reports": len(reports)},
+    )
+    summary["bundle"] = _bundle_summary(manifest, report_count=len(reports))
+    return summary
+
+
+def _is_report_bundle_archive(path: Path) -> bool:
+    suffixes = path.suffixes
+    return path.suffix == ".tgz" or suffixes[-2:] == [".tar", ".gz"]
+
+
+def _load_archive_bundle_reports(
+    archive_path: Path,
+    *,
+    manifest_name: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    with tarfile.open(archive_path, "r:gz") as archive:
+        manifest = _load_archive_json_member(archive, manifest_name)
+        reports = manifest.get("reports", [])
+        if not isinstance(reports, list):
+            raise ValueError("Bundle manifest reports must be a list")
+        report_payloads = []
+        for report in reports:
+            if not isinstance(report, dict):
+                continue
+            source = report.get("source")
+            if isinstance(source, str) and source:
+                report_payloads.append(_load_archive_json_member(archive, source))
+    return manifest, report_payloads
+
+
+def _load_archive_manifest(archive_path: Path, *, manifest_name: str) -> dict[str, Any]:
+    with tarfile.open(archive_path, "r:gz") as archive:
+        return _load_archive_json_member(archive, manifest_name)
+
+
+def _load_archive_triage_summary(
+    archive_path: Path,
+    manifest: dict[str, Any],
+) -> dict[str, Any] | None:
+    triage_summary = manifest.get("triageSummary")
+    if not isinstance(triage_summary, dict):
+        return None
+    source = triage_summary.get("source")
+    if not isinstance(source, str) or not source:
+        return None
+    with tarfile.open(archive_path, "r:gz") as archive:
+        return _load_archive_json_member(archive, source)
+
+
+def _load_archive_json_member(
+    archive: tarfile.TarFile,
+    member_name: str,
+) -> dict[str, Any]:
+    if not _is_bundle_member_label(member_name):
+        raise ValueError(f"Archive member path must be bundle-local: {member_name}")
+    try:
+        member = archive.getmember(member_name)
+    except KeyError as error:
+        raise ValueError(f"Archive member is missing: {member_name}") from error
+    if not member.isfile():
+        raise ValueError(f"Archive member is not a regular file: {member_name}")
+    source = archive.extractfile(member)
+    if source is None:
+        raise ValueError(f"Archive member is unreadable: {member_name}")
+    payload = json.loads(source.read().decode("utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"Report must be a JSON object: {member_name}")
+    return payload
+
+
+def _archive_source(
+    archive_path: Path,
+    *,
+    archive_report: dict[str, Any],
+    manifest: dict[str, Any],
+    manifest_name: str,
+) -> dict[str, Any]:
+    return {
+        "kind": "bundle-archive",
+        "archive": str(archive_path),
+        "manifest": manifest_name,
+        "archiveSha256": archive_report.get("archiveSha256"),
+        "bundleSha256": manifest.get("bundleSha256"),
+        "reports": int(manifest.get("reportCount", 0) or 0),
+    }
+
+
+def _bundle_summary(
+    manifest: dict[str, Any],
+    *,
+    report_count: int | None = None,
+) -> dict[str, Any]:
+    return {
+        "schema": manifest.get("schema"),
+        "sourceKind": _bundle_source_kind(manifest),
+        "reportCount": manifest.get(
+            "reportCount",
+            0 if report_count is None else report_count,
+        ),
+    }
+
+
+def _is_bundle_member_label(label: str) -> bool:
+    member_path = Path(label)
+    return bool(label) and not member_path.is_absolute() and ".." not in member_path.parts
+
+
+def _archive_failure_message(archive_report: dict[str, Any]) -> str:
+    verification = archive_report.get("verification", {})
+    failures = verification.get("failures", []) if isinstance(verification, dict) else []
+    if isinstance(failures, list) and failures and isinstance(failures[0], dict):
+        code = failures[0].get("code", "unknown")
+        message = failures[0].get("message", "")
+        return f"Bundle archive verification failed: {code}: {message}"
+    return "Bundle archive verification failed"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
