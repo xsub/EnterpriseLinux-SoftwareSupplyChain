@@ -8,7 +8,11 @@ import tarfile
 from pathlib import Path
 from typing import Any, Mapping
 
-from src.export_batch import EXPORT_BATCH_SCHEMA, verify_graph_export_batch
+from src.export_batch import (
+    EXPORT_BATCH_SCHEMA,
+    verify_graph_export_batch,
+    verify_graph_export_batch_archive,
+)
 from src.output.report_bundle import (
     verify_report_bundle,
     verify_report_bundle_archive,
@@ -25,6 +29,8 @@ def validate_target(path: Path, *, manifest_name: str = "manifest.json") -> dict
             return _validate_export_batch(path, manifest_name=manifest_name)
         return _validate_bundle(path, manifest_name=manifest_name)
     if _is_report_bundle_archive(path):
+        if _archive_manifest_schema(path, manifest_name=manifest_name) == EXPORT_BATCH_SCHEMA:
+            return _validate_export_batch_archive(path, manifest_name=manifest_name)
         return _validate_bundle_archive(path, manifest_name=manifest_name)
     return _validate_json_file(path)
 
@@ -63,6 +69,43 @@ def _validate_export_batch(path: Path, *, manifest_name: str) -> dict[str, Any]:
         "failures": failures,
         "exportBatchVerification": verification,
     }
+
+
+def _validate_export_batch_archive(path: Path, *, manifest_name: str) -> dict[str, Any]:
+    verification = verify_graph_export_batch_archive(path, manifest_name=manifest_name)
+    nested = verification.get("verification", {})
+    nested_failures = nested.get("failures", []) if isinstance(nested, dict) else []
+    failures = [
+        {
+            "code": f"exportBatchArchive.{failure.get('code', 'unknown')}",
+            "message": str(failure.get("message", "")),
+            "path": str(failure.get("path", path)),
+        }
+        for failure in nested_failures
+        if isinstance(failure, dict)
+    ]
+    return {
+        "schema": VALIDATION_SCHEMA,
+        "target": str(path.resolve()),
+        "targetType": "export-batch-archive",
+        "contract": "edgp.export.batch.archive.v1",
+        "ok": not failures,
+        "summary": {"failures": len(failures)},
+        "failures": failures,
+        "exportBatchArchiveVerification": verification,
+    }
+
+
+def _archive_manifest_schema(path: Path, *, manifest_name: str) -> str | None:
+    if not _is_bundle_member_label(manifest_name):
+        return None
+    try:
+        with tarfile.open(path, "r:gz") as archive:
+            payload = _load_archive_json_member(archive, manifest_name)
+    except (FileNotFoundError, OSError, tarfile.TarError):
+        return None
+    schema = payload.get("schema") if isinstance(payload, dict) else None
+    return schema if isinstance(schema, str) else None
 
 
 def _validate_bundle(path: Path, *, manifest_name: str) -> dict[str, Any]:

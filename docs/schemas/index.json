@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 27,
+  "schemaCount": 28,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -58,6 +58,14 @@
       "id": "urn:edgp:schema:bundle-catalog:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Bundle Catalog v1"
+    },
+    {
+      "contract": "edgp.export.batch.archive.v1",
+      "description": "Archive report for deterministic graph export batch tar.gz handoff artifacts.",
+      "file": "edgp.export.batch.archive.v1.schema.json",
+      "id": "urn:edgp:schema:export-batch-archive:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Export Batch Archive v1"
     },
     {
       "contract": "edgp.export.batch.v1",

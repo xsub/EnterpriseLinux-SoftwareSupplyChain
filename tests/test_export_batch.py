@@ -1,7 +1,9 @@
 """Batch export tests for local graph egress artifacts."""
 
 import hashlib
+import io
 import json
+import tarfile
 from pathlib import Path
 
 from src.cli import main
@@ -9,7 +11,9 @@ from src.export_batch import (
     DETERMINISTIC_CYCLONEDX_TIMESTAMP,
     graph_from_snapshot,
     verify_graph_export_batch,
+    verify_graph_export_batch_archive,
     write_graph_export_batch,
+    write_graph_export_batch_archive,
 )
 from src.schema_validation import validate_target
 
@@ -130,3 +134,134 @@ def test_cli_verify_export_batch_and_validate_directory(tmp_path, capsys) -> Non
     assert validation["targetType"] == "export-batch"
     assert validation["contract"] == "edgp.export.batch.v1"
     assert validation["exportBatchVerification"]["ok"] is True
+
+
+def test_write_export_batch_archive_is_deterministic_and_verifiable(tmp_path) -> None:
+    write_graph_export_batch(
+        Path("tests/fixtures/snapshot-right.json"),
+        tmp_path,
+        formats=["cypher", "cyclonedx"],
+    )
+
+    archive_path = tmp_path / "export-batch.tar.gz"
+    report = write_graph_export_batch_archive(tmp_path, archive_path)
+
+    assert report["schema"] == "edgp.export.batch.archive.v1"
+    assert report["ok"] is True
+    assert report["archiveSha256"] == hashlib.sha256(
+        archive_path.read_bytes()
+    ).hexdigest()
+    assert report["summary"]["files"] == 3
+    assert report["summary"]["verificationFailures"] == 0
+    assert report["verification"]["ok"] is True
+
+    with tarfile.open(archive_path, "r:gz") as archive:
+        names = archive.getnames()
+        infos = {member.name: member for member in archive.getmembers()}
+
+    assert names == ["graph.cyclonedx.json", "graph.cypher", "manifest.json"]
+    assert "export-batch.tar.gz" not in names
+    assert {member.mtime for member in infos.values()} == {0}
+    assert {member.uid for member in infos.values()} == {0}
+    assert {member.gid for member in infos.values()} == {0}
+    assert {member.mode for member in infos.values()} == {0o644}
+
+    second_report = write_graph_export_batch_archive(tmp_path, archive_path)
+    assert second_report["archiveSha256"] == report["archiveSha256"]
+
+    verification = verify_graph_export_batch_archive(archive_path)
+    assert verification["schema"] == "edgp.export.batch.archive.v1"
+    assert verification["ok"] is True
+    assert verification["archiveSha256"] == report["archiveSha256"]
+    assert verification["manifestSha256"] == report["manifestSha256"]
+    assert verification["verification"]["ok"] is True
+
+    validation = validate_target(archive_path)
+    assert validation["ok"] is True
+    assert validation["targetType"] == "export-batch-archive"
+    assert validation["contract"] == "edgp.export.batch.archive.v1"
+
+    (tmp_path / "graph.cypher").write_text("tampered\n", encoding="utf-8")
+    failed_report = write_graph_export_batch_archive(tmp_path, tmp_path / "failed.tar.gz")
+    assert failed_report["ok"] is False
+    assert failed_report["archiveSha256"] is None
+    assert failed_report["summary"]["verificationFailures"] == 2
+
+
+def test_cli_archive_export_batch_and_verify_archive(tmp_path, capsys) -> None:
+    write_graph_export_batch(
+        Path("tests/fixtures/snapshot-right.json"),
+        tmp_path,
+        formats=["cypher", "cyclonedx"],
+    )
+    archive_path = tmp_path / "batch.tgz"
+
+    assert (
+        main(
+            [
+                "archive-export-batch",
+                "--path",
+                str(tmp_path),
+                "--output",
+                str(archive_path),
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    assert capsys.readouterr().out.startswith("OK files=3")
+
+    assert (
+        main(
+            [
+                "verify-export-batch-archive",
+                "--path",
+                str(archive_path),
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    assert capsys.readouterr().out.startswith("OK files=3")
+
+
+def test_verify_export_batch_archive_rejects_unsafe_members(tmp_path, capsys) -> None:
+    archive_path = tmp_path / "unsafe.tar.gz"
+    payload = b"unsafe"
+    with tarfile.open(archive_path, "w:gz") as archive:
+        info = tarfile.TarInfo("../evil.txt")
+        info.size = len(payload)
+        info.uid = 0
+        info.gid = 0
+        info.uname = ""
+        info.gname = ""
+        info.mtime = 0
+        info.mode = 0o644
+        archive.addfile(info, io.BytesIO(payload))
+
+    report = verify_graph_export_batch_archive(archive_path)
+
+    assert report["schema"] == "edgp.export.batch.archive.v1"
+    assert report["ok"] is False
+    assert report["archiveSha256"] == hashlib.sha256(
+        archive_path.read_bytes()
+    ).hexdigest()
+    assert report["summary"]["files"] == 1
+    assert report["summary"]["verificationFailures"] == 1
+    assert report["verification"]["failures"][0]["code"] == "archiveMemberPathInvalid"
+
+    assert (
+        main(
+            [
+                "verify-export-batch-archive",
+                "--path",
+                str(archive_path),
+                "--format",
+                "text",
+            ]
+        )
+        == 1
+    )
+    assert capsys.readouterr().out.startswith("FAIL files=1")

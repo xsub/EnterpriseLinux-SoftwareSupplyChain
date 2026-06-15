@@ -1,0 +1,93 @@
+{
+  "$id": "urn:edgp:schema:export-batch-archive:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Archive report for deterministic graph export batch tar.gz handoff artifacts.",
+  "properties": {
+    "archive": {
+      "description": "Archive path that was written or verified.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "archiveSha256": {
+      "description": "SHA-256 digest of the archive when available, or null when the archive could not be read or written.",
+      "oneOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "batchDir": {
+      "description": "Resolved export batch directory that was archived, or the temporary extraction directory used during archive verification.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "manifestSha256": {
+      "description": "Verified export batch manifest fingerprint when available, or null when verification could not read the manifest.",
+      "oneOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ok": {
+      "description": "True when export batch archive creation or archive verification succeeded.",
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "edgp.export.batch.archive.v1",
+      "description": "Export batch archive schema identifier."
+    },
+    "summary": {
+      "additionalProperties": false,
+      "description": "Compact archive counters.",
+      "properties": {
+        "bytes": {
+          "description": "Archive byte size.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "files": {
+          "description": "Number of files included in the archive.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "verificationFailures": {
+          "description": "Number of embedded export batch verification failures.",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "files",
+        "bytes",
+        "verificationFailures"
+      ],
+      "type": "object"
+    },
+    "verification": {
+      "description": "Embedded edgp.export.batch.verification.v1 result used as the archive gate.",
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "batchDir",
+    "archive",
+    "ok",
+    "manifestSha256",
+    "archiveSha256",
+    "summary",
+    "verification"
+  ],
+  "title": "EDGP Export Batch Archive v1",
+  "type": "object"
+}

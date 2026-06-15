@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import tarfile
+import tempfile
+from gzip import GzipFile
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, BinaryIO, Sequence
 
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.output.cypher_export import CypherExporter
@@ -13,6 +16,7 @@ from src.output.json_export import GraphJsonExporter
 from src.output.sbom_security import CycloneDXExporter
 
 EXPORT_BATCH_SCHEMA = "edgp.export.batch.v1"
+EXPORT_BATCH_ARCHIVE_SCHEMA = "edgp.export.batch.archive.v1"
 EXPORT_BATCH_VERIFICATION_SCHEMA = "edgp.export.batch.verification.v1"
 DETERMINISTIC_CYCLONEDX_TIMESTAMP = "1970-01-01T00:00:00+00:00"
 
@@ -121,6 +125,162 @@ def verify_graph_export_batch(
         "summary": {
             "exports": len(exports) if isinstance(exports, list) else 0,
             "bytes": _summary_bytes(summary),
+            "failures": len(failures),
+        },
+        "failures": failures,
+    }
+
+
+def write_graph_export_batch_archive(
+    batch_dir: Path,
+    output_path: Path,
+    *,
+    manifest_name: str = "manifest.json",
+) -> dict[str, Any]:
+    """Verify and package a graph export batch as a deterministic tar.gz archive."""
+
+    verification = verify_graph_export_batch(batch_dir, manifest_name=manifest_name)
+    if not verification["ok"]:
+        return {
+            "schema": EXPORT_BATCH_ARCHIVE_SCHEMA,
+            "batchDir": str(batch_dir.resolve()),
+            "archive": str(output_path),
+            "ok": False,
+            "manifestSha256": verification.get("manifestSha256"),
+            "archiveSha256": None,
+            "summary": {
+                "files": 0,
+                "bytes": 0,
+                "verificationFailures": verification["summary"]["failures"],
+            },
+            "verification": verification,
+        }
+
+    members = _archive_members(batch_dir, exclude=output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("wb") as raw_output:
+        _write_deterministic_tar_gz(batch_dir, members, raw_output)
+    archive_bytes = output_path.read_bytes()
+    return _archive_report(
+        archive_path=output_path,
+        archive_sha256=hashlib.sha256(archive_bytes).hexdigest(),
+        archive_bytes=len(archive_bytes),
+        files=len(members),
+        verification=verification,
+    )
+
+
+def verify_graph_export_batch_archive(
+    archive_path: Path,
+    *,
+    manifest_name: str = "manifest.json",
+) -> dict[str, Any]:
+    """Verify a deterministic tar.gz graph export batch archive."""
+
+    archive_path = archive_path.resolve()
+    try:
+        archive_bytes = archive_path.read_bytes()
+    except FileNotFoundError:
+        verification = _archive_verification_report(
+            archive_path.parent,
+            manifest_name=manifest_name,
+            failures=[
+                {
+                    "code": "archiveMissing",
+                    "message": "Archive file is missing",
+                    "path": str(archive_path),
+                }
+            ],
+        )
+        return _archive_report(
+            archive_path=archive_path,
+            archive_sha256=None,
+            archive_bytes=0,
+            files=0,
+            verification=verification,
+        )
+
+    archive_sha256 = hashlib.sha256(archive_bytes).hexdigest()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        batch_dir = Path(temp_dir) / "export-batch"
+        batch_dir.mkdir()
+        failures: list[dict[str, str]] = []
+        member_count = 0
+        try:
+            with tarfile.open(archive_path, "r:gz") as archive:
+                members = archive.getmembers()
+                member_count = len(members)
+                _validate_archive_members(members, archive_path, failures)
+                if not failures:
+                    _extract_archive_members(archive, members, batch_dir, failures)
+        except (OSError, tarfile.TarError) as error:
+            _add_failure(
+                failures,
+                "archiveInvalid",
+                f"Could not read gzip tar archive: {error}",
+                archive_path,
+            )
+
+        if failures:
+            verification = _archive_verification_report(
+                batch_dir,
+                manifest_name=manifest_name,
+                failures=failures,
+            )
+        else:
+            verification = verify_graph_export_batch(batch_dir, manifest_name=manifest_name)
+        return _archive_report(
+            archive_path=archive_path,
+            archive_sha256=archive_sha256,
+            archive_bytes=len(archive_bytes),
+            files=member_count,
+            verification=verification,
+        )
+
+
+def _archive_report(
+    *,
+    archive_path: Path,
+    archive_sha256: str | None,
+    archive_bytes: int,
+    files: int,
+    verification: dict[str, Any],
+) -> dict[str, Any]:
+    summary = verification.get("summary", {})
+    verification_failures = (
+        summary.get("failures", 0) if isinstance(summary, dict) else 0
+    )
+    return {
+        "schema": EXPORT_BATCH_ARCHIVE_SCHEMA,
+        "batchDir": str(verification.get("batchDir", "")),
+        "archive": str(archive_path),
+        "ok": bool(verification.get("ok")),
+        "manifestSha256": verification.get("manifestSha256"),
+        "archiveSha256": archive_sha256,
+        "summary": {
+            "files": files,
+            "bytes": archive_bytes,
+            "verificationFailures": verification_failures,
+        },
+        "verification": verification,
+    }
+
+
+def _archive_verification_report(
+    batch_dir: Path,
+    *,
+    manifest_name: str,
+    failures: list[dict[str, str]],
+) -> dict[str, Any]:
+    return {
+        "schema": EXPORT_BATCH_VERIFICATION_SCHEMA,
+        "batchDir": str(batch_dir.resolve()),
+        "manifest": manifest_name,
+        "ok": False,
+        "manifestSha256": None,
+        "summary": {
+            "exports": 0,
+            "bytes": 0,
             "failures": len(failures),
         },
         "failures": failures,
@@ -286,6 +446,109 @@ def _verify_manifest_artifacts(
 def _is_safe_manifest_path(path: str) -> bool:
     member_path = Path(path)
     return bool(path) and not member_path.is_absolute() and ".." not in member_path.parts
+
+
+def _validate_archive_members(
+    members: Sequence[tarfile.TarInfo],
+    archive_path: Path,
+    failures: list[dict[str, str]],
+) -> None:
+    seen_names: set[str] = set()
+    for member in members:
+        failure_path = Path(f"{archive_path}:{member.name}")
+        if not _is_safe_manifest_path(member.name):
+            _add_failure(
+                failures,
+                "archiveMemberPathInvalid",
+                "Archive member path must be export-batch-local",
+                failure_path,
+            )
+        elif member.name in seen_names:
+            _add_failure(
+                failures,
+                "archiveMemberDuplicate",
+                "Archive member path must be unique",
+                failure_path,
+            )
+        seen_names.add(member.name)
+        if not member.isfile():
+            _add_failure(
+                failures,
+                "archiveMemberTypeInvalid",
+                "Archive member must be a regular file",
+                failure_path,
+            )
+        if (
+            member.uid != 0
+            or member.gid != 0
+            or member.uname
+            or member.gname
+            or member.mtime != 0
+            or member.mode != 0o644
+        ):
+            _add_failure(
+                failures,
+                "archiveMemberMetadataInvalid",
+                "Archive member metadata is not deterministic",
+                failure_path,
+            )
+
+
+def _extract_archive_members(
+    archive: tarfile.TarFile,
+    members: Sequence[tarfile.TarInfo],
+    batch_dir: Path,
+    failures: list[dict[str, str]],
+) -> None:
+    for member in members:
+        if not _is_safe_manifest_path(member.name):
+            continue
+        target = batch_dir / member.name
+        source = archive.extractfile(member)
+        if source is None:
+            _add_failure(
+                failures,
+                "archiveMemberUnreadable",
+                "Archive member could not be read",
+                target,
+            )
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(source.read())
+
+
+def _archive_members(batch_dir: Path, *, exclude: Path | None = None) -> list[Path]:
+    batch_dir = batch_dir.resolve()
+    excluded = exclude.resolve() if exclude is not None else None
+    return sorted(
+        [
+            path
+            for path in batch_dir.rglob("*")
+            if path.is_file() and path.resolve() != excluded
+        ],
+        key=lambda path: path.relative_to(batch_dir).as_posix(),
+    )
+
+
+def _write_deterministic_tar_gz(
+    batch_dir: Path,
+    members: Sequence[Path],
+    output: BinaryIO,
+) -> None:
+    batch_dir = batch_dir.resolve()
+    with GzipFile(fileobj=output, mode="wb", filename="", mtime=0) as gzip_file:
+        with tarfile.open(fileobj=gzip_file, mode="w") as archive:
+            for member in members:
+                relative = member.relative_to(batch_dir).as_posix()
+                info = archive.gettarinfo(str(member), arcname=relative)
+                info.uid = 0
+                info.gid = 0
+                info.uname = ""
+                info.gname = ""
+                info.mtime = 0
+                info.mode = 0o644
+                with member.open("rb") as member_file:
+                    archive.addfile(info, member_file)
 
 
 def _snapshot_stats(snapshot: dict[str, Any]) -> dict[str, int]:

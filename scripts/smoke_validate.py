@@ -81,6 +81,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.bundle.catalog.v1.schema.json",
+    "edgp.export.batch.archive.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.export.batch.archive.v1.schema.json",
     "edgp.export.batch.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -166,6 +170,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "bundle-catalog.json",
+    "edgp.export.batch.archive.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "export-batch-archive.json",
     "edgp.export.batch.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -690,6 +698,7 @@ def _assert_schema_index_document() -> None:
         "edgp.albs.build_timing.v1",
         "edgp.advisory.report.v1",
         "edgp.bundle.catalog.v1",
+        "edgp.export.batch.archive.v1",
         "edgp.export.batch.v1",
         "edgp.export.batch.verification.v1",
         "edgp.graph.diff.v1",
@@ -1782,6 +1791,27 @@ def _assert_export_batch() -> None:
             text=True,
         )
         assert completed.stdout.startswith("OK exports=2")
+        archive_path = Path(temp_dir) / "export-batch.tar.gz"
+        archive_report = _run_cli(
+            [
+                "archive-export-batch",
+                "--path",
+                str(output_dir),
+                "--output",
+                str(archive_path),
+            ]
+        )
+        assert archive_report["schema"] == "edgp.export.batch.archive.v1"
+        assert archive_report["ok"] is True
+        assert archive_report["summary"]["files"] == 3
+        archive_verification = _run_cli(
+            ["verify-export-batch-archive", "--path", str(archive_path)]
+        )
+        assert archive_verification["schema"] == "edgp.export.batch.archive.v1"
+        assert archive_verification["ok"] is True
+        archive_validation = _run_cli(["validate", "--path", str(archive_path)])
+        assert archive_validation["targetType"] == "export-batch-archive"
+        assert archive_validation["ok"] is True
         (output_dir / exports["cypher"]["path"]).write_text("tampered\n", encoding="utf-8")
         failed = subprocess.run(
             [

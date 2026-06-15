@@ -1,0 +1,26 @@
+{
+  "archive": "tests/fixtures/export-batch.tar.gz",
+  "archiveSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "batchDir": "tests/fixtures/export-batch",
+  "manifestSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "ok": true,
+  "schema": "edgp.export.batch.archive.v1",
+  "summary": {
+    "bytes": 1024,
+    "files": 3,
+    "verificationFailures": 0
+  },
+  "verification": {
+    "batchDir": "tests/fixtures/export-batch",
+    "failures": [],
+    "manifest": "manifest.json",
+    "manifestSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "ok": true,
+    "schema": "edgp.export.batch.verification.v1",
+    "summary": {
+      "bytes": 1160,
+      "exports": 2,
+      "failures": 0
+    }
+  }
+}

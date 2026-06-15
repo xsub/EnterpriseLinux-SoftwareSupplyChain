@@ -35,6 +35,9 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.bundle.catalog.v1.schema.json`](schemas/edgp.bundle.catalog.v1.schema.json)
   documents verified static report-bundle catalogs for batch CI and workbench
   ingestion.
+- `edgp.export.batch.archive.v1`:
+  [`edgp.export.batch.archive.v1.schema.json`](schemas/edgp.export.batch.archive.v1.schema.json)
+  documents deterministic graph export batch archives for portable CI handoff.
 - `edgp.export.batch.v1`:
   [`edgp.export.batch.v1.schema.json`](schemas/edgp.export.batch.v1.schema.json)
   documents local Cypher, CycloneDX, and snapshot egress artifacts written from

@@ -29,7 +29,12 @@ from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.benchmark import run_synthetic_benchmark
 from src.bundle_catalog import build_bundle_catalog_report
 from src.core_graph.sparse_matrix import CSRDependencyGraph
-from src.export_batch import verify_graph_export_batch, write_graph_export_batch
+from src.export_batch import (
+    verify_graph_export_batch,
+    verify_graph_export_batch_archive,
+    write_graph_export_batch,
+    write_graph_export_batch_archive,
+)
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
 from src.libsolv_bridge import build_libsolv_bridge_report
@@ -183,6 +188,29 @@ def _format_export_batch_verification_report(report: dict[str, Any]) -> str:
         first_failure = failure_list[0]
         if isinstance(first_failure, dict):
             parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
+    return " ".join(parts)
+
+
+def _format_export_batch_archive_report(report: dict[str, Any]) -> str:
+    status = "OK" if report.get("ok") else "FAIL"
+    summary = report.get("summary", {})
+    files = summary.get("files", 0) if isinstance(summary, dict) else 0
+    bytes_written = summary.get("bytes", 0) if isinstance(summary, dict) else 0
+    failures = (
+        summary.get("verificationFailures", 0) if isinstance(summary, dict) else 0
+    )
+    parts = [
+        status,
+        f"files={files}",
+        f"bytes={bytes_written}",
+        f"verificationFailures={failures}",
+    ]
+    manifest_sha = report.get("manifestSha256")
+    if isinstance(manifest_sha, str) and manifest_sha:
+        parts.append(f"manifestSha256={manifest_sha}")
+    archive_sha = report.get("archiveSha256")
+    if isinstance(archive_sha, str) and archive_sha:
+        parts.append(f"archiveSha256={archive_sha}")
     return " ".join(parts)
 
 
@@ -2767,6 +2795,25 @@ def build_parser() -> argparse.ArgumentParser:
     verify_export_batch.add_argument("--manifest-name", default="manifest.json")
     verify_export_batch.add_argument("--format", choices=["json", "text"], default="json")
 
+    archive_export_batch = subparsers.add_parser(
+        "archive-export-batch",
+        help="Verify and package a graph export batch as deterministic tar.gz",
+    )
+    archive_export_batch.add_argument("--path", type=Path, required=True)
+    archive_export_batch.add_argument("--output", type=Path, required=True)
+    archive_export_batch.add_argument("--manifest-name", default="manifest.json")
+    archive_export_batch.add_argument("--format", choices=["json", "text"], default="json")
+
+    verify_export_batch_archive = subparsers.add_parser(
+        "verify-export-batch-archive",
+        help="Verify a deterministic tar.gz graph export batch archive",
+    )
+    verify_export_batch_archive.add_argument("--path", type=Path, required=True)
+    verify_export_batch_archive.add_argument("--manifest-name", default="manifest.json")
+    verify_export_batch_archive.add_argument(
+        "--format", choices=["json", "text"], default="json"
+    )
+
     report_bundle = subparsers.add_parser(
         "report-bundle", help="Render multiple local HTML JSON reports with an index"
     )
@@ -2872,7 +2919,13 @@ def build_parser() -> argparse.ArgumentParser:
     failure_examples.add_argument(
         "--target-type",
         action="append",
-        choices=["json-file", "export-batch", "report-bundle", "report-bundle-archive"],
+        choices=[
+            "json-file",
+            "export-batch",
+            "export-batch-archive",
+            "report-bundle",
+            "report-bundle-archive",
+        ],
         default=[],
         help="filter examples by target artifact type",
     )
@@ -3728,6 +3781,29 @@ def main(argv: list[str] | None = None) -> int:
         report = verify_graph_export_batch(args.path, manifest_name=args.manifest_name)
         if args.format == "text":
             print(_format_export_batch_verification_report(report))
+        else:
+            print(_json(report))
+        return 0 if report["ok"] else 1
+
+    if args.command == "archive-export-batch":
+        report = write_graph_export_batch_archive(
+            args.path,
+            args.output,
+            manifest_name=args.manifest_name,
+        )
+        if args.format == "text":
+            print(_format_export_batch_archive_report(report))
+        else:
+            print(_json(report))
+        return 0 if report["ok"] else 1
+
+    if args.command == "verify-export-batch-archive":
+        report = verify_graph_export_batch_archive(
+            args.path,
+            manifest_name=args.manifest_name,
+        )
+        if args.format == "text":
+            print(_format_export_batch_archive_report(report))
         else:
             print(_json(report))
         return 0 if report["ok"] else 1
