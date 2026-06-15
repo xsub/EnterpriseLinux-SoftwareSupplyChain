@@ -13,6 +13,8 @@ def test_cli_benchmark_outputs_json(capsys) -> None:
     assert payload["stats"]["nodes"] == 6
     assert payload["stats"]["edges"] == 9
     assert payload["storage"]["layout"] == "numpy.int32.c_contiguous"
+    assert payload["storage"]["runtime"] == "frozen"
+    assert payload["timingsMs"]["freeze"] >= 0
 
 
 def test_cli_performance_report_bundle_writes_verifiable_bundle(
@@ -51,10 +53,11 @@ def test_cli_performance_report_bundle_writes_verifiable_bundle(
     assert report["summary"]["scenarios"] == 2
     assert report["summary"]["allContiguous"] is True
     assert report["summary"]["layout"] == "numpy.int32.c_contiguous"
+    assert report["results"][0]["freezeMs"] >= 0
     assert report["results"][0]["reverseReachableMs"] >= 0
-    assert 'data-testid="performance-results-panel"' in (
-        output_dir / "001-performance-report.html"
-    ).read_text(encoding="utf-8")
+    html = (output_dir / "001-performance-report.html").read_text(encoding="utf-8")
+    assert 'data-testid="performance-results-panel"' in html
+    assert "Freezems" in html
 
     assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
     assert capsys.readouterr().out.startswith("OK ")

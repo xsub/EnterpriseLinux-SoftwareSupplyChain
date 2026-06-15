@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Iterator
 
 import numpy as np
@@ -18,6 +19,227 @@ class DependencyEdge:
     source: str
     target: str
     relationship_type: int = 1
+
+
+@dataclass(frozen=True, eq=False)
+class FrozenCSRGraph:
+    """Immutable CSR runtime snapshot for read-only graph traversal."""
+
+    vertex_map: Mapping[str, int]
+    package_ids: tuple[str, ...]
+    values: np.ndarray
+    column_indices: np.ndarray
+    row_pointers: np.ndarray
+    reverse_values: np.ndarray
+    reverse_column_indices: np.ndarray
+    reverse_row_pointers: np.ndarray
+    vertex_metadata: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "vertex_map", MappingProxyType(dict(self.vertex_map)))
+        object.__setattr__(
+            self,
+            "vertex_metadata",
+            MappingProxyType(
+                {
+                    package_id: MappingProxyType(dict(metadata))
+                    for package_id, metadata in self.vertex_metadata.items()
+                }
+            ),
+        )
+        for name in (
+            "values",
+            "column_indices",
+            "row_pointers",
+            "reverse_values",
+            "reverse_column_indices",
+            "reverse_row_pointers",
+        ):
+            object.__setattr__(self, name, _readonly_csr_array(getattr(self, name)))
+        self._validate_shape()
+
+    def __len__(self) -> int:
+        return len(self.package_ids)
+
+    @property
+    def next_vertex_id(self) -> int:
+        return len(self.package_ids)
+
+    def get_vertex_metadata(self, package_id: str) -> dict[str, str]:
+        return dict(self.vertex_metadata.get(package_id, {}))
+
+    def get_dependencies(self, package_id: str) -> list[str]:
+        vertex_id = self.vertex_map.get(package_id)
+        if vertex_id is None:
+            return []
+        return self._vertex_labels(self.get_dependency_ids(vertex_id))
+
+    def get_dependency_ids(self, vertex_id: int) -> np.ndarray:
+        if not self._is_valid_vertex_id(vertex_id):
+            return np.array([], dtype=_CSR_DTYPE)
+        start = int(self.row_pointers[vertex_id])
+        end = int(self.row_pointers[vertex_id + 1])
+        return self.column_indices[start:end]
+
+    def get_dependents(self, package_id: str) -> list[str]:
+        vertex_id = self.vertex_map.get(package_id)
+        if vertex_id is None:
+            return []
+        return self._vertex_labels(self.get_dependent_ids(vertex_id))
+
+    def get_dependent_ids(self, vertex_id: int) -> np.ndarray:
+        if not self._is_valid_vertex_id(vertex_id):
+            return np.array([], dtype=_CSR_DTYPE)
+        start = int(self.reverse_row_pointers[vertex_id])
+        end = int(self.reverse_row_pointers[vertex_id + 1])
+        return self.reverse_column_indices[start:end]
+
+    def reachable_dependencies(self, package_id: str) -> list[str]:
+        vertex_id = self.vertex_map.get(package_id)
+        if vertex_id is None:
+            return []
+        return self._vertex_labels(self.reachable_dependency_ids(vertex_id))
+
+    def reachable_dependency_ids(self, vertex_id: int) -> list[int]:
+        return self._reachable_ids(vertex_id, reverse=False)
+
+    def reachable_dependents(self, package_id: str) -> list[str]:
+        vertex_id = self.vertex_map.get(package_id)
+        if vertex_id is None:
+            return []
+        return self._vertex_labels(self.reachable_dependent_ids(vertex_id))
+
+    def reachable_dependent_ids(self, vertex_id: int) -> list[int]:
+        return self._reachable_ids(vertex_id, reverse=True)
+
+    def shortest_dependency_path(
+        self, source_id: str, target_id: str, *, reverse: bool = False
+    ) -> list[str]:
+        source_vertex = self.vertex_map.get(source_id)
+        target_vertex = self.vertex_map.get(target_id)
+        if source_vertex is None or target_vertex is None:
+            return []
+        return self._vertex_labels(
+            self.shortest_dependency_path_ids(
+                source_vertex,
+                target_vertex,
+                reverse=reverse,
+            )
+        )
+
+    def shortest_dependency_path_ids(
+        self, source_id: int, target_id: int, *, reverse: bool = False
+    ) -> list[int]:
+        if not self._is_valid_vertex_id(source_id) or not self._is_valid_vertex_id(
+            target_id
+        ):
+            return []
+
+        neighbors = self.get_dependent_ids if reverse else self.get_dependency_ids
+        queue: deque[list[int]] = deque([[source_id]])
+        visited = {source_id}
+
+        while queue:
+            path = queue.popleft()
+            current = path[-1]
+            if current == target_id:
+                return path
+            for neighbor in neighbors(current):
+                neighbor_id = int(neighbor)
+                if neighbor_id in visited:
+                    continue
+                visited.add(neighbor_id)
+                queue.append([*path, neighbor_id])
+
+        return []
+
+    def most_depended_upon(self, limit: int = 10) -> list[tuple[str, int]]:
+        incoming_counts = np.bincount(
+            self.column_indices,
+            minlength=self.next_vertex_id,
+        )
+        ranked = sorted(
+            (
+                (self.package_ids[vertex_id], int(count))
+                for vertex_id, count in enumerate(incoming_counts[: self.next_vertex_id])
+                if count
+            ),
+            key=lambda item: (-item[1], item[0]),
+        )
+        return ranked[:limit]
+
+    def edges(self) -> Iterator[DependencyEdge]:
+        for source in range(self.next_vertex_id):
+            start = int(self.row_pointers[source])
+            end = int(self.row_pointers[source + 1])
+            for index in range(start, end):
+                yield DependencyEdge(
+                    source=self.package_ids[source],
+                    target=self.package_ids[int(self.column_indices[index])],
+                    relationship_type=int(self.values[index]),
+                )
+
+    def to_adjacency_dict(self) -> dict[str, list[str]]:
+        return {
+            package_id: self.get_dependencies(package_id)
+            for package_id in sorted(self.vertex_map)
+        }
+
+    def storage_profile(self) -> dict[str, object]:
+        profile = _storage_profile(
+            values=self.values,
+            column_indices=self.column_indices,
+            row_pointers=self.row_pointers,
+            reverse_values=self.reverse_values,
+            reverse_column_indices=self.reverse_column_indices,
+            reverse_row_pointers=self.reverse_row_pointers,
+        )
+        profile["runtime"] = "frozen"
+        profile["readOnly"] = bool(
+            not self.values.flags.writeable
+            and not self.column_indices.flags.writeable
+            and not self.row_pointers.flags.writeable
+            and not self.reverse_values.flags.writeable
+            and not self.reverse_column_indices.flags.writeable
+            and not self.reverse_row_pointers.flags.writeable
+        )
+        return profile
+
+    def _reachable_ids(self, vertex_id: int, *, reverse: bool) -> list[int]:
+        if not self._is_valid_vertex_id(vertex_id):
+            return []
+
+        neighbor_fn = self.get_dependent_ids if reverse else self.get_dependency_ids
+        queue: deque[int] = deque(int(neighbor) for neighbor in neighbor_fn(vertex_id))
+        visited: set[int] = set()
+        reachable: list[int] = []
+
+        while queue:
+            current = queue.popleft()
+            if current in visited or current == vertex_id:
+                continue
+            visited.add(current)
+            reachable.append(current)
+            queue.extend(int(neighbor) for neighbor in neighbor_fn(current))
+
+        return reachable
+
+    def _vertex_labels(self, vertex_ids) -> list[str]:
+        return [self.package_ids[int(vertex_id)] for vertex_id in vertex_ids]
+
+    def _is_valid_vertex_id(self, vertex_id: int) -> bool:
+        return 0 <= vertex_id < self.next_vertex_id
+
+    def _validate_shape(self) -> None:
+        expected_rows = self.next_vertex_id + 1
+        if len(self.row_pointers) != expected_rows:
+            raise ValueError("forward CSR row pointer length does not match vertices")
+        if len(self.reverse_row_pointers) != expected_rows:
+            raise ValueError("reverse CSR row pointer length does not match vertices")
+        if len(self.values) != len(self.column_indices):
+            raise ValueError("forward CSR values and column indices differ")
+        if len(self.reverse_values) != len(self.reverse_column_indices):
+            raise ValueError("reverse CSR values and column indices differ")
 
 
 class CSRDependencyGraph:
@@ -211,32 +433,34 @@ class CSRDependencyGraph:
         """Return the materialized CSR array memory layout and byte footprint."""
 
         self._materialize()
-        return {
-            "layout": "numpy.int32.c_contiguous",
-            "dtype": str(self.values.dtype),
-            "valuesBytes": int(self.values.nbytes),
-            "columnIndicesBytes": int(self.column_indices.nbytes),
-            "rowPointersBytes": int(self.row_pointers.nbytes),
-            "reverseValuesBytes": int(self.reverse_values.nbytes),
-            "reverseColumnIndicesBytes": int(self.reverse_column_indices.nbytes),
-            "reverseRowPointersBytes": int(self.reverse_row_pointers.nbytes),
-            "totalBytes": int(
-                self.values.nbytes
-                + self.column_indices.nbytes
-                + self.row_pointers.nbytes
-                + self.reverse_values.nbytes
-                + self.reverse_column_indices.nbytes
-                + self.reverse_row_pointers.nbytes
-            ),
-            "cContiguous": bool(
-                self.values.flags.c_contiguous
-                and self.column_indices.flags.c_contiguous
-                and self.row_pointers.flags.c_contiguous
-                and self.reverse_values.flags.c_contiguous
-                and self.reverse_column_indices.flags.c_contiguous
-                and self.reverse_row_pointers.flags.c_contiguous
-            ),
-        }
+        return _storage_profile(
+            values=self.values,
+            column_indices=self.column_indices,
+            row_pointers=self.row_pointers,
+            reverse_values=self.reverse_values,
+            reverse_column_indices=self.reverse_column_indices,
+            reverse_row_pointers=self.reverse_row_pointers,
+        )
+
+    def freeze(self) -> FrozenCSRGraph:
+        """Return an immutable read-only copy of the current CSR arrays."""
+
+        self._materialize()
+        package_ids = tuple(
+            self.reverse_vertex_map[vertex_id]
+            for vertex_id in range(self.next_vertex_id)
+        )
+        return FrozenCSRGraph(
+            vertex_map=self.vertex_map,
+            package_ids=package_ids,
+            values=self.values,
+            column_indices=self.column_indices,
+            row_pointers=self.row_pointers,
+            reverse_values=self.reverse_values,
+            reverse_column_indices=self.reverse_column_indices,
+            reverse_row_pointers=self.reverse_row_pointers,
+            vertex_metadata=self.vertex_metadata,
+        )
 
     def _reachable_ids(self, vertex_id: int, *, reverse: bool) -> list[int]:
         self._materialize()
@@ -310,3 +534,46 @@ class CSRDependencyGraph:
         )
 
         self._dirty = False
+
+
+def _readonly_csr_array(values: np.ndarray) -> np.ndarray:
+    array = np.ascontiguousarray(values, dtype=_CSR_DTYPE).copy()
+    array.setflags(write=False)
+    return array
+
+
+def _storage_profile(
+    *,
+    values: np.ndarray,
+    column_indices: np.ndarray,
+    row_pointers: np.ndarray,
+    reverse_values: np.ndarray,
+    reverse_column_indices: np.ndarray,
+    reverse_row_pointers: np.ndarray,
+) -> dict[str, object]:
+    return {
+        "layout": "numpy.int32.c_contiguous",
+        "dtype": str(values.dtype),
+        "valuesBytes": int(values.nbytes),
+        "columnIndicesBytes": int(column_indices.nbytes),
+        "rowPointersBytes": int(row_pointers.nbytes),
+        "reverseValuesBytes": int(reverse_values.nbytes),
+        "reverseColumnIndicesBytes": int(reverse_column_indices.nbytes),
+        "reverseRowPointersBytes": int(reverse_row_pointers.nbytes),
+        "totalBytes": int(
+            values.nbytes
+            + column_indices.nbytes
+            + row_pointers.nbytes
+            + reverse_values.nbytes
+            + reverse_column_indices.nbytes
+            + reverse_row_pointers.nbytes
+        ),
+        "cContiguous": bool(
+            values.flags.c_contiguous
+            and column_indices.flags.c_contiguous
+            and row_pointers.flags.c_contiguous
+            and reverse_values.flags.c_contiguous
+            and reverse_column_indices.flags.c_contiguous
+            and reverse_row_pointers.flags.c_contiguous
+        ),
+    }

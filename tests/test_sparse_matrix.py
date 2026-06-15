@@ -1,8 +1,9 @@
 """CSR graph tests for row pointers, neighbor traversal, and duplicate edges."""
 
 import numpy as np
+import pytest
 
-from src.core_graph.sparse_matrix import CSRDependencyGraph
+from src.core_graph.sparse_matrix import CSRDependencyGraph, FrozenCSRGraph
 
 
 def test_csr_graph_materializes_neighbors_in_row_order() -> None:
@@ -133,3 +134,48 @@ def test_csr_graph_int_native_traversal_queries() -> None:
         app,
     ]
     assert graph.shortest_dependency_path_ids(999, base) == []
+
+
+def test_freeze_returns_read_only_snapshot_for_traversal() -> None:
+    graph = CSRDependencyGraph()
+    app = graph.add_vertex("app==1.0.0", metadata={"ecosystem": "test"})
+    lib = graph.add_vertex("lib==1.0.0")
+    base = graph.add_vertex("base==1.0.0")
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    graph.add_dependency_edge("lib==1.0.0", "base==1.0.0")
+
+    frozen = graph.freeze()
+
+    assert isinstance(frozen, FrozenCSRGraph)
+    assert len(frozen) == 3
+    assert frozen.get_dependencies("app==1.0.0") == ["lib==1.0.0"]
+    assert frozen.get_dependents("base==1.0.0") == ["lib==1.0.0"]
+    assert frozen.reachable_dependency_ids(app) == [lib, base]
+    assert frozen.shortest_dependency_path_ids(app, base) == [app, lib, base]
+    assert frozen.get_vertex_metadata("app==1.0.0") == {"ecosystem": "test"}
+
+    profile = frozen.storage_profile()
+    assert profile["runtime"] == "frozen"
+    assert profile["readOnly"] is True
+    assert profile["cContiguous"] is True
+
+    with pytest.raises(ValueError):
+        frozen.column_indices[0] = app
+    with pytest.raises(TypeError):
+        frozen.vertex_map["other==1.0.0"] = 99
+    with pytest.raises(TypeError):
+        frozen.vertex_metadata["app==1.0.0"]["ecosystem"] = "mutated"
+
+
+def test_frozen_snapshot_isolated_from_later_builder_mutation() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+
+    frozen = graph.freeze()
+    graph.add_dependency_edge("lib==1.0.0", "base==1.0.0")
+
+    assert frozen.reachable_dependencies("app==1.0.0") == ["lib==1.0.0"]
+    assert graph.reachable_dependencies("app==1.0.0") == [
+        "lib==1.0.0",
+        "base==1.0.0",
+    ]

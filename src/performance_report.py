@@ -41,6 +41,7 @@ def _result_row(nodes: int, fanout: int) -> dict[str, Any]:
         "reachableFromRoot": stats["reachableFromRoot"],
         "reverseReachableFromTail": stats["reverseReachableFromTail"],
         "buildMs": timings["build"],
+        "freezeMs": timings["freeze"],
         "reachableMs": timings["reachable"],
         "reverseReachableMs": timings["reverseReachable"],
         "mostDependedUponMs": timings["mostDependedUpon"],

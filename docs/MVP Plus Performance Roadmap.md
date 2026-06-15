@@ -89,3 +89,6 @@ one relevant measurement:
 - Vectorized ranking:
   most-depended-upon ranking now counts incoming edges with NumPy over
   `column_indices` before applying stable package-id tie-breaking.
+- Frozen graph runtime:
+  mutable builders now expose `freeze()` for read-only `FrozenCSRGraph`
+  snapshots, and synthetic benchmarks report freeze timing before traversal.

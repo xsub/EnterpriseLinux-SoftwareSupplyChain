@@ -286,12 +286,21 @@ class CDCLResolver {
 class CSRDependencyGraph {
   +add_vertex(package_id)
   +add_dependency_edge(source, target)
+  +freeze() FrozenCSRGraph
   +get_dependencies(package_id)
   +get_dependents(package_id)
   +reachable_dependencies(package_id)
   +shortest_dependency_path(source, target)
   +storage_profile()
   +edges()
+}
+class FrozenCSRGraph {
+  +get_dependency_ids(vertex_id)
+  +get_dependent_ids(vertex_id)
+  +reachable_dependency_ids(vertex_id)
+  +reachable_dependent_ids(vertex_id)
+  +most_depended_upon(limit)
+  +storage_profile()
 }
 class CypherExporter {
   +export_to_cypher(graph) str
@@ -371,6 +380,7 @@ CLI --> GraphBundleExporter : render graph bundle
 CLI --> ReportBundleExporter : render report bundle
 CLI --> Benchmark : run synthetic traversal
 CLI --> PublicReports : emit report JSON
+CSRDependencyGraph --> FrozenCSRGraph : freeze read-only arrays
 CypherExporter --> CSRDependencyGraph : traverse edges
 CycloneDXExporter --> CSRDependencyGraph : traverse dependencies
 GraphJsonExporter --> CSRDependencyGraph : snapshot nodes and edges
@@ -381,7 +391,8 @@ GraphBundleExporter --> GraphJsonExporter : write graph JSON
 GraphBundleExporter --> ImpactReporter : write impact reports
 GraphBundleExporter --> ReportBundleExporter : render static bundle
 ReportBundleExporter --> HtmlReportExporter : render member reports
-Benchmark --> CSRDependencyGraph : generate and traverse graph
+Benchmark --> CSRDependencyGraph : generate graph
+Benchmark --> FrozenCSRGraph : traverse frozen runtime
 PublicReports --> HtmlReportExporter : render public reports
 ```
 
@@ -448,6 +459,11 @@ methods convert back to package ids only at the API boundary.
 Most-depended-upon ranking counts incoming edges with NumPy over
 `column_indices`, then applies stable package-id tie-breaking for readable
 output.
+`CSRDependencyGraph.freeze()` creates a `FrozenCSRGraph` runtime snapshot with
+read-only copies of the forward and reverse arrays plus package and metadata
+maps. This separates ingestion-time mutation from query-time traversal, so
+benchmark and future server workers can run on a stable object with predictable
+memory accounting.
 
 This is an intentional productionization step. Native Python lists would store
 boxed integers behind arrays of object pointers. Even when the list container is
@@ -466,8 +482,8 @@ threading. That gives us enterprise-grade performance without the overhead of
 maintaining a separate Rust or C++ extension. The current benchmark output
 includes the CSR storage profile (`numpy.int32.c_contiguous`, byte counts, and
 contiguity flag) so this assumption is visible in smoke runs. Performance
-reports also include reverse reachability timing, which tracks the first MVP
-Plus performance vertical.
+reports also include freeze timing and reverse reachability timing, which track
+the MVP Plus performance verticals.
 
 ### CDCL-Inspired Resolution
 
@@ -743,9 +759,10 @@ Passing `--fail-on-status warn|fail` implies `--triage-summary`, preserves the
 generated bundle artifacts, prints the bundle index path, and returns status `2`
 when the generated rollup reaches the selected threshold.
 
-`edgp benchmark` builds a deterministic synthetic CSR graph and reports build,
-reachable traversal, and most-depended-upon timings. It is intended as a
-small smoke benchmark for comparing host environments.
+`edgp benchmark` builds a deterministic synthetic CSR graph, freezes it into a
+read-only runtime snapshot, and reports build, freeze, reachable traversal,
+reverse traversal, and most-depended-upon timings. It is intended as a small
+smoke benchmark for comparing host environments.
 
 ### JSON Snapshot
 

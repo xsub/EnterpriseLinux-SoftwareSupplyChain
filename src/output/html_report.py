@@ -692,6 +692,7 @@ def render_performance_report(report: dict[str, Any]) -> str:
                     "fanout",
                     "edges",
                     "buildMs",
+                    "freezeMs",
                     "reachableMs",
                     "reverseReachableMs",
                     "mostDependedUponMs",

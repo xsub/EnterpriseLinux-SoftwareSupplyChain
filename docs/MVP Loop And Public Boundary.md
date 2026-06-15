@@ -372,6 +372,8 @@ surfaces are:
   converting results back to package identifiers at public boundaries.
 - Count incoming edges for most-depended-upon rankings with NumPy over CSR
   column indices.
+- Freeze mutable CSR builders into read-only `FrozenCSRGraph` runtime snapshots
+  for stable query-time traversal and explicit freeze timing in benchmarks.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

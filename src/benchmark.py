@@ -17,16 +17,20 @@ def run_synthetic_benchmark(*, nodes: int = 1000, fanout: int = 3) -> dict[str, 
     graph, edge_count = _build_synthetic_graph(nodes=nodes, fanout=fanout)
     build_ms = _elapsed_ms(build_start)
 
+    freeze_start = perf_counter()
+    frozen_graph = graph.freeze()
+    freeze_ms = _elapsed_ms(freeze_start)
+
     reachable_start = perf_counter()
-    reachable = graph.reachable_dependencies("pkg0==1.0.0")
+    reachable = frozen_graph.reachable_dependencies("pkg0==1.0.0")
     reachable_ms = _elapsed_ms(reachable_start)
 
     reverse_reachable_start = perf_counter()
-    reverse_reachable = graph.reachable_dependents(f"pkg{nodes - 1}==1.0.0")
+    reverse_reachable = frozen_graph.reachable_dependents(f"pkg{nodes - 1}==1.0.0")
     reverse_reachable_ms = _elapsed_ms(reverse_reachable_start)
 
     ranking_start = perf_counter()
-    ranking = graph.most_depended_upon(limit=10)
+    ranking = frozen_graph.most_depended_upon(limit=10)
     ranking_ms = _elapsed_ms(ranking_start)
 
     return {
@@ -43,11 +47,12 @@ def run_synthetic_benchmark(*, nodes: int = 1000, fanout: int = 3) -> dict[str, 
         },
         "timingsMs": {
             "build": build_ms,
+            "freeze": freeze_ms,
             "reachable": reachable_ms,
             "reverseReachable": reverse_reachable_ms,
             "mostDependedUpon": ranking_ms,
         },
-        "storage": graph.storage_profile(),
+        "storage": frozen_graph.storage_profile(),
         "mostDependedUpon": [
             {"package": package_id, "dependents": count}
             for package_id, count in ranking
