@@ -40,7 +40,7 @@ from src.export_batch import (
     write_graph_export_batch,
     write_graph_export_batch_archive,
 )
-from src.graph_diff import diff_snapshot_files
+from src.graph_diff import diff_snapshot_files, diff_tree_snapshot_files
 from src.impact_report import build_impact_report
 from src.libsolv_bridge import build_libsolv_bridge_report
 from src.license_policy import build_license_report
@@ -1210,6 +1210,37 @@ def _write_graph_diff_bundle(
         [report_path],
         output_dir,
         bundle_metadata={"sourceKind": "graph-diff", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
+def _write_graph_diff_tree_bundle(
+    left_path: Path,
+    right_path: Path,
+    output_dir: Path,
+    *,
+    selector: str,
+    direction: str,
+    depth: int,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "graph-diff-tree.json"
+    report_path.write_text(
+        diff_tree_snapshot_files(
+            left_path,
+            right_path,
+            selector=selector,
+            direction=direction,
+            depth=depth,
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "graph-diff-tree", "command": command},
         include_triage_summary=include_triage_summary,
     )
 
@@ -2673,6 +2704,36 @@ def build_parser() -> argparse.ArgumentParser:
     diff_bundle.add_argument("--output-dir", type=Path, required=True)
     _add_triage_bundle_option(diff_bundle)
 
+    diff_tree = subparsers.add_parser(
+        "diff-tree",
+        help="Diff the dependency or dependent cone around one node in two snapshots",
+    )
+    diff_tree.add_argument("--left", type=Path, required=True)
+    diff_tree.add_argument("--right", type=Path, required=True)
+    diff_tree.add_argument("--node", required=True)
+    diff_tree.add_argument(
+        "--direction",
+        choices=["dependencies", "dependents"],
+        default="dependencies",
+    )
+    diff_tree.add_argument("--depth", type=int, default=3)
+
+    diff_tree_bundle = subparsers.add_parser(
+        "diff-tree-bundle",
+        help="Render a focused graph cone diff as a static report bundle",
+    )
+    diff_tree_bundle.add_argument("--left", type=Path, required=True)
+    diff_tree_bundle.add_argument("--right", type=Path, required=True)
+    diff_tree_bundle.add_argument("--node", required=True)
+    diff_tree_bundle.add_argument(
+        "--direction",
+        choices=["dependencies", "dependents"],
+        default="dependencies",
+    )
+    diff_tree_bundle.add_argument("--depth", type=int, default=3)
+    diff_tree_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(diff_tree_bundle)
+
     impact = subparsers.add_parser("impact", help="Report reverse dependency impact")
     impact.add_argument(
         "--source",
@@ -3790,6 +3851,33 @@ def main(argv: list[str] | None = None) -> int:
                 args.left,
                 args.right,
                 args.output_dir,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
+
+    if args.command == "diff-tree":
+        print(
+            diff_tree_snapshot_files(
+                args.left,
+                args.right,
+                selector=args.node,
+                direction=args.direction,
+                depth=args.depth,
+            )
+        )
+        return 0
+
+    if args.command == "diff-tree-bundle":
+        return _print_bundle_result(
+            _write_graph_diff_tree_bundle(
+                args.left,
+                args.right,
+                args.output_dir,
+                selector=args.node,
+                direction=args.direction,
+                depth=args.depth,
                 command=command,
                 include_triage_summary=_include_triage_summary(args),
             ),

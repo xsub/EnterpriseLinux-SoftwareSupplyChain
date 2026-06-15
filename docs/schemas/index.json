@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 35,
+  "schemaCount": 36,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -106,6 +106,14 @@
       "id": "urn:edgp:schema:graph-diff:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Graph Diff v1"
+    },
+    {
+      "contract": "edgp.graph.diff_tree.v1",
+      "description": "Focused dependency or dependent cone diff around one selected node in two EDGP graph snapshots.",
+      "file": "edgp.graph.diff_tree.v1.schema.json",
+      "id": "urn:edgp:schema:graph-diff-tree:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Graph Diff Tree v1"
     },
     {
       "contract": "edgp.graph.snapshot.v1",

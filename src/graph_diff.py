@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import deque
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,29 @@ def diff_snapshot_files(left_path: Path, right_path: Path) -> str:
     left = json.loads(left_path.read_text(encoding="utf-8"))
     right = json.loads(right_path.read_text(encoding="utf-8"))
     return json.dumps(diff_snapshots(left, right), indent=2, sort_keys=True)
+
+
+def diff_tree_snapshot_files(
+    left_path: Path,
+    right_path: Path,
+    *,
+    selector: str,
+    direction: str = "dependencies",
+    depth: int = 3,
+) -> str:
+    left = json.loads(left_path.read_text(encoding="utf-8"))
+    right = json.loads(right_path.read_text(encoding="utf-8"))
+    return json.dumps(
+        diff_tree_snapshots(
+            left,
+            right,
+            selector=selector,
+            direction=direction,
+            depth=depth,
+        ),
+        indent=2,
+        sort_keys=True,
+    )
 
 
 def diff_snapshots(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
@@ -54,6 +78,94 @@ def diff_snapshots(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any
     }
 
 
+def diff_tree_snapshots(
+    left: dict[str, Any],
+    right: dict[str, Any],
+    *,
+    selector: str,
+    direction: str = "dependencies",
+    depth: int = 3,
+) -> dict[str, Any]:
+    _require_snapshot(left, label="left")
+    _require_snapshot(right, label="right")
+    if direction not in {"dependencies", "dependents"}:
+        raise ValueError("diff tree direction must be dependencies or dependents")
+    if depth < 0:
+        raise ValueError("diff tree depth must be non-negative")
+
+    left_index = _SnapshotIndex.from_snapshot(left, label="left")
+    right_index = _SnapshotIndex.from_snapshot(right, label="right")
+    left_node = left_index.resolve_selector(selector)
+    right_node = right_index.resolve_selector(selector)
+    if left_node is None and right_node is None:
+        raise ValueError(f"diff tree selector does not match either snapshot: {selector}")
+
+    left_view = _collect_neighborhood(left_index, left_node, direction=direction, depth=depth)
+    right_view = _collect_neighborhood(
+        right_index,
+        right_node,
+        direction=direction,
+        depth=depth,
+    )
+
+    added_nodes = sorted(right_view.nodes - left_view.nodes)
+    removed_nodes = sorted(left_view.nodes - right_view.nodes)
+    common_nodes = sorted(left_view.nodes & right_view.nodes)
+    metadata_changed = [
+        _metadata_change(left_index, right_index, node_id)
+        for node_id in common_nodes
+        if left_index.metadata(node_id) != right_index.metadata(node_id)
+    ]
+    changed_node_ids = {item["id"] for item in metadata_changed}
+    unchanged_nodes = [node_id for node_id in common_nodes if node_id not in changed_node_ids]
+    added_edges = sorted(right_view.edges - left_view.edges)
+    removed_edges = sorted(left_view.edges - right_view.edges)
+    unchanged_edges = sorted(left_view.edges & right_view.edges)
+
+    return {
+        "schema": "edgp.graph.diff_tree.v1",
+        "selector": selector,
+        "direction": direction,
+        "depth": depth,
+        "leftRoot": left.get("root"),
+        "rightRoot": right.get("root"),
+        "leftNode": left_node,
+        "rightNode": right_node,
+        "summary": {
+            "leftNodes": len(left_view.nodes),
+            "rightNodes": len(right_view.nodes),
+            "addedNodes": len(added_nodes),
+            "removedNodes": len(removed_nodes),
+            "metadataChangedNodes": len(metadata_changed),
+            "unchangedNodes": len(unchanged_nodes),
+            "addedEdges": len(added_edges),
+            "removedEdges": len(removed_edges),
+            "unchangedEdges": len(unchanged_edges),
+        },
+        "nodes": {
+            "added": [right_index.node_payload(node_id) for node_id in added_nodes],
+            "removed": [left_index.node_payload(node_id) for node_id in removed_nodes],
+            "metadataChanged": metadata_changed,
+            "unchanged": unchanged_nodes,
+        },
+        "edges": {
+            "added": [_edge_payload(edge) for edge in added_edges],
+            "removed": [_edge_payload(edge) for edge in removed_edges],
+            "unchanged": [_edge_payload(edge) for edge in unchanged_edges],
+        },
+        "neighborhoods": {
+            "left": {
+                "nodes": sorted(left_view.nodes),
+                "edges": [_edge_payload(edge) for edge in sorted(left_view.edges)],
+            },
+            "right": {
+                "nodes": sorted(right_view.nodes),
+                "edges": [_edge_payload(edge) for edge in sorted(right_view.edges)],
+            },
+        },
+    }
+
+
 def _require_snapshot(payload: dict[str, Any], *, label: str) -> None:
     if payload.get("schema") != "edgp.graph.snapshot.v1":
         raise ValueError(f"{label} is not an EDGP graph snapshot")
@@ -75,4 +187,122 @@ def _edge_payload(edge: tuple[str, str, int]) -> dict[str, Any]:
         "source": source,
         "target": target,
         "relationshipType": relationship_type,
+    }
+
+
+class _SnapshotIndex:
+    def __init__(
+        self,
+        *,
+        label: str,
+        nodes: dict[str, dict[str, Any]],
+        names: dict[str, list[str]],
+        outgoing: dict[str, list[tuple[str, str, int]]],
+        incoming: dict[str, list[tuple[str, str, int]]],
+    ) -> None:
+        self.label = label
+        self.nodes = nodes
+        self.names = names
+        self.outgoing = outgoing
+        self.incoming = incoming
+
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, Any], *, label: str) -> "_SnapshotIndex":
+        nodes = {str(node["id"]): node for node in snapshot["nodes"]}
+        names: dict[str, list[str]] = {}
+        for node_id, node in nodes.items():
+            names.setdefault(str(node.get("name") or node_id), []).append(node_id)
+        outgoing: dict[str, list[tuple[str, str, int]]] = {node_id: [] for node_id in nodes}
+        incoming: dict[str, list[tuple[str, str, int]]] = {node_id: [] for node_id in nodes}
+        for edge in snapshot["edges"]:
+            key = _edge_key(edge)
+            outgoing.setdefault(key[0], []).append(key)
+            incoming.setdefault(key[1], []).append(key)
+        return cls(
+            label=label,
+            nodes=nodes,
+            names=names,
+            outgoing=outgoing,
+            incoming=incoming,
+        )
+
+    def resolve_selector(self, selector: str) -> str | None:
+        if selector in self.nodes:
+            return selector
+        matches = sorted(self.names.get(selector, []))
+        if not matches:
+            return None
+        if len(matches) > 1:
+            joined = ", ".join(matches[:5])
+            suffix = "" if len(matches) <= 5 else ", ..."
+            raise ValueError(
+                f"{self.label} diff tree selector is ambiguous: {selector} "
+                f"matches {joined}{suffix}"
+            )
+        return matches[0]
+
+    def metadata(self, node_id: str) -> dict[str, Any]:
+        metadata = self.nodes.get(node_id, {}).get("metadata", {})
+        return dict(metadata) if isinstance(metadata, dict) else {}
+
+    def node_payload(self, node_id: str) -> dict[str, Any]:
+        node = self.nodes[node_id]
+        return {
+            "id": node_id,
+            "name": str(node.get("name") or node_id),
+            "version": str(node.get("version") or ""),
+            "metadata": self.metadata(node_id),
+        }
+
+
+class _Neighborhood:
+    def __init__(self, nodes: set[str], edges: set[tuple[str, str, int]]) -> None:
+        self.nodes = nodes
+        self.edges = edges
+
+
+def _collect_neighborhood(
+    index: _SnapshotIndex,
+    start: str | None,
+    *,
+    direction: str,
+    depth: int,
+) -> _Neighborhood:
+    if start is None:
+        return _Neighborhood(set(), set())
+    adjacency = index.outgoing if direction == "dependencies" else index.incoming
+    nodes = {start}
+    edges: set[tuple[str, str, int]] = set()
+    distances = {start: 0}
+    queue: deque[str] = deque([start])
+    while queue:
+        node_id = queue.popleft()
+        distance = distances[node_id]
+        if distance >= depth:
+            continue
+        for edge in adjacency.get(node_id, []):
+            neighbor = edge[1] if direction == "dependencies" else edge[0]
+            edges.add(edge)
+            if neighbor not in nodes:
+                nodes.add(neighbor)
+                distances[neighbor] = distance + 1
+                queue.append(neighbor)
+    return _Neighborhood(nodes, edges)
+
+
+def _metadata_change(
+    left_index: _SnapshotIndex,
+    right_index: _SnapshotIndex,
+    node_id: str,
+) -> dict[str, Any]:
+    left_metadata = left_index.metadata(node_id)
+    right_metadata = right_index.metadata(node_id)
+    keys = sorted(set(left_metadata) | set(right_metadata))
+    return {
+        "id": node_id,
+        "changedKeys": [
+            key for key in keys if left_metadata.get(key) != right_metadata.get(key)
+        ],
+        "leftMetadata": left_metadata,
+        "rightMetadata": right_metadata,
     }

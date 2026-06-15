@@ -12,7 +12,8 @@ Enterprise Dependency Graph Pipeline (EDGP) is a prototype for building,
 resolving, storing, and exporting software dependency graphs at supply-chain
 scale.
 
-The design follows the research notes in this workspace:
+The design follows the research notes in
+[`docs/Architecture and Traversal of Massive-Scale Dependency Graphs.md`](docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20Dependency%20Graphs.md):
 
 - graph topology is represented with Compressed Sparse Row (CSR) arrays;
 - dependency resolution uses a PubGrub/CDCL-inspired loop with learned
@@ -174,6 +175,8 @@ edgp npm-diagnostics --path package-lock.json
 edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-diagnostics --triage-summary
 edgp diff --left before.json --right after.json
 edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --triage-summary
+edgp diff-tree --left before.json --right after.json --node openssl --direction dependencies --depth 4
+edgp diff-tree-bundle --left before.json --right after.json --node openssl --direction dependents --depth 4 --output-dir reports/openssl-impact-diff --triage-summary
 ```
 
 ### Reports And Bundles
@@ -452,6 +455,40 @@ The reverse CSR sidecar mirrors those edges for dependent lookups:
 - `reverse_row_pointers`: offsets into `reverse_column_indices` for each target
   vertex.
 
+The storage layout comes from the
+[`Compressed Sparse Row and Compressed Sparse Column Formats`](docs/Architecture%20and%20Traversal%20of%20Massive-Scale%20Dependency%20Graphs.md#compressed-sparse-row-and-compressed-sparse-column-formats)
+research section. EDGP stores the forward dependency graph as CSR and stores
+the transposed graph as a reverse CSR sidecar, which gives the same direct
+incoming-edge access pattern that CSC provides for the original adjacency
+matrix.
+
+```mermaid
+flowchart TB
+  subgraph Logical["Logical dependency graph"]
+    App["app (0)"] --> Lib["lib (1)"]
+    App --> Tool["tool (2)"]
+    Lib --> Base["base (3)"]
+    Tool --> Base
+  end
+
+  subgraph CSR["CSR: outgoing dependency rows"]
+    CSRRows["row_pointers: 0, 2, 3, 4, 4"]
+    CSRCols["column_indices: 1, 2, 3, 3"]
+    CSRVals["values: 1, 1, 1, 1"]
+    CSRRead["dependencies(app): row 0 -> columns 0..2 -> lib, tool"]
+  end
+
+  subgraph CSC["CSC view / reverse CSR: incoming dependent rows"]
+    CSCRead["dependents(base): row 3 -> reverse columns 2..4 -> lib, tool"]
+    CSCRows["reverse_row_pointers: 0, 0, 1, 2, 4"]
+    CSCCols["reverse_column_indices: 0, 0, 1, 2"]
+    CSCVals["reverse_values: 1, 1, 1, 1"]
+  end
+
+  Logical --> CSR
+  Logical --> CSC
+```
+
 This avoids full-graph scans for `get_dependents`, reverse reachability,
 impact, advisory, and libsolv bridge workflows while keeping the canonical
 storage model simple enough to inspect and serialize.
@@ -709,6 +746,14 @@ nodes, added or removed edges, and node metadata changes. `edgp diff-bundle`
 renders that generic snapshot comparison as static HTML with a verifiable
 manifest, which makes before/after graph changes shareable without rebuilding
 the original input adapters.
+
+`edgp diff-tree` compares the dependency or dependent cone around one selected
+node in two snapshots. It resolves the selector by exact node ID or unambiguous
+node name, traverses both snapshots to the requested depth, and reports the
+added, removed, unchanged, and metadata-changed nodes and edges inside that
+focused neighborhood. `edgp diff-tree-bundle` renders the same focused graph
+change as static HTML, which is the practical view for release-to-release
+package impact, repository snapshot drift, and build provenance changes.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
 optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`

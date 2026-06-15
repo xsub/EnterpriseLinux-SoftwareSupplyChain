@@ -180,6 +180,17 @@ def test_render_report_supports_graph_diff_json() -> None:
     assert "core==1.0.0" in html
 
 
+def test_render_report_supports_graph_diff_tree_json() -> None:
+    report = json.loads(Path("tests/fixtures/graph-diff-tree.json").read_text())
+
+    html = render_report(report)
+
+    assert "EDGP Graph Diff Tree" in html
+    assert 'data-testid="graph-diff-tree-added-nodes-panel"' in html
+    assert 'data-testid="graph-diff-tree-added-edges-panel"' in html
+    assert "lib==2.0.0" in html
+
+
 def test_render_report_supports_query_report_json() -> None:
     report = json.loads(Path("tests/fixtures/query-report.json").read_text())
 

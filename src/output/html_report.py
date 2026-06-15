@@ -27,6 +27,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_snapshot_report(payload)
     if schema == "edgp.graph.diff.v1":
         return render_graph_diff_report(payload)
+    if schema == "edgp.graph.diff_tree.v1":
+        return render_graph_diff_tree_report(payload)
     if schema == "edgp.impact.report.v1":
         return render_impact_report(payload)
     if schema == "edgp.advisory.report.v1":
@@ -185,6 +187,74 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
                 edges.get("removed", []),
                 ["source", "target", "relationshipType"],
                 test_id="graph-diff-removed-edges-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.graph.diff_tree.v1":
+        raise ValueError("HTML graph diff tree input must be an EDGP graph diff tree report")
+
+    summary = report.get("summary", {})
+    nodes = report.get("nodes", {})
+    edges = report.get("edges", {})
+    if not isinstance(nodes, dict):
+        nodes = {}
+    if not isinstance(edges, dict):
+        edges = {}
+    heading = (
+        f"{report.get('selector') or report.get('leftNode') or report.get('rightNode')} "
+        f"({report.get('direction', 'dependencies')}, depth {report.get('depth', 0)})"
+    )
+    return _document(
+        "EDGP Graph Diff Tree",
+        [
+            _generic_hero(
+                eyebrow="graph diff tree",
+                heading=heading,
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Added Nodes", _dict_value(summary, "addedNodes")),
+                    ("Removed Nodes", _dict_value(summary, "removedNodes")),
+                    (
+                        "Metadata Changed",
+                        _dict_value(summary, "metadataChangedNodes"),
+                    ),
+                    ("Added Edges", _dict_value(summary, "addedEdges")),
+                    ("Removed Edges", _dict_value(summary, "removedEdges")),
+                ],
+            ),
+            _rows_panel(
+                "Added Nodes In Focused Cone",
+                nodes.get("added", []),
+                ["id", "name", "version", "metadata"],
+                test_id="graph-diff-tree-added-nodes-panel",
+            ),
+            _rows_panel(
+                "Removed Nodes In Focused Cone",
+                nodes.get("removed", []),
+                ["id", "name", "version", "metadata"],
+                test_id="graph-diff-tree-removed-nodes-panel",
+            ),
+            _rows_panel(
+                "Metadata Changed Nodes",
+                nodes.get("metadataChanged", []),
+                ["id", "changedKeys", "leftMetadata", "rightMetadata"],
+                test_id="graph-diff-tree-metadata-nodes-panel",
+            ),
+            _rows_panel(
+                "Added Edges In Focused Cone",
+                edges.get("added", []),
+                ["source", "target", "relationshipType"],
+                test_id="graph-diff-tree-added-edges-panel",
+            ),
+            _rows_panel(
+                "Removed Edges In Focused Cone",
+                edges.get("removed", []),
+                ["source", "target", "relationshipType"],
+                test_id="graph-diff-tree-removed-edges-panel",
             ),
         ],
         scripts=[_table_sort_script()],

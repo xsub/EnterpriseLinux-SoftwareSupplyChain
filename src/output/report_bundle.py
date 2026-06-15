@@ -34,6 +34,7 @@ SOURCE_KINDS = {
     "dot",
     "edgp-json",
     "graph-diff",
+    "graph-diff-tree",
     "impact-report",
     "license-report",
     "libsolv-transaction",

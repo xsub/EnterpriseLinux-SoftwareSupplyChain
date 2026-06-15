@@ -33,6 +33,7 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.export.batch.v1",
         "edgp.export.batch.verification.v1",
         "edgp.graph.diff.v1",
+        "edgp.graph.diff_tree.v1",
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
         "edgp.libsolv.bridge.v1",

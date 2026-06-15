@@ -23,6 +23,10 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
   [`edgp.graph.diff.v1.schema.json`](schemas/edgp.graph.diff.v1.schema.json)
   documents added, removed, and metadata-changed graph elements between two
   EDGP graph snapshots.
+- `edgp.graph.diff_tree.v1`:
+  [`edgp.graph.diff_tree.v1.schema.json`](schemas/edgp.graph.diff_tree.v1.schema.json)
+  documents dependency or dependent cone changes around one selected node in two
+  EDGP graph snapshots.
 - `edgp.query.report.v1`:
   [`edgp.query.report.v1.schema.json`](schemas/edgp.query.report.v1.schema.json)
   documents dependency, dependent, reachability, shortest-path, and

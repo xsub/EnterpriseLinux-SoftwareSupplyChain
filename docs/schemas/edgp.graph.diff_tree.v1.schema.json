@@ -1,0 +1,134 @@
+{
+  "$id": "urn:edgp:schema:graph-diff-tree:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Focused dependency or dependent cone diff around one selected node in two EDGP graph snapshots.",
+  "properties": {
+    "depth": {"minimum": 0, "type": "integer"},
+    "direction": {"enum": ["dependencies", "dependents"]},
+    "edges": {
+      "additionalProperties": false,
+      "properties": {
+        "added": {"items": {"$ref": "#/$defs/edge"}, "type": "array"},
+        "removed": {"items": {"$ref": "#/$defs/edge"}, "type": "array"},
+        "unchanged": {"items": {"$ref": "#/$defs/edge"}, "type": "array"}
+      },
+      "required": ["added", "removed", "unchanged"],
+      "type": "object"
+    },
+    "leftNode": {"type": ["string", "null"]},
+    "leftRoot": {"type": ["string", "null"]},
+    "neighborhoods": {
+      "additionalProperties": false,
+      "properties": {
+        "left": {"$ref": "#/$defs/neighborhood"},
+        "right": {"$ref": "#/$defs/neighborhood"}
+      },
+      "required": ["left", "right"],
+      "type": "object"
+    },
+    "nodes": {
+      "additionalProperties": false,
+      "properties": {
+        "added": {"items": {"$ref": "#/$defs/node"}, "type": "array"},
+        "metadataChanged": {
+          "items": {"$ref": "#/$defs/metadataChange"},
+          "type": "array"
+        },
+        "removed": {"items": {"$ref": "#/$defs/node"}, "type": "array"},
+        "unchanged": {"items": {"type": "string"}, "type": "array"}
+      },
+      "required": ["added", "removed", "metadataChanged", "unchanged"],
+      "type": "object"
+    },
+    "rightNode": {"type": ["string", "null"]},
+    "rightRoot": {"type": ["string", "null"]},
+    "schema": {"const": "edgp.graph.diff_tree.v1"},
+    "selector": {"minLength": 1, "type": "string"},
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "addedEdges": {"minimum": 0, "type": "integer"},
+        "addedNodes": {"minimum": 0, "type": "integer"},
+        "leftNodes": {"minimum": 0, "type": "integer"},
+        "metadataChangedNodes": {"minimum": 0, "type": "integer"},
+        "removedEdges": {"minimum": 0, "type": "integer"},
+        "removedNodes": {"minimum": 0, "type": "integer"},
+        "rightNodes": {"minimum": 0, "type": "integer"},
+        "unchangedEdges": {"minimum": 0, "type": "integer"},
+        "unchangedNodes": {"minimum": 0, "type": "integer"}
+      },
+      "required": [
+        "leftNodes",
+        "rightNodes",
+        "addedNodes",
+        "removedNodes",
+        "metadataChangedNodes",
+        "unchangedNodes",
+        "addedEdges",
+        "removedEdges",
+        "unchangedEdges"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "selector",
+    "direction",
+    "depth",
+    "leftRoot",
+    "rightRoot",
+    "leftNode",
+    "rightNode",
+    "summary",
+    "nodes",
+    "edges",
+    "neighborhoods"
+  ],
+  "title": "EDGP Graph Diff Tree v1",
+  "type": "object",
+  "$defs": {
+    "edge": {
+      "additionalProperties": false,
+      "properties": {
+        "relationshipType": {"minimum": 1, "type": "integer"},
+        "source": {"minLength": 1, "type": "string"},
+        "target": {"minLength": 1, "type": "string"}
+      },
+      "required": ["source", "target", "relationshipType"],
+      "type": "object"
+    },
+    "metadataChange": {
+      "additionalProperties": false,
+      "properties": {
+        "changedKeys": {"items": {"type": "string"}, "type": "array"},
+        "id": {"minLength": 1, "type": "string"},
+        "leftMetadata": {"type": "object"},
+        "rightMetadata": {"type": "object"}
+      },
+      "required": ["id", "changedKeys", "leftMetadata", "rightMetadata"],
+      "type": "object"
+    },
+    "neighborhood": {
+      "additionalProperties": false,
+      "properties": {
+        "edges": {"items": {"$ref": "#/$defs/edge"}, "type": "array"},
+        "nodes": {"items": {"type": "string"}, "type": "array"}
+      },
+      "required": ["nodes", "edges"],
+      "type": "object"
+    },
+    "node": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {"minLength": 1, "type": "string"},
+        "metadata": {"type": "object"},
+        "name": {"minLength": 1, "type": "string"},
+        "version": {"type": "string"}
+      },
+      "required": ["id", "name", "version", "metadata"],
+      "type": "object"
+    }
+  }
+}

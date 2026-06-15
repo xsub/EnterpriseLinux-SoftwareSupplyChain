@@ -1,0 +1,112 @@
+{
+  "depth": 2,
+  "direction": "dependencies",
+  "edges": {
+    "added": [
+      {
+        "relationshipType": 1,
+        "source": "app==1.0.0",
+        "target": "lib==2.0.0"
+      },
+      {
+        "relationshipType": 1,
+        "source": "lib==2.0.0",
+        "target": "core==1.0.0"
+      }
+    ],
+    "removed": [
+      {
+        "relationshipType": 1,
+        "source": "app==1.0.0",
+        "target": "lib==1.0.0"
+      }
+    ],
+    "unchanged": []
+  },
+  "leftNode": "app==1.0.0",
+  "leftRoot": "app==1.0.0",
+  "neighborhoods": {
+    "left": {
+      "edges": [
+        {
+          "relationshipType": 1,
+          "source": "app==1.0.0",
+          "target": "lib==1.0.0"
+        }
+      ],
+      "nodes": [
+        "app==1.0.0",
+        "lib==1.0.0"
+      ]
+    },
+    "right": {
+      "edges": [
+        {
+          "relationshipType": 1,
+          "source": "app==1.0.0",
+          "target": "lib==2.0.0"
+        },
+        {
+          "relationshipType": 1,
+          "source": "lib==2.0.0",
+          "target": "core==1.0.0"
+        }
+      ],
+      "nodes": [
+        "app==1.0.0",
+        "core==1.0.0",
+        "lib==2.0.0"
+      ]
+    }
+  },
+  "nodes": {
+    "added": [
+      {
+        "id": "core==1.0.0",
+        "metadata": {
+          "ecosystem": "npm"
+        },
+        "name": "core",
+        "version": "1.0.0"
+      },
+      {
+        "id": "lib==2.0.0",
+        "metadata": {
+          "ecosystem": "npm",
+          "license": "MIT"
+        },
+        "name": "lib",
+        "version": "2.0.0"
+      }
+    ],
+    "metadataChanged": [],
+    "removed": [
+      {
+        "id": "lib==1.0.0",
+        "metadata": {
+          "ecosystem": "npm"
+        },
+        "name": "lib",
+        "version": "1.0.0"
+      }
+    ],
+    "unchanged": [
+      "app==1.0.0"
+    ]
+  },
+  "rightNode": "app==1.0.0",
+  "rightRoot": "app==1.0.0",
+  "schema": "edgp.graph.diff_tree.v1",
+  "selector": "app",
+  "summary": {
+    "addedEdges": 2,
+    "addedNodes": 2,
+    "leftNodes": 2,
+    "metadataChangedNodes": 0,
+    "removedEdges": 1,
+    "removedNodes": 1,
+    "rightNodes": 3,
+    "unchangedEdges": 0,
+    "unchangedNodes": 1
+  }
+}
