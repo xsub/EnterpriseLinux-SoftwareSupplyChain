@@ -770,6 +770,8 @@ edgp failure-examples --list-codes
 edgp failure-examples --contract edgp.graph.snapshot.v1 --format text
 edgp failure-examples --target-type report-bundle --code manifestInvalid
 edgp failure-examples --target-type report-bundle-archive --code archiveMissing
+edgp report --input docs/validation-failure-example-index.json --output failure-examples.html
+edgp report --input docs/validation-failure-example-filters.json --output failure-example-filters.html
 ```
 
 `failure-examples` filters are composable:
@@ -789,6 +791,10 @@ edgp failure-examples --target-type report-bundle --contract edgp.report.bundle.
 edgp failure-examples --target-type report-bundle --contract edgp.report.bundle.v1 --code manifestInvalid --format text
 edgp failure-examples --target-type report-bundle-archive --contract edgp.report.bundle.archive.v1 --format text
 ```
+
+The failure example index and filter listing also render through `edgp report`,
+which gives reviewers a static HTML catalog of ids, contracts, target types,
+fixtures, and failure-code filters.
 
 `scripts/browser_smoke_report_sorting.py` generates a self-checking HTML report
 that exercises graph report table sorting inside a browser.

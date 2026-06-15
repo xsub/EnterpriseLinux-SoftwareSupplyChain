@@ -191,6 +191,8 @@ surfaces are:
   workbench and RAG ingestion.
 - Emit the validation failure example index through the `failure-examples` CLI
   command.
+- Render validation failure example indexes and filter listings as static HTML
+  catalogs.
 - Emit a compact text summary for validation failure examples.
 - Document `edgp.validation.failure.example.index.v1` with a Draft 2020-12 JSON
   Schema and smoke validation against the committed index.
@@ -511,6 +513,8 @@ python -B -m src.cli failure-examples --id manifest-invalid
 python -B -m src.cli failure-examples --code bundle.manifestInvalid
 python -B -m src.cli failure-examples --target-type report-bundle --code manifestInvalid
 python -B -m src.cli failure-examples --target-type report-bundle-archive --code archiveMissing
+python -B -m src.cli report --input docs/validation-failure-example-index.json --output /tmp/edgp-failure-examples.html
+python -B -m src.cli report --input docs/validation-failure-example-filters.json --output /tmp/edgp-failure-example-filters.html
 python -B scripts/browser_smoke_report_sorting.py --output /tmp/edgp-report-sorting-smoke.html
 python -B scripts/browser_smoke_report_bundle_navigation.py --output-dir /tmp/edgp-report-bundle-navigation-smoke
 python -B scripts/generate_schema_index.py --check

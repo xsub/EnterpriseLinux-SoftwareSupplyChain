@@ -456,6 +456,52 @@ def test_cli_report_writes_nested_validation_html(tmp_path, capsys) -> None:
     assert "edgp.report.bundle.verification.v1" in html
 
 
+def test_cli_report_writes_failure_example_index_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "failure-examples.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "docs/validation-failure-example-index.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="failure-example-index-panel"' in html
+    assert "graph-missing-edge-count" in html
+    assert "bundle.bundleDigestMismatch" in html
+
+
+def test_cli_report_writes_failure_example_filters_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "failure-example-filters.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "docs/validation-failure-example-filters.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="failure-example-filters-panel"' in html
+    assert "report-bundle-archive" in html
+    assert "bundleArchive.archiveMissing" in html
+
+
 def test_cli_archive_bundle_verifies_and_writes_deterministic_archive(
     tmp_path,
     capsys,

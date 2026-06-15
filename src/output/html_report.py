@@ -65,6 +65,10 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_triage_summary_report(payload)
     if schema == "edgp.validation.report.v1":
         return render_validation_report(payload)
+    if schema == "edgp.validation.failure.example.index.v1":
+        return render_failure_example_index_report(payload)
+    if schema == "edgp.validation.failure.example.filters.v1":
+        return render_failure_example_filters_report(payload)
     if schema == "edgp.report.bundle.verification.v1":
         return render_report_bundle_verification_report(payload)
     if schema == "edgp.report.bundle.archive.v1":
@@ -957,6 +961,109 @@ def render_validation_report(report: dict[str, Any]) -> str:
     )
 
 
+def render_failure_example_index_report(index: dict[str, Any]) -> str:
+    if index.get("schema") != "edgp.validation.failure.example.index.v1":
+        raise ValueError(
+            "HTML failure example input must be an EDGP failure example index"
+        )
+
+    examples = index.get("examples", [])
+    example_rows = _failure_example_rows(examples)
+    contract_count = len({row["contract"] for row in example_rows if row["contract"]})
+    target_type_count = len(
+        {row["targetType"] for row in example_rows if row["targetType"]}
+    )
+    validation_code_count = len(
+        {
+            code
+            for row in example_rows
+            for code in _split_codes(str(row["validationFailureCodes"]))
+        }
+    )
+    verification_code_count = len(
+        {
+            code
+            for row in example_rows
+            for code in _split_codes(str(row["verificationFailureCodes"]))
+        }
+    )
+    return _document(
+        "EDGP Validation Failure Examples",
+        [
+            _generic_hero(
+                eyebrow="failure examples",
+                heading="Validation failure catalog",
+                schema=str(index.get("schema")),
+                metrics=[
+                    ("Examples", index.get("exampleCount", len(example_rows))),
+                    ("Contracts", contract_count),
+                    ("Target Types", target_type_count),
+                    ("Validation Codes", validation_code_count),
+                    ("Verifier Codes", verification_code_count),
+                ],
+            ),
+            _rows_panel(
+                "Examples",
+                example_rows,
+                [
+                    "id",
+                    "targetType",
+                    "contract",
+                    "target",
+                    "firstFailureCode",
+                    "firstFailurePath",
+                    "validationFailureCodes",
+                    "verificationFailureCodes",
+                    "validationFixture",
+                    "verificationFixture",
+                ],
+                test_id="failure-example-index-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_failure_example_filters_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.validation.failure.example.filters.v1":
+        raise ValueError(
+            "HTML failure filters input must be an EDGP failure filter listing"
+        )
+
+    rows = _failure_example_filter_rows(report)
+    return _document(
+        "EDGP Validation Failure Example Filters",
+        [
+            _generic_hero(
+                eyebrow="failure filters",
+                heading="Validation failure filter catalog",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Examples", report.get("exampleCount", 0)),
+                    ("Ids", _list_len(report.get("ids"))),
+                    ("Contracts", _list_len(report.get("contracts"))),
+                    ("Target Types", _list_len(report.get("targetTypes"))),
+                    (
+                        "Validation Codes",
+                        _list_len(report.get("validationFailureCodes")),
+                    ),
+                    (
+                        "Verifier Codes",
+                        _list_len(report.get("verificationFailureCodes")),
+                    ),
+                ],
+            ),
+            _rows_panel(
+                "Available Filters",
+                rows,
+                ["kind", "count", "values"],
+                test_id="failure-example-filters-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
 def _validation_target_row(report: dict[str, object]) -> dict[str, object]:
     return {
         "target": report.get("target", ""),
@@ -965,6 +1072,68 @@ def _validation_target_row(report: dict[str, object]) -> dict[str, object]:
         "schemaFile": report.get("schemaFile", ""),
         "ok": report.get("ok", ""),
     }
+
+
+def _failure_example_rows(examples: object) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    if not isinstance(examples, list):
+        return rows
+    for example in examples:
+        if not isinstance(example, dict):
+            continue
+        first_failure = example.get("firstFailure", {})
+        if not isinstance(first_failure, dict):
+            first_failure = {}
+        rows.append(
+            {
+                "id": example.get("id", ""),
+                "targetType": example.get("targetType", ""),
+                "contract": example.get("contract", ""),
+                "target": example.get("target", ""),
+                "firstFailureCode": first_failure.get("code", ""),
+                "firstFailurePath": first_failure.get("path", ""),
+                "validationFailureCodes": ", ".join(
+                    _as_string_list(example.get("validationFailureCodes"))
+                ),
+                "verificationFailureCodes": ", ".join(
+                    _as_string_list(example.get("verificationFailureCodes"))
+                ),
+                "validationFixture": example.get("validationFixture", ""),
+                "verificationFixture": example.get("verificationFixture", ""),
+            }
+        )
+    return rows
+
+
+def _failure_example_filter_rows(report: dict[str, object]) -> list[dict[str, object]]:
+    return [
+        _failure_example_filter_row("ids", report.get("ids")),
+        _failure_example_filter_row("contracts", report.get("contracts")),
+        _failure_example_filter_row("targetTypes", report.get("targetTypes")),
+        _failure_example_filter_row(
+            "validationFailureCodes",
+            report.get("validationFailureCodes"),
+        ),
+        _failure_example_filter_row(
+            "verificationFailureCodes",
+            report.get("verificationFailureCodes"),
+        ),
+    ]
+
+
+def _failure_example_filter_row(kind: str, values: object) -> dict[str, object]:
+    items = _as_string_list(values)
+    return {"kind": kind, "count": len(items), "values": ", ".join(items)}
+
+
+def _split_codes(value: str) -> list[str]:
+    if not value:
+        return []
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def _list_len(value: object) -> int:
+    return len(value) if isinstance(value, list) else 0
 
 
 def _validation_triage_row(triage_summary: dict[str, object]) -> dict[str, object]:

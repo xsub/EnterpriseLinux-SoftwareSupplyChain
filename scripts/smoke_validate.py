@@ -943,6 +943,52 @@ def _assert_failure_example_index_document() -> None:
     )
     assert validation["ok"] is True
     assert validation["contract"] == "edgp.validation.failure.example.filters.v1"
+    with tempfile.TemporaryDirectory() as temp_dir:
+        index_html_path = Path(temp_dir) / "failure-examples.html"
+        completed_index_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                "docs/validation-failure-example-index.json",
+                "--output",
+                str(index_html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_index_report.stdout.strip()) == index_html_path
+        index_html = index_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="failure-example-index-panel"' in index_html
+        assert "graph-missing-edge-count" in index_html
+
+        filters_html_path = Path(temp_dir) / "failure-example-filters.html"
+        completed_filters_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                "docs/validation-failure-example-filters.json",
+                "--output",
+                str(filters_html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_filters_report.stdout.strip()) == filters_html_path
+        filters_html = filters_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="failure-example-filters-panel"' in filters_html
+        assert "bundleArchive.archiveMissing" in filters_html
     completed = subprocess.run(
         [
             sys.executable,
