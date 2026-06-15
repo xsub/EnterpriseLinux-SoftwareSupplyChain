@@ -693,8 +693,9 @@ and npm diagnostics are documented in
 machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 `edgp validate` checks a local EDGP JSON report file against the documented
 schema subset, including `anyOf` fields such as nullable bundle fingerprints,
-typed `additionalProperties` maps such as bundle metadata, or validates a
-report bundle directory with the bundle verifier.
+`oneOf` nullable fields such as report roots, typed `additionalProperties`
+maps such as bundle metadata, or validates a report bundle directory with the
+bundle verifier.
 For bundles that already contain `manifest.triageSummary`, `validate
 --fail-on-status warn|fail` also gates on the generated triage status while
 leaving validation itself read-only.

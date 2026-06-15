@@ -42,6 +42,37 @@ def test_validate_target_enforces_any_of_schema_options(tmp_path) -> None:
     } in report["failures"]
 
 
+def test_validate_target_accepts_documented_one_of_nullable_fields(
+    tmp_path,
+) -> None:
+    payload = json.loads(Path("tests/fixtures/impact-report.json").read_text())
+    payload["root"] = None
+    path = tmp_path / "impact-report-null-root.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = validate_target(path)
+
+    assert report["ok"] is True
+    assert report["targetType"] == "json-file"
+    assert report["contract"] == "edgp.impact.report.v1"
+
+
+def test_validate_target_enforces_documented_one_of_fields(tmp_path) -> None:
+    payload = json.loads(Path("tests/fixtures/impact-report.json").read_text())
+    payload["root"] = 42
+    path = tmp_path / "impact-report-invalid-root.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = validate_target(path)
+
+    assert report["ok"] is False
+    assert {
+        "code": "oneOfMismatch",
+        "message": "Value must match exactly one schema",
+        "path": "$.root",
+    } in report["failures"]
+
+
 def test_validate_target_accepts_schema_typed_additional_properties(tmp_path) -> None:
     bundle_dir = tmp_path / "bundle"
     write_report_bundle(

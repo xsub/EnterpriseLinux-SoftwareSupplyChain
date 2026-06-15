@@ -386,6 +386,37 @@ def _assert_validate_command() -> None:
         } in invalid_catalog_report["failures"]
 
     with tempfile.TemporaryDirectory() as temp_dir:
+        impact_path = Path(temp_dir) / "impact-report-null-root.json"
+        impact_payload = json.loads(
+            (REPO_ROOT / "tests" / "fixtures" / "impact-report.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        impact_payload["root"] = None
+        impact_path.write_text(
+            json.dumps(impact_payload, sort_keys=True),
+            encoding="utf-8",
+        )
+        impact_report = _run_cli(["validate", "--path", str(impact_path)])
+        assert impact_report["ok"] is True
+        assert impact_report["contract"] == "edgp.impact.report.v1"
+
+        impact_payload["root"] = 42
+        invalid_impact_path = Path(temp_dir) / "impact-report-invalid-root.json"
+        invalid_impact_path.write_text(
+            json.dumps(impact_payload, sort_keys=True),
+            encoding="utf-8",
+        )
+        invalid_impact_report = _run_cli_allow_failure(
+            ["validate", "--path", str(invalid_impact_path)]
+        )
+        assert {
+            "code": "oneOfMismatch",
+            "message": "Value must match exactly one schema",
+            "path": "$.root",
+        } in invalid_impact_report["failures"]
+
+    with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "bundle"
         subprocess.run(
             [
