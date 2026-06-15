@@ -27,6 +27,9 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
   [`edgp.query.report.v1.schema.json`](schemas/edgp.query.report.v1.schema.json)
   documents dependency, dependent, reachability, shortest-path, and
   most-depended-upon traversal query results.
+- `edgp.parallel.query.report.v1`:
+  [`edgp.parallel.query.report.v1.schema.json`](schemas/edgp.parallel.query.report.v1.schema.json)
+  documents concurrent reachability query batches against frozen CSR runtimes.
 - `edgp.csr.artifact.v1`:
   [`edgp.csr.artifact.v1.schema.json`](schemas/edgp.csr.artifact.v1.schema.json)
   documents memory-mappable frozen CSR artifact manifests, array paths, shapes,

@@ -89,6 +89,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.performance.report.v1.schema.json"),
         Path("tests/fixtures/performance-report.json"),
     ),
+    "edgp.parallel.query.report.v1": (
+        Path("docs/schemas/edgp.parallel.query.report.v1.schema.json"),
+        Path("tests/fixtures/parallel-query-report.json"),
+    ),
     "edgp.public.advisory_feed.v1": (
         Path("docs/schemas/edgp.public.advisory_feed.v1.schema.json"),
         Path("tests/fixtures/public-advisory-feed.json"),

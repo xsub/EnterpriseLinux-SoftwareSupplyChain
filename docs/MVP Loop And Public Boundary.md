@@ -383,6 +383,8 @@ surfaces are:
 - Report optional accelerator readiness, including Numba traversal kernels and
   GraphBLAS batch-query experiments, without requiring those dependencies in
   the public default install.
+- Execute independent frozen-CSR reachability queries concurrently with
+  `edgp parallel-query`, preserving query order in a versioned JSON report.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

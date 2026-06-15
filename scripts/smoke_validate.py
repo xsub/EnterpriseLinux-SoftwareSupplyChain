@@ -131,6 +131,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.performance.report.v1.schema.json",
+    "edgp.parallel.query.report.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.parallel.query.report.v1.schema.json",
     "edgp.public.advisory_feed.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -240,6 +244,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "performance-report.json",
+    "edgp.parallel.query.report.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "parallel-query-report.json",
     "edgp.public.advisory_feed.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -4740,6 +4748,29 @@ def _assert_accelerator_status() -> None:
     assert payload["graphblas"]["storageContract"] == "frozen CSR remains canonical"
 
 
+def _assert_parallel_query() -> None:
+    payload = _run_cli(
+        [
+            "parallel-query",
+            "--snapshot",
+            "tests/fixtures/snapshot-right.json",
+            "--query",
+            "dependencies:app==1.0.0",
+            "--query",
+            "dependents:core==1.0.0",
+            "--workers",
+            "2",
+            "--backend",
+            "auto",
+        ]
+    )
+    assert payload["schema"] == "edgp.parallel.query.report.v1"
+    assert payload["summary"]["queries"] == 2
+    assert payload["summary"]["workers"] == 2
+    assert payload["results"][0]["nodes"] == ["lib==2.0.0", "core==1.0.0"]
+    assert payload["results"][1]["nodes"] == ["lib==2.0.0", "app==1.0.0"]
+
+
 def _assert_rpm_installed() -> None:
     payload = _run_cli(
         ["rpm-installed", "--limit", "5", "--max-requirements", "10", "--format", "json"]
@@ -4994,6 +5025,7 @@ def main(argv: list[str] | None = None) -> int:
         ("synthetic benchmark", _assert_benchmark),
         ("accelerator status", _assert_accelerator_status),
         ("csr artifact", _assert_csr_artifact),
+        ("parallel query", _assert_parallel_query),
     ]
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))

@@ -45,6 +45,8 @@ Frozen CSR artifacts persist that runtime boundary to disk. `edgp csr-artifact` 
 
 GraphBLAS is tracked as an optional batch-analytics experiment rather than a replacement for CSR. `edgp accelerator-status` reports whether the `.[graphblas]` extra is available and documents candidate kernels such as multi-source reachability, batch impact queries, and sparse boolean frontier expansion. The contract remains frozen CSR artifacts and EDGP report bundles; GraphBLAS is a possible execution backend for workloads that naturally map to sparse linear algebra.
 
+Parallel query execution now uses that immutable runtime directly. `edgp parallel-query` accepts repeated reachability requests, freezes the snapshot-derived graph once, and runs independent dependency/dependent traversals through a `ThreadPoolExecutor`. On current CPython this is mainly an orchestration and API boundary; on Python 3.14 free-threaded builds it becomes the natural place to run multi-core query batches over read-only arrays.
+
 The concurrency decision changes with Python 3.14's free-threaded build (`3.14t`). Historically, the Global Interpreter Lock (GIL) made highly parallel pure-Python graph traversal unattractive and pushed teams toward Rust or C++ extensions for multi-core execution. With a free-threaded Python runtime, EDGP can run parallel reachability workers over contiguous NumPy CSR arrays using native Python threading. This gives us enterprise-grade performance without the overhead of maintaining a separate Rust or C++ extension.
 
 The current public-resource MVP applies that research boundary to sources that

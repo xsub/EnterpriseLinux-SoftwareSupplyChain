@@ -30,6 +30,7 @@ from src.benchmark import run_synthetic_benchmark
 from src.bundle_catalog import build_bundle_catalog_report
 from src.core_graph.accelerators import accelerator_profile
 from src.core_graph.artifacts import write_frozen_csr_artifact
+from src.core_graph.parallel import run_parallel_reachability_queries
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.export_batch import (
     build_graph_export_batch_submission_plan,
@@ -1899,6 +1900,18 @@ def _performance_scenarios(values: Sequence[str], *, nodes: int, fanout: int) ->
     return scenarios
 
 
+def _parallel_query_specs(values: Sequence[str]) -> list[dict[str, str]]:
+    if not values:
+        raise ValueError("parallel-query requires at least one --query")
+    queries = []
+    for value in values:
+        direction, separator, node = value.partition(":")
+        if not separator or not node:
+            raise ValueError("--query must use dependencies:NODE or dependents:NODE")
+        queries.append({"direction": direction, "node": node})
+    return queries
+
+
 def _rpm_repo_source(primary: Path | None, source: str | None) -> str:
     if source:
         return source
@@ -3099,6 +3112,25 @@ def build_parser() -> argparse.ArgumentParser:
     csr_artifact.add_argument("--snapshot", type=Path, required=True)
     csr_artifact.add_argument("--output-dir", type=Path, required=True)
 
+    parallel_query = subparsers.add_parser(
+        "parallel-query",
+        help="Run independent frozen-CSR reachability queries concurrently",
+    )
+    parallel_query.add_argument("--snapshot", type=Path, required=True)
+    parallel_query.add_argument(
+        "--query",
+        action="append",
+        default=[],
+        help="query as dependencies:NODE or dependents:NODE; may be repeated",
+    )
+    parallel_query.add_argument("--workers", type=int)
+    parallel_query.add_argument(
+        "--backend",
+        choices=["python", "auto", "numba"],
+        default="python",
+        help="traversal backend for reachability queries",
+    )
+
     performance_report = subparsers.add_parser(
         "performance-report",
         help="Run deterministic CSR benchmark scenarios as an EDGP report",
@@ -4142,6 +4174,18 @@ def main(argv: list[str] | None = None) -> int:
         graph = graph_from_snapshot(snapshot)
         manifest = write_frozen_csr_artifact(graph.freeze(), args.output_dir)
         print(_json(manifest))
+        return 0
+
+    if args.command == "parallel-query":
+        snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
+        graph = graph_from_snapshot(snapshot).freeze()
+        report = run_parallel_reachability_queries(
+            graph,
+            _parallel_query_specs(args.query),
+            max_workers=args.workers,
+            backend=args.backend,
+        )
+        print(_json(report))
         return 0
 
     if args.command == "performance-report":

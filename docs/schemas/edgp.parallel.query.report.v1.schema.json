@@ -1,0 +1,28 @@
+{
+  "$id": "urn:edgp:schema:parallel-query-report:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Parallel frozen-CSR reachability query report.",
+  "properties": {
+    "results": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "count": {"minimum": 0, "type": "integer"},
+          "direction": {"enum": ["dependencies", "dependents"]},
+          "node": {"type": "string"},
+          "nodes": {"items": {"type": "string"}, "type": "array"},
+          "resultKind": {"const": "nodes"}
+        },
+        "required": ["direction", "node", "resultKind", "count", "nodes"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema": {"const": "edgp.parallel.query.report.v1"},
+    "summary": {"type": "object"}
+  },
+  "required": ["schema", "summary", "results"],
+  "title": "EDGP Parallel Query Report v1",
+  "type": "object"
+}

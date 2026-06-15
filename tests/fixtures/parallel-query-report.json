@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "count": 2,
+      "direction": "dependencies",
+      "node": "app==1.0.0",
+      "nodes": ["lib==2.0.0", "core==1.0.0"],
+      "resultKind": "nodes"
+    },
+    {
+      "count": 2,
+      "direction": "dependents",
+      "node": "core==1.0.0",
+      "nodes": ["lib==2.0.0", "app==1.0.0"],
+      "resultKind": "nodes"
+    }
+  ],
+  "schema": "edgp.parallel.query.report.v1",
+  "summary": {
+    "backend": "auto",
+    "durationMs": 1.23,
+    "queries": 2,
+    "selectedBackend": "python",
+    "workers": 2
+  }
+}

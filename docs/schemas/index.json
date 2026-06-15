@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 34,
+  "schemaCount": 35,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -146,6 +146,14 @@
       "id": "urn:edgp:schema:npm-diagnostics:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP npm Diagnostics v1"
+    },
+    {
+      "contract": "edgp.parallel.query.report.v1",
+      "description": "Parallel frozen-CSR reachability query report.",
+      "file": "edgp.parallel.query.report.v1.schema.json",
+      "id": "urn:edgp:schema:parallel-query-report:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Parallel Query Report v1"
     },
     {
       "contract": "edgp.performance.report.v1",

@@ -104,3 +104,7 @@ one relevant measurement:
   `.[graphblas]` declares the optional `python-graphblas` dependency, and
   `edgp accelerator-status` reports availability plus candidate sparse linear
   algebra kernels while keeping frozen CSR as the canonical storage contract.
+- Parallel query execution:
+  `edgp parallel-query` freezes a snapshot-derived graph once and executes
+  independent dependency/dependent reachability queries concurrently with a
+  selected traversal backend.
