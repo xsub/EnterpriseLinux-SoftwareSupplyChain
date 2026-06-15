@@ -183,6 +183,7 @@ edgp report-bundle --input graph.json --input impact.json --output-dir reports -
 edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo --output-dir reports/catalog --triage-summary
 edgp verify-bundle --path reports
 edgp archive-bundle --path reports --output reports.tar.gz
+edgp verify-bundle-archive --path reports.tar.gz
 edgp triage-summary --bundle reports --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
@@ -804,6 +805,10 @@ non-zero without writing a new archive when verification fails. The schema is
 [`docs/schemas/edgp.report.bundle.archive.v1.schema.json`](docs/schemas/edgp.report.bundle.archive.v1.schema.json)
 with fixture
 [`tests/fixtures/report-bundle-archive.json`](tests/fixtures/report-bundle-archive.json).
+`edgp verify-bundle-archive` safely opens one of those archives, rejects
+absolute paths, parent-directory traversal, duplicate members, non-file members,
+or non-deterministic member metadata, extracts into a temporary directory, and
+then runs the same bundle verification gate over the extracted contents.
 The bundle `index.html` also includes a compact verification summary showing
 report count, manifest schema, and a shortened bundle fingerprint.
 With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and

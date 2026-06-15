@@ -39,6 +39,7 @@ from src.output.html_report import write_report_file
 from src.output.json_export import GraphJsonExporter
 from src.output.report_bundle import (
     verify_report_bundle,
+    verify_report_bundle_archive,
     write_report_bundle,
     write_report_bundle_archive,
 )
@@ -2732,6 +2733,18 @@ def build_parser() -> argparse.ArgumentParser:
     archive_bundle.add_argument("--manifest-name", default="manifest.json")
     archive_bundle.add_argument("--format", choices=["json", "text"], default="json")
 
+    verify_bundle_archive = subparsers.add_parser(
+        "verify-bundle-archive",
+        help="Verify a deterministic tar.gz static report bundle archive",
+    )
+    verify_bundle_archive.add_argument("--path", type=Path, required=True)
+    verify_bundle_archive.add_argument("--manifest-name", default="manifest.json")
+    verify_bundle_archive.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
+
     validate = subparsers.add_parser(
         "validate",
         help="Validate a local EDGP JSON report file or static report bundle",
@@ -3655,6 +3668,17 @@ def main(argv: list[str] | None = None) -> int:
         report = write_report_bundle_archive(
             args.path,
             args.output,
+            manifest_name=args.manifest_name,
+        )
+        if args.format == "text":
+            print(_format_bundle_archive_report(report))
+        else:
+            print(_json(report))
+        return 0 if report["ok"] else 1
+
+    if args.command == "verify-bundle-archive":
+        report = verify_report_bundle_archive(
+            args.path,
             manifest_name=args.manifest_name,
         )
         if args.format == "text":

@@ -1,12 +1,14 @@
 """Report bundle tests for static EDGP HTML indexes and manifests."""
 
 import hashlib
+import io
 import json
 import tarfile
 from pathlib import Path
 
 from src.output.report_bundle import (
     verify_report_bundle,
+    verify_report_bundle_archive,
     write_report_bundle,
     write_report_bundle_archive,
 )
@@ -189,6 +191,16 @@ def test_write_report_bundle_archive_is_deterministic_and_verification_gated(
     second_report = write_report_bundle_archive(tmp_path, archive_path)
     assert second_report["archiveSha256"] == report["archiveSha256"]
 
+    verification_report = verify_report_bundle_archive(archive_path)
+    assert verification_report["schema"] == "edgp.report.bundle.archive.v1"
+    assert verification_report["ok"] is True
+    assert verification_report["archive"] == str(archive_path.resolve())
+    assert verification_report["archiveSha256"] == report["archiveSha256"]
+    assert verification_report["bundleSha256"] == report["bundleSha256"]
+    assert verification_report["summary"]["files"] == 6
+    assert verification_report["summary"]["verificationFailures"] == 0
+    assert verification_report["verification"]["ok"] is True
+
     (tmp_path / "001-snapshot-right.html").write_text(
         "<!doctype html><title>tampered</title>",
         encoding="utf-8",
@@ -198,6 +210,32 @@ def test_write_report_bundle_archive_is_deterministic_and_verification_gated(
     assert failed_report["archiveSha256"] is None
     assert failed_report["summary"]["verificationFailures"] == 1
     assert failed_report["verification"]["failures"][0]["code"] == "htmlDigestMismatch"
+
+
+def test_verify_report_bundle_archive_rejects_unsafe_members(tmp_path) -> None:
+    archive_path = tmp_path / "unsafe.tar.gz"
+    payload = b"unsafe"
+    with tarfile.open(archive_path, "w:gz") as archive:
+        info = tarfile.TarInfo("../evil.txt")
+        info.size = len(payload)
+        info.uid = 0
+        info.gid = 0
+        info.uname = ""
+        info.gname = ""
+        info.mtime = 0
+        info.mode = 0o644
+        archive.addfile(info, io.BytesIO(payload))
+
+    report = verify_report_bundle_archive(archive_path)
+
+    assert report["schema"] == "edgp.report.bundle.archive.v1"
+    assert report["ok"] is False
+    assert report["archiveSha256"] == hashlib.sha256(
+        archive_path.read_bytes()
+    ).hexdigest()
+    assert report["summary"]["files"] == 1
+    assert report["summary"]["verificationFailures"] == 1
+    assert report["verification"]["failures"][0]["code"] == "archiveMemberPathInvalid"
 
 
 def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:

@@ -2,15 +2,15 @@
   "$id": "urn:edgp:schema:report-bundle-archive:v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Archive report emitted by edgp archive-bundle after verifying and packaging an EDGP static report bundle.",
+  "description": "Archive report emitted by edgp archive-bundle or edgp verify-bundle-archive for deterministic EDGP static report bundle archives.",
   "properties": {
     "archive": {
-      "description": "Archive path requested by the caller.",
+      "description": "Archive path requested by the caller or verified after handoff.",
       "minLength": 1,
       "type": "string"
     },
     "archiveSha256": {
-      "description": "SHA-256 digest of the written archive, or null when verification failed and no archive was produced.",
+      "description": "SHA-256 digest of the archive when available, or null when the archive could not be read.",
       "oneOf": [
         {
           "pattern": "^[0-9a-f]{64}$",
@@ -22,7 +22,7 @@
       ]
     },
     "bundleDir": {
-      "description": "Resolved bundle directory that was archived.",
+      "description": "Resolved bundle directory that was archived, or the temporary extraction directory used during archive verification.",
       "minLength": 1,
       "type": "string"
     },
@@ -39,7 +39,7 @@
       ]
     },
     "ok": {
-      "description": "True when bundle verification succeeded and the archive was written.",
+      "description": "True when bundle archive creation or archive verification succeeded.",
       "type": "boolean"
     },
     "schema": {
@@ -61,7 +61,7 @@
           "type": "integer"
         },
         "verificationFailures": {
-          "description": "Number of bundle verification failures seen before archiving.",
+          "description": "Number of archive safety or bundle verification failures.",
           "minimum": 0,
           "type": "integer"
         }

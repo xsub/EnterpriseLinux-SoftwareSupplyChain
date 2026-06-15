@@ -133,7 +133,7 @@
     },
     {
       "contract": "edgp.report.bundle.archive.v1",
-      "description": "Archive report emitted by edgp archive-bundle after verifying and packaging an EDGP static report bundle.",
+      "description": "Archive report emitted by edgp archive-bundle or edgp verify-bundle-archive for deterministic EDGP static report bundle archives.",
       "file": "edgp.report.bundle.archive.v1.schema.json",
       "id": "urn:edgp:schema:report-bundle-archive:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",

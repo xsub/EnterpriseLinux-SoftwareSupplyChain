@@ -3089,6 +3089,19 @@ def _assert_report_bundle() -> None:
         assert archive_report["summary"]["files"] == 6
         assert archive_report["summary"]["verificationFailures"] == 0
         assert archive_report["verification"]["ok"] is True
+        archive_verification = _run_cli(
+            [
+                "verify-bundle-archive",
+                "--path",
+                str(archive_path),
+            ]
+        )
+        assert archive_verification["schema"] == "edgp.report.bundle.archive.v1"
+        assert archive_verification["ok"] is True
+        assert archive_verification["archiveSha256"] == archive_report["archiveSha256"]
+        assert archive_verification["bundleSha256"] == manifest["bundleSha256"]
+        assert archive_verification["summary"]["files"] == 6
+        assert archive_verification["summary"]["verificationFailures"] == 0
         completed_archive_text = subprocess.run(
             [
                 sys.executable,
@@ -3111,6 +3124,25 @@ def _assert_report_bundle() -> None:
         assert completed_archive_text.stdout.startswith("OK files=6 bytes=")
         assert " verificationFailures=0 " in completed_archive_text.stdout
         assert " archiveSha256=" in completed_archive_text.stdout
+        completed_archive_verify_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "verify-bundle-archive",
+                "--path",
+                str(archive_path),
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_archive_verify_text.stdout.startswith("OK files=6 bytes=")
+        assert " verificationFailures=0 " in completed_archive_verify_text.stdout
         completed_validation_gate = subprocess.run(
             [
                 sys.executable,

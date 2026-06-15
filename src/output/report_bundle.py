@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import tarfile
+import tempfile
 from dataclasses import dataclass
 from gzip import GzipFile
 from html import escape
@@ -307,6 +308,194 @@ def write_report_bundle_archive(
         },
         "verification": verification,
     }
+
+
+def verify_report_bundle_archive(
+    archive_path: Path,
+    *,
+    manifest_name: str = "manifest.json",
+) -> dict[str, Any]:
+    archive_path = archive_path.resolve()
+    try:
+        archive_bytes = archive_path.read_bytes()
+    except FileNotFoundError:
+        verification = _archive_verification_report(
+            archive_path.parent,
+            manifest_name=manifest_name,
+            failures=[
+                {
+                    "code": "archiveMissing",
+                    "message": "Archive file is missing",
+                    "path": str(archive_path),
+                }
+            ],
+        )
+        return _archive_report(
+            archive_path=archive_path,
+            archive_sha256=None,
+            archive_bytes=0,
+            files=0,
+            verification=verification,
+        )
+
+    archive_sha256 = _sha256(archive_bytes)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        bundle_dir = Path(temp_dir) / "bundle"
+        bundle_dir.mkdir()
+        failures: list[dict[str, str]] = []
+        member_count = 0
+        try:
+            with tarfile.open(archive_path, "r:gz") as archive:
+                members = archive.getmembers()
+                member_count = len(members)
+                _validate_archive_members(members, archive_path, bundle_dir, failures)
+                if not failures:
+                    _extract_archive_members(archive, members, bundle_dir, failures)
+        except (OSError, tarfile.TarError) as error:
+            _add_failure(
+                failures,
+                "archiveInvalid",
+                f"Could not read gzip tar archive: {error}",
+                archive_path,
+            )
+
+        if failures:
+            verification = _archive_verification_report(
+                bundle_dir,
+                manifest_name=manifest_name,
+                failures=failures,
+            )
+        else:
+            verification = verify_report_bundle(bundle_dir, manifest_name=manifest_name)
+        return _archive_report(
+            archive_path=archive_path,
+            archive_sha256=archive_sha256,
+            archive_bytes=len(archive_bytes),
+            files=member_count,
+            verification=verification,
+        )
+
+
+def _archive_report(
+    *,
+    archive_path: Path,
+    archive_sha256: str | None,
+    archive_bytes: int,
+    files: int,
+    verification: dict[str, Any],
+) -> dict[str, Any]:
+    summary = verification.get("summary", {})
+    verification_failures = (
+        summary.get("failures", 0) if isinstance(summary, dict) else 0
+    )
+    return {
+        "schema": ARCHIVE_SCHEMA,
+        "bundleDir": str(verification.get("bundleDir", "")),
+        "archive": str(archive_path),
+        "ok": bool(verification.get("ok")),
+        "bundleSha256": verification.get("bundleSha256"),
+        "archiveSha256": archive_sha256,
+        "summary": {
+            "files": files,
+            "bytes": archive_bytes,
+            "verificationFailures": verification_failures,
+        },
+        "verification": verification,
+    }
+
+
+def _archive_verification_report(
+    bundle_dir: Path,
+    *,
+    manifest_name: str,
+    failures: list[dict[str, str]],
+) -> dict[str, Any]:
+    return {
+        "schema": VERIFICATION_SCHEMA,
+        "bundleDir": str(bundle_dir.resolve()),
+        "manifest": manifest_name,
+        "ok": False,
+        "bundleSha256": None,
+        "summary": {
+            "reports": 0,
+            "failures": len(failures),
+        },
+        "failures": failures,
+    }
+
+
+def _validate_archive_members(
+    members: Sequence[tarfile.TarInfo],
+    archive_path: Path,
+    bundle_dir: Path,
+    failures: list[dict[str, str]],
+) -> None:
+    seen_names: set[str] = set()
+    for member in members:
+        failure_path = _archive_member_failure_path(archive_path, member.name)
+        if not member.name or _bundle_member_path(bundle_dir, member.name) is None:
+            _add_failure(
+                failures,
+                "archiveMemberPathInvalid",
+                "Archive member path must be bundle-local",
+                failure_path,
+            )
+        elif member.name in seen_names:
+            _add_failure(
+                failures,
+                "archiveMemberDuplicate",
+                "Archive member path must be unique",
+                failure_path,
+            )
+        seen_names.add(member.name)
+        if not member.isfile():
+            _add_failure(
+                failures,
+                "archiveMemberTypeInvalid",
+                "Archive member must be a regular file",
+                failure_path,
+            )
+        if (
+            member.uid != 0
+            or member.gid != 0
+            or member.uname
+            or member.gname
+            or member.mtime != 0
+            or member.mode != 0o644
+        ):
+            _add_failure(
+                failures,
+                "archiveMemberMetadataInvalid",
+                "Archive member metadata is not deterministic",
+                failure_path,
+            )
+
+
+def _extract_archive_members(
+    archive: tarfile.TarFile,
+    members: Sequence[tarfile.TarInfo],
+    bundle_dir: Path,
+    failures: list[dict[str, str]],
+) -> None:
+    for member in members:
+        target = _bundle_member_path(bundle_dir, member.name)
+        if target is None:
+            continue
+        source = archive.extractfile(member)
+        if source is None:
+            _add_failure(
+                failures,
+                "archiveMemberUnreadable",
+                "Archive member could not be read",
+                target,
+            )
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(source.read())
+
+
+def _archive_member_failure_path(archive_path: Path, member_name: str) -> Path:
+    return Path(f"{archive_path}:{member_name}")
 
 
 def _bundle_archive_members(
