@@ -801,6 +801,31 @@ def _assert_schema_index_document() -> None:
         assert schema["jsonSchema"] == "https://json-schema.org/draft/2020-12/schema"
         assert schema["title"]
         assert schema["description"]
+    with tempfile.TemporaryDirectory() as temp_dir:
+        html_path = Path(temp_dir) / "schema-index.html"
+        completed_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(SCHEMA_INDEX_PATH),
+                "--output",
+                str(html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_report.stdout.strip()) == html_path
+        html = html_path.read_text(encoding="utf-8")
+        assert 'data-testid="schema-index-groups-panel"' in html
+        assert 'data-testid="schema-index-schemas-panel"' in html
+        assert "edgp.graph.snapshot.v1" in html
+        assert "edgp.report.bundle.v1" in html
 
 
 def _assert_submission_plan_index() -> None:

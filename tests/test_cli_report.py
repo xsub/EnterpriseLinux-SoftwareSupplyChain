@@ -446,6 +446,31 @@ def test_cli_report_writes_report_bundle_archive_html(tmp_path, capsys) -> None:
     assert "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" in html
 
 
+def test_cli_report_writes_schema_index_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "schema-index.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "docs/schemas/index.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="schema-index-groups-panel"' in html
+    assert 'data-testid="schema-index-schemas-panel"' in html
+    assert "edgp.schema.index.v1" in html
+    assert "edgp.graph.snapshot.v1" in html
+    assert "edgp.report.bundle.v1" in html
+
+
 def test_cli_report_writes_validation_failure_html(tmp_path, capsys) -> None:
     output_path = tmp_path / "validation-failure.html"
 

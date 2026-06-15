@@ -6,10 +6,11 @@ them without guessing the payload shape. Draft 2020-12 JSON Schemas live in
 [`docs/schemas`](schemas), and the deterministic catalog is
 [`docs/schemas/index.json`](schemas/index.json).
 
-Run this check after editing schema files:
+Run these after editing schema files:
 
 ```bash
 python -B scripts/generate_schema_index.py --check
+python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-schema-index.html
 ```
 
 ## Contracts

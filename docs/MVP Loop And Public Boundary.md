@@ -127,6 +127,8 @@ surfaces are:
   Schema and smoke validation against generated verifier output.
 - Generate a deterministic schema index for documented EDGP JSON Schema
   contracts and validate that it stays current in the smoke suite.
+- Render the deterministic schema index as static HTML for CI, documentation,
+  and workbench handoff reviews.
 - Smoke-test report schema documentation local links against committed files.
 - Unit-test report schema documentation local links against committed files.
 - Remove pasted source-span artifacts from the architecture research document.
@@ -440,6 +442,7 @@ python -B -m src.cli report --snapshot tests/fixtures/snapshot-right.json --outp
 python -B -m src.cli report --input tests/fixtures/impact-report.json --output /tmp/edgp-impact-report.html
 python -B -m src.cli report --input tests/fixtures/advisory-report.json --output /tmp/edgp-advisory-report.html
 python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json --output /tmp/edgp-npm-diagnostics-report.html
+python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-schema-index.html
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle --triage-summary
 python -B -m src.cli report --input /tmp/edgp-report-bundle/manifest.json --output /tmp/edgp-report-bundle-manifest.html
 python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp/edgp-report-bundle.tar.gz
