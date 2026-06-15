@@ -87,6 +87,7 @@ edgp verify-export-batch --path exports --format text
 edgp archive-export-batch --path exports --output exports.tar.gz --format text
 edgp verify-export-batch-archive --path exports.tar.gz --format text
 edgp plan-export-batch-submission --path exports.tar.gz --target dependency-track --endpoint https://dependency-track.example/api/v1/bom --format text
+edgp submission-plan-index --input export-submission.json --input bundle-submission.json --format text
 ```
 
 Use ecosystem-specific adapters when the input format is already resolved:
@@ -190,6 +191,7 @@ edgp verify-bundle --path reports
 edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
 edgp plan-bundle-submission --path reports.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
+edgp submission-plan-index --input export-submission.json --input bundle-submission.json --output submission-index.json --format text
 edgp triage-summary --bundle reports.tar.gz --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
@@ -844,6 +846,10 @@ emits a dry-run JSON plan for the bundle artifacts that would be submitted to a
 workbench, RAG context builder, or generic collector endpoint. It selects only
 artifacts that can be read safely from the directory or archive and does not
 perform network calls or require credentials.
+`edgp submission-plan-index` aggregates multiple dry-run submission plans into
+one deterministic JSON status document for CI, workbench intake, or review. It
+summarizes target kinds, source schemas, artifact counts, bytes, and failed
+plans without submitting anything.
 The bundle `index.html` also includes a compact verification summary showing
 report count, manifest schema, and a shortened bundle fingerprint.
 With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and

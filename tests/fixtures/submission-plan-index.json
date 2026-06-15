@@ -1,0 +1,49 @@
+{
+  "failures": [],
+  "ok": true,
+  "plans": [
+    {
+      "artifacts": 1,
+      "bytes": 861,
+      "failures": 0,
+      "mode": "dry-run",
+      "ok": true,
+      "path": "tests/fixtures/export-batch-submission-plan.json",
+      "schema": "edgp.export.batch.submission_plan.v1",
+      "target": {
+        "endpoint": "https://dependency-track.example/api/v1/bom",
+        "kind": "dependency-track"
+      }
+    },
+    {
+      "artifacts": 3,
+      "bytes": 6656,
+      "failures": 0,
+      "mode": "dry-run",
+      "ok": true,
+      "path": "tests/fixtures/report-bundle-submission-plan.json",
+      "schema": "edgp.report.bundle.submission_plan.v1",
+      "target": {
+        "endpoint": "https://workbench.example/api/bundles",
+        "kind": "workbench"
+      }
+    }
+  ],
+  "schema": "edgp.submission.plan.index.v1",
+  "summary": {
+    "artifacts": 4,
+    "bytes": 7517,
+    "failedPlans": 0,
+    "failures": 0,
+    "okPlans": 2,
+    "plans": 2,
+    "schemas": [
+      "edgp.export.batch.submission_plan.v1",
+      "edgp.report.bundle.submission_plan.v1"
+    ],
+    "targets": [
+      "dependency-track",
+      "workbench"
+    ]
+  }
+}

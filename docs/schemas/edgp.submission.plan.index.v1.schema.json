@@ -1,0 +1,165 @@
+{
+  "$id": "urn:edgp:schema:submission-plan-index:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Aggregate index for offline dry-run submission plans.",
+  "properties": {
+    "command": {
+      "type": "string"
+    },
+    "failures": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "path"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "plans": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "bytes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "failures": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          },
+          "target": {
+            "additionalProperties": false,
+            "properties": {
+              "endpoint": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "endpoint"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "path",
+          "schema",
+          "mode",
+          "ok",
+          "target",
+          "artifacts",
+          "bytes",
+          "failures"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "edgp.submission.plan.index.v1",
+      "description": "Submission plan index schema identifier."
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "artifacts": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "bytes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failedPlans": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failures": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "okPlans": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "plans": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "schemas": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "targets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "plans",
+        "okPlans",
+        "failedPlans",
+        "artifacts",
+        "bytes",
+        "failures",
+        "targets",
+        "schemas"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "ok",
+    "summary",
+    "plans",
+    "failures"
+  ],
+  "title": "EDGP Submission Plan Index v1",
+  "type": "object"
+}

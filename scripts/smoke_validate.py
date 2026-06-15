@@ -105,6 +105,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.report.bundle.submission_plan.v1.schema.json",
+    "edgp.submission.plan.index.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.submission.plan.index.v1.schema.json",
     "edgp.npm.diagnostics.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -239,6 +243,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "triage-summary.json",
+    "edgp.submission.plan.index.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "submission-plan-index.json",
 }
 
 
@@ -733,6 +741,7 @@ def _assert_schema_index_document() -> None:
         "edgp.rpm.albs_provenance.v1",
         "edgp.rpm.repository_diff.v1",
         "edgp.rpm.repository_summary.v1",
+        "edgp.submission.plan.index.v1",
         "edgp.triage.summary.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
@@ -743,6 +752,54 @@ def _assert_schema_index_document() -> None:
         assert schema["jsonSchema"] == "https://json-schema.org/draft/2020-12/schema"
         assert schema["title"]
         assert schema["description"]
+
+
+def _assert_submission_plan_index() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "submission-plan-index.json"
+        index = _run_cli(
+            [
+                "submission-plan-index",
+                "--input",
+                "tests/fixtures/export-batch-submission-plan.json",
+                "--input",
+                "tests/fixtures/report-bundle-submission-plan.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        assert index["schema"] == "edgp.submission.plan.index.v1"
+        assert index["ok"] is True
+        assert index["summary"]["plans"] == 2
+        assert index["summary"]["artifacts"] == 4
+        assert index["summary"]["targets"] == ["dependency-track", "workbench"]
+        assert json.loads(output_path.read_text(encoding="utf-8")) == index
+        validation = _run_cli(["validate", "--path", str(output_path)])
+        assert validation["ok"] is True
+        assert validation["contract"] == "edgp.submission.plan.index.v1"
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "submission-plan-index",
+                "--input",
+                "tests/fixtures/export-batch-submission-plan.json",
+                "--input",
+                "tests/fixtures/report-bundle-submission-plan.json",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.startswith(
+            "OK plans=2 failedPlans=0 artifacts=4 bytes=7517 failures=0 "
+        )
 
 
 def _assert_failure_example_index_document() -> None:
@@ -4455,6 +4512,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         ("architecture doc markdown lists", _assert_architecture_doc_markdown_lists),
         ("schema index", _assert_schema_index_document),
+        ("submission plan index", _assert_submission_plan_index),
         ("failure example index", _assert_failure_example_index_document),
         (
             "validation failure example quick links",

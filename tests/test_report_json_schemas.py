@@ -109,6 +109,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.triage.summary.v1.schema.json"),
         Path("tests/fixtures/triage-summary.json"),
     ),
+    "edgp.submission.plan.index.v1": (
+        Path("docs/schemas/edgp.submission.plan.index.v1.schema.json"),
+        Path("tests/fixtures/submission-plan-index.json"),
+    ),
 }
 
 

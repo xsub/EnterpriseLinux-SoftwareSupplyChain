@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 30,
+  "schemaCount": 31,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -218,6 +218,14 @@
       "id": "urn:edgp:schema:rpm-repository-summary:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP RPM Repository Summary v1"
+    },
+    {
+      "contract": "edgp.submission.plan.index.v1",
+      "description": "Aggregate index for offline dry-run submission plans.",
+      "file": "edgp.submission.plan.index.v1.schema.json",
+      "id": "urn:edgp:schema:submission-plan-index:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Submission Plan Index v1"
     },
     {
       "contract": "edgp.triage.summary.v1",

@@ -61,6 +61,7 @@ from src.rpm_albs_provenance import build_rpm_albs_provenance_report
 from src.rpm_repository_diff import build_rpm_repository_diff_report
 from src.rpm_repository_summary import build_rpm_repository_summary_report
 from src.schema_validation import validate_target
+from src.submission_plan_index import build_submission_plan_index
 from src.triage_summary import (
     build_triage_summary_from_bundle,
     build_triage_summary_from_paths,
@@ -257,6 +258,38 @@ def _format_report_bundle_submission_plan(report: dict[str, Any]) -> str:
         f"failures={failures}",
     ]
     failure_list = report.get("failures", [])
+    if isinstance(failure_list, list) and failure_list:
+        first_failure = failure_list[0]
+        if isinstance(first_failure, dict):
+            parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
+    return " ".join(parts)
+
+
+def _format_submission_plan_index(index: dict[str, Any]) -> str:
+    status = "OK" if index.get("ok") else "FAIL"
+    summary = index.get("summary", {})
+    plans = summary.get("plans", 0) if isinstance(summary, dict) else 0
+    failed_plans = summary.get("failedPlans", 0) if isinstance(summary, dict) else 0
+    artifacts = summary.get("artifacts", 0) if isinstance(summary, dict) else 0
+    bytes_written = summary.get("bytes", 0) if isinstance(summary, dict) else 0
+    failures = summary.get("failures", 0) if isinstance(summary, dict) else 0
+    targets = summary.get("targets", []) if isinstance(summary, dict) else []
+    target_text = (
+        ",".join(str(target) for target in targets)
+        if isinstance(targets, list)
+        else ""
+    )
+    parts = [
+        status,
+        f"plans={plans}",
+        f"failedPlans={failed_plans}",
+        f"artifacts={artifacts}",
+        f"bytes={bytes_written}",
+        f"failures={failures}",
+    ]
+    if target_text:
+        parts.append(f"targets={target_text}")
+    failure_list = index.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
         if isinstance(first_failure, dict):
@@ -2955,6 +2988,24 @@ def build_parser() -> argparse.ArgumentParser:
         default="json",
     )
 
+    submission_plan_index = subparsers.add_parser(
+        "submission-plan-index",
+        help="Aggregate dry-run submission plans into one CI/workbench index",
+    )
+    submission_plan_index.add_argument(
+        "--input",
+        type=Path,
+        action="append",
+        required=True,
+        help="submission plan JSON file; repeat for multiple plans",
+    )
+    submission_plan_index.add_argument("--output", type=Path)
+    submission_plan_index.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
+
     validate = subparsers.add_parser(
         "validate",
         help=(
@@ -3982,6 +4033,17 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(_json(plan))
         return 0 if plan["ok"] else 1
+
+    if args.command == "submission-plan-index":
+        index = build_submission_plan_index(args.input, command=command)
+        if args.output is not None:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(_json(index) + "\n", encoding="utf-8")
+        if args.format == "text":
+            print(_format_submission_plan_index(index))
+        else:
+            print(_json(index))
+        return 0 if index["ok"] else 1
 
     if args.command == "validate":
         report = validate_target(args.path, manifest_name=args.manifest_name)

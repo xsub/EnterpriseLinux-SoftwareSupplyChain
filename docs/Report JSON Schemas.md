@@ -58,6 +58,10 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.report.bundle.submission_plan.v1.schema.json`](schemas/edgp.report.bundle.submission_plan.v1.schema.json)
   documents offline dry-run submission plans for verified report bundle
   directories or archives.
+- `edgp.submission.plan.index.v1`:
+  [`edgp.submission.plan.index.v1.schema.json`](schemas/edgp.submission.plan.index.v1.schema.json)
+  documents aggregate CI/workbench status over multiple dry-run submission
+  plans.
 - `edgp.npm.diagnostics.v1`:
   [`edgp.npm.diagnostics.v1.schema.json`](schemas/edgp.npm.diagnostics.v1.schema.json)
   documents duplicate package names, nested version conflicts, and unresolved
