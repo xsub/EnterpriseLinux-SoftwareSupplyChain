@@ -273,6 +273,26 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert manifest["bundleSha256"][:12] in html
     assert manifest["reports"][1]["schema"] == "edgp.npm.diagnostics.v1"
 
+    manifest_report_path = tmp_path / "report-bundle-manifest.html"
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                str(output_dir / "manifest.json"),
+                "--output",
+                str(manifest_report_path),
+            ]
+        )
+        == 0
+    )
+    assert Path(capsys.readouterr().out.strip()) == manifest_report_path
+    manifest_html = manifest_report_path.read_text(encoding="utf-8")
+    assert 'data-testid="report-bundle-manifest-panel"' in manifest_html
+    assert 'data-testid="report-bundle-manifest-reports-panel"' in manifest_html
+    assert "001-snapshot-right.html" in manifest_html
+    assert "edgp.npm.diagnostics.v1" in manifest_html
+
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)
     assert verification["schema"] == "edgp.report.bundle.verification.v1"
@@ -325,6 +345,23 @@ def test_cli_report_bundle_can_include_triage_summary(tmp_path, capsys) -> None:
     assert manifest["reportCount"] == 2
     assert manifest["triageSummary"]["href"] == "triage-summary.html"
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
+    manifest_report_path = tmp_path / "report-bundle-manifest.html"
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                str(output_dir / "manifest.json"),
+                "--output",
+                str(manifest_report_path),
+            ]
+        )
+        == 0
+    )
+    assert Path(capsys.readouterr().out.strip()) == manifest_report_path
+    manifest_html = manifest_report_path.read_text(encoding="utf-8")
+    assert 'data-testid="report-bundle-manifest-triage-panel"' in manifest_html
+    assert "triage-summary.html" in manifest_html
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     capsys.readouterr()
     assert main(["validate", "--path", str(output_dir), "--format", "text"]) == 0

@@ -190,6 +190,7 @@ edgp report --snapshot graph.json --output graph-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports --fail-on-status fail
 edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --output-dir reports/catalog --archive-output reports/catalog.tar.gz --triage-summary
 edgp verify-bundle --path reports
+edgp report --input reports/manifest.json --output report-bundle-manifest.html
 edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
 edgp report --input report-bundle-archive.json --output report-bundle-archive.html
@@ -862,6 +863,8 @@ deterministic handoff archive.
 Bundle verification reports and deterministic archive reports also render
 through `edgp report`, so the portable handoff can be reviewed as static HTML
 after CI, transfer, or workbench intake.
+Report bundle manifests also render through `edgp report`, exposing bundle
+metadata, member report digests, and triage summary entries as static HTML.
 `edgp plan-bundle-submission` verifies a report bundle directory or archive and
 emits a dry-run JSON plan for the bundle artifacts that would be submitted to a
 workbench, RAG context builder, or generic collector endpoint. It selects only

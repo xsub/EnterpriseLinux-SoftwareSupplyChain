@@ -3612,6 +3612,31 @@ def _assert_report_bundle() -> None:
         assert "triage-summary.html" in index_html
         manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, output_dir)
+        manifest_html_path = Path(temp_dir) / "report-bundle-manifest.html"
+        completed_manifest_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(output_dir / "manifest.json"),
+                "--output",
+                str(manifest_html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_manifest_report.stdout.strip()) == manifest_html_path
+        manifest_html = manifest_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="report-bundle-manifest-panel"' in manifest_html
+        assert 'data-testid="report-bundle-manifest-reports-panel"' in manifest_html
+        assert 'data-testid="report-bundle-manifest-triage-panel"' in manifest_html
+        assert "002-npm-diagnostics-report.html" in manifest_html
+        assert "triage-summary.html" in manifest_html
         _assert_verify_bundle_command(output_dir)
         _assert_verify_bundle_fixture(output_dir)
         validation = _run_cli(["validate", "--path", str(output_dir)])

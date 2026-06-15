@@ -63,6 +63,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_license_report(payload)
     if schema == "edgp.triage.summary.v1":
         return render_triage_summary_report(payload)
+    if schema == "edgp.report.bundle.v1":
+        return render_report_bundle_manifest_report(payload)
     if schema == "edgp.validation.report.v1":
         return render_validation_report(payload)
     if schema == "edgp.validation.failure.example.index.v1":
@@ -896,6 +898,131 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
         ],
         scripts=[_table_sort_script()],
     )
+
+
+def render_report_bundle_manifest_report(manifest: dict[str, Any]) -> str:
+    if manifest.get("schema") != "edgp.report.bundle.v1":
+        raise ValueError("HTML report bundle manifest input must be an EDGP manifest")
+
+    bundle = manifest.get("bundle", {})
+    if not isinstance(bundle, dict):
+        bundle = {}
+    reports = manifest.get("reports", [])
+    if not isinstance(reports, list):
+        reports = []
+    triage_summary = manifest.get("triageSummary")
+
+    sections = [
+        _generic_hero(
+            eyebrow=str(bundle.get("sourceKind") or "report bundle"),
+            heading="Report bundle manifest",
+            schema=str(manifest.get("schema")),
+            metrics=[
+                ("Reports", manifest.get("reportCount", len(reports))),
+                ("Index", manifest.get("index", "")),
+                ("Bundle SHA-256", manifest.get("bundleSha256", "")),
+            ],
+        ),
+        _rows_panel(
+            "Bundle",
+            [_report_bundle_manifest_row(manifest, bundle)],
+            ["sourceKind", "index", "reportCount", "bundleSha256", "command"],
+            test_id="report-bundle-manifest-panel",
+        ),
+        _rows_panel(
+            "Reports",
+            _report_bundle_manifest_report_rows(reports),
+            [
+                "title",
+                "schema",
+                "source",
+                "href",
+                "sourceSha256",
+                "htmlSha256",
+                "summary",
+            ],
+            test_id="report-bundle-manifest-reports-panel",
+        ),
+    ]
+
+    metadata_rows = _report_bundle_manifest_metadata_rows(bundle)
+    if metadata_rows:
+        sections.append(
+            _rows_panel(
+                "Bundle Metadata",
+                metadata_rows,
+                ["key", "value"],
+                test_id="report-bundle-manifest-metadata-panel",
+            )
+        )
+
+    if isinstance(triage_summary, dict):
+        sections.append(
+            _rows_panel(
+                "Triage Summary",
+                [_report_bundle_manifest_entry_row(triage_summary)],
+                [
+                    "title",
+                    "schema",
+                    "source",
+                    "href",
+                    "sourceSha256",
+                    "htmlSha256",
+                    "summary",
+                ],
+                test_id="report-bundle-manifest-triage-panel",
+            )
+        )
+
+    return _document(
+        "EDGP Report Bundle Manifest",
+        sections,
+        scripts=[_table_sort_script()],
+    )
+
+
+def _report_bundle_manifest_row(
+    manifest: dict[str, Any],
+    bundle: dict[str, Any],
+) -> dict[str, object]:
+    return {
+        "sourceKind": bundle.get("sourceKind", ""),
+        "index": manifest.get("index", ""),
+        "reportCount": manifest.get("reportCount", ""),
+        "bundleSha256": manifest.get("bundleSha256", ""),
+        "command": bundle.get("command", ""),
+    }
+
+
+def _report_bundle_manifest_report_rows(
+    reports: list[object],
+) -> list[dict[str, object]]:
+    return [
+        _report_bundle_manifest_entry_row(report)
+        for report in reports
+        if isinstance(report, dict)
+    ]
+
+
+def _report_bundle_manifest_entry_row(entry: dict[str, object]) -> dict[str, object]:
+    return {
+        "title": entry.get("title", ""),
+        "schema": entry.get("schema", ""),
+        "source": entry.get("source", ""),
+        "href": entry.get("href", ""),
+        "sourceSha256": entry.get("sourceSha256", ""),
+        "htmlSha256": entry.get("htmlSha256", ""),
+        "summary": entry.get("summary", {}),
+    }
+
+
+def _report_bundle_manifest_metadata_rows(
+    bundle: dict[str, Any],
+) -> list[dict[str, object]]:
+    return [
+        {"key": str(key), "value": value}
+        for key, value in sorted(bundle.items(), key=lambda item: str(item[0]))
+    ]
 
 
 def render_validation_report(report: dict[str, Any]) -> str:
