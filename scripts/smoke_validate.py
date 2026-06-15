@@ -4731,6 +4731,15 @@ def _assert_csr_artifact() -> None:
         ]
 
 
+def _assert_accelerator_status() -> None:
+    payload = _run_cli(["accelerator-status", "--backend", "auto"])
+    assert payload["requestedBackend"] == "auto"
+    assert payload["selectedBackend"] in {"python", "numba"}
+    assert payload["numba"]["installExtra"] == ".[fast]"
+    assert payload["graphblas"]["installExtra"] == ".[graphblas]"
+    assert payload["graphblas"]["storageContract"] == "frozen CSR remains canonical"
+
+
 def _assert_rpm_installed() -> None:
     payload = _run_cli(
         ["rpm-installed", "--limit", "5", "--max-requirements", "10", "--format", "json"]
@@ -4983,6 +4992,7 @@ def main(argv: list[str] | None = None) -> int:
         ("npm bundle", _assert_npm_bundle),
         ("npm bundle impact advisory", _assert_npm_bundle_with_impact_and_advisory),
         ("synthetic benchmark", _assert_benchmark),
+        ("accelerator status", _assert_accelerator_status),
         ("csr artifact", _assert_csr_artifact),
     ]
     if args.include_rpm_installed:

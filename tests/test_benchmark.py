@@ -10,6 +10,7 @@ def test_synthetic_benchmark_reports_graph_shape_and_timings() -> None:
     assert payload["parameters"] == {"nodes": 6, "fanout": 2, "backend": "python"}
     assert payload["accelerators"]["requestedBackend"] == "python"
     assert payload["accelerators"]["selectedBackend"] == "python"
+    assert payload["accelerators"]["graphblas"]["installExtra"] == ".[graphblas]"
     assert payload["stats"] == {
         "nodes": 6,
         "edges": 9,

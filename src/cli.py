@@ -28,6 +28,7 @@ from src.adapters.rpm_repository import RpmRepositoryAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.benchmark import run_synthetic_benchmark
 from src.bundle_catalog import build_bundle_catalog_report
+from src.core_graph.accelerators import accelerator_profile
 from src.core_graph.artifacts import write_frozen_csr_artifact
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.export_batch import (
@@ -3080,6 +3081,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="traversal backend for benchmark reachability queries",
     )
 
+    accelerator_status = subparsers.add_parser(
+        "accelerator-status",
+        help="Report optional traversal accelerator availability",
+    )
+    accelerator_status.add_argument(
+        "--backend",
+        choices=["python", "auto", "numba"],
+        default="auto",
+        help="backend request used to resolve the selected traversal backend",
+    )
+
     csr_artifact = subparsers.add_parser(
         "csr-artifact",
         help="Persist an EDGP graph snapshot as memory-mappable CSR arrays",
@@ -4119,6 +4131,10 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
         )
+        return 0
+
+    if args.command == "accelerator-status":
+        print(_json(accelerator_profile(requested_backend=args.backend)))
         return 0
 
     if args.command == "csr-artifact":

@@ -43,6 +43,8 @@ Optional Numba kernels now sit behind that frozen runtime boundary. The portable
 
 Frozen CSR artifacts persist that runtime boundary to disk. `edgp csr-artifact` writes the six hot arrays as `.npy` files and stores a JSON manifest with layout version, package IDs, metadata, shapes, and SHA-256 digests. The loader verifies every array and uses `mmap_mode="r"` by default, giving large public RPM graphs a build-once/load-many path without reparsing XML or JSON for every traversal process.
 
+GraphBLAS is tracked as an optional batch-analytics experiment rather than a replacement for CSR. `edgp accelerator-status` reports whether the `.[graphblas]` extra is available and documents candidate kernels such as multi-source reachability, batch impact queries, and sparse boolean frontier expansion. The contract remains frozen CSR artifacts and EDGP report bundles; GraphBLAS is a possible execution backend for workloads that naturally map to sparse linear algebra.
+
 The concurrency decision changes with Python 3.14's free-threaded build (`3.14t`). Historically, the Global Interpreter Lock (GIL) made highly parallel pure-Python graph traversal unattractive and pushed teams toward Rust or C++ extensions for multi-core execution. With a free-threaded Python runtime, EDGP can run parallel reachability workers over contiguous NumPy CSR arrays using native Python threading. This gives us enterprise-grade performance without the overhead of maintaining a separate Rust or C++ extension.
 
 The current public-resource MVP applies that research boundary to sources that

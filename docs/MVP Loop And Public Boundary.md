@@ -380,6 +380,9 @@ surfaces are:
 - Persist graph snapshots as memory-mappable frozen CSR artifact directories
   with `.npy` arrays, `manifest.json`, layout version, and SHA-256 array
   digests.
+- Report optional accelerator readiness, including Numba traversal kernels and
+  GraphBLAS batch-query experiments, without requiring those dependencies in
+  the public default install.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

@@ -215,6 +215,7 @@ edgp report --input validation.json --output validation.html
 
 ```bash
 edgp benchmark --nodes 1000 --fanout 3
+edgp accelerator-status --backend auto
 edgp performance-report --scenario 1000:3 --scenario 10000:5
 edgp performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir reports/performance --triage-summary
 edgp csr-artifact --snapshot graph.json --output-dir artifacts/csr
@@ -770,6 +771,10 @@ reverse traversal, accelerator profile, and most-depended-upon timings. Use
 `--backend python`, `--backend auto`, or `--backend numba` to compare the
 portable path with optional `.[fast]` Numba kernels. It is intended as a small
 smoke benchmark for comparing host environments.
+`edgp accelerator-status` reports optional accelerator availability without
+building a graph. It includes the selected traversal backend, the Numba
+`.[fast]` extra, and the experimental GraphBLAS `.[graphblas]` extra while
+keeping frozen CSR as the canonical storage contract.
 `edgp csr-artifact` persists an existing `edgp.graph.snapshot.v1` as a
 memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
 `manifest.json` containing layout version, package IDs, metadata, array shapes,

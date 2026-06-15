@@ -100,3 +100,7 @@ one relevant measurement:
   `edgp csr-artifact` writes frozen CSR arrays as `.npy` files with a
   `manifest.json` containing layout version, package metadata, array shapes,
   and SHA-256 digests; the loader verifies and memory-maps arrays by default.
+- GraphBLAS backend experiments:
+  `.[graphblas]` declares the optional `python-graphblas` dependency, and
+  `edgp accelerator-status` reports availability plus candidate sparse linear
+  algebra kernels while keeping frozen CSR as the canonical storage contract.

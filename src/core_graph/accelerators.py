@@ -41,6 +41,7 @@ def accelerator_profile(
             "installExtra": ".[fast]",
             "kernels": ["reachable_ids"],
         },
+        "graphblas": graphblas_profile(),
     }
 
 
@@ -52,6 +53,30 @@ def numba_available() -> bool:
     except Exception:
         return False
     return True
+
+
+def graphblas_available() -> bool:
+    if find_spec("graphblas") is None:
+        return False
+    try:
+        import graphblas  # noqa: F401
+    except Exception:
+        return False
+    return True
+
+
+def graphblas_profile() -> dict[str, object]:
+    return {
+        "available": graphblas_available(),
+        "installExtra": ".[graphblas]",
+        "package": "python-graphblas",
+        "storageContract": "frozen CSR remains canonical",
+        "candidateKernels": [
+            "multi_source_reachability",
+            "batch_impact_queries",
+            "sparse_boolean_frontier_expansion",
+        ],
+    }
 
 
 def maybe_numba_reachable_ids(

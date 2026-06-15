@@ -12,6 +12,7 @@ def test_select_traversal_backend_uses_python_by_default() -> None:
 
 def test_auto_backend_falls_back_to_python_without_numba(monkeypatch) -> None:
     monkeypatch.setattr(accelerators, "numba_available", lambda: False)
+    monkeypatch.setattr(accelerators, "graphblas_available", lambda: False)
 
     assert accelerators.select_traversal_backend("auto") == "python"
     assert accelerators.accelerator_profile(requested_backend="auto") == {
@@ -21,6 +22,17 @@ def test_auto_backend_falls_back_to_python_without_numba(monkeypatch) -> None:
             "available": False,
             "installExtra": ".[fast]",
             "kernels": ["reachable_ids"],
+        },
+        "graphblas": {
+            "available": False,
+            "installExtra": ".[graphblas]",
+            "package": "python-graphblas",
+            "storageContract": "frozen CSR remains canonical",
+            "candidateKernels": [
+                "multi_source_reachability",
+                "batch_impact_queries",
+                "sparse_boolean_frontier_expansion",
+            ],
         },
     }
 
@@ -35,3 +47,13 @@ def test_explicit_numba_backend_requires_fast_extra(monkeypatch) -> None:
 def test_unknown_backend_is_rejected() -> None:
     with pytest.raises(ValueError, match="backend must be one of"):
         accelerators.select_traversal_backend("unknown")
+
+
+def test_graphblas_profile_reports_optional_backend(monkeypatch) -> None:
+    monkeypatch.setattr(accelerators, "graphblas_available", lambda: False)
+
+    profile = accelerators.graphblas_profile()
+
+    assert profile["available"] is False
+    assert profile["installExtra"] == ".[graphblas]"
+    assert profile["storageContract"] == "frozen CSR remains canonical"
