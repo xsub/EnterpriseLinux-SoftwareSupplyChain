@@ -370,6 +370,8 @@ surfaces are:
   reachability.
 - Route dependency traversal hot paths through integer vertex-id APIs before
   converting results back to package identifiers at public boundaries.
+- Count incoming edges for most-depended-upon rankings with NumPy over CSR
+  column indices.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

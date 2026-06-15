@@ -445,6 +445,9 @@ Traversal hot paths now operate on integer vertex ids internally through
 `get_dependency_ids`, `get_dependent_ids`, `reachable_dependency_ids`,
 `reachable_dependent_ids`, and `shortest_dependency_path_ids`; public string
 methods convert back to package ids only at the API boundary.
+Most-depended-upon ranking counts incoming edges with NumPy over
+`column_indices`, then applies stable package-id tie-breaking for readable
+output.
 
 This is an intentional productionization step. Native Python lists would store
 boxed integers behind arrays of object pointers. Even when the list container is

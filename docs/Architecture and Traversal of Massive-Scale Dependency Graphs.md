@@ -35,6 +35,8 @@ NumPy solves the immediate memory-layout problem by storing fixed-width `int32` 
 
 The traversal layer also keeps hot loops integer-native. Public methods still accept and return package identifiers, but internally dependency and dependent traversal operate on vertex ids and convert back to strings only at the API boundary. That keeps repeated dictionary lookups and string allocation out of breadth-first traversal loops while preserving the readable JSON and CLI contracts expected by users.
 
+Ranking follows the same principle. Most-depended-upon calculations count incoming edges with NumPy over the CSR `column_indices` array, then apply stable package-id tie-breaking only after the numeric count vector exists. This keeps the high-cardinality counting phase in contiguous array operations rather than Python edge-object iteration.
+
 The concurrency decision changes with Python 3.14's free-threaded build (`3.14t`). Historically, the Global Interpreter Lock (GIL) made highly parallel pure-Python graph traversal unattractive and pushed teams toward Rust or C++ extensions for multi-core execution. With a free-threaded Python runtime, EDGP can run parallel reachability workers over contiguous NumPy CSR arrays using native Python threading. This gives us enterprise-grade performance without the overhead of maintaining a separate Rust or C++ extension.
 
 The current public-resource MVP applies that research boundary to sources that

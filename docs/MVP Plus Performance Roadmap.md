@@ -86,3 +86,6 @@ one relevant measurement:
 - Integer-native traversal:
   public string-based query methods now route through vertex-id traversal APIs
   and convert back to package ids only at the method boundary.
+- Vectorized ranking:
+  most-depended-upon ranking now counts incoming edges with NumPy over
+  `column_indices` before applying stable package-id tie-breaking.

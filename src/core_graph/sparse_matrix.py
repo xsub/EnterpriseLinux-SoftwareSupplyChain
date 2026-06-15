@@ -175,11 +175,16 @@ class CSRDependencyGraph:
 
     def most_depended_upon(self, limit: int = 10) -> list[tuple[str, int]]:
         self._materialize()
-        incoming_counts = {package_id: 0 for package_id in self.vertex_map}
-        for edge in self.edges():
-            incoming_counts[edge.target] += 1
+        incoming_counts = np.bincount(
+            self.column_indices,
+            minlength=self.next_vertex_id,
+        )
         ranked = sorted(
-            ((package_id, count) for package_id, count in incoming_counts.items() if count),
+            (
+                (self.reverse_vertex_map[vertex_id], int(count))
+                for vertex_id, count in enumerate(incoming_counts[: self.next_vertex_id])
+                if count
+            ),
             key=lambda item: (-item[1], item[0]),
         )
         return ranked[:limit]

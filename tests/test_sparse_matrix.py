@@ -64,6 +64,22 @@ def test_duplicate_edges_do_not_expand_sparse_arrays() -> None:
     assert len(list(graph.edges())) == 1
 
 
+def test_most_depended_upon_uses_stable_count_then_name_order() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "zlib==1.0.0")
+    graph.add_dependency_edge("tool==1.0.0", "zlib==1.0.0")
+    graph.add_dependency_edge("app==1.0.0", "abase==1.0.0")
+    graph.add_dependency_edge("tool==1.0.0", "abase==1.0.0")
+    graph.add_dependency_edge("tool==1.0.0", "leaf==1.0.0")
+
+    assert graph.most_depended_upon(limit=3) == [
+        ("abase==1.0.0", 2),
+        ("zlib==1.0.0", 2),
+        ("leaf==1.0.0", 1),
+    ]
+    assert CSRDependencyGraph().most_depended_upon() == []
+
+
 def test_csr_graph_traversal_queries() -> None:
     graph = CSRDependencyGraph()
     graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
