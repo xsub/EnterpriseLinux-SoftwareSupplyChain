@@ -246,6 +246,8 @@ surfaces are:
 - Build public ALBS provenance graphs from build metadata.
 - Load public ALBS build metadata from build IDs, local JSON files, or public
   JSON URLs across ALBS report commands.
+- Query public ALBS build graphs and run generic impact, advisory, and license
+  workflows over public ALBS metadata URLs.
 - Generate ALBS artifact inventory, build timing, build diff, log intelligence,
   and release completeness reports.
 - Render ALBS artifact inventory and build timing reports as static,
@@ -372,6 +374,8 @@ python -B -m src.cli advisory --source rpm-repo --path tests/fixtures/repodata/r
 python -B -m src.cli advisory-bundle --source rpm-repo --path tests/fixtures/repodata/repomd.xml --public-advisory-feed tests/fixtures/public-osv-ranges.json --ecosystem rpm --output-dir /tmp/edgp-advisory-bundle
 python -B -m src.cli license-report-bundle --source sbom --path tests/fixtures/sample-bom.json --deny-license WTFPL --output-dir /tmp/edgp-license-report-bundle
 python -B -m src.cli albs-build --path tests/fixtures/albs-build.json --format json
+python -B -m src.cli query --source albs-build --albs-url file://$PWD/tests/fixtures/albs-build.json --operation most-depended-upon
+python -B -m src.cli query-bundle --source albs-build --albs-url file://$PWD/tests/fixtures/albs-build.json --operation most-depended-upon --output-dir /tmp/edgp-albs-query-bundle
 python -B -m src.cli albs-artifact-inventory-bundle --path tests/fixtures/albs-build.json --output-dir /tmp/edgp-albs-artifact-inventory-bundle
 python -B -m src.cli albs-build-timing-bundle --path tests/fixtures/albs-build.json --output-dir /tmp/edgp-albs-build-timing-bundle
 python -B -m src.cli albs-build-diff --left-path tests/fixtures/albs-build.json --right-path tests/fixtures/albs-build-updated.json

@@ -1047,6 +1047,7 @@ def _write_license_report_bundle(
     *,
     source: str,
     path: Path | None = None,
+    albs_url: str | None = None,
     ecosystem: str = "npm",
     denied_licenses: Sequence[str] = (),
     rpm_limit: int = 100,
@@ -1062,6 +1063,7 @@ def _write_license_report_bundle(
         source,
         path,
         ecosystem,
+        albs_url=albs_url,
         rpm_limit=rpm_limit,
         max_requirements=max_requirements,
         rpm_repo_source=rpm_repo_source,
@@ -1095,6 +1097,7 @@ def _write_advisory_report_bundle(
     *,
     source: str,
     path: Path | None = None,
+    albs_url: str | None = None,
     ecosystem: str = "npm",
     advisory_path: Path | None = None,
     public_advisory_feed_path: Path | None = None,
@@ -1113,6 +1116,7 @@ def _write_advisory_report_bundle(
         source,
         path,
         ecosystem,
+        albs_url=albs_url,
         rpm_limit=rpm_limit,
         max_requirements=max_requirements,
         rpm_repo_source=rpm_repo_source,
@@ -1148,6 +1152,7 @@ def _write_impact_report_bundle(
     *,
     source: str,
     path: Path | None = None,
+    albs_url: str | None = None,
     ecosystem: str = "npm",
     node: str,
     max_paths: int = 20,
@@ -1164,6 +1169,7 @@ def _write_impact_report_bundle(
         source,
         path,
         ecosystem,
+        albs_url=albs_url,
         rpm_limit=rpm_limit,
         max_requirements=max_requirements,
         rpm_repo_source=rpm_repo_source,
@@ -1220,6 +1226,7 @@ def _write_query_report_bundle(
     *,
     source: str,
     path: Path | None = None,
+    albs_url: str | None = None,
     ecosystem: str = "npm",
     operation: str,
     node: str | None = None,
@@ -1239,6 +1246,7 @@ def _write_query_report_bundle(
         source,
         path,
         ecosystem,
+        albs_url=albs_url,
         rpm_limit=rpm_limit,
         max_requirements=max_requirements,
         rpm_repo_source=rpm_repo_source,
@@ -1751,6 +1759,7 @@ def _load_source_graph(
     path: Path | None,
     ecosystem: str,
     *,
+    albs_url: str | None = None,
     rpm_limit: int = 100,
     max_requirements: int = 40,
     rpm_repo_source: str | None = None,
@@ -1762,6 +1771,7 @@ def _load_source_graph(
         source,
         path,
         ecosystem,
+        albs_url=albs_url,
         rpm_limit=rpm_limit,
         max_requirements=max_requirements,
         rpm_repo_source=rpm_repo_source,
@@ -1777,6 +1787,7 @@ def _load_source_project_graph(
     path: Path | None,
     ecosystem: str,
     *,
+    albs_url: str | None = None,
     rpm_limit: int = 100,
     max_requirements: int = 40,
     rpm_repo_source: str | None = None,
@@ -1784,6 +1795,8 @@ def _load_source_project_graph(
     package_limit: int = 5000,
     requirement_limit: int = 40,
 ) -> tuple[str, CSRDependencyGraph, str]:
+    if albs_url is not None and source != "albs-build":
+        raise ValueError("--albs-url is only valid for albs-build source")
     if source == "lockfile":
         if path is None:
             raise ValueError("--path is required for lockfile source")
@@ -1822,9 +1835,13 @@ def _load_source_project_graph(
         )
         return resolved.root_identifier, resolved.graph, resolved.ecosystem
     if source == "albs-build":
-        if path is None:
-            raise ValueError("--path is required for albs-build source")
-        return _load_albs_build_project_graph(path=path)
+        if path is None and albs_url is None:
+            raise ValueError("--path or --albs-url is required for albs-build source")
+        if path is not None and albs_url is not None:
+            raise ValueError(
+                "Use only one of --path or --albs-url for albs-build source"
+            )
+        return _load_albs_build_project_graph(path=path, url=albs_url)
     raise ValueError(f"Unsupported graph source: {source}")
 
 
@@ -1936,6 +1953,13 @@ def _add_rpm_repo_source_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--repo-id", default="public-rpm-repository")
     parser.add_argument("--package-limit", type=int, default=5000)
     parser.add_argument("--requirement-limit", type=int, default=40)
+
+
+def _add_albs_graph_source_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--albs-url",
+        help="public ALBS build metadata URL for --source albs-build",
+    )
 
 
 def _add_license_bundle_options(parser: argparse.ArgumentParser) -> None:
@@ -2469,6 +2493,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="lockfile",
     )
     impact.add_argument("--path", type=Path)
+    _add_albs_graph_source_options(impact)
     impact.add_argument("--ecosystem", default="npm")
     impact.add_argument("--node", required=True)
     impact.add_argument("--limit", type=int, default=20)
@@ -2494,6 +2519,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="lockfile",
     )
     impact_bundle.add_argument("--path", type=Path)
+    _add_albs_graph_source_options(impact_bundle)
     impact_bundle.add_argument("--ecosystem", default="npm")
     impact_bundle.add_argument("--node", required=True)
     impact_bundle.add_argument("--limit", type=int, default=20)
@@ -2518,6 +2544,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="lockfile",
     )
     advisory.add_argument("--path", type=Path)
+    _add_albs_graph_source_options(advisory)
     advisory.add_argument("--ecosystem", default="npm")
     advisory.add_argument("--advisories", type=Path)
     advisory.add_argument("--public-advisory-feed", type=Path)
@@ -2551,6 +2578,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="lockfile",
     )
     advisory_bundle.add_argument("--path", type=Path)
+    _add_albs_graph_source_options(advisory_bundle)
     advisory_bundle.add_argument("--ecosystem", default="npm")
     advisory_bundle.add_argument("--advisories", type=Path)
     advisory_bundle.add_argument("--public-advisory-feed", type=Path)
@@ -2586,6 +2614,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="lockfile",
     )
     license_report.add_argument("--path", type=Path)
+    _add_albs_graph_source_options(license_report)
     license_report.add_argument("--ecosystem", default="npm")
     license_report.add_argument("--deny-license", action="append", default=[])
     license_report.add_argument("--fail-on-denied", action="store_true")
@@ -2611,6 +2640,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="lockfile",
     )
     license_report_bundle.add_argument("--path", type=Path)
+    _add_albs_graph_source_options(license_report_bundle)
     license_report_bundle.add_argument("--ecosystem", default="npm")
     license_report_bundle.add_argument("--deny-license", action="append", default=[])
     license_report_bundle.add_argument("--fail-on-denied", action="store_true")
@@ -2764,6 +2794,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="lockfile",
     )
     query.add_argument("--path", type=Path)
+    _add_albs_graph_source_options(query)
     query.add_argument("--ecosystem", default="npm")
     query.add_argument(
         "--operation",
@@ -2778,7 +2809,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     query.add_argument("--node")
     query.add_argument("--target")
-    query.add_argument("--direction", choices=["dependencies", "dependents"], default="dependencies")
+    query.add_argument(
+        "--direction",
+        choices=["dependencies", "dependents"],
+        default="dependencies",
+    )
     query.add_argument("--limit", type=int, default=10)
     query.add_argument("--rpm-limit", type=int, default=100)
     query.add_argument("--max-requirements", type=int, default=40)
@@ -2802,6 +2837,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="lockfile",
     )
     query_bundle.add_argument("--path", type=Path)
+    _add_albs_graph_source_options(query_bundle)
     query_bundle.add_argument("--ecosystem", default="npm")
     query_bundle.add_argument(
         "--operation",
@@ -3374,6 +3410,7 @@ def main(argv: list[str] | None = None) -> int:
             args.source,
             args.path,
             args.ecosystem,
+            albs_url=args.albs_url,
             rpm_limit=args.rpm_limit,
             max_requirements=args.max_requirements,
             rpm_repo_source=args.rpm_repo_source,
@@ -3401,6 +3438,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 source=args.source,
                 path=args.path,
+                albs_url=args.albs_url,
                 ecosystem=args.ecosystem,
                 node=args.node,
                 max_paths=args.limit,
@@ -3421,6 +3459,7 @@ def main(argv: list[str] | None = None) -> int:
             args.source,
             args.path,
             args.ecosystem,
+            albs_url=args.albs_url,
             rpm_limit=args.rpm_limit,
             max_requirements=args.max_requirements,
             rpm_repo_source=args.rpm_repo_source,
@@ -3453,6 +3492,7 @@ def main(argv: list[str] | None = None) -> int:
             args.output_dir,
             source=args.source,
             path=args.path,
+            albs_url=args.albs_url,
             ecosystem=args.ecosystem,
             advisory_path=args.advisories,
             public_advisory_feed_path=args.public_advisory_feed,
@@ -3482,6 +3522,7 @@ def main(argv: list[str] | None = None) -> int:
             args.source,
             args.path,
             args.ecosystem,
+            albs_url=args.albs_url,
             rpm_limit=args.rpm_limit,
             max_requirements=args.max_requirements,
             rpm_repo_source=args.rpm_repo_source,
@@ -3506,6 +3547,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 source=args.source,
                 path=args.path,
+                albs_url=args.albs_url,
                 ecosystem=args.ecosystem,
                 denied_licenses=args.deny_license,
                 rpm_limit=args.rpm_limit,
@@ -3649,6 +3691,7 @@ def main(argv: list[str] | None = None) -> int:
             args.source,
             args.path,
             args.ecosystem,
+            albs_url=args.albs_url,
             rpm_limit=args.rpm_limit,
             max_requirements=args.max_requirements,
             rpm_repo_source=args.rpm_repo_source,
@@ -3676,6 +3719,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 source=args.source,
                 path=args.path,
+                albs_url=args.albs_url,
                 ecosystem=args.ecosystem,
                 operation=args.operation,
                 node=args.node,

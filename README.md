@@ -132,7 +132,8 @@ edgp public-advisory-feed-bundle --path osv.json --ecosystem rpm --output-dir re
 ### Query And Analyze
 
 Use the same traversal layer across lockfiles, SBOMs, DOT graphs, and local RPM
-snapshots:
+snapshots. ALBS build metadata can also enter this shared layer through
+`--source albs-build` with either a local `--path` or public `--albs-url`:
 
 ```bash
 edgp query --path package-lock.json --operation reachable --node app==1.0.0
@@ -140,6 +141,7 @@ edgp query --path package-lock.json --operation path --node app==1.0.0 --target 
 edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc
 edgp query --source rpm-repo --rpm-repo-source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --operation most-depended-upon
 edgp query --source rpm-installed --rpm-limit 100 --max-requirements 40 --operation most-depended-upon
+edgp query --source albs-build --albs-url https://build.almalinux.org/api/v1/builds/17812/ --operation most-depended-upon
 edgp query-bundle --path package-lock.json --operation reachable --node app --output-dir reports/query --triage-summary
 ```
 
@@ -148,6 +150,7 @@ Impact, advisory overlays, and npm diagnostics cover the main triage flows:
 ```bash
 edgp impact --path package-lock.json --node left-pad
 edgp impact --source rpm-repo --path repodata/repomd.xml --node glibc
+edgp impact --source albs-build --albs-url https://build.almalinux.org/api/v1/builds/17812/ --node albs-release:7396
 edgp impact-bundle --path package-lock.json --node left-pad --output-dir reports/impact --triage-summary
 edgp advisory --path package-lock.json --advisories advisories.json
 edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisories.json --ecosystem rpm
@@ -528,6 +531,11 @@ resources. ALBS commands accept `--build-id`, `--path`, or `--url` for build
 metadata, and batch commands such as release completeness can mix repeated
 public URL and local file inputs:
 
+- `edgp query`, `edgp query-bundle`, `edgp impact`, `edgp impact-bundle`,
+  `edgp advisory`, `edgp advisory-bundle`, `edgp license-report`, and `edgp
+  license-report-bundle` can use public ALBS metadata through `--source
+  albs-build --albs-url ...`, so build provenance participates in the same
+  traversal, impact, advisory, and license report layer as other graphs.
 - `edgp albs-build-diff` compares two builds for artifact, source commit, and
   timing changes. `edgp albs-build-diff-bundle` renders the same comparison as
   static HTML with `manifest.json` for review and verification.
@@ -586,7 +594,9 @@ same graph useful for terminal investigation, future UI panels, and RAG context
 generation. `edgp query-bundle` wraps the same traversal output in an
 `edgp.query.report.v1` document and renders it as static HTML with a verifiable
 manifest. Query selectors accept exact package IDs, such as
-`glibc==2.39-1.el10`, or unambiguous package names, such as `glibc`.
+`glibc==2.39-1.el10`, or unambiguous package names, such as `glibc`. Public
+ALBS build graphs can be queried from local JSON files or public metadata URLs
+with `--source albs-build --path ...` or `--source albs-build --albs-url ...`.
 
 `edgp npm-diagnostics` inspects `package-lock.json` resolution paths and reports
 duplicate package names, nested version conflicts, and unresolved dependency

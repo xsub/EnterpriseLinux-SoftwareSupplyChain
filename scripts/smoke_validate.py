@@ -1811,6 +1811,52 @@ def _assert_public_vertical_reports() -> None:
     url_inventory = _run_cli(["albs-artifact-inventory", "--url", albs_build_url])
     assert url_inventory["schema"] == "edgp.albs.artifact_inventory.v1"
     assert url_inventory["summary"]["artifacts"] == 4
+    url_query = _run_cli(
+        [
+            "query",
+            "--source",
+            "albs-build",
+            "--albs-url",
+            albs_build_url,
+            "--operation",
+            "most-depended-upon",
+        ]
+    )
+    assert url_query["operation"] == "most-depended-upon"
+    assert url_query["result"][0] == {
+        "package": "albs-release:7396",
+        "dependents": 6,
+    }
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "albs-query-url-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "query-bundle",
+                "--source",
+                "albs-build",
+                "--albs-url",
+                albs_build_url,
+                "--operation",
+                "most-depended-upon",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "query-report"
+        assert manifest["reports"][0]["schema"] == "edgp.query.report.v1"
     url_release = _run_cli(
         [
             "albs-release-completeness",

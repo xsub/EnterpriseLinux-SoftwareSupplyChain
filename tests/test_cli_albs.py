@@ -237,3 +237,29 @@ def test_cli_query_albs_build_source(capsys) -> None:
         "package": "albs-release:7396",
         "dependents": 6,
     }
+
+
+def test_cli_query_albs_build_source_accepts_metadata_url(capsys) -> None:
+    metadata_url = Path("tests/fixtures/albs-build.json").resolve().as_uri()
+
+    assert (
+        main(
+            [
+                "query",
+                "--source",
+                "albs-build",
+                "--albs-url",
+                metadata_url,
+                "--operation",
+                "most-depended-upon",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["operation"] == "most-depended-upon"
+    assert payload["result"][0] == {
+        "package": "albs-release:7396",
+        "dependents": 6,
+    }
