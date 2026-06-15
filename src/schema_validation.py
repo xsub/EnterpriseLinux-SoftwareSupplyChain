@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import tarfile
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -72,7 +73,7 @@ def _validate_bundle_archive(path: Path, *, manifest_name: str) -> dict[str, Any
         for failure in verification_failures
         if isinstance(failure, dict)
     ]
-    return {
+    report: dict[str, Any] = {
         "schema": VALIDATION_SCHEMA,
         "target": str(path.resolve()),
         "targetType": "report-bundle-archive",
@@ -82,6 +83,14 @@ def _validate_bundle_archive(path: Path, *, manifest_name: str) -> dict[str, Any
         "failures": failures,
         "bundleArchiveVerification": archive_report,
     }
+    if not failures:
+        triage_summary = _load_bundle_archive_triage_summary(
+            path,
+            manifest_name=manifest_name,
+        )
+        if triage_summary is not None:
+            report["triageSummary"] = triage_summary
+    return report
 
 
 def _load_bundle_triage_summary(
@@ -110,6 +119,56 @@ def _load_bundle_triage_summary(
         return None
     if not isinstance(payload, dict):
         return None
+    return _triage_summary_summary(source, payload)
+
+
+def _load_bundle_archive_triage_summary(
+    archive_path: Path,
+    *,
+    manifest_name: str,
+) -> dict[str, Any] | None:
+    try:
+        with tarfile.open(archive_path, "r:gz") as archive:
+            manifest = _load_archive_json_member(archive, manifest_name)
+            if manifest is None:
+                return None
+            triage_entry = manifest.get("triageSummary")
+            if not isinstance(triage_entry, dict):
+                return None
+            source = triage_entry.get("source")
+            if not isinstance(source, str) or not source:
+                return None
+            payload = _load_archive_json_member(archive, source)
+            if payload is None:
+                return None
+    except (FileNotFoundError, OSError, tarfile.TarError):
+        return None
+    return _triage_summary_summary(source, payload)
+
+
+def _load_archive_json_member(
+    archive: tarfile.TarFile,
+    member_name: str,
+) -> dict[str, Any] | None:
+    if not _is_bundle_member_label(member_name):
+        return None
+    try:
+        member = archive.getmember(member_name)
+    except KeyError:
+        return None
+    if not member.isfile():
+        return None
+    source = archive.extractfile(member)
+    if source is None:
+        return None
+    try:
+        payload = json.loads(source.read().decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _triage_summary_summary(source: str, payload: dict[str, Any]) -> dict[str, Any]:
     summary = payload.get("summary")
     return {
         "schema": payload.get("schema"),
@@ -120,10 +179,14 @@ def _load_bundle_triage_summary(
 
 
 def _bundle_member_path(bundle_dir: Path, label: str) -> Path | None:
-    member_path = Path(label)
-    if member_path.is_absolute() or ".." in member_path.parts:
+    if not _is_bundle_member_label(label):
         return None
-    return bundle_dir / member_path
+    return bundle_dir / Path(label)
+
+
+def _is_bundle_member_label(label: str) -> bool:
+    member_path = Path(label)
+    return bool(label) and not member_path.is_absolute() and ".." not in member_path.parts
 
 
 def _validate_json_file(path: Path) -> dict[str, Any]:

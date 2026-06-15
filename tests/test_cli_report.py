@@ -358,6 +358,7 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
     diagnostics_bundle = tmp_path / "diagnostics-bundle"
     diagnostics_archive = tmp_path / "diagnostics-bundle.tar.gz"
     catalog_dir = tmp_path / "catalog"
+    catalog_archive = tmp_path / "catalog.tar.gz"
 
     assert (
         main(
@@ -410,6 +411,8 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
                 str(diagnostics_archive),
                 "--output-dir",
                 str(catalog_dir),
+                "--archive-output",
+                str(catalog_archive),
                 "--triage-summary",
             ]
         )
@@ -438,6 +441,22 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
     assert 'data-testid="bundle-catalog-source-kinds-panel"' in html
     assert "archive" in html
     assert main(["verify-bundle", "--path", str(catalog_dir)]) == 0
+    capsys.readouterr()
+    assert catalog_archive.exists()
+    assert main(["verify-bundle-archive", "--path", str(catalog_archive)]) == 0
+    archive_verification = json.loads(capsys.readouterr().out)
+    assert archive_verification["ok"] is True
+    assert archive_verification["bundleSha256"] == manifest["bundleSha256"]
+    assert main(["validate", "--path", str(catalog_archive)]) == 0
+    archive_validation = json.loads(capsys.readouterr().out)
+    assert archive_validation["targetType"] == "report-bundle-archive"
+    assert archive_validation["ok"] is True
+    assert archive_validation["triageSummary"]["status"] == "warn"
+    assert main(["triage-summary", "--bundle", str(catalog_archive)]) == 0
+    archive_triage = json.loads(capsys.readouterr().out)
+    assert archive_triage["source"]["kind"] == "bundle-archive"
+    assert archive_triage["status"] == "warn"
+    assert archive_triage["summary"]["catalogTriageWarn"] == 1
 
 
 def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:

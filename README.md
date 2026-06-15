@@ -180,7 +180,7 @@ edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
 edgp report --snapshot graph.json --output graph-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports --fail-on-status fail
-edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --output-dir reports/catalog --triage-summary
+edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --output-dir reports/catalog --archive-output reports/catalog.tar.gz --triage-summary
 edgp verify-bundle --path reports
 edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
@@ -831,8 +831,10 @@ to `report-bundle`.
 deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
 with bundle paths, input type, source kinds, report schemas, triage status,
 failure codes, and bundle fingerprints. The catalog can itself be rendered as a
-static, verifiable bundle, which gives CI systems and future workbench/RAG
-ingestion one compact index over a batch of public-input evidence bundles.
+static, verifiable bundle, and `--archive-output` writes that generated catalog
+bundle as a deterministic `.tar.gz` in the same pass. This gives CI systems and
+future workbench/RAG ingestion one compact index, plus one portable handoff
+archive, over a batch of public-input evidence bundles.
 
 `edgp triage-summary` turns a report bundle directory, a deterministic report
 bundle archive, or a list of EDGP JSON reports into one

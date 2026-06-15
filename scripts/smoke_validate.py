@@ -3336,6 +3336,7 @@ def _assert_bundle_catalog() -> None:
         diagnostics_bundle = temp_path / "diagnostics-bundle"
         diagnostics_archive = temp_path / "diagnostics-bundle.tar.gz"
         catalog_dir = temp_path / "catalog"
+        catalog_archive = temp_path / "catalog.tar.gz"
         subprocess.run(
             [
                 sys.executable,
@@ -3401,6 +3402,8 @@ def _assert_bundle_catalog() -> None:
                 str(diagnostics_archive),
                 "--output-dir",
                 str(catalog_dir),
+                "--archive-output",
+                str(catalog_archive),
                 "--triage-summary",
             ],
             check=True,
@@ -3435,6 +3438,16 @@ def _assert_bundle_catalog() -> None:
         assert 'data-testid="bundle-catalog-bundles-panel"' in (
             catalog_dir / "001-bundle-catalog.html"
         ).read_text(encoding="utf-8")
+        archive_report = _run_cli(["verify-bundle-archive", "--path", str(catalog_archive)])
+        assert archive_report["schema"] == "edgp.report.bundle.archive.v1"
+        assert archive_report["ok"] is True
+        assert archive_report["bundleSha256"] == manifest["bundleSha256"]
+        archive_validation = _run_cli(["validate", "--path", str(catalog_archive)])
+        assert archive_validation["targetType"] == "report-bundle-archive"
+        assert archive_validation["triageSummary"]["status"] == "warn"
+        archive_triage = _run_cli(["triage-summary", "--bundle", str(catalog_archive)])
+        assert archive_triage["source"]["kind"] == "bundle-archive"
+        assert archive_triage["summary"]["catalogTriageWarn"] == 1
 
 
 def _assert_verify_bundle_detects_tampering() -> None:

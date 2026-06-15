@@ -298,6 +298,7 @@ def test_validate_target_accepts_report_bundle_archive(tmp_path) -> None:
             Path("tests/fixtures/npm-diagnostics-report.json"),
         ],
         tmp_path,
+        include_triage_summary=True,
     )
     archive_path = tmp_path / "bundle.tar.gz"
     archive_report = write_report_bundle_archive(tmp_path, archive_path)
@@ -315,6 +316,9 @@ def test_validate_target_accepts_report_bundle_archive(tmp_path) -> None:
         == archive_report["archiveSha256"]
     )
     assert report["bundleArchiveVerification"]["verification"]["ok"] is True
+    assert report["triageSummary"]["schema"] == "edgp.triage.summary.v1"
+    assert report["triageSummary"]["source"] == "triage-summary.json"
+    assert report["triageSummary"]["status"] == "warn"
 
 
 def test_validate_target_reports_bundle_triage_summary(tmp_path) -> None:

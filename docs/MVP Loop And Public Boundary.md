@@ -309,6 +309,8 @@ surfaces are:
   triage status into aggregate triage summaries.
 - Catalog deterministic report bundle archives alongside report bundle
   directories for CI/workbench batch evidence handoff.
+- Write deterministic archive output directly from generated bundle catalogs
+  for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style
@@ -414,6 +416,7 @@ python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text
 python -B -m src.cli triage-summary --bundle /tmp/edgp-report-bundle.tar.gz --fail-on-status warn
+python -B -m src.cli bundle-catalog --bundle /tmp/edgp-report-bundle.tar.gz --output-dir /tmp/edgp-bundle-catalog --archive-output /tmp/edgp-bundle-catalog.tar.gz --triage-summary
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/tampered-report-bundle-manifest --format text

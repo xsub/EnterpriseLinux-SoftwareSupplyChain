@@ -1317,6 +1317,7 @@ def _write_bundle_catalog_bundle(
     *,
     bundle_dirs: Sequence[Path],
     manifest_name: str = "manifest.json",
+    archive_output: Path | None = None,
     command: str | None = None,
     include_triage_summary: bool = False,
 ) -> Path:
@@ -1331,12 +1332,21 @@ def _write_bundle_catalog_bundle(
         ),
         encoding="utf-8",
     )
-    return write_report_bundle(
+    index_path = write_report_bundle(
         [report_path],
         output_dir,
         bundle_metadata={"sourceKind": "bundle-catalog", "command": command},
         include_triage_summary=include_triage_summary,
     )
+    if archive_output is not None:
+        archive_report = write_report_bundle_archive(
+            output_dir,
+            archive_output,
+            manifest_name=manifest_name,
+        )
+        if archive_report.get("ok") is not True:
+            raise ValueError("Could not archive generated bundle catalog")
+    return index_path
 
 
 def _write_rpm_albs_provenance_bundle(
@@ -2724,6 +2734,11 @@ def build_parser() -> argparse.ArgumentParser:
     bundle_catalog.add_argument("--bundle", type=Path, action="append", required=True)
     bundle_catalog.add_argument("--manifest-name", default="manifest.json")
     bundle_catalog.add_argument("--output-dir", type=Path, required=True)
+    bundle_catalog.add_argument(
+        "--archive-output",
+        type=Path,
+        help="also write the generated catalog bundle as a deterministic .tar.gz archive",
+    )
     _add_triage_bundle_option(bundle_catalog)
 
     verify_bundle = subparsers.add_parser(
@@ -3663,6 +3678,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 bundle_dirs=args.bundle,
                 manifest_name=args.manifest_name,
+                archive_output=args.archive_output,
                 command=command,
                 include_triage_summary=_include_triage_summary(args),
             ),
