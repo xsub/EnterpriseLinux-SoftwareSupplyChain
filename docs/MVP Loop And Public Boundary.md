@@ -87,6 +87,8 @@ surfaces are:
   HTML for public handoff review.
 - Render validation reports as static HTML with target, failure, nested
   verifier, and triage status panels.
+- Document `edgp.validation.report.v1` with a Draft 2020-12 JSON Schema so
+  persisted validation evidence can validate itself.
 - Compare two EDGP graph snapshots and render the generic diff as a static,
   verifiable report bundle.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
@@ -455,6 +457,7 @@ python -B -m src.cli plan-bundle-submission --path /tmp/edgp-report-bundle.tar.g
 python -B -m src.cli submission-plan-index --input tests/fixtures/export-batch-submission-plan.json --input tests/fixtures/report-bundle-submission-plan.json --format text
 python -B -m src.cli report --input tests/fixtures/submission-plan-index.json --output /tmp/edgp-submission-plan-index.html
 python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text --fail-on-status warn
+python -B -m src.cli validate --path tests/fixtures/validation-failure-missing-edge-count.json
 python -B -m src.cli triage-summary --bundle /tmp/edgp-report-bundle.tar.gz --fail-on-status warn
 python -B -m src.cli bundle-catalog --bundle /tmp/edgp-report-bundle.tar.gz --output-dir /tmp/edgp-bundle-catalog --archive-output /tmp/edgp-bundle-catalog.tar.gz --triage-summary
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle

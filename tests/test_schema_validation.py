@@ -36,6 +36,18 @@ def test_validate_target_accepts_schema_index() -> None:
     assert report["schemaFile"] == "edgp.schema.index.v1.schema.json"
 
 
+def test_validate_target_accepts_committed_validation_report() -> None:
+    report = validate_target(
+        Path("tests/fixtures/validation-failure-missing-edge-count.json")
+    )
+
+    assert report["schema"] == "edgp.validation.report.v1"
+    assert report["ok"] is True
+    assert report["targetType"] == "json-file"
+    assert report["contract"] == "edgp.validation.report.v1"
+    assert report["schemaFile"] == "edgp.validation.report.v1.schema.json"
+
+
 def test_validate_target_enforces_any_of_schema_options(tmp_path) -> None:
     payload = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
     payload["bundles"][0]["bundleSha256"] = 42

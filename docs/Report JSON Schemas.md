@@ -114,6 +114,10 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
 - `edgp.triage.summary.v1`:
   [`edgp.triage.summary.v1.schema.json`](schemas/edgp.triage.summary.v1.schema.json)
   documents aggregate triage status for EDGP reports and report bundles.
+- `edgp.validation.report.v1`:
+  [`edgp.validation.report.v1.schema.json`](schemas/edgp.validation.report.v1.schema.json)
+  documents validation results emitted by `edgp validate` for JSON reports,
+  report bundles, bundle archives, and export batches.
 - `edgp.validation.failure.example.index.v1`:
   [`edgp.validation.failure.example.index.v1.schema.json`](schemas/edgp.validation.failure.example.index.v1.schema.json)
   documents the committed validation failure example index.

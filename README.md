@@ -204,6 +204,7 @@ edgp validate --path graph.json
 edgp validate --path reports --format text
 edgp validate --path reports.tar.gz --format text
 edgp validate --path reports.tar.gz > validation.json
+edgp validate --path validation.json
 edgp report --input validation.json --output validation.html
 ```
 
@@ -866,6 +867,10 @@ through the general validation report contract as
 `targetType=report-bundle-archive`, which keeps CI/workbench gates on one
 entrypoint whether they receive raw JSON, a report bundle directory, or a
 deterministic handoff archive.
+Validation reports are documented by
+[`docs/schemas/edgp.validation.report.v1.schema.json`](docs/schemas/edgp.validation.report.v1.schema.json),
+so a persisted `validation.json` can be validated and rendered through the same
+local handoff flow.
 Bundle verification reports and deterministic archive reports also render
 through `edgp report`, so the portable handoff can be reviewed as static HTML
 after CI, transfer, or workbench intake.

@@ -153,6 +153,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.triage.summary.v1.schema.json",
+    "edgp.validation.report.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.validation.report.v1.schema.json",
 }
 REPORT_JSON_SCHEMA_FIXTURES = {
     "edgp.albs.build_diff.v1": REPO_ROOT
@@ -248,6 +252,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "triage-summary.json",
+    "edgp.validation.report.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "validation-failure-missing-edge-count.json",
     "edgp.submission.plan.index.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -798,6 +806,7 @@ def _assert_schema_index_document() -> None:
         "edgp.schema.index.v1",
         "edgp.submission.plan.index.v1",
         "edgp.triage.summary.v1",
+        "edgp.validation.report.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
     } <= contracts
@@ -811,6 +820,16 @@ def _assert_schema_index_document() -> None:
     assert validation["ok"] is True
     assert validation["contract"] == "edgp.schema.index.v1"
     assert validation["schemaFile"] == "edgp.schema.index.v1.schema.json"
+    validation_report = _run_cli(
+        [
+            "validate",
+            "--path",
+            "tests/fixtures/validation-failure-missing-edge-count.json",
+        ]
+    )
+    assert validation_report["ok"] is True
+    assert validation_report["contract"] == "edgp.validation.report.v1"
+    assert validation_report["schemaFile"] == "edgp.validation.report.v1.schema.json"
     with tempfile.TemporaryDirectory() as temp_dir:
         html_path = Path(temp_dir) / "schema-index.html"
         completed_report = subprocess.run(

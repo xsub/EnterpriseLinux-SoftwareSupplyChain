@@ -1,0 +1,139 @@
+{
+  "$id": "urn:edgp:schema:validation-report:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Validation report emitted by edgp validate for JSON reports, report bundles, bundle archives, and export batches.",
+  "properties": {
+    "bundleArchiveVerification": {
+      "description": "Nested deterministic report-bundle archive verification payload when validating a report-bundle archive.",
+      "type": "object"
+    },
+    "bundleVerification": {
+      "description": "Nested report-bundle verification payload when validating a report-bundle directory.",
+      "type": "object"
+    },
+    "contract": {
+      "description": "Documented contract used to validate the target.",
+      "type": "string"
+    },
+    "exportBatchArchiveVerification": {
+      "description": "Nested deterministic export-batch archive verification payload when validating an export-batch archive.",
+      "type": "object"
+    },
+    "exportBatchVerification": {
+      "description": "Nested export-batch verification payload when validating an export-batch directory.",
+      "type": "object"
+    },
+    "failures": {
+      "description": "Validation failures normalized for CLI, CI, and static HTML reporting.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "path"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "ok": {
+      "description": "True when the target satisfies the selected contract and any nested bundle/archive verification.",
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "edgp.validation.report.v1",
+      "description": "Validation report contract identifier."
+    },
+    "schemaFile": {
+      "description": "Schema file name used for JSON-file validation targets.",
+      "type": "string"
+    },
+    "summary": {
+      "additionalProperties": false,
+      "description": "Compact validation counters.",
+      "properties": {
+        "failures": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "failures"
+      ],
+      "type": "object"
+    },
+    "target": {
+      "description": "Absolute target path passed to edgp validate.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "targetType": {
+      "description": "Detected validation target kind.",
+      "enum": [
+        "export-batch",
+        "export-batch-archive",
+        "json-file",
+        "report-bundle",
+        "report-bundle-archive"
+      ],
+      "type": "string"
+    },
+    "triageSummary": {
+      "additionalProperties": false,
+      "description": "Optional triage summary copied from a verified report bundle or archive.",
+      "properties": {
+        "schema": {
+          "const": "edgp.triage.summary.v1"
+        },
+        "source": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "warn",
+            "fail"
+          ],
+          "type": "string"
+        },
+        "summary": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema",
+        "source",
+        "status",
+        "summary"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "target",
+    "targetType",
+    "contract",
+    "ok",
+    "summary",
+    "failures"
+  ],
+  "title": "EDGP Validation Report v1",
+  "type": "object"
+}

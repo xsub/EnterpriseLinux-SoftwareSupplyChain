@@ -50,6 +50,7 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.schema.index.v1",
         "edgp.submission.plan.index.v1",
         "edgp.triage.summary.v1",
+        "edgp.validation.report.v1",
         "edgp.validation.failure.example.filters.v1",
         "edgp.validation.failure.example.index.v1",
     }
