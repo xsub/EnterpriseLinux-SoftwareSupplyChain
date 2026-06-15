@@ -377,6 +377,9 @@ surfaces are:
 - Select optional traversal backends for benchmark reachability with
   `python`, `auto`, or `numba`, while keeping Python as the dependency-light
   public default.
+- Persist graph snapshots as memory-mappable frozen CSR artifact directories
+  with `.npy` arrays, `manifest.json`, layout version, and SHA-256 array
+  digests.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

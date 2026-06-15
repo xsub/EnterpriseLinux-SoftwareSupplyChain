@@ -83,6 +83,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.bundle.catalog.v1.schema.json",
+    "edgp.csr.artifact.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.csr.artifact.v1.schema.json",
     "edgp.export.batch.archive.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -192,6 +196,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "bundle-catalog.json",
+    "edgp.csr.artifact.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "csr-artifact-manifest.json",
     "edgp.export.batch.archive.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -4648,11 +4656,12 @@ def _assert_npm_bundle_with_impact_and_advisory() -> None:
 
 
 def _assert_benchmark() -> None:
-    payload = _run_cli(["benchmark", "--nodes", "64", "--fanout", "3"])
+    payload = _run_cli(["benchmark", "--nodes", "64", "--fanout", "3", "--backend", "auto"])
     assert payload["schema"] == "edgp.benchmark.v1"
     assert payload["stats"]["nodes"] == 64
     assert payload["stats"]["edges"] == 186
     assert payload["stats"]["reachableFromRoot"] == 63
+    assert payload["accelerators"]["requestedBackend"] == "auto"
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "performance-report-bundle"
@@ -4693,6 +4702,33 @@ def _assert_benchmark() -> None:
         assert 'data-testid="performance-results-panel"' in (
             output_dir / "001-performance-report.html"
         ).read_text(encoding="utf-8")
+
+
+def _assert_csr_artifact() -> None:
+    from src.core_graph.artifacts import load_frozen_csr_artifact
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "csr-artifact"
+        manifest = _run_cli(
+            [
+                "csr-artifact",
+                "--snapshot",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
+        loaded = load_frozen_csr_artifact(output_dir)
+        assert manifest["schema"] == "edgp.csr.artifact.v1"
+        assert manifest["nodes"] == 3
+        assert manifest["edges"] == 2
+        assert (output_dir / "manifest.json").exists()
+        assert (output_dir / "column_indices.npy").exists()
+        assert loaded.storage_profile()["memoryMapped"] is True
+        assert loaded.reachable_dependencies("app==1.0.0") == [
+            "lib==2.0.0",
+            "core==1.0.0",
+        ]
 
 
 def _assert_rpm_installed() -> None:
@@ -4947,6 +4983,7 @@ def main(argv: list[str] | None = None) -> int:
         ("npm bundle", _assert_npm_bundle),
         ("npm bundle impact advisory", _assert_npm_bundle_with_impact_and_advisory),
         ("synthetic benchmark", _assert_benchmark),
+        ("csr artifact", _assert_csr_artifact),
     ]
     if args.include_rpm_installed:
         checks.append(("installed rpm graph", _assert_rpm_installed))

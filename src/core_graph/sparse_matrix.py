@@ -39,6 +39,7 @@ class FrozenCSRGraph:
     reverse_column_indices: np.ndarray
     reverse_row_pointers: np.ndarray
     vertex_metadata: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
+    copy_arrays: bool = field(default=True, repr=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "vertex_map", MappingProxyType(dict(self.vertex_map)))
@@ -60,7 +61,11 @@ class FrozenCSRGraph:
             "reverse_column_indices",
             "reverse_row_pointers",
         ):
-            object.__setattr__(self, name, _readonly_csr_array(getattr(self, name)))
+            object.__setattr__(
+                self,
+                name,
+                _readonly_csr_array(getattr(self, name), copy=self.copy_arrays),
+            )
         self._validate_shape()
 
     def __len__(self) -> int:
@@ -220,7 +225,22 @@ class FrozenCSRGraph:
             and not self.reverse_column_indices.flags.writeable
             and not self.reverse_row_pointers.flags.writeable
         )
+        profile["memoryMapped"] = bool(
+            isinstance(self.values, np.memmap)
+            or isinstance(self.column_indices, np.memmap)
+            or isinstance(self.row_pointers, np.memmap)
+            or isinstance(self.reverse_values, np.memmap)
+            or isinstance(self.reverse_column_indices, np.memmap)
+            or isinstance(self.reverse_row_pointers, np.memmap)
+        )
         return profile
+
+    def save_artifact(self, output_dir) -> dict[str, object]:
+        """Persist this frozen graph as a memory-mappable CSR artifact."""
+
+        from src.core_graph.artifacts import write_frozen_csr_artifact
+
+        return write_frozen_csr_artifact(self, output_dir)
 
     def _reachable_ids(
         self, vertex_id: int, *, reverse: bool, backend: str = "python"
@@ -599,8 +619,13 @@ class CSRDependencyGraph:
         self._dirty = False
 
 
-def _readonly_csr_array(values: np.ndarray) -> np.ndarray:
-    array = np.ascontiguousarray(values, dtype=_CSR_DTYPE).copy()
+def _readonly_csr_array(values: np.ndarray, *, copy: bool = True) -> np.ndarray:
+    if copy:
+        array = np.ascontiguousarray(values, dtype=_CSR_DTYPE).copy()
+    else:
+        array = np.asanyarray(values, dtype=_CSR_DTYPE)
+        if not array.flags.c_contiguous:
+            array = np.ascontiguousarray(array, dtype=_CSR_DTYPE)
     array.setflags(write=False)
     return array
 

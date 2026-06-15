@@ -1,0 +1,52 @@
+{
+  "arrays": {
+    "column_indices": {
+      "dtype": "int32",
+      "path": "column_indices.npy",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "shape": [2]
+    },
+    "reverse_column_indices": {
+      "dtype": "int32",
+      "path": "reverse_column_indices.npy",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "shape": [2]
+    },
+    "reverse_row_pointers": {
+      "dtype": "int32",
+      "path": "reverse_row_pointers.npy",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "shape": [4]
+    },
+    "reverse_values": {
+      "dtype": "int32",
+      "path": "reverse_values.npy",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "shape": [2]
+    },
+    "row_pointers": {
+      "dtype": "int32",
+      "path": "row_pointers.npy",
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "shape": [4]
+    },
+    "values": {
+      "dtype": "int32",
+      "path": "values.npy",
+      "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "shape": [2]
+    }
+  },
+  "dtype": "int32",
+  "edges": 2,
+  "layout": "frozen_csr_numpy_npy_directory",
+  "layoutVersion": 1,
+  "nodes": 3,
+  "packageIds": ["app==1.0.0", "lib==2.0.0", "core==1.0.0"],
+  "schema": "edgp.csr.artifact.v1",
+  "vertexMetadata": {
+    "app==1.0.0": {"ecosystem": "npm"},
+    "core==1.0.0": {"ecosystem": "npm"},
+    "lib==2.0.0": {"ecosystem": "npm", "license": "MIT"}
+  }
+}

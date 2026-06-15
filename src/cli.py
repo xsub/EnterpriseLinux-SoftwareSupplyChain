@@ -28,9 +28,11 @@ from src.adapters.rpm_repository import RpmRepositoryAdapter
 from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.benchmark import run_synthetic_benchmark
 from src.bundle_catalog import build_bundle_catalog_report
+from src.core_graph.artifacts import write_frozen_csr_artifact
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.export_batch import (
     build_graph_export_batch_submission_plan,
+    graph_from_snapshot,
     verify_graph_export_batch,
     verify_graph_export_batch_archive,
     write_graph_export_batch,
@@ -3078,6 +3080,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="traversal backend for benchmark reachability queries",
     )
 
+    csr_artifact = subparsers.add_parser(
+        "csr-artifact",
+        help="Persist an EDGP graph snapshot as memory-mappable CSR arrays",
+    )
+    csr_artifact.add_argument("--snapshot", type=Path, required=True)
+    csr_artifact.add_argument("--output-dir", type=Path, required=True)
+
     performance_report = subparsers.add_parser(
         "performance-report",
         help="Run deterministic CSR benchmark scenarios as an EDGP report",
@@ -4110,6 +4119,13 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
         )
+        return 0
+
+    if args.command == "csr-artifact":
+        snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
+        graph = graph_from_snapshot(snapshot)
+        manifest = write_frozen_csr_artifact(graph.freeze(), args.output_dir)
+        print(_json(manifest))
         return 0
 
     if args.command == "performance-report":

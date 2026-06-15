@@ -45,6 +45,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.bundle.catalog.v1.schema.json"),
         Path("tests/fixtures/bundle-catalog.json"),
     ),
+    "edgp.csr.artifact.v1": (
+        Path("docs/schemas/edgp.csr.artifact.v1.schema.json"),
+        Path("tests/fixtures/csr-artifact-manifest.json"),
+    ),
     "edgp.export.batch.archive.v1": (
         Path("docs/schemas/edgp.export.batch.archive.v1.schema.json"),
         Path("tests/fixtures/export-batch-archive.json"),

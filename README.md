@@ -217,6 +217,7 @@ edgp report --input validation.json --output validation.html
 edgp benchmark --nodes 1000 --fanout 3
 edgp performance-report --scenario 1000:3 --scenario 10000:5
 edgp performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir reports/performance --triage-summary
+edgp csr-artifact --snapshot graph.json --output-dir artifacts/csr
 ```
 
 ## Architecture
@@ -769,6 +770,12 @@ reverse traversal, accelerator profile, and most-depended-upon timings. Use
 `--backend python`, `--backend auto`, or `--backend numba` to compare the
 portable path with optional `.[fast]` Numba kernels. It is intended as a small
 smoke benchmark for comparing host environments.
+`edgp csr-artifact` persists an existing `edgp.graph.snapshot.v1` as a
+memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
+`manifest.json` containing layout version, package IDs, metadata, array shapes,
+and SHA-256 digests. `load_frozen_csr_artifact()` verifies the manifest and
+loads the arrays with `mmap_mode="r"` by default, so large graphs can be queried
+without rebuilding from XML or JSON on every process start.
 
 ### JSON Snapshot
 

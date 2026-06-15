@@ -1,0 +1,49 @@
+{
+  "$id": "urn:edgp:schema:csr-artifact:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Memory-mappable frozen CSR graph artifact manifest with array digests.",
+  "properties": {
+    "arrays": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "dtype": {"const": "int32"},
+          "path": {"type": "string"},
+          "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+          "shape": {"items": {"type": "integer"}, "type": "array"}
+        },
+        "required": ["path", "dtype", "shape", "sha256"],
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "dtype": {"const": "int32"},
+    "edges": {"minimum": 0, "type": "integer"},
+    "layout": {"const": "frozen_csr_numpy_npy_directory"},
+    "layoutVersion": {"const": 1},
+    "nodes": {"minimum": 0, "type": "integer"},
+    "packageIds": {"items": {"type": "string"}, "type": "array"},
+    "schema": {"const": "edgp.csr.artifact.v1"},
+    "vertexMetadata": {
+      "additionalProperties": {
+        "additionalProperties": {"type": "string"},
+        "type": "object"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "layout",
+    "layoutVersion",
+    "dtype",
+    "nodes",
+    "edges",
+    "arrays",
+    "packageIds",
+    "vertexMetadata"
+  ],
+  "title": "EDGP CSR Artifact Manifest v1",
+  "type": "object"
+}

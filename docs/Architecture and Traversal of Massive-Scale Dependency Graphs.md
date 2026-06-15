@@ -41,6 +41,8 @@ EDGP now separates mutable graph construction from read-only traversal through `
 
 Optional Numba kernels now sit behind that frozen runtime boundary. The portable Python traversal remains the default, while `backend=auto` can select a compiled reachability kernel when the optional `.[fast]` extra is installed. This keeps the public MVP dependency-light on AlmaLinux but gives production deployments a measured path toward native loop execution without changing the CSR storage contract.
 
+Frozen CSR artifacts persist that runtime boundary to disk. `edgp csr-artifact` writes the six hot arrays as `.npy` files and stores a JSON manifest with layout version, package IDs, metadata, shapes, and SHA-256 digests. The loader verifies every array and uses `mmap_mode="r"` by default, giving large public RPM graphs a build-once/load-many path without reparsing XML or JSON for every traversal process.
+
 The concurrency decision changes with Python 3.14's free-threaded build (`3.14t`). Historically, the Global Interpreter Lock (GIL) made highly parallel pure-Python graph traversal unattractive and pushed teams toward Rust or C++ extensions for multi-core execution. With a free-threaded Python runtime, EDGP can run parallel reachability workers over contiguous NumPy CSR arrays using native Python threading. This gives us enterprise-grade performance without the overhead of maintaining a separate Rust or C++ extension.
 
 The current public-resource MVP applies that research boundary to sources that

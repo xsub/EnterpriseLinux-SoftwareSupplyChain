@@ -96,3 +96,7 @@ one relevant measurement:
   `.[fast]` declares the optional Numba dependency, traversal accepts
   `python`, `auto`, or `numba` backends, and benchmark JSON reports accelerator
   availability plus the selected backend.
+- Memory-mapped graph artifacts:
+  `edgp csr-artifact` writes frozen CSR arrays as `.npy` files with a
+  `manifest.json` containing layout version, package metadata, array shapes,
+  and SHA-256 digests; the loader verifies and memory-maps arrays by default.

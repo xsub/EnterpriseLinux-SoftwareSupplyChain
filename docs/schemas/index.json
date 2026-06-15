@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 33,
+  "schemaCount": 34,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -58,6 +58,14 @@
       "id": "urn:edgp:schema:bundle-catalog:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Bundle Catalog v1"
+    },
+    {
+      "contract": "edgp.csr.artifact.v1",
+      "description": "Memory-mappable frozen CSR graph artifact manifest with array digests.",
+      "file": "edgp.csr.artifact.v1.schema.json",
+      "id": "urn:edgp:schema:csr-artifact:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP CSR Artifact Manifest v1"
     },
     {
       "contract": "edgp.export.batch.archive.v1",
