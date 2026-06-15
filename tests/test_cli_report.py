@@ -309,6 +309,28 @@ def test_cli_archive_bundle_verifies_and_writes_deterministic_archive(
     assert verified_text.startswith("OK files=4 bytes=")
     assert " verificationFailures=0 " in verified_text
 
+    assert main(["validate", "--path", str(archive_path)]) == 0
+    validation = json.loads(capsys.readouterr().out)
+    assert validation["schema"] == "edgp.validation.report.v1"
+    assert validation["ok"] is True
+    assert validation["targetType"] == "report-bundle-archive"
+    assert validation["contract"] == "edgp.report.bundle.archive.v1"
+    assert validation["bundleArchiveVerification"]["ok"] is True
+    assert (
+        validation["bundleArchiveVerification"]["archiveSha256"]
+        == payload["archiveSha256"]
+    )
+
+    assert (
+        main(["validate", "--path", str(archive_path), "--format", "text"])
+        == 0
+    )
+    validation_text = capsys.readouterr().out.strip()
+    assert validation_text == (
+        "OK targetType=report-bundle-archive failures=0 "
+        "contract=edgp.report.bundle.archive.v1"
+    )
+
     (output_dir / "001-snapshot-right.html").write_text(
         "<!doctype html><title>tampered</title>",
         encoding="utf-8",

@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from src.output.report_bundle import write_report_bundle
+from src.output.report_bundle import write_report_bundle, write_report_bundle_archive
 from src.schema_validation import validate_target
 
 
@@ -278,6 +278,32 @@ def test_validate_target_accepts_report_bundle_directory(tmp_path) -> None:
     assert report["contract"] == "edgp.report.bundle.v1"
     assert report["summary"] == {"failures": 0}
     assert report["bundleVerification"]["ok"] is True
+
+
+def test_validate_target_accepts_report_bundle_archive(tmp_path) -> None:
+    write_report_bundle(
+        [
+            Path("tests/fixtures/snapshot-right.json"),
+            Path("tests/fixtures/npm-diagnostics-report.json"),
+        ],
+        tmp_path,
+    )
+    archive_path = tmp_path / "bundle.tar.gz"
+    archive_report = write_report_bundle_archive(tmp_path, archive_path)
+
+    report = validate_target(archive_path)
+
+    assert report["ok"] is True
+    assert report["targetType"] == "report-bundle-archive"
+    assert report["contract"] == "edgp.report.bundle.archive.v1"
+    assert report["summary"] == {"failures": 0}
+    assert report["failures"] == []
+    assert report["bundleArchiveVerification"]["ok"] is True
+    assert (
+        report["bundleArchiveVerification"]["archiveSha256"]
+        == archive_report["archiveSha256"]
+    )
+    assert report["bundleArchiveVerification"]["verification"]["ok"] is True
 
 
 def test_validate_target_reports_bundle_triage_summary(tmp_path) -> None:

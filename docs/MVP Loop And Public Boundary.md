@@ -406,6 +406,7 @@ python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json -
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle
 python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
+python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli verify-bundle --path tests/fixtures/tampered-report-bundle-manifest --format text

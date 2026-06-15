@@ -3143,6 +3143,37 @@ def _assert_report_bundle() -> None:
         )
         assert completed_archive_verify_text.stdout.startswith("OK files=6 bytes=")
         assert " verificationFailures=0 " in completed_archive_verify_text.stdout
+        archive_validation = _run_cli(["validate", "--path", str(archive_path)])
+        assert archive_validation["schema"] == "edgp.validation.report.v1"
+        assert archive_validation["ok"] is True
+        assert archive_validation["targetType"] == "report-bundle-archive"
+        assert archive_validation["contract"] == "edgp.report.bundle.archive.v1"
+        assert archive_validation["bundleArchiveVerification"]["ok"] is True
+        assert (
+            archive_validation["bundleArchiveVerification"]["archiveSha256"]
+            == archive_report["archiveSha256"]
+        )
+        completed_archive_validation_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "validate",
+                "--path",
+                str(archive_path),
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_archive_validation_text.stdout.strip() == (
+            "OK targetType=report-bundle-archive failures=0 "
+            "contract=edgp.report.bundle.archive.v1"
+        )
         completed_validation_gate = subprocess.run(
             [
                 sys.executable,

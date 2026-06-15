@@ -187,6 +187,7 @@ edgp verify-bundle-archive --path reports.tar.gz
 edgp triage-summary --bundle reports --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
+edgp validate --path reports.tar.gz --format text
 ```
 
 ### Benchmark
@@ -809,6 +810,11 @@ with fixture
 absolute paths, parent-directory traversal, duplicate members, non-file members,
 or non-deterministic member metadata, extracts into a temporary directory, and
 then runs the same bundle verification gate over the extracted contents.
+`edgp validate --path reports.tar.gz` exposes that same archive verification
+through the general validation report contract as
+`targetType=report-bundle-archive`, which keeps CI/workbench gates on one
+entrypoint whether they receive raw JSON, a report bundle directory, or a
+deterministic handoff archive.
 The bundle `index.html` also includes a compact verification summary showing
 report count, manifest schema, and a shortened bundle fingerprint.
 With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and

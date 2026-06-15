@@ -7,7 +7,10 @@ import re
 from pathlib import Path
 from typing import Any, Mapping
 
-from src.output.report_bundle import verify_report_bundle
+from src.output.report_bundle import (
+    verify_report_bundle,
+    verify_report_bundle_archive,
+)
 
 VALIDATION_SCHEMA = "edgp.validation.report.v1"
 SCHEMA_DIR = Path(__file__).resolve().parents[1] / "docs" / "schemas"
@@ -17,7 +20,14 @@ SCHEMA_INDEX_PATH = SCHEMA_DIR / "index.json"
 def validate_target(path: Path, *, manifest_name: str = "manifest.json") -> dict[str, Any]:
     if path.is_dir():
         return _validate_bundle(path, manifest_name=manifest_name)
+    if _is_report_bundle_archive(path):
+        return _validate_bundle_archive(path, manifest_name=manifest_name)
     return _validate_json_file(path)
+
+
+def _is_report_bundle_archive(path: Path) -> bool:
+    suffixes = path.suffixes
+    return path.suffix == ".tgz" or suffixes[-2:] == [".tar", ".gz"]
 
 
 def _validate_bundle(path: Path, *, manifest_name: str) -> dict[str, Any]:
@@ -45,6 +55,33 @@ def _validate_bundle(path: Path, *, manifest_name: str) -> dict[str, Any]:
     if triage_summary is not None:
         report["triageSummary"] = triage_summary
     return report
+
+
+def _validate_bundle_archive(path: Path, *, manifest_name: str) -> dict[str, Any]:
+    archive_report = verify_report_bundle_archive(path, manifest_name=manifest_name)
+    verification = archive_report.get("verification", {})
+    verification_failures = (
+        verification.get("failures", []) if isinstance(verification, dict) else []
+    )
+    failures = [
+        {
+            "code": f"bundleArchive.{failure.get('code', 'unknown')}",
+            "message": str(failure.get("message", "")),
+            "path": str(failure.get("path", path)),
+        }
+        for failure in verification_failures
+        if isinstance(failure, dict)
+    ]
+    return {
+        "schema": VALIDATION_SCHEMA,
+        "target": str(path.resolve()),
+        "targetType": "report-bundle-archive",
+        "contract": "edgp.report.bundle.archive.v1",
+        "ok": not failures,
+        "summary": {"failures": len(failures)},
+        "failures": failures,
+        "bundleArchiveVerification": archive_report,
+    }
 
 
 def _load_bundle_triage_summary(

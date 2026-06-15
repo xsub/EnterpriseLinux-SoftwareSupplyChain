@@ -2747,7 +2747,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = subparsers.add_parser(
         "validate",
-        help="Validate a local EDGP JSON report file or static report bundle",
+        help=(
+            "Validate a local EDGP JSON report file, static report bundle, "
+            "or deterministic bundle archive"
+        ),
     )
     validate.add_argument("--path", type=Path, required=True)
     validate.add_argument("--manifest-name", default="manifest.json")
