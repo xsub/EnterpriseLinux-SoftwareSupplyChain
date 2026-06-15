@@ -81,6 +81,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.bundle.catalog.v1.schema.json",
+    "edgp.export.batch.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.export.batch.v1.schema.json",
     "edgp.report.bundle.archive.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -158,6 +162,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "bundle-catalog.json",
+    "edgp.export.batch.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "export-batch.json",
     "edgp.report.bundle.archive.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -674,6 +682,7 @@ def _assert_schema_index_document() -> None:
         "edgp.albs.build_timing.v1",
         "edgp.advisory.report.v1",
         "edgp.bundle.catalog.v1",
+        "edgp.export.batch.v1",
         "edgp.graph.diff.v1",
         "edgp.graph.snapshot.v1",
         "edgp.impact.report.v1",
@@ -1699,6 +1708,45 @@ def _assert_dot_snapshot() -> None:
         "package": "glibc==unknown",
         "dependents": 3,
     }
+
+
+def _assert_export_batch() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "export-batch"
+        manifest = _run_cli(
+            [
+                "export-batch",
+                "--snapshot",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+                "--format",
+                "cypher",
+                "--format",
+                "cyclonedx",
+            ]
+        )
+        assert manifest["schema"] == "edgp.export.batch.v1"
+        assert manifest["source"]["root"] == "app==1.0.0"
+        assert manifest["source"]["ecosystem"] == "npm"
+        assert manifest["summary"]["formats"] == ["cypher", "cyclonedx"]
+        assert json.loads((output_dir / "manifest.json").read_text()) == manifest
+        exports = {entry["format"]: entry for entry in manifest["exports"]}
+        assert set(exports) == {"cypher", "cyclonedx"}
+        assert "DEPENDS_ON" in (output_dir / exports["cypher"]["path"]).read_text(
+            encoding="utf-8"
+        )
+        cyclonedx = json.loads(
+            (output_dir / exports["cyclonedx"]["path"]).read_text(encoding="utf-8")
+        )
+        assert cyclonedx["bomFormat"] == "CycloneDX"
+        for entry in manifest["exports"]:
+            data = (output_dir / entry["path"]).read_bytes()
+            assert entry["bytes"] == len(data)
+            assert entry["sha256"] == hashlib.sha256(data).hexdigest()
+        validation = _run_cli(["validate", "--path", str(output_dir / "manifest.json")])
+        assert validation["ok"] is True
+        assert validation["contract"] == "edgp.export.batch.v1"
 
 
 def _assert_dot_bundle() -> None:
@@ -4198,6 +4246,7 @@ def main(argv: list[str] | None = None) -> int:
         ("maven marker html report", _assert_maven_tree_marker_html_report),
         ("maven bundle", _assert_maven_bundle),
         ("dot snapshot", _assert_dot_snapshot),
+        ("export batch", _assert_export_batch),
         ("dot bundle", _assert_dot_bundle),
         ("albs build snapshot", _assert_albs_build_snapshot),
         ("albs build bundle", _assert_albs_build_bundle),

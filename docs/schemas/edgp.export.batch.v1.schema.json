@@ -1,0 +1,142 @@
+{
+  "$id": "urn:edgp:schema:export-batch:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Local batch export manifest for graph egress artifacts written from an EDGP snapshot.",
+  "properties": {
+    "command": {
+      "type": "string"
+    },
+    "exports": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "format": {
+            "enum": [
+              "cypher",
+              "cyclonedx",
+              "json"
+            ],
+            "type": "string"
+          },
+          "mediaType": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "path",
+          "mediaType",
+          "sha256",
+          "bytes"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema": {
+      "const": "edgp.export.batch.v1",
+      "description": "Export batch schema identifier."
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "ecosystem": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "root": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stats": {
+          "additionalProperties": true,
+          "properties": {
+            "edges": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "nodes": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "nodes",
+            "edges"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "path",
+        "root",
+        "ecosystem",
+        "stats"
+      ],
+      "type": "object"
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exports": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "formats": {
+          "items": {
+            "enum": [
+              "cypher",
+              "cyclonedx",
+              "json"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "exports",
+        "formats",
+        "bytes"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "source",
+    "summary",
+    "exports"
+  ],
+  "title": "EDGP Export Batch v1",
+  "type": "object"
+}

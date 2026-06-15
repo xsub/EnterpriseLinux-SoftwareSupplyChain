@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 25,
+  "schemaCount": 26,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -58,6 +58,14 @@
       "id": "urn:edgp:schema:bundle-catalog:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Bundle Catalog v1"
+    },
+    {
+      "contract": "edgp.export.batch.v1",
+      "description": "Local batch export manifest for graph egress artifacts written from an EDGP snapshot.",
+      "file": "edgp.export.batch.v1.schema.json",
+      "id": "urn:edgp:schema:export-batch:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Export Batch v1"
     },
     {
       "contract": "edgp.graph.diff.v1",

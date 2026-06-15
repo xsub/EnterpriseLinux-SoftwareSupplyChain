@@ -17,6 +17,7 @@ class CycloneDXExporter:
         csr_graph: CSRDependencyGraph,
         root: str | None = None,
         ecosystem: str = "generic",
+        timestamp: str | None = None,
     ) -> str:
         components = [
             CycloneDXExporter._component(
@@ -39,7 +40,7 @@ class CycloneDXExporter:
             "specVersion": "1.5",
             "version": 1,
             "metadata": {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": timestamp or datetime.now(timezone.utc).isoformat(),
             },
             "components": components,
             "dependencies": dependencies,

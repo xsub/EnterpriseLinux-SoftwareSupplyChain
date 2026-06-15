@@ -1,0 +1,36 @@
+{
+  "exports": [
+    {
+      "bytes": 240,
+      "format": "cypher",
+      "mediaType": "text/vnd.neo4j.cypher",
+      "path": "graph.cypher",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "bytes": 920,
+      "format": "cyclonedx",
+      "mediaType": "application/vnd.cyclonedx+json",
+      "path": "graph.cyclonedx.json",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "schema": "edgp.export.batch.v1",
+  "source": {
+    "ecosystem": "npm",
+    "path": "tests/fixtures/snapshot-right.json",
+    "root": "app==1.0.0",
+    "stats": {
+      "edges": 2,
+      "nodes": 3
+    }
+  },
+  "summary": {
+    "bytes": 1160,
+    "exports": 2,
+    "formats": [
+      "cypher",
+      "cyclonedx"
+    ]
+  }
+}

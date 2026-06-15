@@ -29,6 +29,7 @@ from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.benchmark import run_synthetic_benchmark
 from src.bundle_catalog import build_bundle_catalog_report
 from src.core_graph.sparse_matrix import CSRDependencyGraph
+from src.export_batch import write_graph_export_batch
 from src.graph_diff import diff_snapshot_files
 from src.impact_report import build_impact_report
 from src.libsolv_bridge import build_libsolv_bridge_report
@@ -2720,6 +2721,21 @@ def build_parser() -> argparse.ArgumentParser:
     report_input.add_argument("--input", type=Path)
     report.add_argument("--output", type=Path, required=True)
 
+    export_batch = subparsers.add_parser(
+        "export-batch",
+        help="Write local Cypher, CycloneDX, or JSON egress artifacts from a graph snapshot",
+    )
+    export_batch.add_argument("--snapshot", type=Path, required=True)
+    export_batch.add_argument("--output-dir", type=Path, required=True)
+    export_batch.add_argument(
+        "--format",
+        action="append",
+        choices=["cypher", "cyclonedx", "json"],
+        default=[],
+        help="egress format to write; may be repeated; defaults to cypher and cyclonedx",
+    )
+    export_batch.add_argument("--manifest-name", default="manifest.json")
+
     report_bundle = subparsers.add_parser(
         "report-bundle", help="Render multiple local HTML JSON reports with an index"
     )
@@ -3664,6 +3680,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "report":
         output_path = write_report_file(args.snapshot or args.input, args.output)
         print(output_path)
+        return 0
+
+    if args.command == "export-batch":
+        manifest = write_graph_export_batch(
+            args.snapshot,
+            args.output_dir,
+            formats=args.format,
+            manifest_name=args.manifest_name,
+            command=command,
+        )
+        print(_json(manifest))
         return 0
 
     if args.command == "report-bundle":

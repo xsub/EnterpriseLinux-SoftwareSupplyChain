@@ -45,6 +45,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.bundle.catalog.v1.schema.json"),
         Path("tests/fixtures/bundle-catalog.json"),
     ),
+    "edgp.export.batch.v1": (
+        Path("docs/schemas/edgp.export.batch.v1.schema.json"),
+        Path("tests/fixtures/export-batch.json"),
+    ),
     "edgp.report.bundle.archive.v1": (
         Path("docs/schemas/edgp.report.bundle.archive.v1.schema.json"),
         Path("tests/fixtures/report-bundle-archive.json"),

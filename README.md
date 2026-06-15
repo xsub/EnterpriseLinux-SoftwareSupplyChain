@@ -82,6 +82,7 @@ edgp demo --format cyclonedx
 edgp lockfile --path package-lock.json --format cypher
 edgp lockfile --path package-lock.json --format cyclonedx
 edgp lockfile --path package-lock.json --format json
+edgp export-batch --snapshot graph.json --output-dir exports --format cypher --format cyclonedx
 ```
 
 Use ecosystem-specific adapters when the input format is already resolved:
@@ -587,6 +588,11 @@ metadata such as `arch`, `distro`, or non-zero `epoch` is available. Live
 `rpm-installed` ingestion also records public RPM metadata such as vendor,
 license, source RPM, install time, architecture, distribution, packager,
 upstream URL, and build host when those fields are present in the RPM database.
+`edgp export-batch` turns an existing `edgp.graph.snapshot.v1` into local
+egress artifacts such as `graph.cypher` and `graph.cyclonedx.json`, plus an
+`edgp.export.batch.v1` manifest with paths, media types, byte counts, and
+SHA-256 fingerprints. This is the offline public-resource foundation for later
+Neo4j, Dependency-Track, or report-submission clients.
 
 ### Query Layer
 
