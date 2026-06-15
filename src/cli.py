@@ -30,6 +30,7 @@ from src.benchmark import run_synthetic_benchmark
 from src.bundle_catalog import build_bundle_catalog_report
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.export_batch import (
+    build_graph_export_batch_submission_plan,
     verify_graph_export_batch,
     verify_graph_export_batch_archive,
     write_graph_export_batch,
@@ -211,6 +212,29 @@ def _format_export_batch_archive_report(report: dict[str, Any]) -> str:
     archive_sha = report.get("archiveSha256")
     if isinstance(archive_sha, str) and archive_sha:
         parts.append(f"archiveSha256={archive_sha}")
+    return " ".join(parts)
+
+
+def _format_export_batch_submission_plan(report: dict[str, Any]) -> str:
+    status = "OK" if report.get("ok") else "FAIL"
+    summary = report.get("summary", {})
+    artifacts = summary.get("artifacts", 0) if isinstance(summary, dict) else 0
+    bytes_written = summary.get("bytes", 0) if isinstance(summary, dict) else 0
+    failures = summary.get("failures", 0) if isinstance(summary, dict) else 0
+    target = report.get("target", {})
+    target_kind = target.get("kind", "unknown") if isinstance(target, dict) else "unknown"
+    parts = [
+        status,
+        f"target={target_kind}",
+        f"artifacts={artifacts}",
+        f"bytes={bytes_written}",
+        f"failures={failures}",
+    ]
+    failure_list = report.get("failures", [])
+    if isinstance(failure_list, list) and failure_list:
+        first_failure = failure_list[0]
+        if isinstance(first_failure, dict):
+            parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
     return " ".join(parts)
 
 
@@ -2814,6 +2838,23 @@ def build_parser() -> argparse.ArgumentParser:
         "--format", choices=["json", "text"], default="json"
     )
 
+    plan_export_batch_submission = subparsers.add_parser(
+        "plan-export-batch-submission",
+        help="Build a dry-run submission plan for a verified graph export batch",
+    )
+    plan_export_batch_submission.add_argument("--path", type=Path, required=True)
+    plan_export_batch_submission.add_argument(
+        "--target",
+        choices=["neo4j", "dependency-track", "generic"],
+        required=True,
+    )
+    plan_export_batch_submission.add_argument("--endpoint", required=True)
+    plan_export_batch_submission.add_argument("--manifest-name", default="manifest.json")
+    plan_export_batch_submission.add_argument("--output", type=Path)
+    plan_export_batch_submission.add_argument(
+        "--format", choices=["json", "text"], default="json"
+    )
+
     report_bundle = subparsers.add_parser(
         "report-bundle", help="Render multiple local HTML JSON reports with an index"
     )
@@ -3807,6 +3848,23 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(_json(report))
         return 0 if report["ok"] else 1
+
+    if args.command == "plan-export-batch-submission":
+        plan = build_graph_export_batch_submission_plan(
+            args.path,
+            target=args.target,
+            endpoint=args.endpoint,
+            manifest_name=args.manifest_name,
+            command=command,
+        )
+        if args.output is not None:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(_json(plan) + "\n", encoding="utf-8")
+        if args.format == "text":
+            print(_format_export_batch_submission_plan(plan))
+        else:
+            print(_json(plan))
+        return 0 if plan["ok"] else 1
 
     if args.command == "report-bundle":
         index_path = write_report_bundle(

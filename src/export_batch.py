@@ -17,6 +17,7 @@ from src.output.sbom_security import CycloneDXExporter
 
 EXPORT_BATCH_SCHEMA = "edgp.export.batch.v1"
 EXPORT_BATCH_ARCHIVE_SCHEMA = "edgp.export.batch.archive.v1"
+EXPORT_BATCH_SUBMISSION_PLAN_SCHEMA = "edgp.export.batch.submission_plan.v1"
 EXPORT_BATCH_VERIFICATION_SCHEMA = "edgp.export.batch.verification.v1"
 DETERMINISTIC_CYCLONEDX_TIMESTAMP = "1970-01-01T00:00:00+00:00"
 
@@ -24,6 +25,16 @@ _EXPORT_FILES = {
     "cypher": ("graph.cypher", "text/vnd.neo4j.cypher"),
     "cyclonedx": ("graph.cyclonedx.json", "application/vnd.cyclonedx+json"),
     "json": ("graph.snapshot.json", "application/vnd.edgp.graph.snapshot+json"),
+}
+_SUBMISSION_TARGET_FORMATS = {
+    "neo4j": ("cypher",),
+    "dependency-track": ("cyclonedx",),
+    "generic": (),
+}
+_SUBMISSION_TARGET_ACTIONS = {
+    "neo4j": "cypher-script-import",
+    "dependency-track": "cyclonedx-bom-upload",
+    "generic": "artifact-upload",
 }
 
 
@@ -238,6 +249,70 @@ def verify_graph_export_batch_archive(
         )
 
 
+def build_graph_export_batch_submission_plan(
+    path: Path,
+    *,
+    target: str,
+    endpoint: str,
+    manifest_name: str = "manifest.json",
+    command: str | None = None,
+) -> dict[str, Any]:
+    """Build a dry-run submission plan for a verified graph export batch."""
+
+    source = _load_submission_source(path, manifest_name=manifest_name)
+    failures = [
+        {
+            "code": failure.get("code", "unknown"),
+            "message": str(failure.get("message", "")),
+            "path": str(failure.get("path", path)),
+        }
+        for failure in source["verification"].get("failures", [])
+        if isinstance(failure, dict)
+    ]
+    if target not in _SUBMISSION_TARGET_FORMATS:
+        failures.append(
+            {
+                "code": "targetUnsupported",
+                "message": f"Unsupported submission target {target}",
+                "path": "$.target.kind",
+            }
+        )
+    artifacts = (
+        _submission_artifacts(source["manifest"], target=target, endpoint=endpoint)
+        if not failures
+        else []
+    )
+    if not artifacts and not failures:
+        failures.append(
+            {
+                "code": "targetArtifactMissing",
+                "message": f"No export artifacts match submission target {target}",
+                "path": "$.exports",
+            }
+        )
+
+    plan = {
+        "schema": EXPORT_BATCH_SUBMISSION_PLAN_SCHEMA,
+        "mode": "dry-run",
+        "ok": not failures,
+        "target": {
+            "kind": target,
+            "endpoint": endpoint,
+        },
+        "source": source["source"],
+        "summary": {
+            "artifacts": len(artifacts),
+            "bytes": sum(int(artifact["bytes"]) for artifact in artifacts),
+            "failures": len(failures),
+        },
+        "artifacts": artifacts,
+        "failures": failures,
+    }
+    if command:
+        plan["command"] = command
+    return plan
+
+
 def _archive_report(
     *,
     archive_path: Path,
@@ -285,6 +360,96 @@ def _archive_verification_report(
         },
         "failures": failures,
     }
+
+
+def _load_submission_source(path: Path, *, manifest_name: str) -> dict[str, Any]:
+    resolved = path.resolve()
+    if path.is_dir():
+        verification = verify_graph_export_batch(path, manifest_name=manifest_name)
+        manifest = _load_export_manifest_file(path / manifest_name)
+        return {
+            "manifest": manifest,
+            "verification": verification,
+            "source": {
+                "path": str(resolved),
+                "inputType": "directory",
+                "manifest": manifest_name,
+                "manifestSha256": verification.get("manifestSha256"),
+                "archiveSha256": None,
+            },
+        }
+    archive_report = verify_graph_export_batch_archive(path, manifest_name=manifest_name)
+    manifest = _load_export_manifest_archive(path, manifest_name=manifest_name)
+    return {
+        "manifest": manifest,
+        "verification": archive_report.get("verification", {}),
+        "source": {
+            "path": str(resolved),
+            "inputType": "archive",
+            "manifest": manifest_name,
+            "manifestSha256": archive_report.get("manifestSha256"),
+            "archiveSha256": archive_report.get("archiveSha256"),
+        },
+    }
+
+
+def _load_export_manifest_file(manifest_path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _load_export_manifest_archive(archive_path: Path, *, manifest_name: str) -> dict[str, Any]:
+    if not _is_safe_manifest_path(manifest_name):
+        return {}
+    try:
+        with tarfile.open(archive_path, "r:gz") as archive:
+            member = archive.getmember(manifest_name)
+            source = archive.extractfile(member)
+            if source is None:
+                return {}
+            payload = json.loads(source.read().decode("utf-8"))
+    except (KeyError, OSError, tarfile.TarError, UnicodeDecodeError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _submission_artifacts(
+    manifest: dict[str, Any],
+    *,
+    target: str,
+    endpoint: str,
+) -> list[dict[str, Any]]:
+    wanted_formats = _SUBMISSION_TARGET_FORMATS.get(target, ())
+    exports = manifest.get("exports", [])
+    if not isinstance(exports, list):
+        return []
+    artifacts = []
+    for entry in exports:
+        if not isinstance(entry, dict):
+            continue
+        export_format = entry.get("format")
+        if not isinstance(export_format, str):
+            continue
+        if wanted_formats and export_format not in wanted_formats:
+            continue
+        artifacts.append(
+            {
+                "format": export_format,
+                "path": str(entry.get("path", "")),
+                "mediaType": str(entry.get("mediaType", "")),
+                "sha256": str(entry.get("sha256", "")),
+                "bytes": int(entry.get("bytes", 0))
+                if isinstance(entry.get("bytes"), int)
+                else 0,
+                "endpoint": endpoint,
+                "method": "POST",
+                "action": _SUBMISSION_TARGET_ACTIONS.get(target, "artifact-upload"),
+            }
+        )
+    return artifacts
 
 
 def graph_from_snapshot(snapshot: dict[str, Any]) -> CSRDependencyGraph:

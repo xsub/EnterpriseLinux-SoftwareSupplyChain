@@ -38,6 +38,10 @@ python -B scripts/generate_schema_index.py --check
 - `edgp.export.batch.archive.v1`:
   [`edgp.export.batch.archive.v1.schema.json`](schemas/edgp.export.batch.archive.v1.schema.json)
   documents deterministic graph export batch archives for portable CI handoff.
+- `edgp.export.batch.submission_plan.v1`:
+  [`edgp.export.batch.submission_plan.v1.schema.json`](schemas/edgp.export.batch.submission_plan.v1.schema.json)
+  documents offline dry-run submission plans for verified graph export batch
+  directories or archives.
 - `edgp.export.batch.v1`:
   [`edgp.export.batch.v1.schema.json`](schemas/edgp.export.batch.v1.schema.json)
   documents local Cypher, CycloneDX, and snapshot egress artifacts written from

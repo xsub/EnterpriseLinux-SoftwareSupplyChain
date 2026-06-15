@@ -86,6 +86,7 @@ edgp export-batch --snapshot graph.json --output-dir exports --format cypher --f
 edgp verify-export-batch --path exports --format text
 edgp archive-export-batch --path exports --output exports.tar.gz --format text
 edgp verify-export-batch-archive --path exports.tar.gz --format text
+edgp plan-export-batch-submission --path exports.tar.gz --target dependency-track --endpoint https://dependency-track.example/api/v1/bom --format text
 ```
 
 Use ecosystem-specific adapters when the input format is already resolved:
@@ -599,8 +600,11 @@ artifact files still line up before those files are handed to Neo4j,
 Dependency-Track, or report-submission clients. `edgp archive-export-batch`
 packages that verified directory as a deterministic `.tar.gz`, and
 `edgp verify-export-batch-archive` verifies the portable handoff artifact after
-transfer. This is the offline public-resource foundation for later automated
-egress flows.
+transfer. `edgp plan-export-batch-submission` performs the next offline step:
+it verifies a directory or archive and emits a dry-run JSON plan describing
+which Cypher, CycloneDX, or generic artifacts would be POSTed to the selected
+endpoint, without making network calls or requiring secrets. This is the
+public-resource foundation for later automated egress flows.
 
 ### Query Layer
 

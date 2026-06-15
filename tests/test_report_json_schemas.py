@@ -49,6 +49,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.export.batch.archive.v1.schema.json"),
         Path("tests/fixtures/export-batch-archive.json"),
     ),
+    "edgp.export.batch.submission_plan.v1": (
+        Path("docs/schemas/edgp.export.batch.submission_plan.v1.schema.json"),
+        Path("tests/fixtures/export-batch-submission-plan.json"),
+    ),
     "edgp.export.batch.v1": (
         Path("docs/schemas/edgp.export.batch.v1.schema.json"),
         Path("tests/fixtures/export-batch.json"),

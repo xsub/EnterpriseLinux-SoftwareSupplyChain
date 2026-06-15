@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 28,
+  "schemaCount": 29,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -66,6 +66,14 @@
       "id": "urn:edgp:schema:export-batch-archive:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Export Batch Archive v1"
+    },
+    {
+      "contract": "edgp.export.batch.submission_plan.v1",
+      "description": "Dry-run submission plan for verified graph export batch artifacts.",
+      "file": "edgp.export.batch.submission_plan.v1.schema.json",
+      "id": "urn:edgp:schema:export-batch-submission-plan:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Export Batch Submission Plan v1"
     },
     {
       "contract": "edgp.export.batch.v1",

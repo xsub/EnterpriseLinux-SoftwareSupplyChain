@@ -1,0 +1,212 @@
+{
+  "$id": "urn:edgp:schema:export-batch-submission-plan:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Dry-run submission plan for verified graph export batch artifacts.",
+  "properties": {
+    "artifacts": {
+      "description": "Artifacts selected for the requested submission target.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "bytes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "endpoint": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "cypher",
+              "cyclonedx",
+              "json"
+            ],
+            "type": "string"
+          },
+          "mediaType": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "POST"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "path",
+          "mediaType",
+          "sha256",
+          "bytes",
+          "endpoint",
+          "method",
+          "action"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "command": {
+      "type": "string"
+    },
+    "failures": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "path"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "mode": {
+      "const": "dry-run"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "edgp.export.batch.submission_plan.v1",
+      "description": "Export batch submission plan schema identifier."
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "archiveSha256": {
+          "oneOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inputType": {
+          "enum": [
+            "directory",
+            "archive"
+          ],
+          "type": "string"
+        },
+        "manifest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "manifestSha256": {
+          "oneOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "inputType",
+        "manifest",
+        "manifestSha256",
+        "archiveSha256"
+      ],
+      "type": "object"
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "artifacts": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "bytes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failures": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifacts",
+        "bytes",
+        "failures"
+      ],
+      "type": "object"
+    },
+    "target": {
+      "additionalProperties": false,
+      "properties": {
+        "endpoint": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "neo4j",
+            "dependency-track",
+            "generic"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "endpoint"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "mode",
+    "ok",
+    "target",
+    "source",
+    "summary",
+    "artifacts",
+    "failures"
+  ],
+  "title": "EDGP Export Batch Submission Plan v1",
+  "type": "object"
+}

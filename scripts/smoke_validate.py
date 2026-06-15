@@ -85,6 +85,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.export.batch.archive.v1.schema.json",
+    "edgp.export.batch.submission_plan.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.export.batch.submission_plan.v1.schema.json",
     "edgp.export.batch.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -174,6 +178,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "export-batch-archive.json",
+    "edgp.export.batch.submission_plan.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "export-batch-submission-plan.json",
     "edgp.export.batch.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -699,6 +707,7 @@ def _assert_schema_index_document() -> None:
         "edgp.advisory.report.v1",
         "edgp.bundle.catalog.v1",
         "edgp.export.batch.archive.v1",
+        "edgp.export.batch.submission_plan.v1",
         "edgp.export.batch.v1",
         "edgp.export.batch.verification.v1",
         "edgp.graph.diff.v1",
@@ -1791,6 +1800,54 @@ def _assert_export_batch() -> None:
             text=True,
         )
         assert completed.stdout.startswith("OK exports=2")
+        submission_plan_path = Path(temp_dir) / "submission-plan.json"
+        submission_plan = _run_cli(
+            [
+                "plan-export-batch-submission",
+                "--path",
+                str(output_dir),
+                "--target",
+                "neo4j",
+                "--endpoint",
+                "https://neo4j.example/import",
+                "--output",
+                str(submission_plan_path),
+            ]
+        )
+        assert submission_plan["schema"] == "edgp.export.batch.submission_plan.v1"
+        assert submission_plan["ok"] is True
+        assert submission_plan["summary"]["artifacts"] == 1
+        assert submission_plan["artifacts"][0]["format"] == "cypher"
+        submission_plan_validation = _run_cli(
+            ["validate", "--path", str(submission_plan_path)]
+        )
+        assert submission_plan_validation["ok"] is True
+        assert (
+            submission_plan_validation["contract"]
+            == "edgp.export.batch.submission_plan.v1"
+        )
+        text_plan = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "plan-export-batch-submission",
+                "--path",
+                str(output_dir),
+                "--target",
+                "generic",
+                "--endpoint",
+                "https://collector.example/upload",
+                "--format",
+                "text",
+            ],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        assert text_plan.stdout.startswith("OK target=generic artifacts=2")
         archive_path = Path(temp_dir) / "export-batch.tar.gz"
         archive_report = _run_cli(
             [
@@ -1812,6 +1869,20 @@ def _assert_export_batch() -> None:
         archive_validation = _run_cli(["validate", "--path", str(archive_path)])
         assert archive_validation["targetType"] == "export-batch-archive"
         assert archive_validation["ok"] is True
+        archive_submission_plan = _run_cli(
+            [
+                "plan-export-batch-submission",
+                "--path",
+                str(archive_path),
+                "--target",
+                "dependency-track",
+                "--endpoint",
+                "https://dependency-track.example/api/v1/bom",
+            ]
+        )
+        assert archive_submission_plan["ok"] is True
+        assert archive_submission_plan["source"]["inputType"] == "archive"
+        assert archive_submission_plan["artifacts"][0]["format"] == "cyclonedx"
         (output_dir / exports["cypher"]["path"]).write_text("tampered\n", encoding="utf-8")
         failed = subprocess.run(
             [

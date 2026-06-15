@@ -28,6 +28,7 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.advisory.report.v1",
         "edgp.bundle.catalog.v1",
         "edgp.export.batch.archive.v1",
+        "edgp.export.batch.submission_plan.v1",
         "edgp.export.batch.v1",
         "edgp.export.batch.verification.v1",
         "edgp.graph.diff.v1",

@@ -9,6 +9,7 @@ from pathlib import Path
 from src.cli import main
 from src.export_batch import (
     DETERMINISTIC_CYCLONEDX_TIMESTAMP,
+    build_graph_export_batch_submission_plan,
     graph_from_snapshot,
     verify_graph_export_batch,
     verify_graph_export_batch_archive,
@@ -225,6 +226,151 @@ def test_cli_archive_export_batch_and_verify_archive(tmp_path, capsys) -> None:
         == 0
     )
     assert capsys.readouterr().out.startswith("OK files=3")
+
+
+def test_build_submission_plan_for_directory_selects_target_artifacts(tmp_path) -> None:
+    manifest = write_graph_export_batch(
+        Path("tests/fixtures/snapshot-right.json"),
+        tmp_path,
+        formats=["cypher", "cyclonedx", "json"],
+    )
+
+    plan = build_graph_export_batch_submission_plan(
+        tmp_path,
+        target="neo4j",
+        endpoint="https://neo4j.example/import",
+    )
+
+    cypher_export = next(
+        entry for entry in manifest["exports"] if entry["format"] == "cypher"
+    )
+    assert plan["schema"] == "edgp.export.batch.submission_plan.v1"
+    assert plan["mode"] == "dry-run"
+    assert plan["ok"] is True
+    assert plan["target"] == {
+        "kind": "neo4j",
+        "endpoint": "https://neo4j.example/import",
+    }
+    assert plan["source"]["inputType"] == "directory"
+    assert plan["source"]["archiveSha256"] is None
+    assert plan["summary"] == {
+        "artifacts": 1,
+        "bytes": cypher_export["bytes"],
+        "failures": 0,
+    }
+    assert plan["artifacts"] == [
+        {
+            "format": "cypher",
+            "path": "graph.cypher",
+            "mediaType": "text/vnd.neo4j.cypher",
+            "sha256": cypher_export["sha256"],
+            "bytes": cypher_export["bytes"],
+            "endpoint": "https://neo4j.example/import",
+            "method": "POST",
+            "action": "cypher-script-import",
+        }
+    ]
+    assert plan["failures"] == []
+
+
+def test_build_submission_plan_for_archive_selects_sbom_artifact(tmp_path) -> None:
+    export_dir = tmp_path / "exports"
+    manifest = write_graph_export_batch(
+        Path("tests/fixtures/snapshot-right.json"),
+        export_dir,
+        formats=["cypher", "cyclonedx"],
+    )
+    archive_path = tmp_path / "exports.tar.gz"
+    archive_report = write_graph_export_batch_archive(export_dir, archive_path)
+
+    plan = build_graph_export_batch_submission_plan(
+        archive_path,
+        target="dependency-track",
+        endpoint="https://dependency-track.example/api/v1/bom",
+    )
+
+    sbom_export = next(
+        entry for entry in manifest["exports"] if entry["format"] == "cyclonedx"
+    )
+    assert plan["ok"] is True
+    assert plan["source"]["inputType"] == "archive"
+    assert plan["source"]["archiveSha256"] == archive_report["archiveSha256"]
+    assert plan["summary"] == {
+        "artifacts": 1,
+        "bytes": sbom_export["bytes"],
+        "failures": 0,
+    }
+    assert plan["artifacts"][0] == {
+        "format": "cyclonedx",
+        "path": "graph.cyclonedx.json",
+        "mediaType": "application/vnd.cyclonedx+json",
+        "sha256": sbom_export["sha256"],
+        "bytes": sbom_export["bytes"],
+        "endpoint": "https://dependency-track.example/api/v1/bom",
+        "method": "POST",
+        "action": "cyclonedx-bom-upload",
+    }
+
+
+def test_cli_submission_plan_writes_output_and_text_summary(tmp_path, capsys) -> None:
+    write_graph_export_batch(
+        Path("tests/fixtures/snapshot-right.json"),
+        tmp_path,
+        formats=["cypher", "cyclonedx"],
+    )
+    plan_path = tmp_path / "submission-plan.json"
+
+    assert (
+        main(
+            [
+                "plan-export-batch-submission",
+                "--path",
+                str(tmp_path),
+                "--target",
+                "generic",
+                "--endpoint",
+                "https://collector.example/upload",
+                "--output",
+                str(plan_path),
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    assert capsys.readouterr().out.startswith("OK target=generic artifacts=2")
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert plan["schema"] == "edgp.export.batch.submission_plan.v1"
+    assert plan["ok"] is True
+    assert [artifact["format"] for artifact in plan["artifacts"]] == [
+        "cypher",
+        "cyclonedx",
+    ]
+
+
+def test_submission_plan_reports_missing_target_artifact(tmp_path) -> None:
+    write_graph_export_batch(
+        Path("tests/fixtures/snapshot-right.json"),
+        tmp_path,
+        formats=["cypher"],
+    )
+
+    plan = build_graph_export_batch_submission_plan(
+        tmp_path,
+        target="dependency-track",
+        endpoint="https://dependency-track.example/api/v1/bom",
+    )
+
+    assert plan["ok"] is False
+    assert plan["summary"] == {"artifacts": 0, "bytes": 0, "failures": 1}
+    assert plan["failures"] == [
+        {
+            "code": "targetArtifactMissing",
+            "message": "No export artifacts match submission target dependency-track",
+            "path": "$.exports",
+        }
+    ]
 
 
 def test_verify_export_batch_archive_rejects_unsafe_members(tmp_path, capsys) -> None:

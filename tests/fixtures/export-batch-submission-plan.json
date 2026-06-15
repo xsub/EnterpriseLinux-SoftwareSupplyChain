@@ -1,0 +1,34 @@
+{
+  "artifacts": [
+    {
+      "action": "cyclonedx-bom-upload",
+      "bytes": 861,
+      "endpoint": "https://dependency-track.example/api/v1/bom",
+      "format": "cyclonedx",
+      "mediaType": "application/vnd.cyclonedx+json",
+      "method": "POST",
+      "path": "graph.cyclonedx.json",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "failures": [],
+  "mode": "dry-run",
+  "ok": true,
+  "schema": "edgp.export.batch.submission_plan.v1",
+  "source": {
+    "archiveSha256": null,
+    "inputType": "directory",
+    "manifest": "manifest.json",
+    "manifestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "path": "tests/fixtures/export-batch"
+  },
+  "summary": {
+    "artifacts": 1,
+    "bytes": 861,
+    "failures": 0
+  },
+  "target": {
+    "endpoint": "https://dependency-track.example/api/v1/bom",
+    "kind": "dependency-track"
+  }
+}
