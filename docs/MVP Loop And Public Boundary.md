@@ -411,10 +411,10 @@ python -B -m src.cli report --snapshot tests/fixtures/snapshot-right.json --outp
 python -B -m src.cli report --input tests/fixtures/impact-report.json --output /tmp/edgp-impact-report.html
 python -B -m src.cli report --input tests/fixtures/advisory-report.json --output /tmp/edgp-advisory-report.html
 python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json --output /tmp/edgp-npm-diagnostics-report.html
-python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle
+python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle --triage-summary
 python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
-python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text
+python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text --fail-on-status warn
 python -B -m src.cli triage-summary --bundle /tmp/edgp-report-bundle.tar.gz --fail-on-status warn
 python -B -m src.cli bundle-catalog --bundle /tmp/edgp-report-bundle.tar.gz --output-dir /tmp/edgp-bundle-catalog --archive-output /tmp/edgp-bundle-catalog.tar.gz --triage-summary
 python -B -m src.cli verify-bundle --path /tmp/edgp-report-bundle

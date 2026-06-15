@@ -174,6 +174,11 @@ def _format_validation_report(report: dict[str, Any]) -> str:
     contract = report.get("contract")
     if isinstance(contract, str) and contract:
         parts.append(f"contract={contract}")
+    triage_summary = report.get("triageSummary")
+    if isinstance(triage_summary, dict):
+        triage_status = triage_summary.get("status")
+        if isinstance(triage_status, str) and triage_status:
+            parts.append(f"triageStatus={triage_status}")
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]

@@ -3157,6 +3157,27 @@ def _assert_report_bundle() -> None:
         assert validation["targetType"] == "report-bundle"
         assert validation["bundleVerification"]["ok"] is True
         assert validation["triageSummary"]["status"] == "warn"
+        completed_validation_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "validate",
+                "--path",
+                str(output_dir),
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_validation_text.stdout.strip() == (
+            "OK targetType=report-bundle failures=0 "
+            "contract=edgp.report.bundle.v1 triageStatus=warn"
+        )
         archive_path = Path(temp_dir) / "bundle.tar.gz"
         archive_report = _run_cli(
             [
@@ -3259,7 +3280,7 @@ def _assert_report_bundle() -> None:
         )
         assert completed_archive_validation_text.stdout.strip() == (
             "OK targetType=report-bundle-archive failures=0 "
-            "contract=edgp.report.bundle.archive.v1"
+            "contract=edgp.report.bundle.archive.v1 triageStatus=warn"
         )
         archive_triage = _run_cli(["triage-summary", "--bundle", str(archive_path)])
         assert archive_triage["schema"] == "edgp.triage.summary.v1"

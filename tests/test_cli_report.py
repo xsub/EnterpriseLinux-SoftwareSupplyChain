@@ -183,6 +183,13 @@ def test_cli_report_bundle_can_include_triage_summary(tmp_path, capsys) -> None:
     assert manifest["triageSummary"]["href"] == "triage-summary.html"
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    capsys.readouterr()
+    assert main(["validate", "--path", str(output_dir), "--format", "text"]) == 0
+    validation_text = capsys.readouterr().out.strip()
+    assert validation_text == (
+        "OK targetType=report-bundle failures=0 "
+        "contract=edgp.report.bundle.v1 triageStatus=fail"
+    )
 
 
 def test_cli_report_bundle_can_fail_on_triage_status(tmp_path, capsys) -> None:
@@ -452,6 +459,12 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
     assert archive_validation["targetType"] == "report-bundle-archive"
     assert archive_validation["ok"] is True
     assert archive_validation["triageSummary"]["status"] == "warn"
+    assert main(["validate", "--path", str(catalog_archive), "--format", "text"]) == 0
+    archive_validation_text = capsys.readouterr().out.strip()
+    assert archive_validation_text == (
+        "OK targetType=report-bundle-archive failures=0 "
+        "contract=edgp.report.bundle.archive.v1 triageStatus=warn"
+    )
     assert main(["triage-summary", "--bundle", str(catalog_archive)]) == 0
     archive_triage = json.loads(capsys.readouterr().out)
     assert archive_triage["source"]["kind"] == "bundle-archive"
