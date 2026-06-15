@@ -200,6 +200,8 @@ edgp triage-summary --bundle reports.tar.gz --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
 edgp validate --path reports.tar.gz --format text
+edgp validate --path reports.tar.gz > validation.json
+edgp report --input validation.json --output validation.html
 ```
 
 ### Benchmark
@@ -746,6 +748,9 @@ For bundles that already contain `manifest.triageSummary`, `validate
 leaving validation itself read-only. Text output includes `triageStatus=...`
 for bundle directories and deterministic bundle archives that embed that
 summary, which keeps CI logs readable even when the JSON report is archived.
+Validation reports also render through `edgp report`, so CI gate output can be
+reviewed as static HTML with target details, failures, nested verifier state,
+and triage status when present.
 Validation failure examples are documented in
 [`docs/Validation Failure Examples.md`](docs/Validation%20Failure%20Examples.md).
 Start with the guide's

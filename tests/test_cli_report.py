@@ -409,6 +409,53 @@ def test_cli_report_writes_report_bundle_archive_html(tmp_path, capsys) -> None:
     assert "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" in html
 
 
+def test_cli_report_writes_validation_failure_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "validation-failure.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/validation-failure-missing-edge-count.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="validation-target-panel"' in html
+    assert 'data-testid="validation-failures-panel"' in html
+    assert "edgp.graph.snapshot.v1" in html
+    assert "requiredMissing" in html
+
+
+def test_cli_report_writes_nested_validation_html(tmp_path, capsys) -> None:
+    output_path = tmp_path / "validation-bundle-failure.html"
+
+    assert (
+        main(
+            [
+                "report",
+                "--input",
+                "tests/fixtures/validation-failure-tampered-bundle-manifest.json",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_path
+    html = output_path.read_text(encoding="utf-8")
+    assert 'data-testid="validation-nested-verification-panel"' in html
+    assert "bundle.bundleDigestMismatch" in html
+    assert "edgp.report.bundle.verification.v1" in html
+
+
 def test_cli_archive_bundle_verifies_and_writes_deterministic_archive(
     tmp_path,
     capsys,

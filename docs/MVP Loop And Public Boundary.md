@@ -85,6 +85,8 @@ surfaces are:
   review and report-bundle inclusion.
 - Render report bundle verification and deterministic archive reports as static
   HTML for public handoff review.
+- Render validation reports as static HTML with target, failure, nested
+  verifier, and triage status panels.
 - Compare two EDGP graph snapshots and render the generic diff as a static,
   verifiable report bundle.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
@@ -473,6 +475,7 @@ python -B -m src.cli verify-bundle --path tests/fixtures/invalid-json-manifest-b
 python -B -m src.cli verify-bundle --path tests/fixtures/invalid-manifest-type-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/snapshot-right.json
 python -B -m src.cli validate --path tests/fixtures/invalid-snapshot-missing-edge-count.json
+python -B -m src.cli report --input tests/fixtures/validation-failure-missing-edge-count.json --output /tmp/edgp-validation-failure.html
 python -B -m src.cli validate --path /tmp/edgp-report-bundle --format text
 python -B -m src.cli validate --path tests/fixtures/tampered-report-bundle-manifest --format text
 python -B -m src.cli validate --path tests/fixtures/tampered-report-bundle-member --format text

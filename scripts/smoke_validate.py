@@ -434,6 +434,32 @@ def _assert_validate_command() -> None:
         "OK targetType=json-file failures=0 contract=edgp.graph.snapshot.v1"
     )
 
+    with tempfile.TemporaryDirectory() as temp_dir:
+        validation_path = Path(temp_dir) / "validation-report.json"
+        validation_path.write_text(json.dumps(payload), encoding="utf-8")
+        html_path = Path(temp_dir) / "validation-report.html"
+        completed_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(validation_path),
+                "--output",
+                str(html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_report.stdout.strip()) == html_path
+        html = html_path.read_text(encoding="utf-8")
+        assert 'data-testid="validation-target-panel"' in html
+        assert "edgp.graph.snapshot.v1" in html
+
     failure_payload = _run_cli_allow_failure(
         [
             "validate",
@@ -450,6 +476,29 @@ def _assert_validate_command() -> None:
         ).read_text(encoding="utf-8")
     )
     assert _normalize_validation_report(failure_payload) == fixture
+    with tempfile.TemporaryDirectory() as temp_dir:
+        html_path = Path(temp_dir) / "validation-failure.html"
+        completed_report = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                "tests/fixtures/validation-failure-missing-edge-count.json",
+                "--output",
+                str(html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert Path(completed_report.stdout.strip()) == html_path
+        html = html_path.read_text(encoding="utf-8")
+        assert 'data-testid="validation-failures-panel"' in html
+        assert "requiredMissing" in html
 
     archive_failure_payload = _run_cli_allow_failure(
         [

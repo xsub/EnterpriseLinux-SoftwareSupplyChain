@@ -63,6 +63,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_license_report(payload)
     if schema == "edgp.triage.summary.v1":
         return render_triage_summary_report(payload)
+    if schema == "edgp.validation.report.v1":
+        return render_validation_report(payload)
     if schema == "edgp.report.bundle.verification.v1":
         return render_report_bundle_verification_report(payload)
     if schema == "edgp.report.bundle.archive.v1":
@@ -890,6 +892,142 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
         ],
         scripts=[_table_sort_script()],
     )
+
+
+def render_validation_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.validation.report.v1":
+        raise ValueError("HTML validation input must be an EDGP validation report")
+
+    summary = report.get("summary", {})
+    sections = [
+        _generic_hero(
+            eyebrow="ok" if report.get("ok") is True else "failed",
+            heading=str(report.get("targetType") or "Validation report"),
+            schema=str(report.get("schema")),
+            metrics=[
+                ("Contract", report.get("contract", "")),
+                ("Failures", _dict_value(summary, "failures")),
+            ],
+        ),
+        _rows_panel(
+            "Validation Target",
+            [_validation_target_row(report)],
+            ["target", "targetType", "contract", "schemaFile", "ok"],
+            test_id="validation-target-panel",
+        ),
+        _rows_panel(
+            "Failures",
+            report.get("failures", []),
+            ["code", "message", "path"],
+            test_id="validation-failures-panel",
+        ),
+        _rows_panel(
+            "Nested Verification",
+            _validation_verification_rows(report),
+            [
+                "kind",
+                "schema",
+                "ok",
+                "path",
+                "manifest",
+                "fingerprint",
+                "reports",
+                "exports",
+                "files",
+                "bytes",
+                "failures",
+            ],
+            test_id="validation-nested-verification-panel",
+        ),
+    ]
+    triage_summary = report.get("triageSummary")
+    if isinstance(triage_summary, dict):
+        sections.append(
+            _rows_panel(
+                "Triage Summary",
+                [_validation_triage_row(triage_summary)],
+                ["schema", "source", "status", "summary"],
+                test_id="validation-triage-panel",
+            )
+        )
+    return _document(
+        "EDGP Validation Report",
+        sections,
+        scripts=[_table_sort_script()],
+    )
+
+
+def _validation_target_row(report: dict[str, object]) -> dict[str, object]:
+    return {
+        "target": report.get("target", ""),
+        "targetType": report.get("targetType", ""),
+        "contract": report.get("contract", ""),
+        "schemaFile": report.get("schemaFile", ""),
+        "ok": report.get("ok", ""),
+    }
+
+
+def _validation_triage_row(triage_summary: dict[str, object]) -> dict[str, object]:
+    return {
+        "schema": triage_summary.get("schema", ""),
+        "source": triage_summary.get("source", ""),
+        "status": triage_summary.get("status", ""),
+        "summary": triage_summary.get("summary", {}),
+    }
+
+
+def _validation_verification_rows(report: dict[str, object]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for kind, key in [
+        ("report bundle", "bundleVerification"),
+        ("report bundle archive", "bundleArchiveVerification"),
+        ("export batch", "exportBatchVerification"),
+        ("export batch archive", "exportBatchArchiveVerification"),
+    ]:
+        verification = report.get(key)
+        if isinstance(verification, dict):
+            rows.append(_validation_verification_row(kind, verification))
+    return rows
+
+
+def _validation_verification_row(
+    kind: str,
+    verification: dict[str, object],
+) -> dict[str, object]:
+    summary = verification.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    nested = verification.get("verification", {})
+    if not isinstance(nested, dict):
+        nested = {}
+    nested_summary = nested.get("summary", {})
+    if not isinstance(nested_summary, dict):
+        nested_summary = {}
+    return {
+        "kind": kind,
+        "schema": verification.get("schema", ""),
+        "ok": verification.get("ok", ""),
+        "path": (
+            verification.get("archive")
+            or verification.get("bundleDir")
+            or verification.get("batchDir")
+            or ""
+        ),
+        "manifest": verification.get("manifest") or nested.get("manifest") or "",
+        "fingerprint": (
+            verification.get("archiveSha256")
+            or verification.get("bundleSha256")
+            or verification.get("manifestSha256")
+            or ""
+        ),
+        "reports": summary.get("reports") or nested_summary.get("reports") or "",
+        "exports": summary.get("exports") or nested_summary.get("exports") or "",
+        "files": summary.get("files", ""),
+        "bytes": summary.get("bytes", ""),
+        "failures": summary.get("failures")
+        if "failures" in summary
+        else summary.get("verificationFailures", ""),
+    }
 
 
 def render_report_bundle_verification_report(report: dict[str, Any]) -> str:
