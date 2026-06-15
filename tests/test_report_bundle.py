@@ -6,7 +6,9 @@ import json
 import tarfile
 from pathlib import Path
 
+from src.cli import main
 from src.output.report_bundle import (
+    build_report_bundle_submission_plan,
     verify_report_bundle,
     verify_report_bundle_archive,
     write_report_bundle,
@@ -249,6 +251,144 @@ def test_verify_report_bundle_archive_matches_missing_archive_fixture() -> None:
     )
 
     assert _normalize_archive_verification_report(report) == expected
+
+
+def test_build_report_bundle_submission_plan_for_directory(tmp_path) -> None:
+    source_path = tmp_path / "snapshot-right.json"
+    source_path.write_text(
+        Path("tests/fixtures/snapshot-right.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    write_report_bundle([source_path], tmp_path, include_triage_summary=True)
+
+    plan = build_report_bundle_submission_plan(
+        tmp_path,
+        target="workbench",
+        endpoint="https://workbench.example/api/bundles",
+    )
+
+    assert plan["schema"] == "edgp.report.bundle.submission_plan.v1"
+    assert plan["mode"] == "dry-run"
+    assert plan["ok"] is True
+    assert plan["target"] == {
+        "kind": "workbench",
+        "endpoint": "https://workbench.example/api/bundles",
+    }
+    assert plan["source"]["inputType"] == "directory"
+    assert plan["source"]["archiveSha256"] is None
+    assert plan["summary"]["reports"] == 1
+    assert plan["summary"]["failures"] == 0
+    assert [artifact["role"] for artifact in plan["artifacts"]] == [
+        "manifest",
+        "index",
+        "report-html",
+        "report-source",
+        "triage-html",
+        "triage-source",
+    ]
+    assert {artifact["action"] for artifact in plan["artifacts"]} == {
+        "report-bundle-import"
+    }
+    assert {artifact["method"] for artifact in plan["artifacts"]} == {"POST"}
+    assert plan["summary"]["bytes"] == sum(
+        artifact["bytes"] for artifact in plan["artifacts"]
+    )
+
+
+def test_build_report_bundle_submission_plan_for_archive_rag_target(tmp_path) -> None:
+    source_path = tmp_path / "snapshot-right.json"
+    source_path.write_text(
+        Path("tests/fixtures/snapshot-right.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    write_report_bundle([source_path], tmp_path, include_triage_summary=True)
+    archive_path = tmp_path / "bundle.tar.gz"
+    archive_report = write_report_bundle_archive(tmp_path, archive_path)
+
+    plan = build_report_bundle_submission_plan(
+        archive_path,
+        target="rag",
+        endpoint="https://rag.example/api/context",
+    )
+
+    assert plan["ok"] is True
+    assert plan["source"]["inputType"] == "archive"
+    assert plan["source"]["archiveSha256"] == archive_report["archiveSha256"]
+    assert [artifact["role"] for artifact in plan["artifacts"]] == [
+        "manifest",
+        "report-source",
+        "triage-source",
+    ]
+    assert {artifact["mediaType"] for artifact in plan["artifacts"]} == {
+        "application/json"
+    }
+    assert {artifact["action"] for artifact in plan["artifacts"]} == {
+        "rag-context-import"
+    }
+
+
+def test_cli_report_bundle_submission_plan_writes_output_and_text(
+    tmp_path,
+    capsys,
+) -> None:
+    source_path = tmp_path / "snapshot-right.json"
+    source_path.write_text(
+        Path("tests/fixtures/snapshot-right.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    write_report_bundle([source_path], tmp_path)
+    plan_path = tmp_path / "bundle-submission-plan.json"
+
+    assert (
+        main(
+            [
+                "plan-bundle-submission",
+                "--path",
+                str(tmp_path),
+                "--target",
+                "generic",
+                "--endpoint",
+                "https://collector.example/upload",
+                "--output",
+                str(plan_path),
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    assert capsys.readouterr().out.startswith(
+        "OK target=generic reports=1 artifacts=4"
+    )
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert plan["schema"] == "edgp.report.bundle.submission_plan.v1"
+    assert plan["ok"] is True
+    assert [artifact["role"] for artifact in plan["artifacts"]] == [
+        "manifest",
+        "index",
+        "report-html",
+        "report-source",
+    ]
+
+
+def test_report_bundle_submission_plan_reports_verification_failure(tmp_path) -> None:
+    write_report_bundle([Path("tests/fixtures/snapshot-right.json")], tmp_path)
+    (tmp_path / "001-snapshot-right.html").write_text(
+        "<!doctype html><title>tampered</title>",
+        encoding="utf-8",
+    )
+
+    plan = build_report_bundle_submission_plan(
+        tmp_path,
+        target="workbench",
+        endpoint="https://workbench.example/api/bundles",
+    )
+
+    assert plan["ok"] is False
+    assert plan["summary"]["artifacts"] == 0
+    assert plan["summary"]["failures"] == 1
+    assert plan["failures"][0]["code"] == "htmlDigestMismatch"
 
 
 def test_verify_report_bundle_matches_committed_failure_fixtures() -> None:

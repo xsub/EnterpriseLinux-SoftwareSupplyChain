@@ -1,0 +1,55 @@
+{
+  "artifacts": [
+    {
+      "action": "report-bundle-import",
+      "bytes": 512,
+      "endpoint": "https://workbench.example/api/bundles",
+      "mediaType": "application/json",
+      "method": "POST",
+      "path": "manifest.json",
+      "role": "manifest",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "action": "report-bundle-import",
+      "bytes": 2048,
+      "endpoint": "https://workbench.example/api/bundles",
+      "mediaType": "text/html",
+      "method": "POST",
+      "path": "index.html",
+      "role": "index",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "action": "report-bundle-import",
+      "bytes": 4096,
+      "endpoint": "https://workbench.example/api/bundles",
+      "mediaType": "text/html",
+      "method": "POST",
+      "path": "001-snapshot-right.html",
+      "role": "report-html",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  ],
+  "failures": [],
+  "mode": "dry-run",
+  "ok": true,
+  "schema": "edgp.report.bundle.submission_plan.v1",
+  "source": {
+    "archiveSha256": null,
+    "bundleSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "inputType": "directory",
+    "manifest": "manifest.json",
+    "path": "tests/fixtures/report-bundle"
+  },
+  "summary": {
+    "artifacts": 3,
+    "bytes": 6656,
+    "failures": 0,
+    "reports": 1
+  },
+  "target": {
+    "endpoint": "https://workbench.example/api/bundles",
+    "kind": "workbench"
+  }
+}

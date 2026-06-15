@@ -189,6 +189,7 @@ edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --outp
 edgp verify-bundle --path reports
 edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
+edgp plan-bundle-submission --path reports.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
 edgp triage-summary --bundle reports.tar.gz --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
@@ -838,6 +839,11 @@ through the general validation report contract as
 `targetType=report-bundle-archive`, which keeps CI/workbench gates on one
 entrypoint whether they receive raw JSON, a report bundle directory, or a
 deterministic handoff archive.
+`edgp plan-bundle-submission` verifies a report bundle directory or archive and
+emits a dry-run JSON plan for the bundle artifacts that would be submitted to a
+workbench, RAG context builder, or generic collector endpoint. It selects only
+artifacts that can be read safely from the directory or archive and does not
+perform network calls or require credentials.
 The bundle `index.html` also includes a compact verification summary showing
 report count, manifest schema, and a shortened bundle fingerprint.
 With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and
@@ -872,5 +878,5 @@ when the computed status reaches the selected threshold.
 - harden ecosystem adapters with larger real-world fixture suites;
 - support curated vulnerability annotations and reachability policies;
 - add GraphBLAS or GPU-backed traversal adapters for very large static graphs;
-- add batch Cypher, SBOM, and report-bundle submission clients for automated
-  DevSecOps flows.
+- turn dry-run Cypher, SBOM, and report-bundle submission plans into
+  authenticated submission clients for automated DevSecOps flows.

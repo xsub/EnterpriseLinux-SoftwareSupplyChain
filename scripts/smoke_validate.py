@@ -101,6 +101,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.report.bundle.archive.v1.schema.json",
+    "edgp.report.bundle.submission_plan.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.report.bundle.submission_plan.v1.schema.json",
     "edgp.npm.diagnostics.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -194,6 +198,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "report-bundle-archive.json",
+    "edgp.report.bundle.submission_plan.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "report-bundle-submission-plan.json",
     "edgp.npm.diagnostics.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -719,6 +727,7 @@ def _assert_schema_index_document() -> None:
         "edgp.performance.report.v1",
         "edgp.public.advisory_feed.v1",
         "edgp.query.report.v1",
+        "edgp.report.bundle.submission_plan.v1",
         "edgp.report.bundle.v1",
         "edgp.report.bundle.verification.v1",
         "edgp.rpm.albs_provenance.v1",
@@ -3384,6 +3393,64 @@ def _assert_report_bundle() -> None:
             "OK targetType=report-bundle failures=0 "
             "contract=edgp.report.bundle.v1 triageStatus=warn"
         )
+        submission_plan_path = Path(temp_dir) / "bundle-submission-plan.json"
+        submission_plan = _run_cli(
+            [
+                "plan-bundle-submission",
+                "--path",
+                str(output_dir),
+                "--target",
+                "workbench",
+                "--endpoint",
+                "https://workbench.example/api/bundles",
+                "--output",
+                str(submission_plan_path),
+            ]
+        )
+        assert submission_plan["schema"] == "edgp.report.bundle.submission_plan.v1"
+        assert submission_plan["ok"] is True
+        assert submission_plan["source"]["inputType"] == "directory"
+        assert submission_plan["summary"]["reports"] == 2
+        assert [artifact["role"] for artifact in submission_plan["artifacts"]] == [
+            "manifest",
+            "index",
+            "report-html",
+            "report-html",
+            "triage-html",
+            "triage-source",
+        ]
+        submission_plan_validation = _run_cli(
+            ["validate", "--path", str(submission_plan_path)]
+        )
+        assert submission_plan_validation["ok"] is True
+        assert (
+            submission_plan_validation["contract"]
+            == "edgp.report.bundle.submission_plan.v1"
+        )
+        completed_submission_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "plan-bundle-submission",
+                "--path",
+                str(output_dir),
+                "--target",
+                "generic",
+                "--endpoint",
+                "https://collector.example/upload",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_submission_text.stdout.startswith(
+            "OK target=generic reports=2 artifacts=6"
+        )
         archive_path = Path(temp_dir) / "bundle.tar.gz"
         archive_report = _run_cli(
             [
@@ -3467,6 +3534,31 @@ def _assert_report_bundle() -> None:
             archive_validation["bundleArchiveVerification"]["archiveSha256"]
             == archive_report["archiveSha256"]
         )
+        archive_submission_plan = _run_cli(
+            [
+                "plan-bundle-submission",
+                "--path",
+                str(archive_path),
+                "--target",
+                "workbench",
+                "--endpoint",
+                "https://workbench.example/api/bundles",
+            ]
+        )
+        assert archive_submission_plan["ok"] is True
+        assert archive_submission_plan["source"]["inputType"] == "archive"
+        assert (
+            archive_submission_plan["source"]["archiveSha256"]
+            == archive_report["archiveSha256"]
+        )
+        assert [artifact["role"] for artifact in archive_submission_plan["artifacts"]] == [
+            "manifest",
+            "index",
+            "report-html",
+            "report-html",
+            "triage-html",
+            "triage-source",
+        ]
         completed_archive_validation_text = subprocess.run(
             [
                 sys.executable,

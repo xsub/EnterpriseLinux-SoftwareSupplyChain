@@ -19,6 +19,7 @@ from src.triage_summary import build_triage_summary_report
 BUNDLE_SHA256_KEY = "bundleSha256"
 ARCHIVE_SCHEMA = "edgp.report.bundle.archive.v1"
 MANIFEST_SCHEMA = "edgp.report.bundle.v1"
+SUBMISSION_PLAN_SCHEMA = "edgp.report.bundle.submission_plan.v1"
 VERIFICATION_SCHEMA = "edgp.report.bundle.verification.v1"
 SOURCE_KINDS = {
     "advisory-report",
@@ -77,6 +78,23 @@ _REPORT_REQUIRED_KEYS = {
     "title",
 }
 _REPORT_ALLOWED_KEYS = _REPORT_REQUIRED_KEYS
+_SUBMISSION_TARGET_ROLES = {
+    "workbench": (
+        "manifest",
+        "index",
+        "report-html",
+        "report-source",
+        "triage-html",
+        "triage-source",
+    ),
+    "rag": ("manifest", "report-source", "triage-source"),
+    "generic": (),
+}
+_SUBMISSION_TARGET_ACTIONS = {
+    "workbench": "report-bundle-import",
+    "rag": "rag-context-import",
+    "generic": "artifact-upload",
+}
 
 
 @dataclass(frozen=True)
@@ -376,6 +394,80 @@ def verify_report_bundle_archive(
         )
 
 
+def build_report_bundle_submission_plan(
+    path: Path,
+    *,
+    target: str,
+    endpoint: str,
+    manifest_name: str = "manifest.json",
+    command: str | None = None,
+) -> dict[str, Any]:
+    """Build a dry-run submission plan for a verified static report bundle."""
+
+    source = _load_submission_source(path, manifest_name=manifest_name)
+    verification = source["verification"]
+    failures = [
+        {
+            "code": failure.get("code", "unknown"),
+            "message": str(failure.get("message", "")),
+            "path": str(failure.get("path", path)),
+        }
+        for failure in verification.get("failures", [])
+        if isinstance(failure, dict)
+    ]
+    if target not in _SUBMISSION_TARGET_ROLES:
+        failures.append(
+            {
+                "code": "targetUnsupported",
+                "message": f"Unsupported submission target {target}",
+                "path": "$.target.kind",
+            }
+        )
+    artifacts = (
+        _submission_artifacts(source["manifest"], source=source, target=target)
+        if not failures
+        else []
+    )
+    if not artifacts and not failures:
+        failures.append(
+            {
+                "code": "targetArtifactMissing",
+                "message": f"No report bundle artifacts match submission target {target}",
+                "path": "$",
+            }
+        )
+
+    plan = {
+        "schema": SUBMISSION_PLAN_SCHEMA,
+        "mode": "dry-run",
+        "ok": not failures,
+        "target": {
+            "kind": target,
+            "endpoint": endpoint,
+        },
+        "source": source["source"],
+        "summary": {
+            "artifacts": len(artifacts),
+            "bytes": sum(int(artifact["bytes"]) for artifact in artifacts),
+            "failures": len(failures),
+            "reports": _manifest_report_count(source["manifest"]),
+        },
+        "artifacts": [
+            {
+                **artifact,
+                "endpoint": endpoint,
+                "method": "POST",
+                "action": _SUBMISSION_TARGET_ACTIONS.get(target, "artifact-upload"),
+            }
+            for artifact in artifacts
+        ],
+        "failures": failures,
+    }
+    if command:
+        plan["command"] = command
+    return plan
+
+
 def _archive_report(
     *,
     archive_path: Path,
@@ -402,6 +494,178 @@ def _archive_report(
         },
         "verification": verification,
     }
+
+
+def _load_submission_source(path: Path, *, manifest_name: str) -> dict[str, Any]:
+    resolved = path.resolve()
+    if path.is_dir():
+        verification = verify_report_bundle(path, manifest_name=manifest_name)
+        manifest = _load_manifest_file(path / manifest_name)
+        return {
+            "manifest": manifest,
+            "verification": verification,
+            "source": {
+                "path": str(resolved),
+                "inputType": "directory",
+                "manifest": manifest_name,
+                "bundleSha256": verification.get("bundleSha256"),
+                "archiveSha256": None,
+            },
+            "readArtifact": lambda label: _read_directory_member(path, label),
+        }
+    archive_report = verify_report_bundle_archive(path, manifest_name=manifest_name)
+    manifest = _load_manifest_archive(path, manifest_name=manifest_name)
+    return {
+        "manifest": manifest,
+        "verification": archive_report.get("verification", {}),
+        "source": {
+            "path": str(resolved),
+            "inputType": "archive",
+            "manifest": manifest_name,
+            "bundleSha256": archive_report.get("bundleSha256"),
+            "archiveSha256": archive_report.get("archiveSha256"),
+        },
+        "readArtifact": lambda label: _read_archive_member(path, label),
+    }
+
+
+def _load_manifest_file(manifest_path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _load_manifest_archive(archive_path: Path, *, manifest_name: str) -> dict[str, Any]:
+    if _bundle_member_path(Path("."), manifest_name) is None:
+        return {}
+    try:
+        with tarfile.open(archive_path, "r:gz") as archive:
+            member = archive.getmember(manifest_name)
+            source = archive.extractfile(member)
+            if source is None:
+                return {}
+            payload = json.loads(source.read().decode("utf-8"))
+    except (KeyError, OSError, tarfile.TarError, UnicodeDecodeError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _read_directory_member(bundle_dir: Path, label: str) -> bytes | None:
+    target = _bundle_member_path(bundle_dir, label)
+    if target is None or not target.is_file():
+        return None
+    return target.read_bytes()
+
+
+def _read_archive_member(archive_path: Path, label: str) -> bytes | None:
+    if _bundle_member_path(Path("."), label) is None:
+        return None
+    try:
+        with tarfile.open(archive_path, "r:gz") as archive:
+            member = archive.getmember(label)
+            if not member.isfile():
+                return None
+            source = archive.extractfile(member)
+            if source is None:
+                return None
+            return source.read()
+    except (KeyError, OSError, tarfile.TarError):
+        return None
+
+
+def _submission_artifacts(
+    manifest: dict[str, Any],
+    *,
+    source: dict[str, Any],
+    target: str,
+) -> list[dict[str, Any]]:
+    wanted_roles = _SUBMISSION_TARGET_ROLES.get(target, ())
+    candidates = _submission_artifact_candidates(
+        manifest,
+        manifest_name=str(source["source"].get("manifest", "manifest.json")),
+    )
+    artifacts = []
+    read_artifact = source["readArtifact"]
+    for candidate in candidates:
+        if wanted_roles and candidate["role"] not in wanted_roles:
+            continue
+        content = read_artifact(candidate["path"])
+        if content is None:
+            continue
+        artifacts.append(
+            {
+                "role": candidate["role"],
+                "path": candidate["path"],
+                "mediaType": candidate["mediaType"],
+                "sha256": _sha256(content),
+                "bytes": len(content),
+            }
+        )
+    return artifacts
+
+
+def _submission_artifact_candidates(
+    manifest: dict[str, Any],
+    *,
+    manifest_name: str,
+) -> list[dict[str, str]]:
+    candidates = [
+        {
+            "role": "manifest",
+            "path": manifest_name,
+            "mediaType": "application/json",
+        }
+    ]
+    index = manifest.get("index")
+    if isinstance(index, str) and index:
+        candidates.append({"role": "index", "path": index, "mediaType": "text/html"})
+
+    reports = manifest.get("reports", [])
+    if isinstance(reports, list):
+        for report in reports:
+            if isinstance(report, dict):
+                candidates.extend(_report_artifact_candidates(report, prefix="report"))
+
+    triage_summary = manifest.get("triageSummary")
+    if isinstance(triage_summary, dict):
+        candidates.extend(
+            _report_artifact_candidates(triage_summary, prefix="triage")
+        )
+    return candidates
+
+
+def _report_artifact_candidates(
+    report: dict[str, Any],
+    *,
+    prefix: str,
+) -> list[dict[str, str]]:
+    candidates = []
+    href = report.get("href")
+    if isinstance(href, str) and href:
+        candidates.append(
+            {
+                "role": f"{prefix}-html",
+                "path": href,
+                "mediaType": "text/html",
+            }
+        )
+    source = report.get("source")
+    if isinstance(source, str) and source:
+        candidates.append(
+            {
+                "role": f"{prefix}-source",
+                "path": source,
+                "mediaType": "application/json",
+            }
+        )
+    return candidates
+
+
+def _manifest_report_count(manifest: Mapping[str, Any]) -> int:
+    reports = manifest.get("reports")
+    return len(reports) if isinstance(reports, list) else 0
 
 
 def _archive_verification_report(

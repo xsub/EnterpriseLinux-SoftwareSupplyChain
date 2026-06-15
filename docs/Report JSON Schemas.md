@@ -54,6 +54,10 @@ python -B scripts/generate_schema_index.py --check
   [`edgp.report.bundle.archive.v1.schema.json`](schemas/edgp.report.bundle.archive.v1.schema.json)
   documents deterministic archive packaging results for verified static report
   bundles.
+- `edgp.report.bundle.submission_plan.v1`:
+  [`edgp.report.bundle.submission_plan.v1.schema.json`](schemas/edgp.report.bundle.submission_plan.v1.schema.json)
+  documents offline dry-run submission plans for verified report bundle
+  directories or archives.
 - `edgp.npm.diagnostics.v1`:
   [`edgp.npm.diagnostics.v1.schema.json`](schemas/edgp.npm.diagnostics.v1.schema.json)
   documents duplicate package names, nested version conflicts, and unresolved

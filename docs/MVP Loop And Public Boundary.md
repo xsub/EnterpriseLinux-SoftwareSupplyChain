@@ -75,6 +75,8 @@ surfaces are:
 - Export graph data to Neo4j Cypher, CycloneDX, and EDGP JSON snapshots.
 - Build dry-run submission plans for verified graph export batch directories
   or archives without network access or secrets.
+- Build dry-run submission plans for verified report bundle directories or
+  archives without network access or secrets.
 - Compare two EDGP graph snapshots and render the generic diff as a static,
   verifiable report bundle.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
@@ -426,6 +428,7 @@ python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json -
 python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle --triage-summary
 python -B -m src.cli archive-bundle --path /tmp/edgp-report-bundle --output /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
+python -B -m src.cli plan-bundle-submission --path /tmp/edgp-report-bundle.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
 python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text --fail-on-status warn
 python -B -m src.cli triage-summary --bundle /tmp/edgp-report-bundle.tar.gz --fail-on-status warn
 python -B -m src.cli bundle-catalog --bundle /tmp/edgp-report-bundle.tar.gz --output-dir /tmp/edgp-bundle-catalog --archive-output /tmp/edgp-bundle-catalog.tar.gz --triage-summary

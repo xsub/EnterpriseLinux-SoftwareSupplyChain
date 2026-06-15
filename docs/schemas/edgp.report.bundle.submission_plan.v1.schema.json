@@ -1,0 +1,223 @@
+{
+  "$id": "urn:edgp:schema:report-bundle-submission-plan:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Dry-run submission plan for verified static report bundle artifacts.",
+  "properties": {
+    "artifacts": {
+      "description": "Bundle artifacts selected for the requested submission target.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "bytes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "endpoint": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "mediaType": {
+            "enum": [
+              "application/json",
+              "text/html"
+            ],
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "POST"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "index",
+              "manifest",
+              "report-html",
+              "report-source",
+              "triage-html",
+              "triage-source"
+            ],
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "path",
+          "mediaType",
+          "sha256",
+          "bytes",
+          "endpoint",
+          "method",
+          "action"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "command": {
+      "type": "string"
+    },
+    "failures": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "path"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "mode": {
+      "const": "dry-run"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "schema": {
+      "const": "edgp.report.bundle.submission_plan.v1",
+      "description": "Report bundle submission plan schema identifier."
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "archiveSha256": {
+          "oneOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bundleSha256": {
+          "oneOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inputType": {
+          "enum": [
+            "archive",
+            "directory"
+          ],
+          "type": "string"
+        },
+        "manifest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "inputType",
+        "manifest",
+        "bundleSha256",
+        "archiveSha256"
+      ],
+      "type": "object"
+    },
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "artifacts": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "bytes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failures": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "reports": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifacts",
+        "bytes",
+        "failures",
+        "reports"
+      ],
+      "type": "object"
+    },
+    "target": {
+      "additionalProperties": false,
+      "properties": {
+        "endpoint": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "generic",
+            "rag",
+            "workbench"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "endpoint"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "mode",
+    "ok",
+    "target",
+    "source",
+    "summary",
+    "artifacts",
+    "failures"
+  ],
+  "title": "EDGP Report Bundle Submission Plan v1",
+  "type": "object"
+}

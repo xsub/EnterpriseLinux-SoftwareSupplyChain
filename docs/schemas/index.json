@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 29,
+  "schemaCount": 30,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -170,6 +170,14 @@
       "id": "urn:edgp:schema:report-bundle-archive:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Report Bundle Archive v1"
+    },
+    {
+      "contract": "edgp.report.bundle.submission_plan.v1",
+      "description": "Dry-run submission plan for verified static report bundle artifacts.",
+      "file": "edgp.report.bundle.submission_plan.v1.schema.json",
+      "id": "urn:edgp:schema:report-bundle-submission-plan:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Report Bundle Submission Plan v1"
     },
     {
       "contract": "edgp.report.bundle.v1",

@@ -45,6 +45,7 @@ from src.output.graph_bundle import write_graph_report_bundle
 from src.output.html_report import write_report_file
 from src.output.json_export import GraphJsonExporter
 from src.output.report_bundle import (
+    build_report_bundle_submission_plan,
     verify_report_bundle,
     verify_report_bundle_archive,
     write_report_bundle,
@@ -226,6 +227,31 @@ def _format_export_batch_submission_plan(report: dict[str, Any]) -> str:
     parts = [
         status,
         f"target={target_kind}",
+        f"artifacts={artifacts}",
+        f"bytes={bytes_written}",
+        f"failures={failures}",
+    ]
+    failure_list = report.get("failures", [])
+    if isinstance(failure_list, list) and failure_list:
+        first_failure = failure_list[0]
+        if isinstance(first_failure, dict):
+            parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
+    return " ".join(parts)
+
+
+def _format_report_bundle_submission_plan(report: dict[str, Any]) -> str:
+    status = "OK" if report.get("ok") else "FAIL"
+    summary = report.get("summary", {})
+    artifacts = summary.get("artifacts", 0) if isinstance(summary, dict) else 0
+    bytes_written = summary.get("bytes", 0) if isinstance(summary, dict) else 0
+    failures = summary.get("failures", 0) if isinstance(summary, dict) else 0
+    reports = summary.get("reports", 0) if isinstance(summary, dict) else 0
+    target = report.get("target", {})
+    target_kind = target.get("kind", "unknown") if isinstance(target, dict) else "unknown"
+    parts = [
+        status,
+        f"target={target_kind}",
+        f"reports={reports}",
         f"artifacts={artifacts}",
         f"bytes={bytes_written}",
         f"failures={failures}",
@@ -2910,6 +2936,25 @@ def build_parser() -> argparse.ArgumentParser:
         default="json",
     )
 
+    plan_bundle_submission = subparsers.add_parser(
+        "plan-bundle-submission",
+        help="Build a dry-run submission plan for a verified report bundle",
+    )
+    plan_bundle_submission.add_argument("--path", type=Path, required=True)
+    plan_bundle_submission.add_argument(
+        "--target",
+        choices=["workbench", "rag", "generic"],
+        required=True,
+    )
+    plan_bundle_submission.add_argument("--endpoint", required=True)
+    plan_bundle_submission.add_argument("--manifest-name", default="manifest.json")
+    plan_bundle_submission.add_argument("--output", type=Path)
+    plan_bundle_submission.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
+
     validate = subparsers.add_parser(
         "validate",
         help=(
@@ -3920,6 +3965,23 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(_json(report))
         return 0 if report["ok"] else 1
+
+    if args.command == "plan-bundle-submission":
+        plan = build_report_bundle_submission_plan(
+            args.path,
+            target=args.target,
+            endpoint=args.endpoint,
+            manifest_name=args.manifest_name,
+            command=command,
+        )
+        if args.output is not None:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(_json(plan) + "\n", encoding="utf-8")
+        if args.format == "text":
+            print(_format_report_bundle_submission_plan(plan))
+        else:
+            print(_json(plan))
+        return 0 if plan["ok"] else 1
 
     if args.command == "validate":
         report = validate_target(args.path, manifest_name=args.manifest_name)
