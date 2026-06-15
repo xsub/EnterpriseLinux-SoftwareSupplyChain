@@ -180,7 +180,7 @@ edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
 edgp report --snapshot graph.json --output graph-report.html
 edgp report-bundle --input graph.json --input impact.json --output-dir reports --fail-on-status fail
-edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo --output-dir reports/catalog --triage-summary
+edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --output-dir reports/catalog --triage-summary
 edgp verify-bundle --path reports
 edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
@@ -824,12 +824,12 @@ summary back into the input `reports` list.
 `--fail-on-status warn|fail` applies the same artifact-preserving gate directly
 to `report-bundle`.
 
-`edgp bundle-catalog` verifies multiple existing report bundles and writes one
-`edgp.bundle.catalog.v1` rollup with bundle paths, source kinds, report schemas,
-triage status, failure codes, and bundle fingerprints. The catalog can itself be
-rendered as a static, verifiable bundle, which gives CI systems and future
-workbench/RAG ingestion one compact index over a batch of public-input evidence
-bundles.
+`edgp bundle-catalog` verifies multiple existing report bundle directories or
+deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
+with bundle paths, input type, source kinds, report schemas, triage status,
+failure codes, and bundle fingerprints. The catalog can itself be rendered as a
+static, verifiable bundle, which gives CI systems and future workbench/RAG
+ingestion one compact index over a batch of public-input evidence bundles.
 
 `edgp triage-summary` turns a report bundle, or a list of EDGP JSON reports, into
 one `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status,

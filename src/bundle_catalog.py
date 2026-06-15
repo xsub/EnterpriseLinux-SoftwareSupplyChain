@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+import tarfile
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
-from src.output.report_bundle import verify_report_bundle
+from src.output.report_bundle import verify_report_bundle, verify_report_bundle_archive
 
 BUNDLE_CATALOG_SCHEMA = "edgp.bundle.catalog.v1"
 
@@ -35,20 +36,74 @@ def build_bundle_catalog_report(
 
 
 def _bundle_catalog_entry(bundle_dir: Path, *, manifest_name: str) -> dict[str, Any]:
+    if _is_report_bundle_archive(bundle_dir):
+        return _bundle_archive_catalog_entry(bundle_dir, manifest_name=manifest_name)
+    return _bundle_directory_catalog_entry(bundle_dir, manifest_name=manifest_name)
+
+
+def _bundle_directory_catalog_entry(
+    bundle_dir: Path,
+    *,
+    manifest_name: str,
+) -> dict[str, Any]:
     bundle_dir = bundle_dir.resolve()
     verification = verify_report_bundle(bundle_dir, manifest_name=manifest_name)
     manifest = _load_manifest(bundle_dir / manifest_name)
+    return _catalog_entry(
+        path=bundle_dir,
+        input_type="directory",
+        manifest_name=manifest_name,
+        verification=verification,
+        manifest=manifest,
+        triage_status=_triage_status(
+            lambda label: _load_manifest(_bundle_member_path(bundle_dir, label)),
+            manifest,
+        ),
+    )
+
+
+def _bundle_archive_catalog_entry(
+    archive_path: Path,
+    *,
+    manifest_name: str,
+) -> dict[str, Any]:
+    archive_path = archive_path.resolve()
+    archive_report = verify_report_bundle_archive(
+        archive_path,
+        manifest_name=manifest_name,
+    )
+    verification = archive_report.get("verification", {})
+    if not isinstance(verification, dict):
+        verification = {}
+    manifest = _load_archive_manifest(archive_path, manifest_name)
+    return _catalog_entry(
+        path=archive_path,
+        input_type="archive",
+        manifest_name=manifest_name,
+        verification=verification,
+        manifest=manifest,
+        triage_status=_triage_status(
+            lambda label: _load_archive_json_member(archive_path, label),
+            manifest,
+        ),
+    )
+
+
+def _catalog_entry(
+    *,
+    path: Path,
+    input_type: str,
+    manifest_name: str,
+    verification: dict[str, Any],
+    manifest: dict[str, Any],
+    triage_status: str,
+) -> dict[str, Any]:
     bundle_metadata = manifest.get("bundle", {}) if isinstance(manifest, dict) else {}
     if not isinstance(bundle_metadata, dict):
         bundle_metadata = {}
     reports = manifest.get("reports", []) if isinstance(manifest, dict) else []
     if not isinstance(reports, list):
         reports = []
-    triage_summary = (
-        manifest.get("triageSummary", {}) if isinstance(manifest, dict) else {}
-    )
-    if not isinstance(triage_summary, dict):
-        triage_summary = {}
     failure_codes = [
         str(failure.get("code", "unknown"))
         for failure in verification.get("failures", [])
@@ -58,7 +113,8 @@ def _bundle_catalog_entry(bundle_dir: Path, *, manifest_name: str) -> dict[str, 
     if not isinstance(verification_summary, dict):
         verification_summary = {}
     return {
-        "path": str(bundle_dir),
+        "path": str(path),
+        "inputType": input_type,
         "manifest": manifest_name,
         "ok": bool(verification.get("ok")),
         "sourceKind": str(bundle_metadata.get("sourceKind") or "unknown"),
@@ -68,14 +124,49 @@ def _bundle_catalog_entry(bundle_dir: Path, *, manifest_name: str) -> dict[str, 
         "failureCount": int(verification_summary.get("failures", 0) or 0),
         "failureCodes": failure_codes,
         "reportSchemas": _report_schemas(reports),
-        "triageStatus": _triage_status(bundle_dir, triage_summary),
+        "triageStatus": triage_status,
     }
+
+
+def _is_report_bundle_archive(path: Path) -> bool:
+    suffixes = path.suffixes
+    return path.suffix == ".tgz" or suffixes[-2:] == [".tar", ".gz"]
 
 
 def _load_manifest(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _load_archive_manifest(archive_path: Path, manifest_name: str) -> dict[str, Any]:
+    return _load_archive_json_member(archive_path, manifest_name)
+
+
+def _load_archive_json_member(archive_path: Path, member_name: str) -> dict[str, Any]:
+    if not _is_bundle_member_label(member_name):
+        return {}
+    try:
+        with tarfile.open(archive_path, "r:gz") as archive:
+            try:
+                member = archive.getmember(member_name)
+            except KeyError:
+                return {}
+            if not member.isfile():
+                return {}
+            source = archive.extractfile(member)
+            if source is None:
+                return {}
+            payload = json.loads(source.read().decode("utf-8"))
+    except (
+        FileNotFoundError,
+        OSError,
+        tarfile.TarError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ):
         return {}
     return payload if isinstance(payload, dict) else {}
 
@@ -88,18 +179,31 @@ def _report_schemas(reports: list[object]) -> list[str]:
     return sorted(set(schemas))
 
 
-def _triage_status(bundle_dir: Path, triage_summary: dict[str, Any]) -> str:
+def _triage_status(
+    load_member: Callable[[str], dict[str, Any]],
+    manifest: dict[str, Any],
+) -> str:
+    triage_summary = manifest.get("triageSummary", {})
+    if not isinstance(triage_summary, dict):
+        triage_summary = {}
     source = triage_summary.get("source")
     if not isinstance(source, str) or not source:
         return "not-present"
-    triage_path = bundle_dir / source
-    try:
-        payload = json.loads(triage_path.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError):
-        return "unreadable"
+    payload = load_member(source)
     if not isinstance(payload, dict):
         return "unreadable"
     return str(payload.get("status") or "unknown")
+
+
+def _bundle_member_path(bundle_dir: Path, label: str) -> Path:
+    if not _is_bundle_member_label(label):
+        return bundle_dir / "__invalid_bundle_member__"
+    return bundle_dir / label
+
+
+def _is_bundle_member_label(label: str) -> bool:
+    member_path = Path(label)
+    return bool(label) and not member_path.is_absolute() and ".." not in member_path.parts
 
 
 def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:

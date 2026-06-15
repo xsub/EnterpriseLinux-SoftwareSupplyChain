@@ -32,6 +32,13 @@
             "minimum": 0,
             "type": "integer"
           },
+          "inputType": {
+            "enum": [
+              "directory",
+              "archive"
+            ],
+            "type": "string"
+          },
           "manifest": {
             "minLength": 1,
             "type": "string"
@@ -64,6 +71,7 @@
         },
         "required": [
           "path",
+          "inputType",
           "manifest",
           "ok",
           "sourceKind",

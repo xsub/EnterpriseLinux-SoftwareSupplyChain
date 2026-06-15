@@ -748,6 +748,7 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                 report.get("bundles", []),
                 [
                     "path",
+                    "inputType",
                     "ok",
                     "sourceKind",
                     "reportCount",

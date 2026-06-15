@@ -356,6 +356,7 @@ def test_cli_archive_bundle_verifies_and_writes_deterministic_archive(
 def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
     graph_bundle = tmp_path / "graph-bundle"
     diagnostics_bundle = tmp_path / "diagnostics-bundle"
+    diagnostics_archive = tmp_path / "diagnostics-bundle.tar.gz"
     catalog_dir = tmp_path / "catalog"
 
     assert (
@@ -385,6 +386,19 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
         == 0
     )
     capsys.readouterr()
+    assert (
+        main(
+            [
+                "archive-bundle",
+                "--path",
+                str(diagnostics_bundle),
+                "--output",
+                str(diagnostics_archive),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
 
     assert (
         main(
@@ -393,7 +407,7 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
                 "--bundle",
                 str(graph_bundle),
                 "--bundle",
-                str(diagnostics_bundle),
+                str(diagnostics_archive),
                 "--output-dir",
                 str(catalog_dir),
                 "--triage-summary",
@@ -413,12 +427,16 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
     assert catalog["summary"]["bundles"] == 2
     assert catalog["summary"]["okBundles"] == 2
     assert catalog["summary"]["triageWarn"] == 1
+    assert catalog["bundles"][0]["inputType"] == "directory"
+    assert catalog["bundles"][1]["inputType"] == "archive"
+    assert catalog["bundles"][1]["path"] == str(diagnostics_archive.resolve())
     triage = json.loads((catalog_dir / "triage-summary.json").read_text(encoding="utf-8"))
     assert triage["status"] == "warn"
     assert triage["summary"]["catalogTriageWarn"] == 1
     html = (catalog_dir / "001-bundle-catalog.html").read_text(encoding="utf-8")
     assert 'data-testid="bundle-catalog-bundles-panel"' in html
     assert 'data-testid="bundle-catalog-source-kinds-panel"' in html
+    assert "archive" in html
     assert main(["verify-bundle", "--path", str(catalog_dir)]) == 0
 
 

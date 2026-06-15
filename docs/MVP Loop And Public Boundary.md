@@ -303,6 +303,8 @@ surfaces are:
   triage summary reaches a selected warn/fail threshold.
 - Promote bundle-catalog verification failures and underlying bundle warn/fail
   triage status into aggregate triage summaries.
+- Catalog deterministic report bundle archives alongside report bundle
+  directories for CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`
   EVR values, and non-zero `epoch:version-release` values.
 - Report libsolv command availability and parse saved libsolv-style

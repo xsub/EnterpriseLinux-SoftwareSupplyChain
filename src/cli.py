@@ -2709,7 +2709,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     bundle_catalog = subparsers.add_parser(
         "bundle-catalog",
-        help="Catalog and verify multiple static EDGP report bundles",
+        help=(
+            "Catalog and verify multiple static EDGP report bundles or "
+            "deterministic bundle archives"
+        ),
     )
     bundle_catalog.add_argument("--bundle", type=Path, action="append", required=True)
     bundle_catalog.add_argument("--manifest-name", default="manifest.json")

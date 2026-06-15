@@ -1,10 +1,12 @@
 """Bundle catalog tests for batch report-bundle verification."""
 
+import io
 import json
+import tarfile
 from pathlib import Path
 
 from src.bundle_catalog import build_bundle_catalog_report
-from src.output.report_bundle import write_report_bundle
+from src.output.report_bundle import write_report_bundle, write_report_bundle_archive
 
 
 def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> None:
@@ -52,8 +54,72 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
         },
     ]
     assert report["bundles"][0]["reportSchemas"] == ["edgp.graph.snapshot.v1"]
+    assert report["bundles"][0]["inputType"] == "directory"
     assert report["bundles"][1]["triageStatus"] == "warn"
     assert report["bundles"][1]["bundleSha256"]
+
+
+def test_build_bundle_catalog_report_accepts_bundle_archives(tmp_path) -> None:
+    graph_bundle = tmp_path / "graph-bundle"
+    diagnostics_bundle = tmp_path / "diagnostics-bundle"
+    diagnostics_archive = tmp_path / "diagnostics-bundle.tar.gz"
+    write_report_bundle(
+        [Path("tests/fixtures/snapshot-right.json")],
+        graph_bundle,
+        bundle_metadata={
+            "sourceKind": "edgp-json",
+            "command": "edgp report-bundle --input snapshot",
+        },
+    )
+    write_report_bundle(
+        [Path("tests/fixtures/npm-diagnostics-report.json")],
+        diagnostics_bundle,
+        bundle_metadata={
+            "sourceKind": "npm-diagnostics",
+            "command": "edgp npm-diagnostics-bundle --path package-lock.json",
+        },
+        include_triage_summary=True,
+    )
+    archive_report = write_report_bundle_archive(diagnostics_bundle, diagnostics_archive)
+
+    report = build_bundle_catalog_report([graph_bundle, diagnostics_archive])
+
+    assert report["summary"]["bundles"] == 2
+    assert report["summary"]["okBundles"] == 2
+    assert report["summary"]["reports"] == 2
+    assert report["summary"]["triageWarn"] == 1
+    assert report["bundles"][0]["inputType"] == "directory"
+    assert report["bundles"][1]["inputType"] == "archive"
+    assert report["bundles"][1]["path"] == str(diagnostics_archive.resolve())
+    assert report["bundles"][1]["sourceKind"] == "npm-diagnostics"
+    assert report["bundles"][1]["reportSchemas"] == ["edgp.npm.diagnostics.v1"]
+    assert report["bundles"][1]["triageStatus"] == "warn"
+    assert report["bundles"][1]["bundleSha256"] == archive_report["bundleSha256"]
+
+
+def test_build_bundle_catalog_report_captures_unsafe_archives(tmp_path) -> None:
+    archive_path = tmp_path / "unsafe.tar.gz"
+    payload = b"unsafe"
+    with tarfile.open(archive_path, "w:gz") as archive:
+        info = tarfile.TarInfo("../evil.txt")
+        info.size = len(payload)
+        info.uid = 0
+        info.gid = 0
+        info.uname = ""
+        info.gname = ""
+        info.mtime = 0
+        info.mode = 0o644
+        archive.addfile(info, io.BytesIO(payload))
+
+    report = build_bundle_catalog_report([archive_path])
+
+    assert report["summary"]["failedBundles"] == 1
+    assert report["summary"]["failures"] == 1
+    assert report["bundles"][0]["inputType"] == "archive"
+    assert report["bundles"][0]["ok"] is False
+    assert report["bundles"][0]["sourceKind"] == "unknown"
+    assert report["bundles"][0]["failureCodes"] == ["archiveMemberPathInvalid"]
+    assert report["bundles"][0]["bundleSha256"] is None
 
 
 def test_build_bundle_catalog_report_captures_tampered_bundle(tmp_path) -> None:

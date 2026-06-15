@@ -3218,6 +3218,7 @@ def _assert_bundle_catalog() -> None:
         temp_path = Path(temp_dir)
         graph_bundle = temp_path / "graph-bundle"
         diagnostics_bundle = temp_path / "diagnostics-bundle"
+        diagnostics_archive = temp_path / "diagnostics-bundle.tar.gz"
         catalog_dir = temp_path / "catalog"
         subprocess.run(
             [
@@ -3254,6 +3255,23 @@ def _assert_bundle_catalog() -> None:
             capture_output=True,
             text=True,
         )
+        subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "archive-bundle",
+                "--path",
+                str(diagnostics_bundle),
+                "--output",
+                str(diagnostics_archive),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
         completed = subprocess.run(
             [
                 sys.executable,
@@ -3264,7 +3282,7 @@ def _assert_bundle_catalog() -> None:
                 "--bundle",
                 str(graph_bundle),
                 "--bundle",
-                str(diagnostics_bundle),
+                str(diagnostics_archive),
                 "--output-dir",
                 str(catalog_dir),
                 "--triage-summary",
@@ -3289,6 +3307,9 @@ def _assert_bundle_catalog() -> None:
         assert catalog["summary"]["bundles"] == 2
         assert catalog["summary"]["okBundles"] == 2
         assert catalog["summary"]["triageWarn"] == 1
+        assert catalog["bundles"][0]["inputType"] == "directory"
+        assert catalog["bundles"][1]["inputType"] == "archive"
+        assert catalog["bundles"][1]["path"] == str(diagnostics_archive.resolve())
         triage = json.loads(
             (catalog_dir / "triage-summary.json").read_text(encoding="utf-8")
         )

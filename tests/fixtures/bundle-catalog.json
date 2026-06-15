@@ -5,6 +5,7 @@
       "command": "edgp report-bundle --input tests/fixtures/snapshot-right.json --output-dir reports/graph",
       "failureCodes": [],
       "failureCount": 0,
+      "inputType": "directory",
       "manifest": "manifest.json",
       "ok": true,
       "path": "/tmp/reports/graph",
@@ -22,6 +23,7 @@
         "htmlDigestMismatch"
       ],
       "failureCount": 1,
+      "inputType": "directory",
       "manifest": "manifest.json",
       "ok": false,
       "path": "/tmp/reports/tampered",
