@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import compileall
 import hashlib
 import json
@@ -40,6 +41,7 @@ FAILURE_EXAMPLE_FILTERS_PATH = (
 VALIDATION_FAILURE_EXAMPLES_DOC_PATH = (
     REPO_ROOT / "docs" / "Validation Failure Examples.md"
 )
+PYTHON_TRANSLATION_UNIT_DIRS = ("src", "scripts", "tests")
 REPORT_JSON_SCHEMA_CONTRACTS = {
     "edgp.albs.build_diff.v1": REPO_ROOT
     / "docs"
@@ -345,9 +347,32 @@ def _normalize_archive_verification_report(payload: dict[str, Any]) -> dict[str,
 
 def _assert_compile() -> None:
     ok = compileall.compile_dir(REPO_ROOT / "src", quiet=1)
+    ok = compileall.compile_dir(REPO_ROOT / "scripts", quiet=1) and ok
     ok = compileall.compile_dir(REPO_ROOT / "tests", quiet=1) and ok
     if not ok:
         raise AssertionError("compileall failed")
+
+
+def _python_translation_unit_paths() -> list[Path]:
+    paths: list[Path] = []
+    for directory in PYTHON_TRANSLATION_UNIT_DIRS:
+        paths.extend((REPO_ROOT / directory).rglob("*.py"))
+    return sorted(paths, key=lambda path: path.relative_to(REPO_ROOT).as_posix())
+
+
+def _assert_python_translation_unit_docstrings() -> None:
+    missing: list[str] = []
+    for path in _python_translation_unit_paths():
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        docstring = ast.get_docstring(tree, clean=False)
+        if not docstring or not docstring.strip():
+            missing.append(path.relative_to(REPO_ROOT).as_posix())
+
+    if missing:
+        raise AssertionError(
+            "Python translation units missing top-level descriptions: "
+            + ", ".join(missing)
+        )
 
 
 def _assert_lockfile_snapshot() -> None:
@@ -4827,6 +4852,10 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     checks = [
         ("compile", _assert_compile),
+        (
+            "python translation unit descriptions",
+            _assert_python_translation_unit_docstrings,
+        ),
         ("lockfile snapshot", _assert_lockfile_snapshot),
         ("npm diagnostics", _assert_npm_diagnostics),
         ("validate command", _assert_validate_command),

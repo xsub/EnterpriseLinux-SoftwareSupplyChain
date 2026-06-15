@@ -240,6 +240,8 @@ surfaces are:
   documentation checks.
 - Share reusable Markdown link target and path extraction helpers for
   documentation checks.
+- Enforce top-level descriptions for Python translation units across `src`,
+  `scripts`, and `tests`.
 - Document filtered validation failure example workflows in the dedicated
   validation examples guide.
 - Document validation failure example filter switches in the README.
