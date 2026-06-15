@@ -91,3 +91,29 @@ def test_csr_graph_traversal_queries() -> None:
         ("lib==1.0.0", 2),
         ("base==1.0.0", 1),
     ]
+
+
+def test_csr_graph_int_native_traversal_queries() -> None:
+    graph = CSRDependencyGraph()
+    app = graph.add_vertex("app==1.0.0")
+    lib = graph.add_vertex("lib==1.0.0")
+    tool = graph.add_vertex("tool==2.0.0")
+    base = graph.add_vertex("base==1.0.0")
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    graph.add_dependency_edge("app==1.0.0", "tool==2.0.0")
+    graph.add_dependency_edge("tool==2.0.0", "lib==1.0.0")
+    graph.add_dependency_edge("lib==1.0.0", "base==1.0.0")
+
+    assert graph.get_dependency_ids(app).tolist() == [lib, tool]
+    assert graph.get_dependent_ids(lib).tolist() == [app, tool]
+    assert graph.get_dependency_ids(999).tolist() == []
+    assert graph.get_dependent_ids(999).tolist() == []
+    assert graph.reachable_dependency_ids(app) == [lib, tool, base]
+    assert graph.reachable_dependent_ids(base) == [lib, app, tool]
+    assert graph.shortest_dependency_path_ids(app, base) == [app, lib, base]
+    assert graph.shortest_dependency_path_ids(base, app, reverse=True) == [
+        base,
+        lib,
+        app,
+    ]
+    assert graph.shortest_dependency_path_ids(999, base) == []

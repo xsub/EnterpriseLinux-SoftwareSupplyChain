@@ -441,6 +441,10 @@ The reverse CSR sidecar mirrors those edges for dependent lookups:
 This avoids full-graph scans for `get_dependents`, reverse reachability,
 impact, advisory, and libsolv bridge workflows while keeping the canonical
 storage model simple enough to inspect and serialize.
+Traversal hot paths now operate on integer vertex ids internally through
+`get_dependency_ids`, `get_dependent_ids`, `reachable_dependency_ids`,
+`reachable_dependent_ids`, and `shortest_dependency_path_ids`; public string
+methods convert back to package ids only at the API boundary.
 
 This is an intentional productionization step. Native Python lists would store
 boxed integers behind arrays of object pointers. Even when the list container is

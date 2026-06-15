@@ -82,43 +82,81 @@ class CSRDependencyGraph:
 
     def get_dependencies(self, package_id: str) -> list[str]:
         self._materialize()
-        if package_id not in self.vertex_map:
+        vertex_id = self.vertex_map.get(package_id)
+        if vertex_id is None:
             return []
-        vertex_id = self.vertex_map[package_id]
+        return self._vertex_labels(self.get_dependency_ids(vertex_id))
+
+    def get_dependency_ids(self, vertex_id: int) -> np.ndarray:
+        self._materialize()
+        if not self._is_valid_vertex_id(vertex_id):
+            return np.array([], dtype=_CSR_DTYPE)
         start = int(self.row_pointers[vertex_id])
         end = int(self.row_pointers[vertex_id + 1])
-        return [
-            self.reverse_vertex_map[int(target)]
-            for target in self.column_indices[start:end]
-        ]
+        return self.column_indices[start:end]
 
     def get_dependents(self, package_id: str) -> list[str]:
         self._materialize()
-        if package_id not in self.vertex_map:
+        vertex_id = self.vertex_map.get(package_id)
+        if vertex_id is None:
             return []
-        vertex_id = self.vertex_map[package_id]
+        return self._vertex_labels(self.get_dependent_ids(vertex_id))
+
+    def get_dependent_ids(self, vertex_id: int) -> np.ndarray:
+        self._materialize()
+        if not self._is_valid_vertex_id(vertex_id):
+            return np.array([], dtype=_CSR_DTYPE)
         start = int(self.reverse_row_pointers[vertex_id])
         end = int(self.reverse_row_pointers[vertex_id + 1])
-        return [
-            self.reverse_vertex_map[int(source)]
-            for source in self.reverse_column_indices[start:end]
-        ]
+        return self.reverse_column_indices[start:end]
 
     def reachable_dependencies(self, package_id: str) -> list[str]:
-        return self._reachable(package_id, self.get_dependencies)
+        self._materialize()
+        vertex_id = self.vertex_map.get(package_id)
+        if vertex_id is None:
+            return []
+        return self._vertex_labels(self.reachable_dependency_ids(vertex_id))
+
+    def reachable_dependency_ids(self, vertex_id: int) -> list[int]:
+        return self._reachable_ids(vertex_id, reverse=False)
 
     def reachable_dependents(self, package_id: str) -> list[str]:
-        return self._reachable(package_id, self.get_dependents)
+        self._materialize()
+        vertex_id = self.vertex_map.get(package_id)
+        if vertex_id is None:
+            return []
+        return self._vertex_labels(self.reachable_dependent_ids(vertex_id))
+
+    def reachable_dependent_ids(self, vertex_id: int) -> list[int]:
+        return self._reachable_ids(vertex_id, reverse=True)
 
     def shortest_dependency_path(
         self, source_id: str, target_id: str, *, reverse: bool = False
     ) -> list[str]:
         self._materialize()
-        if source_id not in self.vertex_map or target_id not in self.vertex_map:
+        source_vertex = self.vertex_map.get(source_id)
+        target_vertex = self.vertex_map.get(target_id)
+        if source_vertex is None or target_vertex is None:
+            return []
+        return self._vertex_labels(
+            self.shortest_dependency_path_ids(
+                source_vertex,
+                target_vertex,
+                reverse=reverse,
+            )
+        )
+
+    def shortest_dependency_path_ids(
+        self, source_id: int, target_id: int, *, reverse: bool = False
+    ) -> list[int]:
+        self._materialize()
+        if not self._is_valid_vertex_id(source_id) or not self._is_valid_vertex_id(
+            target_id
+        ):
             return []
 
-        neighbors = self.get_dependents if reverse else self.get_dependencies
-        queue: deque[list[str]] = deque([[source_id]])
+        neighbors = self.get_dependent_ids if reverse else self.get_dependency_ids
+        queue: deque[list[int]] = deque([[source_id]])
         visited = {source_id}
 
         while queue:
@@ -127,10 +165,11 @@ class CSRDependencyGraph:
             if current == target_id:
                 return path
             for neighbor in neighbors(current):
-                if neighbor in visited:
+                neighbor_id = int(neighbor)
+                if neighbor_id in visited:
                     continue
-                visited.add(neighbor)
-                queue.append([*path, neighbor])
+                visited.add(neighbor_id)
+                queue.append([*path, neighbor_id])
 
         return []
 
@@ -194,24 +233,31 @@ class CSRDependencyGraph:
             ),
         }
 
-    def _reachable(self, package_id: str, neighbor_fn) -> list[str]:
+    def _reachable_ids(self, vertex_id: int, *, reverse: bool) -> list[int]:
         self._materialize()
-        if package_id not in self.vertex_map:
+        if not self._is_valid_vertex_id(vertex_id):
             return []
 
-        queue: deque[str] = deque(neighbor_fn(package_id))
-        visited: set[str] = set()
-        reachable: list[str] = []
+        neighbor_fn = self.get_dependent_ids if reverse else self.get_dependency_ids
+        queue: deque[int] = deque(int(neighbor) for neighbor in neighbor_fn(vertex_id))
+        visited: set[int] = set()
+        reachable: list[int] = []
 
         while queue:
             current = queue.popleft()
-            if current in visited or current == package_id:
+            if current in visited or current == vertex_id:
                 continue
             visited.add(current)
             reachable.append(current)
-            queue.extend(neighbor_fn(current))
+            queue.extend(int(neighbor) for neighbor in neighbor_fn(current))
 
         return reachable
+
+    def _vertex_labels(self, vertex_ids) -> list[str]:
+        return [self.reverse_vertex_map[int(vertex_id)] for vertex_id in vertex_ids]
+
+    def _is_valid_vertex_id(self, vertex_id: int) -> bool:
+        return 0 <= vertex_id < self.next_vertex_id
 
     def _materialize(self) -> None:
         if not self._dirty:

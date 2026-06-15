@@ -77,3 +77,12 @@ one relevant measurement:
 - storage bytes for forward and reverse arrays;
 - whether all hot arrays are C-contiguous;
 - behavior on local macOS and AlmaLinux VPS validation.
+
+## Completed Verticals
+
+- Reverse CSR sidecar:
+  dependent lookups and reverse reachability now read direct reverse CSR row
+  slices instead of scanning the full forward graph.
+- Integer-native traversal:
+  public string-based query methods now route through vertex-id traversal APIs
+  and convert back to package ids only at the method boundary.

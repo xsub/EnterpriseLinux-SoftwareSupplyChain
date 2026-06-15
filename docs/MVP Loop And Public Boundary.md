@@ -368,6 +368,8 @@ surfaces are:
   [`MVP Plus Performance Roadmap.md`](MVP%20Plus%20Performance%20Roadmap.md).
 - Materialize a reverse CSR sidecar for dependent lookups and reverse
   reachability.
+- Route dependency traversal hot paths through integer vertex-id APIs before
+  converting results back to package identifiers at public boundaries.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.
