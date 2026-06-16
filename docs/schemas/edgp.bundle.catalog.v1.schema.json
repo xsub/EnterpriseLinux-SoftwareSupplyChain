@@ -114,13 +114,33 @@
           "sourceKind": {
             "minLength": 1,
             "type": "string"
+          },
+          "triageFail": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "triagePass": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "triageWarn": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "withoutTriage": {
+            "minimum": 0,
+            "type": "integer"
           }
         },
         "required": [
           "sourceKind",
           "bundles",
           "reports",
-          "failures"
+          "failures",
+          "triagePass",
+          "triageWarn",
+          "triageFail",
+          "withoutTriage"
         ],
         "type": "object"
       },

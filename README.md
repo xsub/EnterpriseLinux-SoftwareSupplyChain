@@ -1031,11 +1031,13 @@ to `report-bundle`.
 `edgp bundle-catalog` verifies multiple existing report bundle directories or
 deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
 with bundle paths, input type, source kinds, report schemas, triage status,
-failure codes, and bundle fingerprints. The catalog can itself be rendered as a
-static, verifiable bundle, and `--archive-output` writes that generated catalog
-bundle as a deterministic `.tar.gz` in the same pass. This gives CI systems and
-future workbench/RAG ingestion one compact index, plus one portable handoff
-archive, over a batch of public-input evidence bundles.
+failure codes, and bundle fingerprints. Source-kind rows include triage
+pass/warn/fail counts, so large evidence batches can show which input family
+contributed a failed policy or diagnostic signal. The catalog can itself be
+rendered as a static, verifiable bundle, and `--archive-output` writes that
+generated catalog bundle as a deterministic `.tar.gz` in the same pass. This
+gives CI systems and future workbench/RAG ingestion one compact index, plus one
+portable handoff archive, over a batch of public-input evidence bundles.
 
 `edgp triage-summary` turns a report bundle directory, a deterministic report
 bundle archive, or a list of EDGP JSON reports into one

@@ -229,9 +229,27 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         source_kind = str(entry.get("sourceKind") or "unknown")
         row = grouped.setdefault(
             source_kind,
-            {"sourceKind": source_kind, "bundles": 0, "reports": 0, "failures": 0},
+            {
+                "sourceKind": source_kind,
+                "bundles": 0,
+                "reports": 0,
+                "failures": 0,
+                "triagePass": 0,
+                "triageWarn": 0,
+                "triageFail": 0,
+                "withoutTriage": 0,
+            },
         )
         row["bundles"] += 1
         row["reports"] += int(entry.get("reportCount", 0) or 0)
         row["failures"] += int(entry.get("failureCount", 0) or 0)
+        triage_status = str(entry.get("triageStatus") or "unknown")
+        if triage_status == "pass":
+            row["triagePass"] += 1
+        elif triage_status == "warn":
+            row["triageWarn"] += 1
+        elif triage_status == "fail":
+            row["triageFail"] += 1
+        elif triage_status == "not-present":
+            row["withoutTriage"] += 1
     return [grouped[key] for key in sorted(grouped)]

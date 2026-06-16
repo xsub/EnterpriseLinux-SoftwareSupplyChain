@@ -887,7 +887,16 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
             _rows_panel(
                 "Source Kinds",
                 report.get("sourceKinds", []),
-                ["sourceKind", "bundles", "reports", "failures"],
+                [
+                    "sourceKind",
+                    "bundles",
+                    "reports",
+                    "failures",
+                    "triagePass",
+                    "triageWarn",
+                    "triageFail",
+                    "withoutTriage",
+                ],
                 test_id="bundle-catalog-source-kinds-panel",
             ),
         ],

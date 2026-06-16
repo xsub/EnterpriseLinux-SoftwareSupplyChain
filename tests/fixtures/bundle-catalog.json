@@ -42,13 +42,21 @@
       "bundles": 1,
       "failures": 0,
       "reports": 1,
-      "sourceKind": "edgp-json"
+      "sourceKind": "edgp-json",
+      "triageFail": 0,
+      "triagePass": 0,
+      "triageWarn": 0,
+      "withoutTriage": 1
     },
     {
       "bundles": 1,
       "failures": 1,
       "reports": 1,
-      "sourceKind": "npm-diagnostics"
+      "sourceKind": "npm-diagnostics",
+      "triageFail": 0,
+      "triagePass": 0,
+      "triageWarn": 1,
+      "withoutTriage": 0
     }
   ],
   "summary": {

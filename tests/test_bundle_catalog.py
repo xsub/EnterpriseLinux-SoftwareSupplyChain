@@ -45,12 +45,25 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
         "withoutTriage": 1,
     }
     assert report["sourceKinds"] == [
-        {"sourceKind": "edgp-json", "bundles": 1, "reports": 1, "failures": 0},
+        {
+            "sourceKind": "edgp-json",
+            "bundles": 1,
+            "reports": 1,
+            "failures": 0,
+            "triagePass": 0,
+            "triageWarn": 0,
+            "triageFail": 0,
+            "withoutTriage": 1,
+        },
         {
             "sourceKind": "npm-diagnostics",
             "bundles": 1,
             "reports": 1,
             "failures": 0,
+            "triagePass": 0,
+            "triageWarn": 1,
+            "triageFail": 0,
+            "withoutTriage": 0,
         },
     ]
     assert report["bundles"][0]["reportSchemas"] == ["edgp.graph.snapshot.v1"]
@@ -137,3 +150,43 @@ def test_build_bundle_catalog_report_captures_tampered_bundle(tmp_path) -> None:
     assert report["bundles"][0]["ok"] is False
     assert report["bundles"][0]["failureCodes"] == ["htmlDigestMismatch"]
     assert report["bundles"][0]["bundleSha256"]
+
+
+def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) -> None:
+    diff_tree_report = json.loads(
+        Path("tests/fixtures/graph-diff-tree.json").read_text(encoding="utf-8")
+    )
+    diff_tree_report["policy"] = {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
+    diff_tree_path = tmp_path / "graph-diff-tree.json"
+    diff_tree_path.write_text(json.dumps(diff_tree_report), encoding="utf-8")
+    diff_tree_bundle = tmp_path / "diff-tree-bundle"
+    write_report_bundle(
+        [diff_tree_path],
+        diff_tree_bundle,
+        bundle_metadata={
+            "sourceKind": "graph-diff-tree",
+            "command": "edgp diff-tree-bundle --fail-on-kind upgrade",
+        },
+        include_triage_summary=True,
+    )
+
+    report = build_bundle_catalog_report([diff_tree_bundle])
+
+    assert report["summary"]["triageFail"] == 1
+    assert report["sourceKinds"] == [
+        {
+            "sourceKind": "graph-diff-tree",
+            "bundles": 1,
+            "reports": 1,
+            "failures": 0,
+            "triagePass": 0,
+            "triageWarn": 0,
+            "triageFail": 1,
+            "withoutTriage": 0,
+        }
+    ]
