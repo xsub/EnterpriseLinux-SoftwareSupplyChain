@@ -1253,6 +1253,7 @@ def _triage_summary_card(entry: BundleEntry | None) -> str:
         ("Failed Checks", summary.get("failedChecks", 0)),
         ("Advisories", summary.get("advisoryFindings", 0)),
         ("Denied Licenses", summary.get("deniedLicenseFindings", 0)),
+        ("Diff Tree Policies", summary.get("diffTreePolicyFailures", 0)),
         ("npm Signals", _npm_signal_count(summary)),
     ]
     metric_items = "".join(

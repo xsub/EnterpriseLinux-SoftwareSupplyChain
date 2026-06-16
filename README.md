@@ -1024,7 +1024,8 @@ report count, manifest schema, and a shortened bundle fingerprint.
 With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and
 `triage-summary.html`, links the rollup from the bundle index, and records both
 artifact digests in `manifest.triageSummary` without adding the generated
-summary back into the input `reports` list.
+summary back into the input `reports` list. The bundle index triage card shows
+diff-tree policy failures beside advisory, license, and npm counts.
 `--fail-on-status warn|fail` applies the same artifact-preserving gate directly
 to `report-bundle`.
 

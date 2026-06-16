@@ -99,6 +99,36 @@ def test_write_report_bundle_can_include_triage_summary(tmp_path) -> None:
     assert verify_report_bundle(tmp_path)["ok"] is True
 
 
+def test_write_report_bundle_index_surfaces_diff_tree_policy_failures(
+    tmp_path,
+) -> None:
+    diff_tree = json.loads(
+        Path("tests/fixtures/graph-diff-tree.json").read_text(encoding="utf-8")
+    )
+    diff_tree["policy"] = {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
+    diff_tree_path = tmp_path / "graph-diff-tree-policy.json"
+    diff_tree_path.write_text(json.dumps(diff_tree), encoding="utf-8")
+
+    index_path = write_report_bundle(
+        [diff_tree_path],
+        tmp_path,
+        include_triage_summary=True,
+    )
+
+    index_html = index_path.read_text(encoding="utf-8")
+    triage = json.loads((tmp_path / "triage-summary.json").read_text(encoding="utf-8"))
+
+    assert triage["summary"]["diffTreePolicyFailures"] == 1
+    assert 'data-testid="report-bundle-triage-summary"' in index_html
+    assert "Diff Tree Policies" in index_html
+    assert "triage-summary.html" in index_html
+
+
 def test_verify_report_bundle_reports_tampered_member_html(tmp_path) -> None:
     write_report_bundle(
         [
