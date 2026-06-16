@@ -335,6 +335,8 @@ surfaces are:
   triage summary reaches a selected warn/fail threshold.
 - Promote bundle-catalog verification failures and underlying bundle warn/fail
   triage status into aggregate triage summaries.
+- Promote focused graph diff-tree policy failures into aggregate triage
+  summaries.
 - Catalog deterministic report bundle archives alongside report bundle
   directories for CI/workbench batch evidence handoff.
 - Write deterministic archive output directly from generated bundle catalogs

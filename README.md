@@ -1041,9 +1041,9 @@ archive, over a batch of public-input evidence bundles.
 bundle archive, or a list of EDGP JSON reports into one
 `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status, graph
 size, advisory findings, denied license findings, npm diagnostic signals,
-bundle-catalog integrity and underlying triage status, and the source report
-list so CI systems and workbench/RAG contexts can read one compact artifact
-instead of stitching together every report manually.
+diff-tree policy gate failures, bundle-catalog integrity and underlying triage
+status, and the source report list so CI systems and workbench/RAG contexts can
+read one compact artifact instead of stitching together every report manually.
 `--fail-on-status warn|fail` still prints the JSON rollup and returns status `2`
 when the computed status reaches the selected threshold.
 

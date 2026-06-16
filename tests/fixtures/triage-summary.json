@@ -68,6 +68,8 @@
     "catalogTriageFail": 0,
     "catalogTriageWarn": 0,
     "deniedLicenseFindings": 1,
+    "diffTreePolicyFailures": 0,
+    "diffTreeReports": 0,
     "edges": 2,
     "failedChecks": 2,
     "graphSnapshots": 1,
@@ -91,6 +93,7 @@
       }
     ],
     "bundleCatalog": [],
+    "diffTreePolicies": [],
     "licenses": [
       {
         "license": "WTFPL",

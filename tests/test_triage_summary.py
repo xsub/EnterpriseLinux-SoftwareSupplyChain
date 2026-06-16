@@ -189,6 +189,97 @@ def test_cli_triage_summary_warn_threshold(capsys) -> None:
     assert json.loads(capsys.readouterr().out)["status"] == "warn"
 
 
+def test_triage_summary_fails_on_diff_tree_policy_gate(tmp_path, capsys) -> None:
+    diff_tree_path = tmp_path / "graph-diff-tree-policy.json"
+
+    assert (
+        main(
+            [
+                "diff-tree",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+    diff_tree_path.write_text(capsys.readouterr().out, encoding="utf-8")
+
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                str(diff_tree_path),
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["status"] == "fail"
+    assert payload["summary"]["diffTreeReports"] == 1
+    assert payload["summary"]["diffTreePolicyFailures"] == 1
+    assert payload["summary"]["failedChecks"] == 1
+    assert payload["checks"] == [
+        {
+            "kind": "diff-tree-policy",
+            "status": "fail",
+            "failOnKind": ["upgrade"],
+            "matchedKinds": ["upgrade"],
+            "exitCode": 2,
+        }
+    ]
+    assert payload["topFindings"]["diffTreePolicies"][0]["matchedKinds"] == [
+        "upgrade"
+    ]
+
+
+def test_diff_tree_bundle_triage_summary_reflects_policy_gate(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "diff-tree-policy-bundle"
+
+    assert (
+        main(
+            [
+                "diff-tree-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    triage = json.loads(
+        (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+    )
+
+    assert triage["status"] == "fail"
+    assert triage["summary"]["diffTreePolicyFailures"] == 1
+    assert triage["checks"][0]["kind"] == "diff-tree-policy"
+    assert triage["checks"][0]["status"] == "fail"
+
+
 def test_triage_summary_includes_bundle_catalog_failures() -> None:
     report = build_triage_summary_from_paths(
         [Path("tests/fixtures/bundle-catalog.json")]
