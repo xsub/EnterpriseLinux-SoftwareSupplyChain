@@ -1043,14 +1043,16 @@ with bundle paths, input type, source kinds, report schemas, triage status,
 diff-tree policy failure counts, failure codes, and bundle fingerprints.
 Source-kind rows include triage pass/warn/fail counts plus
 `diffTreePolicyFailures`, so large evidence batches can show which input family
-contributed failed snapshot-drift policy gates. The catalog can itself be
+contributed failed snapshot-drift policy gates. The top-level `status` is
+`pass`, `warn`, or `fail` so CI and workbench views do not need to infer the
+catalog verdict from several counters. The catalog can itself be
 rendered as a static, verifiable bundle, and `--archive-output` writes that
 generated catalog bundle as a deterministic `.tar.gz` in the same pass. This
 gives CI systems and future workbench/RAG ingestion one compact index, plus one
 portable handoff archive, over a batch of public-input evidence bundles.
 Use `--format text` when the CI log should show the catalog's bundle counts,
-triage status, and diff-tree policy failure count directly beside the generated
-index path.
+`catalogStatus`, triage status, and diff-tree policy failure count directly
+beside the generated index path.
 
 `edgp triage-summary` turns a report bundle directory, a deterministic report
 bundle archive, or a list of EDGP JSON reports into one

@@ -26,10 +26,12 @@ def build_bundle_catalog_report(
         _bundle_catalog_entry(bundle_dir, manifest_name=manifest_name)
         for bundle_dir in bundle_dirs
     ]
+    summary = _summary(entries)
     return {
         "schema": BUNDLE_CATALOG_SCHEMA,
         "manifestName": manifest_name,
-        "summary": _summary(entries),
+        "status": _status(summary),
+        "summary": summary,
         "sourceKinds": _source_kind_summary(entries),
         "bundles": entries,
     }
@@ -237,6 +239,19 @@ def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
             int(entry.get("diffTreePolicyFailures", 0) or 0) for entry in entries
         ),
     }
+
+
+def _status(summary: dict[str, Any]) -> str:
+    if (
+        int(summary.get("failedBundles", 0) or 0)
+        or int(summary.get("failures", 0) or 0)
+        or int(summary.get("triageFail", 0) or 0)
+        or int(summary.get("diffTreePolicyFailures", 0) or 0)
+    ):
+        return "fail"
+    if int(summary.get("triageWarn", 0) or 0):
+        return "warn"
+    return "pass"
 
 
 def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:

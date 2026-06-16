@@ -881,9 +881,9 @@ def test_cli_bundle_catalog_text_summarizes_diff_tree_policy_failures(
     text = capsys.readouterr().out.strip()
 
     assert text == (
-        f"OK index={catalog_dir / 'index.html'} bundles=1 okBundles=1 "
-        "failedBundles=0 reports=1 failures=0 triageWarn=0 triageFail=1 "
-        "diffTreePolicyFailures=1 triageStatus=fail"
+        f"OK index={catalog_dir / 'index.html'} catalogStatus=fail "
+        "bundles=1 okBundles=1 failedBundles=0 reports=1 failures=0 "
+        "triageWarn=0 triageFail=1 diffTreePolicyFailures=1 triageStatus=fail"
     )
 
 

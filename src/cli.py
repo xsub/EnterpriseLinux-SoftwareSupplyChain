@@ -976,6 +976,7 @@ def _format_bundle_catalog_result(index_path: Path) -> str:
     parts = [
         "OK",
         f"index={index_path}",
+        f"catalogStatus={catalog.get('status', 'unknown')}",
         f"bundles={int(summary.get('bundles', 0) or 0)}",
         f"okBundles={int(summary.get('okBundles', 0) or 0)}",
         f"failedBundles={int(summary.get('failedBundles', 0) or 0)}",

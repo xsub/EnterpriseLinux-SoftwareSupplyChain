@@ -862,6 +862,7 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                 heading="Bundle catalog",
                 schema=str(report.get("schema")),
                 metrics=[
+                    ("Status", report.get("status", "")),
                     ("Bundles", _dict_value(summary, "bundles")),
                     ("OK", _dict_value(summary, "okBundles")),
                     ("Failed", _dict_value(summary, "failedBundles")),

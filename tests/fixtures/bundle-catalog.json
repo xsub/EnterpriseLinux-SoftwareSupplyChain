@@ -39,6 +39,7 @@
   ],
   "manifestName": "manifest.json",
   "schema": "edgp.bundle.catalog.v1",
+  "status": "fail",
   "sourceKinds": [
     {
       "bundles": 1,

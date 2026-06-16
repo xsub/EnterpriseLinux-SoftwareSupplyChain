@@ -156,6 +156,15 @@
       },
       "type": "array"
     },
+    "status": {
+      "description": "Computed catalog status derived from bundle verification failures and embedded triage summaries.",
+      "enum": [
+        "pass",
+        "warn",
+        "fail"
+      ],
+      "type": "string"
+    },
     "summary": {
       "additionalProperties": false,
       "properties": {
@@ -218,6 +227,7 @@
   "required": [
     "schema",
     "manifestName",
+    "status",
     "summary",
     "sourceKinds",
     "bundles"

@@ -33,6 +33,7 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
     report = build_bundle_catalog_report([graph_bundle, diagnostics_bundle])
 
     assert report["schema"] == "edgp.bundle.catalog.v1"
+    assert report["status"] == "warn"
     assert report["summary"] == {
         "bundles": 2,
         "okBundles": 2,
@@ -77,6 +78,24 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
     assert report["bundles"][1]["bundleSha256"]
 
 
+def test_build_bundle_catalog_report_marks_clean_catalog_pass(tmp_path) -> None:
+    graph_bundle = tmp_path / "graph-bundle"
+    write_report_bundle(
+        [Path("tests/fixtures/snapshot-right.json")],
+        graph_bundle,
+        bundle_metadata={
+            "sourceKind": "edgp-json",
+            "command": "edgp report-bundle --input snapshot",
+        },
+    )
+
+    report = build_bundle_catalog_report([graph_bundle])
+
+    assert report["status"] == "pass"
+    assert report["summary"]["okBundles"] == 1
+    assert report["summary"]["withoutTriage"] == 1
+
+
 def test_build_bundle_catalog_report_accepts_bundle_archives(tmp_path) -> None:
     graph_bundle = tmp_path / "graph-bundle"
     diagnostics_bundle = tmp_path / "diagnostics-bundle"
@@ -102,6 +121,7 @@ def test_build_bundle_catalog_report_accepts_bundle_archives(tmp_path) -> None:
 
     report = build_bundle_catalog_report([graph_bundle, diagnostics_archive])
 
+    assert report["status"] == "warn"
     assert report["summary"]["bundles"] == 2
     assert report["summary"]["okBundles"] == 2
     assert report["summary"]["reports"] == 2
@@ -133,6 +153,7 @@ def test_build_bundle_catalog_report_captures_unsafe_archives(tmp_path) -> None:
 
     report = build_bundle_catalog_report([archive_path])
 
+    assert report["status"] == "fail"
     assert report["summary"]["failedBundles"] == 1
     assert report["summary"]["failures"] == 1
     assert report["summary"]["diffTreePolicyFailures"] == 0
@@ -153,6 +174,7 @@ def test_build_bundle_catalog_report_captures_tampered_bundle(tmp_path) -> None:
 
     report = build_bundle_catalog_report([bundle_dir])
 
+    assert report["status"] == "fail"
     assert report["summary"]["failedBundles"] == 1
     assert report["summary"]["failures"] == 1
     assert report["summary"]["diffTreePolicyFailures"] == 0
@@ -186,6 +208,7 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
 
     report = build_bundle_catalog_report([diff_tree_bundle])
 
+    assert report["status"] == "fail"
     assert report["summary"]["triageFail"] == 1
     assert report["summary"]["diffTreePolicyFailures"] == 1
     assert report["bundles"][0]["diffTreePolicyFailures"] == 1
@@ -233,6 +256,7 @@ def test_build_bundle_catalog_counts_archive_diff_tree_policy_failures(
 
     report = build_bundle_catalog_report([diff_tree_archive])
 
+    assert report["status"] == "fail"
     assert report["summary"]["triageFail"] == 1
     assert report["summary"]["diffTreePolicyFailures"] == 1
     assert report["bundles"][0]["inputType"] == "archive"
