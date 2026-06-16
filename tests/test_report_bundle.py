@@ -71,6 +71,7 @@ def test_write_report_bundle_can_include_triage_summary(tmp_path) -> None:
 
     index_html = index_path.read_text(encoding="utf-8")
     assert 'data-testid="report-bundle-triage-summary"' in index_html
+    assert "Graph Diff Policies" in index_html
     assert "triage-summary.html" in index_html
 
     triage_json_path = tmp_path / "triage-summary.json"
@@ -125,6 +126,7 @@ def test_write_report_bundle_index_surfaces_diff_tree_policy_failures(
 
     assert triage["summary"]["diffTreePolicyFailures"] == 1
     assert 'data-testid="report-bundle-triage-summary"' in index_html
+    assert "Graph Diff Policies" in index_html
     assert "Diff Tree Policies" in index_html
     assert "triage-summary.html" in index_html
 

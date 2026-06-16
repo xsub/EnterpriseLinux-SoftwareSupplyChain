@@ -223,7 +223,7 @@ edgp report --input report-bundle-archive.json --output report-bundle-archive.ht
 edgp plan-bundle-submission --path reports.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
 edgp submission-plan-index --input export-submission.json --input bundle-submission.json --output submission-index.json --format text
 edgp report --input submission-index.json --output submission-index.html
-edgp triage-summary --bundle reports.tar.gz --fail-on-status fail
+edgp triage-summary --bundle reports.tar.gz --format text --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
 edgp validate --path reports.tar.gz --format text
@@ -1080,8 +1080,11 @@ underlying triage status, and the source report list so CI systems and
 workbench/RAG contexts can read one compact artifact instead of stitching
 together every report manually. Rendered triage-summary HTML includes dedicated
 graph-diff and diff-tree policy findings panels when graph-drift gates fail.
-`--fail-on-status warn|fail` still prints the JSON rollup and returns status `2`
-when the computed status reaches the selected threshold.
+Use `--format text` for a compact CI log line that keeps status, failed checks,
+graph-diff and diff-tree policy failures, npm signals, and catalog failures
+visible without parsing the full JSON rollup. `--fail-on-status warn|fail` still
+prints the selected format and returns status `2` when the computed status
+reaches the selected threshold.
 
 ## Roadmap
 

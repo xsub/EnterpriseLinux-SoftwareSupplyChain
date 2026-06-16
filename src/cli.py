@@ -1017,6 +1017,49 @@ def _format_bundle_catalog_result(index_path: Path) -> str:
     return " ".join(parts)
 
 
+def _format_triage_summary_report(report: dict[str, Any]) -> str:
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    parts = [
+        "TRIAGE",
+        f"status={report.get('status', 'unknown')}",
+        f"reports={int(summary.get('reports', 0) or 0)}",
+        f"failedChecks={int(summary.get('failedChecks', 0) or 0)}",
+    ]
+    graph_snapshots = int(summary.get("graphSnapshots", 0) or 0)
+    if graph_snapshots:
+        parts.append(f"graphSnapshots={graph_snapshots}")
+        parts.append(f"nodes={int(summary.get('nodes', 0) or 0)}")
+        parts.append(f"edges={int(summary.get('edges', 0) or 0)}")
+    for key in (
+        "advisoryFindings",
+        "deniedLicenseFindings",
+        "missingLicenses",
+    ):
+        value = int(summary.get(key, 0) or 0)
+        if value:
+            parts.append(f"{key}={value}")
+    npm_signals = (
+        int(summary.get("npmDuplicatePackageNames", 0) or 0)
+        + int(summary.get("npmNestedResolutionConflicts", 0) or 0)
+        + int(summary.get("npmUnresolvedDependencies", 0) or 0)
+    )
+    if npm_signals:
+        parts.append(f"npmSignals={npm_signals}")
+    parts.extend(_policy_failure_text_parts(summary))
+    for key in (
+        "catalogFailedBundles",
+        "catalogFailures",
+        "catalogTriageWarn",
+        "catalogTriageFail",
+    ):
+        value = int(summary.get(key, 0) or 0)
+        if value:
+            parts.append(f"{key}={value}")
+    return " ".join(parts)
+
+
 def _load_optional_json(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -3217,6 +3260,7 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["warn", "fail"],
         help="return status 2 when the triage status is at least this severity",
     )
+    triage_summary.add_argument("--format", choices=["json", "text"], default="json")
 
     report = subparsers.add_parser("report", help="Render a local HTML JSON report")
     report_input = report.add_mutually_exclusive_group(required=True)
@@ -4378,7 +4422,10 @@ def main(argv: list[str] | None = None) -> int:
             )
         else:
             triage_report = build_triage_summary_from_paths(args.input)
-        print(_json(triage_report))
+        if args.format == "text":
+            print(_format_triage_summary_report(triage_report))
+        else:
+            print(_json(triage_report))
         if _triage_summary_should_fail(
             triage_report,
             min_status=args.fail_on_status,

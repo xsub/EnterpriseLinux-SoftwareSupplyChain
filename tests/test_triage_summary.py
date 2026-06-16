@@ -158,6 +158,46 @@ def test_cli_triage_summary_can_fail_on_status(capsys) -> None:
     assert payload["status"] == "fail"
 
 
+def test_cli_triage_summary_text_can_fail_on_status(tmp_path, capsys) -> None:
+    diff_path = tmp_path / "graph-diff-policy.json"
+
+    assert (
+        main(
+            [
+                "diff",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--fail-on-change",
+                "added-node",
+            ]
+        )
+        == 2
+    )
+    diff_path.write_text(capsys.readouterr().out, encoding="utf-8")
+
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                str(diff_path),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        "TRIAGE status=fail reports=1 failedChecks=1 "
+        "graphDiffPolicyFailures=1"
+    )
+
+
 def test_cli_triage_summary_warn_threshold(capsys) -> None:
     assert (
         main(
@@ -187,6 +227,25 @@ def test_cli_triage_summary_warn_threshold(capsys) -> None:
         == 2
     )
     assert json.loads(capsys.readouterr().out)["status"] == "warn"
+
+
+def test_cli_triage_summary_text_reports_npm_signals(capsys) -> None:
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        "TRIAGE status=warn reports=1 failedChecks=0 npmSignals=3"
+    )
 
 
 def test_triage_summary_fails_on_graph_diff_policy_gate(tmp_path, capsys) -> None:
