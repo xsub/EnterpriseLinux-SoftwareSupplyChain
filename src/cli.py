@@ -976,21 +976,68 @@ def _validation_report_should_fail_on_status(
     return _TRIAGE_STATUS_RANKS.get(status, 0) >= _TRIAGE_STATUS_RANKS[min_status]
 
 
-def _diff_tree_report_should_fail_on_kind(
+def _attach_diff_tree_policy(
     report: dict[str, Any],
     *,
     fail_on_kind: Sequence[str] = (),
-) -> bool:
-    requested_kinds = set(fail_on_kind)
+) -> dict[str, Any]:
+    requested_kinds = _unique_diff_tree_change_kinds(fail_on_kind)
+    if requested_kinds:
+        report["policy"] = _diff_tree_policy_verdict(
+            report,
+            fail_on_kind=requested_kinds,
+        )
+    return report
+
+
+def _diff_tree_policy_verdict(
+    report: dict[str, Any],
+    *,
+    fail_on_kind: Sequence[str] = (),
+) -> dict[str, Any]:
+    requested_kinds = _unique_diff_tree_change_kinds(fail_on_kind)
     if not requested_kinds:
-        return False
+        return {
+            "failOnKind": [],
+            "matchedKinds": [],
+            "status": "pass",
+            "exitCode": 0,
+        }
+    observed_kinds = _diff_tree_classification_kinds(report)
+    matched_kinds = [kind for kind in requested_kinds if kind in observed_kinds]
+    failed = bool(matched_kinds)
+    return {
+        "failOnKind": requested_kinds,
+        "matchedKinds": matched_kinds,
+        "status": "fail" if failed else "pass",
+        "exitCode": 2 if failed else 0,
+    }
+
+
+def _unique_diff_tree_change_kinds(kinds: Sequence[str]) -> list[str]:
+    unique: list[str] = []
+    for kind in kinds:
+        if kind not in unique:
+            unique.append(kind)
+    return unique
+
+
+def _diff_tree_classification_kinds(report: dict[str, Any]) -> set[str]:
     classifications = report.get("classifications", [])
     if not isinstance(classifications, list):
-        return False
-    return any(
-        isinstance(change, dict) and change.get("kind") in requested_kinds
+        return set()
+    return {
+        str(change["kind"])
         for change in classifications
-    )
+        if isinstance(change, dict) and isinstance(change.get("kind"), str)
+    }
+
+
+def _diff_tree_policy_failed(report: dict[str, Any]) -> bool:
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        return False
+    return policy.get("status") == "fail"
 
 
 def _bundle_license_report_should_fail(output_dir: Path) -> bool:
@@ -1252,10 +1299,11 @@ def _write_graph_diff_tree_bundle(
     depth: int,
     command: str | None = None,
     include_triage_summary: bool = False,
+    fail_on_kind: Sequence[str] = (),
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / "graph-diff-tree.json"
-    report_path.write_text(
+    report = json.loads(
         diff_tree_snapshot_files(
             left_path,
             right_path,
@@ -1264,7 +1312,11 @@ def _write_graph_diff_tree_bundle(
             right_selector=right_selector,
             direction=direction,
             depth=depth,
-        ),
+        )
+    )
+    _attach_diff_tree_policy(report, fail_on_kind=fail_on_kind)
+    report_path.write_text(
+        _json(report),
         encoding="utf-8",
     )
     return write_report_bundle(
@@ -3937,12 +3989,10 @@ def main(argv: list[str] | None = None) -> int:
             direction=args.direction,
             depth=args.depth,
         )
-        print(report_text)
         report = json.loads(report_text)
-        if _diff_tree_report_should_fail_on_kind(
-            report,
-            fail_on_kind=args.fail_on_kind,
-        ):
+        _attach_diff_tree_policy(report, fail_on_kind=args.fail_on_kind)
+        print(_json(report))
+        if _diff_tree_policy_failed(report):
             return 2
         return 0
 
@@ -3959,6 +4009,7 @@ def main(argv: list[str] | None = None) -> int:
             depth=args.depth,
             command=command,
             include_triage_summary=_include_triage_summary(args),
+            fail_on_kind=args.fail_on_kind,
         )
         result = _print_bundle_result(
             index_path,
@@ -3968,10 +4019,7 @@ def main(argv: list[str] | None = None) -> int:
             return result
         report_path = args.output_dir / "graph-diff-tree.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
-        if _diff_tree_report_should_fail_on_kind(
-            report,
-            fail_on_kind=args.fail_on_kind,
-        ):
+        if _diff_tree_policy_failed(report):
             return 2
         return 0
 

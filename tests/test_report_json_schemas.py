@@ -168,6 +168,26 @@ def test_graph_snapshot_schema_documents_nested_shapes() -> None:
     assert set(ranking_schema["required"]) == {"package", "dependents"}
 
 
+def test_graph_diff_tree_schema_documents_policy_gate_shape() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.graph.diff_tree.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["policy"]["$ref"] == "#/$defs/policy"
+    policy_def = schema["$defs"]["policy"]
+
+    assert set(policy_def["required"]) == {
+        "failOnKind",
+        "matchedKinds",
+        "status",
+        "exitCode",
+    }
+    assert policy_def["properties"]["status"]["enum"] == ["fail", "pass"]
+    assert policy_def["properties"]["exitCode"]["enum"] == [0, 2]
+
+
 def test_impact_and_advisory_schemas_share_impact_summary_shape() -> None:
     impact_schema = json.loads(
         Path("docs/schemas/edgp.impact.report.v1.schema.json").read_text(

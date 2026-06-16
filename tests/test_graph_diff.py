@@ -209,6 +209,12 @@ def test_cli_diff_tree_can_fail_on_classified_change_kind(capsys) -> None:
     )
 
     payload = json.loads(capsys.readouterr().out)
+    assert payload["policy"] == {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
     assert payload["summary"]["upgradeChanges"] == 1
     assert any(change["kind"] == "upgrade" for change in payload["classifications"])
 
@@ -234,6 +240,12 @@ def test_cli_diff_tree_does_not_fail_on_absent_classified_change_kind(capsys) ->
     )
 
     payload = json.loads(capsys.readouterr().out)
+    assert payload["policy"] == {
+        "exitCode": 0,
+        "failOnKind": ["downgrade"],
+        "matchedKinds": [],
+        "status": "pass",
+    }
     assert payload["summary"]["downgradeChanges"] == 0
 
 
@@ -310,6 +322,12 @@ def test_cli_diff_tree_bundle_can_fail_after_writing_bundle(tmp_path, capsys) ->
     )
 
     assert output_dir.joinpath("index.html").exists()
+    assert report["policy"] == {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
     assert report["summary"]["upgradeChanges"] == 1
     assert any(change["kind"] == "upgrade" for change in report["classifications"])
 

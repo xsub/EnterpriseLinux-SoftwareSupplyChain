@@ -182,10 +182,18 @@ def test_render_report_supports_graph_diff_json() -> None:
 
 def test_render_report_supports_graph_diff_tree_json() -> None:
     report = json.loads(Path("tests/fixtures/graph-diff-tree.json").read_text())
+    report["policy"] = {
+        "exitCode": 2,
+        "failOnKind": ["upgrade", "replacement"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
 
     html = render_report(report)
 
     assert "EDGP Graph Diff Tree" in html
+    assert 'data-testid="graph-diff-tree-policy-panel"' in html
+    assert "Diff Tree Policy" in html
     assert 'data-testid="graph-diff-tree-visual-panel"' in html
     assert 'data-testid="graph-diff-tree-classification-panel"' in html
     assert 'data-testid="graph-diff-tree-paths-panel"' in html

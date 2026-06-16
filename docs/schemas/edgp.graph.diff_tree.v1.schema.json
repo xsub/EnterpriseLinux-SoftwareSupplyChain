@@ -43,6 +43,7 @@
       "required": ["added", "removed", "metadataChanged", "unchanged"],
       "type": "object"
     },
+    "policy": {"$ref": "#/$defs/policy"},
     "rightNode": {"type": ["string", "null"]},
     "rightRoot": {"type": ["string", "null"]},
     "rightSelector": {"minLength": 1, "type": "string"},
@@ -183,6 +184,43 @@
         "version": {"type": "string"}
       },
       "required": ["id", "name", "version", "metadata"],
+      "type": "object"
+    },
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "exitCode": {"enum": [0, 2]},
+        "failOnKind": {
+          "items": {
+            "enum": [
+              "added",
+              "downgrade",
+              "metadataChange",
+              "removed",
+              "replacement",
+              "upgrade"
+            ]
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "matchedKinds": {
+          "items": {
+            "enum": [
+              "added",
+              "downgrade",
+              "metadataChange",
+              "removed",
+              "replacement",
+              "upgrade"
+            ]
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "status": {"enum": ["fail", "pass"]}
+      },
+      "required": ["failOnKind", "matchedKinds", "status", "exitCode"],
       "type": "object"
     }
   }

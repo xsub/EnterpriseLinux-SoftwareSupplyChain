@@ -184,7 +184,9 @@ edgp diff-tree-bundle --left before.json --right after.json --node openssl --dir
 Focused diff-tree commands classify changes as additions, removals, metadata changes,
 replacements, upgrades, or downgrades. Use `--fail-on-kind` to keep the JSON or
 static bundle on disk while returning status `2` when selected change classes are
-present, which makes snapshot-to-snapshot graph drift usable in CI gates.
+present, which makes snapshot-to-snapshot graph drift usable in CI gates. Gated
+diff-tree reports include a `policy` block with the requested change kinds,
+matched kinds, pass/fail status, and expected exit code.
 
 ### Reports And Bundles
 

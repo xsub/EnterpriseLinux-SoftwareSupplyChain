@@ -204,12 +204,15 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
     nodes = report.get("nodes", {})
     edges = report.get("edges", {})
     classifications = report.get("classifications", [])
+    policy = report.get("policy")
     if not isinstance(nodes, dict):
         nodes = {}
     if not isinstance(edges, dict):
         edges = {}
     if not isinstance(classifications, list):
         classifications = []
+    if not isinstance(policy, dict):
+        policy = {}
     heading = (
         f"{report.get('selector') or report.get('leftNode') or report.get('rightNode')} "
         f"({report.get('direction', 'dependencies')}, depth {report.get('depth', 0)})"
@@ -234,6 +237,7 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
                     ("Replacements", _dict_value(summary, "replacementChanges")),
                 ],
             ),
+            _graph_diff_tree_policy_panel(policy),
             _graph_diff_tree_visual_panel(report),
             _graph_diff_tree_classification_panel(classifications),
             _graph_diff_tree_paths_panel(nodes),
@@ -2678,6 +2682,17 @@ def _graph_diff_tree_classification_panel(classifications: list[object]) -> str:
             "changedKeys",
         ],
         test_id="graph-diff-tree-classification-panel",
+    )
+
+
+def _graph_diff_tree_policy_panel(policy: dict[str, Any]) -> str:
+    if not policy:
+        return ""
+    return _rows_panel(
+        "Diff Tree Policy",
+        [policy],
+        ["status", "exitCode", "failOnKind", "matchedKinds"],
+        test_id="graph-diff-tree-policy-panel",
     )
 
 
