@@ -953,6 +953,55 @@ def _print_bundle_result(
     return 0
 
 
+def _print_bundle_catalog_result(
+    index_path: Path,
+    *,
+    output_format: str = "path",
+    fail_on_status: str | None = None,
+) -> int:
+    if output_format == "text":
+        print(_format_bundle_catalog_result(index_path))
+    else:
+        print(index_path)
+    if _bundle_triage_summary_should_fail(index_path.parent, min_status=fail_on_status):
+        return 2
+    return 0
+
+
+def _format_bundle_catalog_result(index_path: Path) -> str:
+    catalog = _load_optional_json(index_path.parent / "bundle-catalog.json")
+    summary = catalog.get("summary", {}) if isinstance(catalog, dict) else {}
+    if not isinstance(summary, dict):
+        summary = {}
+    parts = [
+        "OK",
+        f"index={index_path}",
+        f"bundles={int(summary.get('bundles', 0) or 0)}",
+        f"okBundles={int(summary.get('okBundles', 0) or 0)}",
+        f"failedBundles={int(summary.get('failedBundles', 0) or 0)}",
+        f"reports={int(summary.get('reports', 0) or 0)}",
+        f"failures={int(summary.get('failures', 0) or 0)}",
+        f"triageWarn={int(summary.get('triageWarn', 0) or 0)}",
+        f"triageFail={int(summary.get('triageFail', 0) or 0)}",
+        "diffTreePolicyFailures="
+        f"{int(summary.get('diffTreePolicyFailures', 0) or 0)}",
+    ]
+    triage = _load_optional_json(index_path.parent / "triage-summary.json")
+    if isinstance(triage, dict):
+        triage_status = triage.get("status")
+        if isinstance(triage_status, str) and triage_status:
+            parts.append(f"triageStatus={triage_status}")
+    return " ".join(parts)
+
+
+def _load_optional_json(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def _bundle_triage_summary_should_fail(
     output_dir: Path,
     *,
@@ -3144,6 +3193,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="also write the generated catalog bundle as a deterministic .tar.gz archive",
     )
+    bundle_catalog.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+        help="output the generated index path or a compact text summary",
+    )
     _add_triage_bundle_option(bundle_catalog)
 
     verify_bundle = subparsers.add_parser(
@@ -4280,15 +4335,17 @@ def main(argv: list[str] | None = None) -> int:
         return _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
 
     if args.command == "bundle-catalog":
-        return _print_bundle_result(
-            _write_bundle_catalog_bundle(
-                args.output_dir,
-                bundle_dirs=args.bundle,
-                manifest_name=args.manifest_name,
-                archive_output=args.archive_output,
-                command=command,
-                include_triage_summary=_include_triage_summary(args),
-            ),
+        index_path = _write_bundle_catalog_bundle(
+            args.output_dir,
+            bundle_dirs=args.bundle,
+            manifest_name=args.manifest_name,
+            archive_output=args.archive_output,
+            command=command,
+            include_triage_summary=_include_triage_summary(args),
+        )
+        return _print_bundle_catalog_result(
+            index_path,
+            output_format=args.format,
             fail_on_status=args.fail_on_status,
         )
 

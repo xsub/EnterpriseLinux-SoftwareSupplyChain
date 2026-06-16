@@ -818,6 +818,75 @@ def test_cli_bundle_catalog_writes_report_bundle(tmp_path, capsys) -> None:
     assert archive_triage["summary"]["catalogTriageWarn"] == 1
 
 
+def test_cli_bundle_catalog_text_summarizes_diff_tree_policy_failures(
+    tmp_path,
+    capsys,
+) -> None:
+    diff_tree_bundle = tmp_path / "diff-tree-bundle"
+    diff_tree_archive = tmp_path / "diff-tree-bundle.tar.gz"
+    catalog_dir = tmp_path / "catalog"
+
+    assert (
+        main(
+            [
+                "diff-tree-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--output-dir",
+                str(diff_tree_bundle),
+                "--triage-summary",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "archive-bundle",
+                "--path",
+                str(diff_tree_bundle),
+                "--output",
+                str(diff_tree_archive),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert (
+        main(
+            [
+                "bundle-catalog",
+                "--bundle",
+                str(diff_tree_archive),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+    text = capsys.readouterr().out.strip()
+
+    assert text == (
+        f"OK index={catalog_dir / 'index.html'} bundles=1 okBundles=1 "
+        "failedBundles=0 reports=1 failures=0 triageWarn=0 triageFail=1 "
+        "diffTreePolicyFailures=1 triageStatus=fail"
+    )
+
+
 def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     output_dir = tmp_path / "bundle"
     assert (

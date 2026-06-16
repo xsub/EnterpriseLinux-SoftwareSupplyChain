@@ -206,6 +206,7 @@ edgp report --input docs/schemas/index.json --output schema-index.html
 edgp validate --path docs/schemas/index.json
 edgp report-bundle --input graph.json --input impact.json --output-dir reports --fail-on-status fail
 edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --output-dir reports/catalog --archive-output reports/catalog.tar.gz --triage-summary
+edgp bundle-catalog --bundle reports/openssl-impact-diff.tar.gz --output-dir reports/catalog --format text --fail-on-status fail
 edgp verify-bundle --path reports
 edgp report --input reports/manifest.json --output report-bundle-manifest.html
 edgp archive-bundle --path reports --output reports.tar.gz
@@ -1047,6 +1048,9 @@ rendered as a static, verifiable bundle, and `--archive-output` writes that
 generated catalog bundle as a deterministic `.tar.gz` in the same pass. This
 gives CI systems and future workbench/RAG ingestion one compact index, plus one
 portable handoff archive, over a batch of public-input evidence bundles.
+Use `--format text` when the CI log should show the catalog's bundle counts,
+triage status, and diff-tree policy failure count directly beside the generated
+index path.
 
 `edgp triage-summary` turns a report bundle directory, a deterministic report
 bundle archive, or a list of EDGP JSON reports into one
