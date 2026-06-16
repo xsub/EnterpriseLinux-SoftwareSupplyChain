@@ -24,6 +24,7 @@
       "required": ["added", "removed", "metadataChanged"],
       "type": "object"
     },
+    "policy": {"$ref": "#/$defs/policy"},
     "rightRoot": {"type": ["string", "null"]},
     "schema": {"const": "edgp.graph.diff.v1"},
     "summary": {
@@ -47,5 +48,42 @@
   },
   "required": ["schema", "leftRoot", "rightRoot", "summary", "nodes", "edges"],
   "title": "EDGP Graph Diff v1",
-  "type": "object"
+  "type": "object",
+  "$defs": {
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "exitCode": {"enum": [0, 2], "type": "integer"},
+        "failOnChange": {
+          "items": {
+            "enum": [
+              "added-node",
+              "removed-node",
+              "added-edge",
+              "removed-edge",
+              "metadata-change"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "matchedChanges": {
+          "items": {
+            "enum": [
+              "added-node",
+              "removed-node",
+              "added-edge",
+              "removed-edge",
+              "metadata-change"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "status": {"enum": ["pass", "fail"], "type": "string"}
+      },
+      "required": ["failOnChange", "matchedChanges", "status", "exitCode"],
+      "type": "object"
+    }
+  }
 }

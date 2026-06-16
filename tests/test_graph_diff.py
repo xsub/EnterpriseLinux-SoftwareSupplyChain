@@ -27,6 +27,34 @@ def test_diff_snapshot_files_reports_added_and_removed_graph_elements() -> None:
     assert payload["nodes"]["removed"] == ["lib==1.0.0"]
 
 
+def test_cli_diff_can_fail_on_selected_change_kind(capsys) -> None:
+    assert (
+        main(
+            [
+                "diff",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--fail-on-change",
+                "added-node",
+                "--fail-on-change",
+                "metadata-change",
+            ]
+        )
+        == 2
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["policy"] == {
+        "exitCode": 2,
+        "failOnChange": ["added-node", "metadata-change"],
+        "matchedChanges": ["added-node"],
+        "status": "fail",
+    }
+    assert payload["summary"]["addedNodes"] == 2
+
+
 def test_diff_tree_snapshot_files_reports_focused_dependency_cone_changes() -> None:
     payload = json.loads(
         diff_tree_snapshot_files(
@@ -152,6 +180,44 @@ def test_cli_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert report["summary"]["addedEdges"] == 2
     assert 'data-testid="graph-diff-added-edges-panel"' in html
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True
+
+
+def test_cli_diff_bundle_can_fail_after_writing_bundle(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "graph-diff-failing-bundle"
+
+    assert (
+        main(
+            [
+                "diff-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--fail-on-change",
+                "removed-edge",
+            ]
+        )
+        == 2
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    report = json.loads((output_dir / "graph-diff.json").read_text(encoding="utf-8"))
+
+    assert output_dir.joinpath("index.html").exists()
+    assert report["policy"] == {
+        "exitCode": 2,
+        "failOnChange": ["removed-edge"],
+        "matchedChanges": ["removed-edge"],
+        "status": "fail",
+    }
+    assert report["summary"]["removedEdges"] == 1
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)

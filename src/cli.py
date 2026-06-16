@@ -84,6 +84,14 @@ DIFF_TREE_CHANGE_KINDS = (
     "downgrade",
 )
 
+DIFF_CHANGE_KINDS = (
+    "added-node",
+    "removed-node",
+    "added-edge",
+    "removed-edge",
+    "metadata-change",
+)
+
 
 def _demo_registry() -> RegistryMock:
     return RegistryMock.from_mapping(
@@ -1058,6 +1066,72 @@ def _attach_diff_tree_policy(
     return report
 
 
+def _attach_diff_policy(
+    report: dict[str, Any],
+    *,
+    fail_on_change: Sequence[str] = (),
+) -> dict[str, Any]:
+    requested_changes = _unique_diff_change_kinds(fail_on_change)
+    if requested_changes:
+        report["policy"] = _diff_policy_verdict(
+            report,
+            fail_on_change=requested_changes,
+        )
+    return report
+
+
+def _diff_policy_verdict(
+    report: dict[str, Any],
+    *,
+    fail_on_change: Sequence[str] = (),
+) -> dict[str, Any]:
+    requested_changes = _unique_diff_change_kinds(fail_on_change)
+    if not requested_changes:
+        return {
+            "failOnChange": [],
+            "matchedChanges": [],
+            "status": "pass",
+            "exitCode": 0,
+        }
+    observed_changes = _diff_change_kinds(report)
+    matched_changes = [
+        change for change in requested_changes if change in observed_changes
+    ]
+    failed = bool(matched_changes)
+    return {
+        "failOnChange": requested_changes,
+        "matchedChanges": matched_changes,
+        "status": "fail" if failed else "pass",
+        "exitCode": 2 if failed else 0,
+    }
+
+
+def _unique_diff_change_kinds(kinds: Sequence[str]) -> list[str]:
+    unique: list[str] = []
+    for kind in kinds:
+        if kind not in unique:
+            unique.append(kind)
+    return unique
+
+
+def _diff_change_kinds(report: dict[str, Any]) -> set[str]:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        return set()
+    checks = {
+        "added-node": "addedNodes",
+        "removed-node": "removedNodes",
+        "added-edge": "addedEdges",
+        "removed-edge": "removedEdges",
+        "metadata-change": "metadataChangedNodes",
+    }
+    return {
+        change
+        for change, summary_key in checks.items()
+        if int(summary.get(summary_key, 0) or 0) > 0
+    }
+
+
 def _diff_tree_policy_verdict(
     report: dict[str, Any],
     *,
@@ -1102,6 +1176,13 @@ def _diff_tree_classification_kinds(report: dict[str, Any]) -> set[str]:
 
 
 def _diff_tree_policy_failed(report: dict[str, Any]) -> bool:
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        return False
+    return policy.get("status") == "fail"
+
+
+def _diff_policy_failed(report: dict[str, Any]) -> bool:
     policy = report.get("policy")
     if not isinstance(policy, dict):
         return False
@@ -1340,11 +1421,14 @@ def _write_graph_diff_bundle(
     *,
     command: str | None = None,
     include_triage_summary: bool = False,
+    fail_on_change: Sequence[str] = (),
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / "graph-diff.json"
+    report = json.loads(diff_snapshot_files(left_path, right_path))
+    _attach_diff_policy(report, fail_on_change=fail_on_change)
     report_path.write_text(
-        diff_snapshot_files(left_path, right_path),
+        _json(report),
         encoding="utf-8",
     )
     return write_report_bundle(
@@ -2859,6 +2943,13 @@ def build_parser() -> argparse.ArgumentParser:
     diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
+    diff.add_argument(
+        "--fail-on-change",
+        action="append",
+        choices=DIFF_CHANGE_KINDS,
+        default=[],
+        help="return status 2 when the graph diff includes this change kind",
+    )
 
     diff_bundle = subparsers.add_parser(
         "diff-bundle",
@@ -2867,6 +2958,13 @@ def build_parser() -> argparse.ArgumentParser:
     diff_bundle.add_argument("--left", type=Path, required=True)
     diff_bundle.add_argument("--right", type=Path, required=True)
     diff_bundle.add_argument("--output-dir", type=Path, required=True)
+    diff_bundle.add_argument(
+        "--fail-on-change",
+        action="append",
+        choices=DIFF_CHANGE_KINDS,
+        default=[],
+        help="return status 2 when the graph diff includes this change kind",
+    )
     _add_triage_bundle_option(diff_bundle)
 
     diff_tree = subparsers.add_parser(
@@ -4037,20 +4135,33 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.command == "diff":
-        print(diff_snapshot_files(args.left, args.right))
+        report = json.loads(diff_snapshot_files(args.left, args.right))
+        _attach_diff_policy(report, fail_on_change=args.fail_on_change)
+        print(_json(report))
+        if _diff_policy_failed(report):
+            return 2
         return 0
 
     if args.command == "diff-bundle":
-        return _print_bundle_result(
-            _write_graph_diff_bundle(
-                args.left,
-                args.right,
-                args.output_dir,
-                command=command,
-                include_triage_summary=_include_triage_summary(args),
-            ),
+        index_path = _write_graph_diff_bundle(
+            args.left,
+            args.right,
+            args.output_dir,
+            command=command,
+            include_triage_summary=_include_triage_summary(args),
+            fail_on_change=args.fail_on_change,
+        )
+        result = _print_bundle_result(
+            index_path,
             fail_on_status=args.fail_on_status,
         )
+        if result != 0:
+            return result
+        report_path = args.output_dir / "graph-diff.json"
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        if _diff_policy_failed(report):
+            return 2
+        return 0
 
     if args.command == "diff-tree":
         selector, left_selector, right_selector = _diff_tree_selector_args(args)

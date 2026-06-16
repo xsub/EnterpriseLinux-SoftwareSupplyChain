@@ -174,12 +174,20 @@ edgp license-report-bundle --source sbom --path bom.json --deny-license GPL-3.0-
 edgp npm-diagnostics --path package-lock.json
 edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-diagnostics --triage-summary
 edgp diff --left before.json --right after.json
-edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --triage-summary
+edgp diff --left before.json --right after.json --fail-on-change added-node --fail-on-change removed-edge
+edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --triage-summary --fail-on-change added-node
 edgp diff-tree --left before.json --right after.json --node openssl --direction dependencies --depth 4
 edgp diff-tree --left before.json --right after.json --left-node openssl==3.0.7 --right-node openssl==3.0.8 --direction dependencies --depth 4
 edgp diff-tree --left before.json --right after.json --node openssl --fail-on-kind downgrade --fail-on-kind replacement
 edgp diff-tree-bundle --left before.json --right after.json --node openssl --direction dependents --depth 4 --output-dir reports/openssl-impact-diff --triage-summary
 ```
+
+Global snapshot diff commands compare the whole graph and can act as coarse CI
+gates with `--fail-on-change added-node|removed-node|added-edge|removed-edge|metadata-change`.
+The command still prints or writes the full report first, then returns status
+`2` when a selected change class is present. Gated graph-diff reports include a
+`policy` block with requested changes, matched changes, pass/fail status, and
+expected exit code.
 
 Focused diff-tree commands classify changes as additions, removals, metadata changes,
 replacements, upgrades, or downgrades. Use `--fail-on-kind` to keep the JSON or
@@ -759,7 +767,8 @@ curated risk feeds.
 nodes, added or removed edges, and node metadata changes. `edgp diff-bundle`
 renders that generic snapshot comparison as static HTML with a verifiable
 manifest, which makes before/after graph changes shareable without rebuilding
-the original input adapters.
+the original input adapters. Passing `--fail-on-change` turns those whole-graph
+differences into an artifact-preserving CI gate for coarse release drift.
 
 `edgp diff-tree` compares the dependency or dependent cone around one selected
 node in two snapshots. It resolves `--node` by exact node ID or unambiguous
