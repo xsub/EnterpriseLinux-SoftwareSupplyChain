@@ -226,6 +226,8 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "EDGP Bundle Catalog" in html
     assert 'data-testid="bundle-catalog-bundles-panel"' in html
     assert 'data-testid="bundle-catalog-source-kinds-panel"' in html
+    assert "Diff Tree Policies" in html
+    assert "Diff Tree Policy Failures" in html
     assert "htmlDigestMismatch" in html
 
 

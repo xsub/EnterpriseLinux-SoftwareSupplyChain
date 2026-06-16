@@ -22,6 +22,10 @@
           "command": {
             "type": "string"
           },
+          "diffTreePolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "failureCodes": {
             "items": {
               "type": "string"
@@ -79,6 +83,7 @@
           "bundleSha256",
           "reportCount",
           "failureCount",
+          "diffTreePolicyFailures",
           "failureCodes",
           "reportSchemas",
           "triageStatus"
@@ -100,6 +105,10 @@
         "additionalProperties": false,
         "properties": {
           "bundles": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "diffTreePolicyFailures": {
             "minimum": 0,
             "type": "integer"
           },
@@ -137,6 +146,7 @@
           "bundles",
           "reports",
           "failures",
+          "diffTreePolicyFailures",
           "triagePass",
           "triageWarn",
           "triageFail",
@@ -154,6 +164,10 @@
           "type": "integer"
         },
         "failedBundles": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "diffTreePolicyFailures": {
           "minimum": 0,
           "type": "integer"
         },
@@ -192,6 +206,7 @@
         "failedBundles",
         "reports",
         "failures",
+        "diffTreePolicyFailures",
         "triagePass",
         "triageWarn",
         "triageFail",

@@ -64,7 +64,7 @@ def test_cli_performance_report_bundle_writes_verifiable_bundle(
     assert report["results"][0]["reverseReachableMs"] >= 0
     html = (output_dir / "001-performance-report.html").read_text(encoding="utf-8")
     assert 'data-testid="performance-results-panel"' in html
-    assert "Freezems" in html
+    assert "Freeze Ms" in html
     assert "Accelerators" in html
 
     assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0

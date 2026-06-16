@@ -49,16 +49,17 @@ def _bundle_directory_catalog_entry(
     bundle_dir = bundle_dir.resolve()
     verification = verify_report_bundle(bundle_dir, manifest_name=manifest_name)
     manifest = _load_manifest(bundle_dir / manifest_name)
+    triage_summary = _triage_summary(
+        lambda label: _load_manifest(_bundle_member_path(bundle_dir, label)),
+        manifest,
+    )
     return _catalog_entry(
         path=bundle_dir,
         input_type="directory",
         manifest_name=manifest_name,
         verification=verification,
         manifest=manifest,
-        triage_status=_triage_status(
-            lambda label: _load_manifest(_bundle_member_path(bundle_dir, label)),
-            manifest,
-        ),
+        triage_summary=triage_summary,
     )
 
 
@@ -76,16 +77,17 @@ def _bundle_archive_catalog_entry(
     if not isinstance(verification, dict):
         verification = {}
     manifest = _load_archive_manifest(archive_path, manifest_name)
+    triage_summary = _triage_summary(
+        lambda label: _load_archive_json_member(archive_path, label),
+        manifest,
+    )
     return _catalog_entry(
         path=archive_path,
         input_type="archive",
         manifest_name=manifest_name,
         verification=verification,
         manifest=manifest,
-        triage_status=_triage_status(
-            lambda label: _load_archive_json_member(archive_path, label),
-            manifest,
-        ),
+        triage_summary=triage_summary,
     )
 
 
@@ -96,7 +98,7 @@ def _catalog_entry(
     manifest_name: str,
     verification: dict[str, Any],
     manifest: dict[str, Any],
-    triage_status: str,
+    triage_summary: dict[str, Any],
 ) -> dict[str, Any]:
     bundle_metadata = manifest.get("bundle", {}) if isinstance(manifest, dict) else {}
     if not isinstance(bundle_metadata, dict):
@@ -124,7 +126,10 @@ def _catalog_entry(
         "failureCount": int(verification_summary.get("failures", 0) or 0),
         "failureCodes": failure_codes,
         "reportSchemas": _report_schemas(reports),
-        "triageStatus": triage_status,
+        "triageStatus": str(triage_summary.get("status") or "unknown"),
+        "diffTreePolicyFailures": int(
+            triage_summary.get("diffTreePolicyFailures", 0) or 0
+        ),
     }
 
 
@@ -179,20 +184,28 @@ def _report_schemas(reports: list[object]) -> list[str]:
     return sorted(set(schemas))
 
 
-def _triage_status(
+def _triage_summary(
     load_member: Callable[[str], dict[str, Any]],
     manifest: dict[str, Any],
-) -> str:
+) -> dict[str, Any]:
     triage_summary = manifest.get("triageSummary", {})
     if not isinstance(triage_summary, dict):
         triage_summary = {}
     source = triage_summary.get("source")
     if not isinstance(source, str) or not source:
-        return "not-present"
+        return {"status": "not-present", "diffTreePolicyFailures": 0}
     payload = load_member(source)
     if not isinstance(payload, dict):
-        return "unreadable"
-    return str(payload.get("status") or "unknown")
+        return {"status": "unreadable", "diffTreePolicyFailures": 0}
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    return {
+        "status": str(payload.get("status") or "unknown"),
+        "diffTreePolicyFailures": int(
+            summary.get("diffTreePolicyFailures", 0) or 0
+        ),
+    }
 
 
 def _bundle_member_path(bundle_dir: Path, label: str) -> Path:
@@ -220,6 +233,9 @@ def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "triageWarn": triage_counts.get("warn", 0),
         "triageFail": triage_counts.get("fail", 0),
         "withoutTriage": triage_counts.get("not-present", 0),
+        "diffTreePolicyFailures": sum(
+            int(entry.get("diffTreePolicyFailures", 0) or 0) for entry in entries
+        ),
     }
 
 
@@ -238,6 +254,7 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "triageWarn": 0,
                 "triageFail": 0,
                 "withoutTriage": 0,
+                "diffTreePolicyFailures": 0,
             },
         )
         row["bundles"] += 1
@@ -252,4 +269,7 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
             row["triageFail"] += 1
         elif triage_status == "not-present":
             row["withoutTriage"] += 1
+        row["diffTreePolicyFailures"] += int(
+            entry.get("diffTreePolicyFailures", 0) or 0
+        )
     return [grouped[key] for key in sorted(grouped)]

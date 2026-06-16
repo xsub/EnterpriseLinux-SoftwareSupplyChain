@@ -3,6 +3,7 @@
     {
       "bundleSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "command": "edgp report-bundle --input tests/fixtures/snapshot-right.json --output-dir reports/graph",
+      "diffTreePolicyFailures": 0,
       "failureCodes": [],
       "failureCount": 0,
       "inputType": "directory",
@@ -19,6 +20,7 @@
     {
       "bundleSha256": null,
       "command": "",
+      "diffTreePolicyFailures": 0,
       "failureCodes": [
         "htmlDigestMismatch"
       ],
@@ -40,6 +42,7 @@
   "sourceKinds": [
     {
       "bundles": 1,
+      "diffTreePolicyFailures": 0,
       "failures": 0,
       "reports": 1,
       "sourceKind": "edgp-json",
@@ -50,6 +53,7 @@
     },
     {
       "bundles": 1,
+      "diffTreePolicyFailures": 0,
       "failures": 1,
       "reports": 1,
       "sourceKind": "npm-diagnostics",
@@ -61,6 +65,7 @@
   ],
   "summary": {
     "bundles": 2,
+    "diffTreePolicyFailures": 0,
     "failedBundles": 1,
     "failures": 1,
     "okBundles": 1,

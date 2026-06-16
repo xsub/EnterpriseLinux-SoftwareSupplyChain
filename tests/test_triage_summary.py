@@ -300,11 +300,46 @@ def test_triage_summary_includes_bundle_catalog_failures() -> None:
             "status": "fail",
             "failedBundles": 1,
             "failures": 1,
+            "diffTreePolicyFailures": 0,
             "triageWarn": 1,
             "triageFail": 0,
         }
     ]
+    assert report["topFindings"]["bundleCatalog"][0]["diffTreePolicyFailures"] == 0
     assert report["topFindings"]["bundleCatalog"][0]["path"] == "/tmp/reports/tampered"
+
+
+def test_triage_summary_rolls_up_catalog_diff_tree_policy_failures(tmp_path) -> None:
+    catalog = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
+    catalog["summary"]["failedBundles"] = 0
+    catalog["summary"]["failures"] = 0
+    catalog["summary"]["triageWarn"] = 0
+    catalog["summary"]["triageFail"] = 1
+    catalog["summary"]["diffTreePolicyFailures"] = 1
+    catalog["bundles"][0]["triageStatus"] = "fail"
+    catalog["bundles"][0]["diffTreePolicyFailures"] = 1
+    catalog["sourceKinds"][0]["triageFail"] = 1
+    catalog["sourceKinds"][0]["diffTreePolicyFailures"] = 1
+    path = tmp_path / "bundle-catalog.json"
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+
+    report = build_triage_summary_from_paths([path])
+
+    assert report["status"] == "fail"
+    assert report["summary"]["diffTreePolicyFailures"] == 1
+    assert report["summary"]["catalogTriageFail"] == 1
+    assert report["checks"] == [
+        {
+            "kind": "bundle-catalog",
+            "status": "fail",
+            "failedBundles": 0,
+            "failures": 0,
+            "diffTreePolicyFailures": 1,
+            "triageWarn": 0,
+            "triageFail": 1,
+        }
+    ]
+    assert report["topFindings"]["bundleCatalog"][0]["diffTreePolicyFailures"] == 1
 
 
 def test_triage_summary_warns_on_catalog_underlying_warns(tmp_path, capsys) -> None:

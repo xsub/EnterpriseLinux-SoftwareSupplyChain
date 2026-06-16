@@ -368,6 +368,9 @@ def _accumulate_summary(
         rollup["catalogBundles"] += int(summary.get("bundles", 0))
         rollup["catalogFailedBundles"] += int(summary.get("failedBundles", 0))
         rollup["catalogFailures"] += int(summary.get("failures", 0))
+        rollup["diffTreePolicyFailures"] += int(
+            summary.get("diffTreePolicyFailures", 0)
+        )
         rollup["catalogTriageWarn"] += int(summary.get("triageWarn", 0))
         rollup["catalogTriageFail"] += int(summary.get("triageFail", 0))
 
@@ -395,6 +398,9 @@ def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
         "status": status,
         "failedBundles": failed_bundles,
         "failures": failures,
+        "diffTreePolicyFailures": int(
+            summary.get("diffTreePolicyFailures", 0) or 0
+        ),
         "triageWarn": triage_warn,
         "triageFail": triage_fail,
     }
@@ -538,6 +544,7 @@ def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "failureCount": bundle.get("failureCount"),
                 "failureCodes": bundle.get("failureCodes", []),
                 "triageStatus": bundle.get("triageStatus"),
+                "diffTreePolicyFailures": bundle.get("diffTreePolicyFailures", 0),
             }
         )
     return rows

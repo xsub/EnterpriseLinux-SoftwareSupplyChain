@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from html import escape
 from pathlib import Path
 from typing import Any, Mapping
@@ -865,6 +866,10 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                     ("OK", _dict_value(summary, "okBundles")),
                     ("Failed", _dict_value(summary, "failedBundles")),
                     ("Reports", _dict_value(summary, "reports")),
+                    (
+                        "Diff Tree Policies",
+                        _dict_value(summary, "diffTreePolicyFailures"),
+                    ),
                 ],
             ),
             _rows_panel(
@@ -877,6 +882,7 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                     "sourceKind",
                     "reportCount",
                     "triageStatus",
+                    "diffTreePolicyFailures",
                     "failureCount",
                     "failureCodes",
                     "reportSchemas",
@@ -892,6 +898,7 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                     "bundles",
                     "reports",
                     "failures",
+                    "diffTreePolicyFailures",
                     "triagePass",
                     "triageWarn",
                     "triageFail",
@@ -2142,7 +2149,9 @@ def _dict_value(value: object, key: str) -> str:
 
 
 def _humanize_label(key: str) -> str:
-    return key.replace("_", " ").replace("-", " ").title()
+    label = key.replace("_", " ").replace("-", " ")
+    label = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", label)
+    return label.title()
 
 
 def _package_list_panel(title: str, packages: object, *, test_id: str) -> str:

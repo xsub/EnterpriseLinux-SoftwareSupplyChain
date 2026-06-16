@@ -39,6 +39,7 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
         "failedBundles": 0,
         "reports": 2,
         "failures": 0,
+        "diffTreePolicyFailures": 0,
         "triagePass": 0,
         "triageWarn": 1,
         "triageFail": 0,
@@ -50,6 +51,7 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "bundles": 1,
             "reports": 1,
             "failures": 0,
+            "diffTreePolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 0,
@@ -60,6 +62,7 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "bundles": 1,
             "reports": 1,
             "failures": 0,
+            "diffTreePolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 1,
             "triageFail": 0,
@@ -68,7 +71,9 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
     ]
     assert report["bundles"][0]["reportSchemas"] == ["edgp.graph.snapshot.v1"]
     assert report["bundles"][0]["inputType"] == "directory"
+    assert report["bundles"][0]["diffTreePolicyFailures"] == 0
     assert report["bundles"][1]["triageStatus"] == "warn"
+    assert report["bundles"][1]["diffTreePolicyFailures"] == 0
     assert report["bundles"][1]["bundleSha256"]
 
 
@@ -101,12 +106,14 @@ def test_build_bundle_catalog_report_accepts_bundle_archives(tmp_path) -> None:
     assert report["summary"]["okBundles"] == 2
     assert report["summary"]["reports"] == 2
     assert report["summary"]["triageWarn"] == 1
+    assert report["summary"]["diffTreePolicyFailures"] == 0
     assert report["bundles"][0]["inputType"] == "directory"
     assert report["bundles"][1]["inputType"] == "archive"
     assert report["bundles"][1]["path"] == str(diagnostics_archive.resolve())
     assert report["bundles"][1]["sourceKind"] == "npm-diagnostics"
     assert report["bundles"][1]["reportSchemas"] == ["edgp.npm.diagnostics.v1"]
     assert report["bundles"][1]["triageStatus"] == "warn"
+    assert report["bundles"][1]["diffTreePolicyFailures"] == 0
     assert report["bundles"][1]["bundleSha256"] == archive_report["bundleSha256"]
 
 
@@ -128,6 +135,7 @@ def test_build_bundle_catalog_report_captures_unsafe_archives(tmp_path) -> None:
 
     assert report["summary"]["failedBundles"] == 1
     assert report["summary"]["failures"] == 1
+    assert report["summary"]["diffTreePolicyFailures"] == 0
     assert report["bundles"][0]["inputType"] == "archive"
     assert report["bundles"][0]["ok"] is False
     assert report["bundles"][0]["sourceKind"] == "unknown"
@@ -147,6 +155,7 @@ def test_build_bundle_catalog_report_captures_tampered_bundle(tmp_path) -> None:
 
     assert report["summary"]["failedBundles"] == 1
     assert report["summary"]["failures"] == 1
+    assert report["summary"]["diffTreePolicyFailures"] == 0
     assert report["bundles"][0]["ok"] is False
     assert report["bundles"][0]["failureCodes"] == ["htmlDigestMismatch"]
     assert report["bundles"][0]["bundleSha256"]
@@ -178,15 +187,55 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
     report = build_bundle_catalog_report([diff_tree_bundle])
 
     assert report["summary"]["triageFail"] == 1
+    assert report["summary"]["diffTreePolicyFailures"] == 1
+    assert report["bundles"][0]["diffTreePolicyFailures"] == 1
     assert report["sourceKinds"] == [
         {
             "sourceKind": "graph-diff-tree",
             "bundles": 1,
             "reports": 1,
             "failures": 0,
+            "diffTreePolicyFailures": 1,
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 1,
             "withoutTriage": 0,
         }
     ]
+
+
+def test_build_bundle_catalog_counts_archive_diff_tree_policy_failures(
+    tmp_path,
+) -> None:
+    diff_tree_report = json.loads(
+        Path("tests/fixtures/graph-diff-tree.json").read_text(encoding="utf-8")
+    )
+    diff_tree_report["policy"] = {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
+    diff_tree_path = tmp_path / "graph-diff-tree.json"
+    diff_tree_path.write_text(json.dumps(diff_tree_report), encoding="utf-8")
+    diff_tree_bundle = tmp_path / "diff-tree-bundle"
+    diff_tree_archive = tmp_path / "diff-tree-bundle.tar.gz"
+    write_report_bundle(
+        [diff_tree_path],
+        diff_tree_bundle,
+        bundle_metadata={
+            "sourceKind": "graph-diff-tree",
+            "command": "edgp diff-tree-bundle --fail-on-kind upgrade",
+        },
+        include_triage_summary=True,
+    )
+    write_report_bundle_archive(diff_tree_bundle, diff_tree_archive)
+
+    report = build_bundle_catalog_report([diff_tree_archive])
+
+    assert report["summary"]["triageFail"] == 1
+    assert report["summary"]["diffTreePolicyFailures"] == 1
+    assert report["bundles"][0]["inputType"] == "archive"
+    assert report["bundles"][0]["triageStatus"] == "fail"
+    assert report["bundles"][0]["diffTreePolicyFailures"] == 1
+    assert report["sourceKinds"][0]["diffTreePolicyFailures"] == 1
