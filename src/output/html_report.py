@@ -1241,6 +1241,28 @@ def render_validation_report(report: dict[str, Any]) -> str:
                 test_id="validation-triage-panel",
             )
         )
+    report_summary = report.get("reportSummary")
+    report_status = report.get("reportStatus")
+    if isinstance(report_summary, dict) or isinstance(report_status, str):
+        sections.append(
+            _rows_panel(
+                "Validated Report Summary",
+                [_validation_report_summary_row(report)],
+                [
+                    "status",
+                    "reports",
+                    "bundles",
+                    "okBundles",
+                    "failedBundles",
+                    "failures",
+                    "triageWarn",
+                    "triageFail",
+                    "diffTreePolicyFailures",
+                    "summary",
+                ],
+                test_id="validation-report-summary-panel",
+            )
+        )
     return _document(
         "EDGP Validation Report",
         sections,
@@ -1436,6 +1458,24 @@ def _validation_triage_row(triage_summary: dict[str, object]) -> dict[str, objec
         "advisoryFindings": summary.get("advisoryFindings", ""),
         "deniedLicenseFindings": summary.get("deniedLicenseFindings", ""),
         "npmSignals": _triage_npm_signal_count(summary),
+        "summary": summary,
+    }
+
+
+def _validation_report_summary_row(report: dict[str, object]) -> dict[str, object]:
+    summary = report.get("reportSummary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    return {
+        "status": report.get("reportStatus", ""),
+        "reports": summary.get("reports", ""),
+        "bundles": summary.get("bundles", ""),
+        "okBundles": summary.get("okBundles", ""),
+        "failedBundles": summary.get("failedBundles", ""),
+        "failures": summary.get("failures", ""),
+        "triageWarn": summary.get("triageWarn", ""),
+        "triageFail": summary.get("triageFail", ""),
+        "diffTreePolicyFailures": summary.get("diffTreePolicyFailures", ""),
         "summary": summary,
     }
 

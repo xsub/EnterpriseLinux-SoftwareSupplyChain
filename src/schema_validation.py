@@ -305,7 +305,7 @@ def _validate_json_file(path: Path) -> dict[str, Any]:
                     schema = json.loads(schema_path.read_text(encoding="utf-8"))
                     _validate_value(payload, schema, "$", schema, failures)
 
-    return {
+    report = {
         "schema": VALIDATION_SCHEMA,
         "target": str(path.resolve()),
         "targetType": "json-file",
@@ -315,6 +315,20 @@ def _validate_json_file(path: Path) -> dict[str, Any]:
         "summary": {"failures": len(failures)},
         "failures": failures,
     }
+    if not failures and isinstance(payload, dict):
+        report.update(_json_report_context(payload))
+    return report
+
+
+def _json_report_context(payload: dict[str, Any]) -> dict[str, Any]:
+    context: dict[str, Any] = {}
+    status = payload.get("status")
+    if isinstance(status, str) and status:
+        context["reportStatus"] = status
+    summary = payload.get("summary")
+    if isinstance(summary, dict):
+        context["reportSummary"] = summary
+    return context
 
 
 def _schema_path_for_contract(contract: str) -> Path | None:

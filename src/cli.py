@@ -322,6 +322,16 @@ def _format_validation_report(report: dict[str, Any]) -> str:
     contract = report.get("contract")
     if isinstance(contract, str) and contract:
         parts.append(f"contract={contract}")
+    report_status = report.get("reportStatus")
+    if isinstance(report_status, str) and report_status:
+        parts.append(f"reportStatus={report_status}")
+    report_summary = report.get("reportSummary")
+    if isinstance(report_summary, dict):
+        diff_tree_policy_failures = int(
+            report_summary.get("diffTreePolicyFailures", 0) or 0
+        )
+        if diff_tree_policy_failures:
+            parts.append(f"diffTreePolicyFailures={diff_tree_policy_failures}")
     triage_summary = report.get("triageSummary")
     if isinstance(triage_summary, dict):
         triage_status = triage_summary.get("status")

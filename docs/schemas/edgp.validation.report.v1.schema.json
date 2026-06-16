@@ -55,6 +55,14 @@
       "description": "True when the target satisfies the selected contract and any nested bundle/archive verification.",
       "type": "boolean"
     },
+    "reportStatus": {
+      "description": "Optional top-level status copied from a successfully validated EDGP JSON report.",
+      "type": "string"
+    },
+    "reportSummary": {
+      "description": "Optional top-level summary copied from a successfully validated EDGP JSON report.",
+      "type": "object"
+    },
     "schema": {
       "const": "edgp.validation.report.v1",
       "description": "Validation report contract identifier."

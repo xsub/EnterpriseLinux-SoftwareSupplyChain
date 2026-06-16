@@ -880,6 +880,9 @@ leaving validation itself read-only. Text output includes `triageStatus=...`
 and `diffTreePolicyFailures=...` when present for bundle directories and
 deterministic bundle archives that embed that summary, which keeps CI logs
 readable even when the JSON report is archived.
+For standalone EDGP JSON reports with top-level `status` and `summary`, such as
+`edgp.bundle.catalog.v1`, validation also preserves `reportStatus=...` and
+`diffTreePolicyFailures=...` in text output.
 Validation reports also render through `edgp report`, so CI gate output can be
 reviewed as static HTML with target details, failures, nested verifier state,
 and triage status when present. The validation triage panel breaks out failed

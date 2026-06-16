@@ -272,6 +272,16 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
         "ok": True,
         "summary": {"failures": 0},
         "failures": [],
+        "reportStatus": "fail",
+        "reportSummary": {
+            "bundles": 1,
+            "okBundles": 1,
+            "failedBundles": 0,
+            "failures": 0,
+            "triageWarn": 0,
+            "triageFail": 1,
+            "diffTreePolicyFailures": 1,
+        },
         "triageSummary": {
             "schema": "edgp.triage.summary.v1",
             "source": "triage-summary.json",
@@ -292,6 +302,7 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
     html = render_report(report)
 
     assert 'data-testid="validation-triage-panel"' in html
+    assert 'data-testid="validation-report-summary-panel"' in html
     assert "diffTreePolicyFailures" in html
     assert "failedChecks" in html
 

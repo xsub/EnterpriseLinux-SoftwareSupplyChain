@@ -1264,6 +1264,31 @@ def test_cli_validate_reports_json_contract(capsys) -> None:
     )
 
 
+def test_cli_validate_json_text_surfaces_report_status_and_summary(
+    tmp_path,
+    capsys,
+) -> None:
+    payload = json.loads(
+        Path("tests/fixtures/bundle-catalog.json").read_text(encoding="utf-8")
+    )
+    payload["summary"]["diffTreePolicyFailures"] = 1
+    path = tmp_path / "bundle-catalog.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert main(["validate", "--path", str(path)]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["reportStatus"] == "fail"
+    assert report["reportSummary"]["diffTreePolicyFailures"] == 1
+
+    assert main(["validate", "--path", str(path), "--format", "text"]) == 0
+    text = capsys.readouterr().out.strip()
+    assert text == (
+        "OK targetType=json-file failures=0 "
+        "contract=edgp.bundle.catalog.v1 reportStatus=fail "
+        "diffTreePolicyFailures=1"
+    )
+
+
 def test_cli_validate_reports_json_contract_failure(capsys) -> None:
     path = "tests/fixtures/invalid-snapshot-missing-edge-count.json"
 
