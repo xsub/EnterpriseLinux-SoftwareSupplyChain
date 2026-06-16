@@ -954,6 +954,7 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
     top_findings = top_findings if isinstance(top_findings, dict) else {}
     npm_findings = top_findings.get("npm", [])
     bundle_catalog_findings = top_findings.get("bundleCatalog", [])
+    diff_tree_policy_findings = top_findings.get("diffTreePolicies", [])
     return _document(
         "EDGP Triage Summary",
         [
@@ -965,12 +966,24 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                     ("Reports", summary.get("reports", 0)),
                     ("Advisories", summary.get("advisoryFindings", 0)),
                     ("Denied Licenses", summary.get("deniedLicenseFindings", 0)),
+                    (
+                        "Diff Tree Policies",
+                        summary.get("diffTreePolicyFailures", 0),
+                    ),
                 ],
             ),
             _rows_panel(
                 "Checks",
                 report.get("checks", []),
-                ["kind", "status", "findings", "deniedFindings"],
+                [
+                    "kind",
+                    "status",
+                    "findings",
+                    "deniedFindings",
+                    "failOnKind",
+                    "matchedKinds",
+                    "exitCode",
+                ],
                 test_id="triage-checks-panel",
             ),
             _rows_panel(
@@ -994,8 +1007,28 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
             _rows_panel(
                 "Bundle Catalog Findings",
                 bundle_catalog_findings,
-                ["path", "sourceKind", "ok", "failureCount", "triageStatus", "failureCodes"],
+                [
+                    "path",
+                    "sourceKind",
+                    "ok",
+                    "failureCount",
+                    "triageStatus",
+                    "failureCodes",
+                ],
                 test_id="triage-bundle-catalog-panel",
+            ),
+            _rows_panel(
+                "Diff Tree Policy Findings",
+                diff_tree_policy_findings,
+                [
+                    "selector",
+                    "direction",
+                    "depth",
+                    "failOnKind",
+                    "matchedKinds",
+                    "exitCode",
+                ],
+                test_id="triage-diff-tree-policy-panel",
             ),
             _rows_panel(
                 "Source Reports",

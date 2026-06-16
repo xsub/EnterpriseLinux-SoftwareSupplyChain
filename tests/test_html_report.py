@@ -229,6 +229,36 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "htmlDigestMismatch" in html
 
 
+def test_render_report_supports_triage_diff_tree_policy_findings() -> None:
+    report = json.loads(Path("tests/fixtures/triage-summary.json").read_text())
+    report["summary"]["diffTreePolicyFailures"] = 1
+    report["checks"].append(
+        {
+            "kind": "diff-tree-policy",
+            "status": "fail",
+            "failOnKind": ["upgrade"],
+            "matchedKinds": ["upgrade"],
+            "exitCode": 2,
+        }
+    )
+    report["topFindings"]["diffTreePolicies"] = [
+        {
+            "selector": "app",
+            "direction": "dependencies",
+            "depth": 2,
+            "failOnKind": ["upgrade"],
+            "matchedKinds": ["upgrade"],
+            "exitCode": 2,
+        }
+    ]
+
+    html = render_report(report)
+
+    assert 'data-testid="triage-diff-tree-policy-panel"' in html
+    assert "Diff Tree Policy Findings" in html
+    assert "upgrade" in html
+
+
 @pytest.mark.parametrize(
     ("fixture", "test_id"),
     [

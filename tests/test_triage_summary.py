@@ -278,6 +278,8 @@ def test_diff_tree_bundle_triage_summary_reflects_policy_gate(tmp_path, capsys) 
     assert triage["summary"]["diffTreePolicyFailures"] == 1
     assert triage["checks"][0]["kind"] == "diff-tree-policy"
     assert triage["checks"][0]["status"] == "fail"
+    triage_html = (output_dir / "triage-summary.html").read_text(encoding="utf-8")
+    assert 'data-testid="triage-diff-tree-policy-panel"' in triage_html
 
 
 def test_triage_summary_includes_bundle_catalog_failures() -> None:

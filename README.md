@@ -1046,6 +1046,8 @@ size, advisory findings, denied license findings, npm diagnostic signals,
 diff-tree policy gate failures, bundle-catalog integrity and underlying triage
 status, and the source report list so CI systems and workbench/RAG contexts can
 read one compact artifact instead of stitching together every report manually.
+Rendered triage-summary HTML includes a dedicated diff-tree policy findings
+panel when focused graph-drift gates fail.
 `--fail-on-status warn|fail` still prints the JSON rollup and returns status `2`
 when the computed status reaches the selected threshold.
 
