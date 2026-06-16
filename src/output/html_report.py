@@ -6,7 +6,7 @@ import json
 import math
 from html import escape
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 EDGE_EXPLORER_PAGE_SIZE = 250
 
@@ -1218,7 +1218,18 @@ def render_validation_report(report: dict[str, Any]) -> str:
             _rows_panel(
                 "Triage Summary",
                 [_validation_triage_row(triage_summary)],
-                ["schema", "source", "status", "summary"],
+                [
+                    "schema",
+                    "source",
+                    "status",
+                    "reports",
+                    "failedChecks",
+                    "diffTreePolicyFailures",
+                    "advisoryFindings",
+                    "deniedLicenseFindings",
+                    "npmSignals",
+                    "summary",
+                ],
                 test_id="validation-triage-panel",
             )
         )
@@ -1405,12 +1416,31 @@ def _list_len(value: object) -> int:
 
 
 def _validation_triage_row(triage_summary: dict[str, object]) -> dict[str, object]:
+    summary = triage_summary.get("summary", {})
+    summary = summary if isinstance(summary, dict) else {}
     return {
         "schema": triage_summary.get("schema", ""),
         "source": triage_summary.get("source", ""),
         "status": triage_summary.get("status", ""),
-        "summary": triage_summary.get("summary", {}),
+        "reports": summary.get("reports", ""),
+        "failedChecks": summary.get("failedChecks", ""),
+        "diffTreePolicyFailures": summary.get("diffTreePolicyFailures", ""),
+        "advisoryFindings": summary.get("advisoryFindings", ""),
+        "deniedLicenseFindings": summary.get("deniedLicenseFindings", ""),
+        "npmSignals": _triage_npm_signal_count(summary),
+        "summary": summary,
     }
+
+
+def _triage_npm_signal_count(summary: Mapping[str, object]) -> int:
+    return sum(
+        int(summary.get(key, 0) or 0)
+        for key in (
+            "npmDuplicatePackageNames",
+            "npmNestedResolutionConflicts",
+            "npmUnresolvedDependencies",
+        )
+    )
 
 
 def _validation_verification_rows(report: dict[str, object]) -> list[dict[str, object]]:

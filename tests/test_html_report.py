@@ -259,6 +259,39 @@ def test_render_report_supports_triage_diff_tree_policy_findings() -> None:
     assert "upgrade" in html
 
 
+def test_render_report_supports_validation_triage_policy_metrics() -> None:
+    report = {
+        "schema": "edgp.validation.report.v1",
+        "target": "/tmp/reports/diff-tree",
+        "targetType": "report-bundle",
+        "contract": "edgp.report.bundle.v1",
+        "ok": True,
+        "summary": {"failures": 0},
+        "failures": [],
+        "triageSummary": {
+            "schema": "edgp.triage.summary.v1",
+            "source": "triage-summary.json",
+            "status": "fail",
+            "summary": {
+                "reports": 1,
+                "failedChecks": 1,
+                "diffTreePolicyFailures": 1,
+                "advisoryFindings": 0,
+                "deniedLicenseFindings": 0,
+                "npmDuplicatePackageNames": 0,
+                "npmNestedResolutionConflicts": 0,
+                "npmUnresolvedDependencies": 0,
+            },
+        },
+    }
+
+    html = render_report(report)
+
+    assert 'data-testid="validation-triage-panel"' in html
+    assert "diffTreePolicyFailures" in html
+    assert "failedChecks" in html
+
+
 @pytest.mark.parametrize(
     ("fixture", "test_id"),
     [
