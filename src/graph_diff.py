@@ -126,7 +126,13 @@ def diff_tree_snapshots(
     removed_nodes = sorted(left_view.nodes - right_view.nodes)
     common_nodes = sorted(left_view.nodes & right_view.nodes)
     metadata_changed = [
-        _metadata_change(left_index, right_index, node_id)
+        _metadata_change(
+            left_index,
+            right_index,
+            node_id,
+            left_view=left_view,
+            right_view=right_view,
+        )
         for node_id in common_nodes
         if left_index.metadata(node_id) != right_index.metadata(node_id)
     ]
@@ -159,8 +165,22 @@ def diff_tree_snapshots(
             "unchangedEdges": len(unchanged_edges),
         },
         "nodes": {
-            "added": [right_index.node_payload(node_id) for node_id in added_nodes],
-            "removed": [left_index.node_payload(node_id) for node_id in removed_nodes],
+            "added": [
+                right_index.node_payload(
+                    node_id,
+                    distance=right_view.distance(node_id),
+                    path=right_view.path_to(node_id),
+                )
+                for node_id in added_nodes
+            ],
+            "removed": [
+                left_index.node_payload(
+                    node_id,
+                    distance=left_view.distance(node_id),
+                    path=left_view.path_to(node_id),
+                )
+                for node_id in removed_nodes
+            ],
             "metadataChanged": metadata_changed,
             "unchanged": unchanged_nodes,
         },
@@ -291,20 +311,60 @@ class _SnapshotIndex:
         metadata = self.nodes.get(node_id, {}).get("metadata", {})
         return dict(metadata) if isinstance(metadata, dict) else {}
 
-    def node_payload(self, node_id: str) -> dict[str, Any]:
+    def node_payload(
+        self,
+        node_id: str,
+        *,
+        distance: int | None = None,
+        path: list[str] | None = None,
+    ) -> dict[str, Any]:
         node = self.nodes[node_id]
-        return {
+        payload: dict[str, Any] = {
             "id": node_id,
             "name": str(node.get("name") or node_id),
             "version": str(node.get("version") or ""),
             "metadata": self.metadata(node_id),
         }
+        if distance is not None:
+            payload["distance"] = distance
+        if path:
+            payload["path"] = path
+        return payload
 
 
 class _Neighborhood:
-    def __init__(self, nodes: set[str], edges: set[tuple[str, str, int]]) -> None:
+    def __init__(
+        self,
+        nodes: set[str],
+        edges: set[tuple[str, str, int]],
+        *,
+        start: str | None,
+        distances: dict[str, int] | None = None,
+        parents: dict[str, str | None] | None = None,
+    ) -> None:
         self.nodes = nodes
         self.edges = edges
+        self.start = start
+        self.distances = distances or {}
+        self.parents = parents or {}
+
+    def distance(self, node_id: str) -> int | None:
+        return self.distances.get(node_id)
+
+    def path_to(self, node_id: str) -> list[str]:
+        if node_id not in self.nodes:
+            return []
+        path = [node_id]
+        current = node_id
+        seen = {node_id}
+        while current != self.start:
+            parent = self.parents.get(current)
+            if parent is None or parent in seen:
+                return []
+            path.append(parent)
+            seen.add(parent)
+            current = parent
+        return list(reversed(path))
 
 
 def _collect_neighborhood(
@@ -315,11 +375,12 @@ def _collect_neighborhood(
     depth: int,
 ) -> _Neighborhood:
     if start is None:
-        return _Neighborhood(set(), set())
+        return _Neighborhood(set(), set(), start=None)
     adjacency = index.outgoing if direction == "dependencies" else index.incoming
     nodes = {start}
     edges: set[tuple[str, str, int]] = set()
     distances = {start: 0}
+    parents: dict[str, str | None] = {start: None}
     queue: deque[str] = deque([start])
     while queue:
         node_id = queue.popleft()
@@ -332,19 +393,29 @@ def _collect_neighborhood(
             if neighbor not in nodes:
                 nodes.add(neighbor)
                 distances[neighbor] = distance + 1
+                parents[neighbor] = node_id
                 queue.append(neighbor)
-    return _Neighborhood(nodes, edges)
+    return _Neighborhood(
+        nodes,
+        edges,
+        start=start,
+        distances=distances,
+        parents=parents,
+    )
 
 
 def _metadata_change(
     left_index: _SnapshotIndex,
     right_index: _SnapshotIndex,
     node_id: str,
+    *,
+    left_view: _Neighborhood,
+    right_view: _Neighborhood,
 ) -> dict[str, Any]:
     left_metadata = left_index.metadata(node_id)
     right_metadata = right_index.metadata(node_id)
     keys = sorted(set(left_metadata) | set(right_metadata))
-    return {
+    payload: dict[str, Any] = {
         "id": node_id,
         "changedKeys": [
             key for key in keys if left_metadata.get(key) != right_metadata.get(key)
@@ -352,3 +423,12 @@ def _metadata_change(
         "leftMetadata": left_metadata,
         "rightMetadata": right_metadata,
     }
+    left_distance = left_view.distance(node_id)
+    right_distance = right_view.distance(node_id)
+    if left_distance is not None:
+        payload["leftDistance"] = left_distance
+        payload["leftPath"] = left_view.path_to(node_id)
+    if right_distance is not None:
+        payload["rightDistance"] = right_distance
+        payload["rightPath"] = right_view.path_to(node_id)
+    return payload

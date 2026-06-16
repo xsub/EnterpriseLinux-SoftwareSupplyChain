@@ -227,6 +227,7 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
                 ],
             ),
             _graph_diff_tree_visual_panel(report),
+            _graph_diff_tree_paths_panel(nodes),
             _rows_panel(
                 "Added Nodes In Focused Cone",
                 nodes.get("added", []),
@@ -2645,6 +2646,51 @@ def _graph_diff_tree_visual_panel(report: dict[str, Any]) -> str:
   </svg>
   {legend}
 </section>""".strip()
+
+
+def _graph_diff_tree_paths_panel(nodes: dict[str, Any]) -> str:
+    rows: list[dict[str, Any]] = []
+    for status in ("added", "removed"):
+        raw_nodes = nodes.get(status, [])
+        if not isinstance(raw_nodes, list):
+            continue
+        for raw_node in raw_nodes:
+            if not isinstance(raw_node, dict):
+                continue
+            path = raw_node.get("path", [])
+            if not isinstance(path, list) or not path:
+                continue
+            rows.append(
+                {
+                    "status": status,
+                    "node": raw_node.get("id", ""),
+                    "distance": raw_node.get("distance", ""),
+                    "path": " -> ".join(str(item) for item in path),
+                }
+            )
+    changed_nodes = nodes.get("metadataChanged", [])
+    if isinstance(changed_nodes, list):
+        for raw_node in changed_nodes:
+            if not isinstance(raw_node, dict):
+                continue
+            for side in ("left", "right"):
+                path = raw_node.get(f"{side}Path", [])
+                if not isinstance(path, list) or not path:
+                    continue
+                rows.append(
+                    {
+                        "status": f"metadataChanged:{side}",
+                        "node": raw_node.get("id", ""),
+                        "distance": raw_node.get(f"{side}Distance", ""),
+                        "path": " -> ".join(str(item) for item in path),
+                    }
+                )
+    return _rows_panel(
+        "Change Paths",
+        rows,
+        ["status", "node", "distance", "path"],
+        test_id="graph-diff-tree-paths-panel",
+    )
 
 
 def _diff_tree_visible_node_ids(

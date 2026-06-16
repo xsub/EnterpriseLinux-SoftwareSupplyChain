@@ -108,8 +108,12 @@
       "properties": {
         "changedKeys": {"items": {"type": "string"}, "type": "array"},
         "id": {"minLength": 1, "type": "string"},
+        "leftDistance": {"minimum": 0, "type": "integer"},
         "leftMetadata": {"type": "object"},
-        "rightMetadata": {"type": "object"}
+        "leftPath": {"items": {"type": "string"}, "type": "array"},
+        "rightDistance": {"minimum": 0, "type": "integer"},
+        "rightMetadata": {"type": "object"},
+        "rightPath": {"items": {"type": "string"}, "type": "array"}
       },
       "required": ["id", "changedKeys", "leftMetadata", "rightMetadata"],
       "type": "object"
@@ -126,9 +130,11 @@
     "node": {
       "additionalProperties": false,
       "properties": {
+        "distance": {"minimum": 0, "type": "integer"},
         "id": {"minLength": 1, "type": "string"},
         "metadata": {"type": "object"},
         "name": {"minLength": 1, "type": "string"},
+        "path": {"items": {"type": "string"}, "type": "array"},
         "version": {"type": "string"}
       },
       "required": ["id", "name", "version", "metadata"],

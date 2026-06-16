@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from src.cli import main
-from src.graph_diff import diff_snapshot_files, diff_tree_snapshot_files
+from src.graph_diff import diff_snapshot_files, diff_tree_snapshot_files, diff_tree_snapshots
 
 
 def test_diff_snapshot_files_reports_added_and_removed_graph_elements() -> None:
@@ -46,7 +46,14 @@ def test_diff_tree_snapshot_files_reports_focused_dependency_cone_changes() -> N
         "core==1.0.0",
         "lib==2.0.0",
     ]
+    assert payload["nodes"]["added"][0]["path"] == [
+        "app==1.0.0",
+        "lib==2.0.0",
+        "core==1.0.0",
+    ]
+    assert payload["nodes"]["added"][0]["distance"] == 2
     assert [node["id"] for node in payload["nodes"]["removed"]] == ["lib==1.0.0"]
+    assert payload["nodes"]["removed"][0]["path"] == ["app==1.0.0", "lib==1.0.0"]
 
 
 def test_diff_tree_snapshot_files_supports_explicit_left_right_selectors() -> None:
@@ -70,6 +77,39 @@ def test_diff_tree_snapshot_files_supports_explicit_left_right_selectors() -> No
         "lib==2.0.0",
     ]
     assert [node["id"] for node in payload["nodes"]["removed"]] == ["lib==1.0.0"]
+
+
+def test_diff_tree_snapshots_reports_paths_for_metadata_changes() -> None:
+    left = {
+        "schema": "edgp.graph.snapshot.v1",
+        "root": "app==1.0.0",
+        "nodes": [
+            {"id": "app==1.0.0", "name": "app", "metadata": {}},
+            {"id": "lib==1.0.0", "name": "lib", "metadata": {"license": "MIT"}},
+        ],
+        "edges": [
+            {"source": "app==1.0.0", "target": "lib==1.0.0", "relationshipType": 1}
+        ],
+    }
+    right = {
+        "schema": "edgp.graph.snapshot.v1",
+        "root": "app==1.0.0",
+        "nodes": [
+            {"id": "app==1.0.0", "name": "app", "metadata": {}},
+            {"id": "lib==1.0.0", "name": "lib", "metadata": {"license": "Apache-2.0"}},
+        ],
+        "edges": [
+            {"source": "app==1.0.0", "target": "lib==1.0.0", "relationshipType": 1}
+        ],
+    }
+
+    payload = diff_tree_snapshots(left, right, selector="app", depth=1)
+
+    changed = payload["nodes"]["metadataChanged"][0]
+    assert changed["id"] == "lib==1.0.0"
+    assert changed["changedKeys"] == ["license"]
+    assert changed["leftPath"] == ["app==1.0.0", "lib==1.0.0"]
+    assert changed["rightPath"] == ["app==1.0.0", "lib==1.0.0"]
 
 
 def test_cli_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:
@@ -132,6 +172,10 @@ def test_cli_diff_tree_accepts_explicit_left_right_selectors(capsys) -> None:
     assert payload["leftNode"] == "lib==1.0.0"
     assert payload["rightNode"] == "lib==2.0.0"
     assert payload["summary"]["addedNodes"] == 2
+    assert payload["nodes"]["added"][0]["path"] == [
+        "lib==2.0.0",
+        "core==1.0.0",
+    ]
 
 
 def test_cli_diff_tree_bundle_writes_report_bundle(tmp_path, capsys) -> None:

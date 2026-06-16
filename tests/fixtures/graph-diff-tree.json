@@ -63,31 +63,47 @@
   "nodes": {
     "added": [
       {
+        "distance": 2,
         "id": "core==1.0.0",
         "metadata": {
           "ecosystem": "npm"
         },
         "name": "core",
+        "path": [
+          "app==1.0.0",
+          "lib==2.0.0",
+          "core==1.0.0"
+        ],
         "version": "1.0.0"
       },
       {
+        "distance": 1,
         "id": "lib==2.0.0",
         "metadata": {
           "ecosystem": "npm",
           "license": "MIT"
         },
         "name": "lib",
+        "path": [
+          "app==1.0.0",
+          "lib==2.0.0"
+        ],
         "version": "2.0.0"
       }
     ],
     "metadataChanged": [],
     "removed": [
       {
+        "distance": 1,
         "id": "lib==1.0.0",
         "metadata": {
           "ecosystem": "npm"
         },
         "name": "lib",
+        "path": [
+          "app==1.0.0",
+          "lib==1.0.0"
+        ],
         "version": "1.0.0"
       }
     ],
