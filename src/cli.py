@@ -1037,9 +1037,10 @@ def _validation_report_should_fail_on_status(
     if min_status is None:
         return False
     triage_summary = report.get("triageSummary")
-    if not isinstance(triage_summary, dict):
-        return False
-    status = str(triage_summary.get("status", "pass")).lower()
+    if isinstance(triage_summary, dict):
+        status = str(triage_summary.get("status", "pass")).lower()
+    else:
+        status = str(report.get("reportStatus", "pass")).lower()
     return _TRIAGE_STATUS_RANKS.get(status, 0) >= _TRIAGE_STATUS_RANKS[min_status]
 
 

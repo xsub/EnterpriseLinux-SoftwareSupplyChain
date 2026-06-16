@@ -1288,6 +1288,27 @@ def test_cli_validate_json_text_surfaces_report_status_and_summary(
         "diffTreePolicyFailures=1"
     )
 
+    assert (
+        main(
+            [
+                "validate",
+                "--path",
+                str(path),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+    text = capsys.readouterr().out.strip()
+    assert text == (
+        "OK targetType=json-file failures=0 "
+        "contract=edgp.bundle.catalog.v1 reportStatus=fail "
+        "diffTreePolicyFailures=1"
+    )
+
 
 def test_cli_validate_reports_json_contract_failure(capsys) -> None:
     path = "tests/fixtures/invalid-snapshot-missing-edge-count.json"
