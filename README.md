@@ -223,6 +223,10 @@ edgp validate --path validation.json
 edgp report --input validation.json --output validation.html
 ```
 
+For deterministic bundle archives, validation text preserves the same triage
+gate fields as directory bundles, including `triageStatus=...` and
+`diffTreePolicyFailures=...` for focused snapshot-diff policy failures.
+
 ### Benchmark
 
 ```bash
