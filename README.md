@@ -929,6 +929,9 @@ advisory reports render affected package lists, dependency
 chains, advisory metadata, and affected dependent counts for browser-friendly
 triage. npm diagnostics reports render duplicate package names, nested
 resolution conflicts, and unresolved dependency declarations.
+Graph diff-tree reports add a focused SVG change map for the selected
+dependency or dependent cone, with added, removed, metadata-changed, unchanged,
+and selected nodes called out before the detailed tables.
 
 `edgp report-bundle` renders multiple EDGP JSON documents into one static
 directory with deterministic member report filenames, an `index.html` summary,

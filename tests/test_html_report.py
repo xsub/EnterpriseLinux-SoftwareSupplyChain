@@ -186,6 +186,10 @@ def test_render_report_supports_graph_diff_tree_json() -> None:
     html = render_report(report)
 
     assert "EDGP Graph Diff Tree" in html
+    assert 'data-testid="graph-diff-tree-visual-panel"' in html
+    assert 'class="diff-edge diff-edge-added"' in html
+    assert 'class="diff-edge diff-edge-removed"' in html
+    assert "Selected Node" in html
     assert 'data-testid="graph-diff-tree-added-nodes-panel"' in html
     assert 'data-testid="graph-diff-tree-added-edges-panel"' in html
     assert "lib==2.0.0" in html

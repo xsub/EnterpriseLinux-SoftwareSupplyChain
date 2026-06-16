@@ -226,6 +226,7 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
                     ("Removed Edges", _dict_value(summary, "removedEdges")),
                 ],
             ),
+            _graph_diff_tree_visual_panel(report),
             _rows_panel(
                 "Added Nodes In Focused Cone",
                 nodes.get("added", []),
@@ -2517,6 +2518,242 @@ def _graph_panel(nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> st
 </section>""".strip()
 
 
+def _graph_diff_tree_visual_panel(report: dict[str, Any]) -> str:
+    nodes = report.get("nodes", {})
+    edges = report.get("edges", {})
+    if not isinstance(nodes, dict):
+        nodes = {}
+    if not isinstance(edges, dict):
+        edges = {}
+    status_by_node: dict[str, str] = {}
+    label_by_node: dict[str, str] = {}
+    for status in ("added", "removed"):
+        raw_nodes = nodes.get(status, [])
+        if not isinstance(raw_nodes, list):
+            continue
+        for raw_node in raw_nodes:
+            if not isinstance(raw_node, dict):
+                continue
+            node_id = str(raw_node.get("id") or "")
+            if not node_id:
+                continue
+            status_by_node[node_id] = status
+            label_by_node[node_id] = str(raw_node.get("name") or node_id)
+    changed_nodes = nodes.get("metadataChanged", [])
+    if isinstance(changed_nodes, list):
+        for raw_node in changed_nodes:
+            if not isinstance(raw_node, dict):
+                continue
+            node_id = str(raw_node.get("id") or "")
+            if node_id:
+                status_by_node[node_id] = "changed"
+                label_by_node.setdefault(node_id, node_id)
+    unchanged_nodes = nodes.get("unchanged", [])
+    if isinstance(unchanged_nodes, list):
+        for raw_node in unchanged_nodes:
+            node_id = str(raw_node)
+            status_by_node.setdefault(node_id, "unchanged")
+            label_by_node.setdefault(node_id, node_id)
+
+    edge_entries: list[tuple[str, dict[str, Any]]] = []
+    for status in ("removed", "unchanged", "added"):
+        raw_edges = edges.get(status, [])
+        if not isinstance(raw_edges, list):
+            continue
+        for edge in raw_edges:
+            if not isinstance(edge, dict):
+                continue
+            edge_entries.append((status, edge))
+            source = str(edge.get("source") or "")
+            target = str(edge.get("target") or "")
+            if source:
+                status_by_node.setdefault(source, "unchanged")
+                label_by_node.setdefault(source, source)
+            if target:
+                status_by_node.setdefault(target, "unchanged")
+                label_by_node.setdefault(target, target)
+
+    focus_nodes = {
+        str(value)
+        for value in (report.get("leftNode"), report.get("rightNode"))
+        if isinstance(value, str) and value
+    }
+    for node_id in focus_nodes:
+        status_by_node.setdefault(node_id, "unchanged")
+        label_by_node.setdefault(node_id, node_id)
+
+    visible_ids = _diff_tree_visible_node_ids(
+        status_by_node,
+        edge_entries,
+        focus_nodes,
+        direction=str(report.get("direction") or "dependencies"),
+    )
+    positions = _diff_tree_positions(visible_ids, edge_entries, focus_nodes, report)
+    visible_edges = [
+        (status, edge)
+        for status, edge in edge_entries[:128]
+        if str(edge.get("source") or "") in positions
+        and str(edge.get("target") or "") in positions
+    ]
+
+    edge_markup = []
+    for status, edge in visible_edges:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        x1, y1 = positions[source]
+        x2, y2 = positions[target]
+        edge_markup.append(
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" '
+            f'class="diff-edge diff-edge-{escape(status)}" />'
+        )
+
+    node_markup = []
+    for node_id in visible_ids:
+        if node_id not in positions:
+            continue
+        x, y = positions[node_id]
+        status = status_by_node.get(node_id, "unchanged")
+        focus_class = " diff-node-focus" if node_id in focus_nodes else ""
+        label = label_by_node.get(node_id, node_id)
+        short_label = label if len(label) <= 22 else f"{label[:19]}..."
+        node_markup.append(
+            f'<g class="diff-node diff-node-{escape(status)}{focus_class}">'
+            f"<title>{escape(node_id)}</title>"
+            f'<circle cx="{x}" cy="{y}" r="14" />'
+            f'<text x="{x}" y="{y + 31}">{escape(short_label)}</text>'
+            "</g>"
+        )
+
+    legend = _diff_tree_legend()
+    hidden_nodes = max(0, len(status_by_node) - len(visible_ids))
+    hidden_edges = max(0, len(edge_entries) - len(visible_edges))
+    budget_note = (
+        f"{hidden_nodes} nodes / {hidden_edges} edges outside preview"
+        if hidden_nodes or hidden_edges
+        else "complete focused cone preview"
+    )
+    return f"""
+<section class="panel" data-testid="graph-diff-tree-visual-panel" data-diff-tree-visual>
+  <div class="section-head">
+    <h2>Focused Graph Change</h2>
+    <span>{escape(budget_note)}</span>
+  </div>
+  <svg viewBox="0 0 760 420" role="img" aria-label="Focused graph difference preview">
+    <rect x="1" y="1" width="758" height="418" rx="8" class="svg-bg" />
+    {"".join(edge_markup)}
+    {"".join(node_markup)}
+  </svg>
+  {legend}
+</section>""".strip()
+
+
+def _diff_tree_visible_node_ids(
+    status_by_node: dict[str, str],
+    edge_entries: list[tuple[str, dict[str, Any]]],
+    focus_nodes: set[str],
+    *,
+    direction: str,
+) -> list[str]:
+    nodes = set(status_by_node)
+    adjacency: dict[str, list[str]] = {node_id: [] for node_id in nodes}
+    for _, edge in edge_entries:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if not source or not target:
+            continue
+        origin, neighbor = (source, target) if direction == "dependencies" else (target, source)
+        adjacency.setdefault(origin, []).append(neighbor)
+        adjacency.setdefault(neighbor, [])
+    starts = sorted(focus_nodes & nodes) or sorted(nodes)[:1]
+    ordered: list[str] = []
+    seen: set[str] = set()
+    queue: list[str] = starts[:]
+    while queue and len(ordered) < 64:
+        node_id = queue.pop(0)
+        if node_id in seen:
+            continue
+        seen.add(node_id)
+        ordered.append(node_id)
+        queue.extend(sorted(neighbor for neighbor in adjacency.get(node_id, []) if neighbor not in seen))
+    for node_id in sorted(nodes):
+        if len(ordered) >= 64:
+            break
+        if node_id not in seen:
+            ordered.append(node_id)
+            seen.add(node_id)
+    return ordered
+
+
+def _diff_tree_positions(
+    node_ids: list[str],
+    edge_entries: list[tuple[str, dict[str, Any]]],
+    focus_nodes: set[str],
+    report: dict[str, Any],
+) -> dict[str, tuple[int, int]]:
+    if not node_ids:
+        return {}
+    direction = str(report.get("direction") or "dependencies")
+    adjacency: dict[str, list[str]] = {node_id: [] for node_id in node_ids}
+    node_set = set(node_ids)
+    for _, edge in edge_entries:
+        source = str(edge.get("source") or "")
+        target = str(edge.get("target") or "")
+        if source not in node_set or target not in node_set:
+            continue
+        origin, neighbor = (source, target) if direction == "dependencies" else (target, source)
+        adjacency.setdefault(origin, []).append(neighbor)
+
+    distances: dict[str, int] = {}
+    queue: list[str] = []
+    for node_id in sorted(focus_nodes & node_set):
+        distances[node_id] = 0
+        queue.append(node_id)
+    if not queue:
+        distances[node_ids[0]] = 0
+        queue.append(node_ids[0])
+    while queue:
+        node_id = queue.pop(0)
+        for neighbor in sorted(adjacency.get(node_id, [])):
+            if neighbor in distances:
+                continue
+            distances[neighbor] = distances[node_id] + 1
+            queue.append(neighbor)
+    fallback_level = (max(distances.values()) if distances else 0) + 1
+    levels: dict[int, list[str]] = {}
+    for node_id in node_ids:
+        levels.setdefault(distances.get(node_id, fallback_level), []).append(node_id)
+
+    max_level = max(levels) if levels else 0
+    x_span = 600
+    x_start = 80
+    positions: dict[str, tuple[int, int]] = {}
+    for level, level_nodes in sorted(levels.items()):
+        x = x_start + round((x_span * level) / max(1, max_level))
+        count = len(level_nodes)
+        for index, node_id in enumerate(level_nodes):
+            y = 210 if count == 1 else 72 + round((276 * index) / max(1, count - 1))
+            positions[node_id] = (x, y)
+    return positions
+
+
+def _diff_tree_legend() -> str:
+    items = [
+        ("added", "Added"),
+        ("removed", "Removed"),
+        ("changed", "Metadata Changed"),
+        ("unchanged", "Unchanged"),
+        ("focus", "Selected Node"),
+    ]
+    rows = "".join(
+        '<li>'
+        f'<span class="diff-legend-swatch diff-legend-{escape(status)}"></span>'
+        f"<strong>{escape(label)}</strong>"
+        "</li>"
+        for status, label in items
+    )
+    return f'<ul class="diff-legend" aria-label="Graph diff legend">{rows}</ul>'
+
+
 def _edge_relationship_summary(edges: list[dict[str, Any]]) -> str:
     if not edges:
         return '<p class="empty">No edge relationships.</p>'
@@ -2920,6 +3157,45 @@ svg { width: 100%; height: auto; display: block; }
 .svg-bg { fill: #f8faf9; stroke: var(--line); }
 .edge { stroke: var(--blue); stroke-width: 2; opacity: .55; }
 circle { fill: var(--green); stroke: #ffffff; stroke-width: 3; }
+.diff-edge { stroke-width: 3; stroke-linecap: round; opacity: .78; }
+.diff-edge-added { stroke: #2e7d5b; }
+.diff-edge-removed { stroke: #b2413c; stroke-dasharray: 9 7; }
+.diff-edge-unchanged { stroke: #78909c; stroke-width: 2; opacity: .5; }
+.diff-node circle { stroke-width: 4; }
+.diff-node-added circle { fill: #2e7d5b; }
+.diff-node-removed circle { fill: #b2413c; }
+.diff-node-changed circle { fill: var(--amber); }
+.diff-node-unchanged circle { fill: #6f8793; }
+.diff-node-focus circle { stroke: var(--ink); stroke-width: 5; }
+.diff-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.diff-legend li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.diff-legend strong { font-size: 13px; }
+.diff-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.diff-legend-added { background: #2e7d5b; }
+.diff-legend-removed { background: #b2413c; }
+.diff-legend-changed { background: var(--amber); }
+.diff-legend-unchanged { background: #6f8793; }
+.diff-legend-focus { background: #ffffff; border: 3px solid var(--ink); }
 text {
   fill: var(--ink);
   font-size: 12px;
