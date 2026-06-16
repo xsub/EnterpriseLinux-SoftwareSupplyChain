@@ -75,6 +75,15 @@ from scripts.generate_failure_example_index import (
     build_failure_example_index,
 )
 
+DIFF_TREE_CHANGE_KINDS = (
+    "added",
+    "removed",
+    "metadataChange",
+    "replacement",
+    "upgrade",
+    "downgrade",
+)
+
 
 def _demo_registry() -> RegistryMock:
     return RegistryMock.from_mapping(
@@ -965,6 +974,23 @@ def _validation_report_should_fail_on_status(
         return False
     status = str(triage_summary.get("status", "pass")).lower()
     return _TRIAGE_STATUS_RANKS.get(status, 0) >= _TRIAGE_STATUS_RANKS[min_status]
+
+
+def _diff_tree_report_should_fail_on_kind(
+    report: dict[str, Any],
+    *,
+    fail_on_kind: Sequence[str] = (),
+) -> bool:
+    requested_kinds = set(fail_on_kind)
+    if not requested_kinds:
+        return False
+    classifications = report.get("classifications", [])
+    if not isinstance(classifications, list):
+        return False
+    return any(
+        isinstance(change, dict) and change.get("kind") in requested_kinds
+        for change in classifications
+    )
 
 
 def _bundle_license_report_should_fail(output_dir: Path) -> bool:
@@ -2738,6 +2764,16 @@ def build_parser() -> argparse.ArgumentParser:
         default="dependencies",
     )
     diff_tree.add_argument("--depth", type=int, default=3)
+    diff_tree.add_argument(
+        "--fail-on-kind",
+        action="append",
+        choices=DIFF_TREE_CHANGE_KINDS,
+        default=[],
+        help=(
+            "return status 2 when the focused diff includes this classified "
+            "change kind"
+        ),
+    )
 
     diff_tree_bundle = subparsers.add_parser(
         "diff-tree-bundle",
@@ -2755,6 +2791,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     diff_tree_bundle.add_argument("--depth", type=int, default=3)
     diff_tree_bundle.add_argument("--output-dir", type=Path, required=True)
+    diff_tree_bundle.add_argument(
+        "--fail-on-kind",
+        action="append",
+        choices=DIFF_TREE_CHANGE_KINDS,
+        default=[],
+        help=(
+            "return status 2 when the focused diff includes this classified "
+            "change kind"
+        ),
+    )
     _add_triage_bundle_option(diff_tree_bundle)
 
     impact = subparsers.add_parser("impact", help="Report reverse dependency impact")
@@ -3882,36 +3928,52 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "diff-tree":
         selector, left_selector, right_selector = _diff_tree_selector_args(args)
-        print(
-            diff_tree_snapshot_files(
-                args.left,
-                args.right,
-                selector=selector,
-                left_selector=left_selector,
-                right_selector=right_selector,
-                direction=args.direction,
-                depth=args.depth,
-            )
+        report_text = diff_tree_snapshot_files(
+            args.left,
+            args.right,
+            selector=selector,
+            left_selector=left_selector,
+            right_selector=right_selector,
+            direction=args.direction,
+            depth=args.depth,
         )
+        print(report_text)
+        report = json.loads(report_text)
+        if _diff_tree_report_should_fail_on_kind(
+            report,
+            fail_on_kind=args.fail_on_kind,
+        ):
+            return 2
         return 0
 
     if args.command == "diff-tree-bundle":
         selector, left_selector, right_selector = _diff_tree_selector_args(args)
-        return _print_bundle_result(
-            _write_graph_diff_tree_bundle(
-                args.left,
-                args.right,
-                args.output_dir,
-                selector=selector,
-                left_selector=left_selector,
-                right_selector=right_selector,
-                direction=args.direction,
-                depth=args.depth,
-                command=command,
-                include_triage_summary=_include_triage_summary(args),
-            ),
+        index_path = _write_graph_diff_tree_bundle(
+            args.left,
+            args.right,
+            args.output_dir,
+            selector=selector,
+            left_selector=left_selector,
+            right_selector=right_selector,
+            direction=args.direction,
+            depth=args.depth,
+            command=command,
+            include_triage_summary=_include_triage_summary(args),
+        )
+        result = _print_bundle_result(
+            index_path,
             fail_on_status=args.fail_on_status,
         )
+        if result != 0:
+            return result
+        report_path = args.output_dir / "graph-diff-tree.json"
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        if _diff_tree_report_should_fail_on_kind(
+            report,
+            fail_on_kind=args.fail_on_kind,
+        ):
+            return 2
+        return 0
 
     if args.command == "impact":
         root_identifier, graph, resolved_ecosystem = _load_source_project_graph(

@@ -188,6 +188,55 @@ def test_cli_diff_tree_accepts_explicit_left_right_selectors(capsys) -> None:
     ]
 
 
+def test_cli_diff_tree_can_fail_on_classified_change_kind(capsys) -> None:
+    assert (
+        main(
+            [
+                "diff-tree",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["summary"]["upgradeChanges"] == 1
+    assert any(change["kind"] == "upgrade" for change in payload["classifications"])
+
+
+def test_cli_diff_tree_does_not_fail_on_absent_classified_change_kind(capsys) -> None:
+    assert (
+        main(
+            [
+                "diff-tree",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--fail-on-kind",
+                "downgrade",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["summary"]["downgradeChanges"] == 0
+
+
 def test_cli_diff_tree_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     output_dir = tmp_path / "graph-diff-tree-bundle"
 
@@ -213,7 +262,9 @@ def test_cli_diff_tree_bundle_writes_report_bundle(tmp_path, capsys) -> None:
 
     assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
-    report = json.loads((output_dir / "graph-diff-tree.json").read_text(encoding="utf-8"))
+    report = json.loads(
+        (output_dir / "graph-diff-tree.json").read_text(encoding="utf-8")
+    )
     html = (output_dir / "001-graph-diff-tree.html").read_text(encoding="utf-8")
 
     assert manifest["bundle"]["sourceKind"] == "graph-diff-tree"
@@ -222,6 +273,45 @@ def test_cli_diff_tree_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert report["summary"]["addedEdges"] == 2
     assert 'data-testid="graph-diff-tree-added-edges-panel"' in html
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True
+
+
+def test_cli_diff_tree_bundle_can_fail_after_writing_bundle(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "graph-diff-tree-failing-bundle"
+
+    assert (
+        main(
+            [
+                "diff-tree-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    report = json.loads(
+        (output_dir / "graph-diff-tree.json").read_text(encoding="utf-8")
+    )
+
+    assert output_dir.joinpath("index.html").exists()
+    assert report["summary"]["upgradeChanges"] == 1
+    assert any(change["kind"] == "upgrade" for change in report["classifications"])
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)

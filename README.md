@@ -177,8 +177,14 @@ edgp diff --left before.json --right after.json
 edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --triage-summary
 edgp diff-tree --left before.json --right after.json --node openssl --direction dependencies --depth 4
 edgp diff-tree --left before.json --right after.json --left-node openssl==3.0.7 --right-node openssl==3.0.8 --direction dependencies --depth 4
+edgp diff-tree --left before.json --right after.json --node openssl --fail-on-kind downgrade --fail-on-kind replacement
 edgp diff-tree-bundle --left before.json --right after.json --node openssl --direction dependents --depth 4 --output-dir reports/openssl-impact-diff --triage-summary
 ```
+
+Focused diff-tree commands classify changes as additions, removals, metadata changes,
+replacements, upgrades, or downgrades. Use `--fail-on-kind` to keep the JSON or
+static bundle on disk while returning status `2` when selected change classes are
+present, which makes snapshot-to-snapshot graph drift usable in CI gates.
 
 ### Reports And Bundles
 
