@@ -327,6 +327,13 @@ def _format_validation_report(report: dict[str, Any]) -> str:
         triage_status = triage_summary.get("status")
         if isinstance(triage_status, str) and triage_status:
             parts.append(f"triageStatus={triage_status}")
+        summary = triage_summary.get("summary", {})
+        if isinstance(summary, dict):
+            diff_tree_policy_failures = int(
+                summary.get("diffTreePolicyFailures", 0) or 0
+            )
+            if diff_tree_policy_failures:
+                parts.append(f"diffTreePolicyFailures={diff_tree_policy_failures}")
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]

@@ -1287,6 +1287,45 @@ def test_cli_validate_can_fail_on_bundle_triage_status(tmp_path, capsys) -> None
     )
 
 
+def test_cli_validate_text_reports_diff_tree_policy_failures(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "diff-tree-bundle"
+
+    assert (
+        main(
+            [
+                "diff-tree-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+    capsys.readouterr()
+
+    assert main(["validate", "--path", str(output_dir), "--format", "text"]) == 0
+    validation_text = capsys.readouterr().out.strip()
+
+    assert validation_text == (
+        "OK targetType=report-bundle failures=0 "
+        "contract=edgp.report.bundle.v1 triageStatus=fail "
+        "diffTreePolicyFailures=1"
+    )
+
+
 def _normalize_verification_report(payload: dict[str, object]) -> dict[str, object]:
     normalized = dict(payload)
     bundle_dir = str(normalized.get("bundleDir", ""))
