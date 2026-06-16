@@ -40,6 +40,7 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
         "failedBundles": 0,
         "reports": 2,
         "failures": 0,
+        "graphDiffPolicyFailures": 0,
         "diffTreePolicyFailures": 0,
         "triagePass": 0,
         "triageWarn": 1,
@@ -52,6 +53,7 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "bundles": 1,
             "reports": 1,
             "failures": 0,
+            "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 0,
@@ -63,6 +65,7 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "bundles": 1,
             "reports": 1,
             "failures": 0,
+            "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 1,
@@ -72,8 +75,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
     ]
     assert report["bundles"][0]["reportSchemas"] == ["edgp.graph.snapshot.v1"]
     assert report["bundles"][0]["inputType"] == "directory"
+    assert report["bundles"][0]["graphDiffPolicyFailures"] == 0
     assert report["bundles"][0]["diffTreePolicyFailures"] == 0
     assert report["bundles"][1]["triageStatus"] == "warn"
+    assert report["bundles"][1]["graphDiffPolicyFailures"] == 0
     assert report["bundles"][1]["diffTreePolicyFailures"] == 0
     assert report["bundles"][1]["bundleSha256"]
 
@@ -218,7 +223,56 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
             "bundles": 1,
             "reports": 1,
             "failures": 0,
+            "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 1,
+            "triagePass": 0,
+            "triageWarn": 0,
+            "triageFail": 1,
+            "withoutTriage": 0,
+        }
+    ]
+
+
+def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
+    tmp_path,
+) -> None:
+    diff_report = json.loads(
+        Path("tests/fixtures/graph-diff.json").read_text(encoding="utf-8")
+    )
+    diff_report["policy"] = {
+        "exitCode": 2,
+        "failOnChange": ["added-node"],
+        "matchedChanges": ["added-node"],
+        "status": "fail",
+    }
+    diff_path = tmp_path / "graph-diff.json"
+    diff_path.write_text(json.dumps(diff_report), encoding="utf-8")
+    diff_bundle = tmp_path / "diff-bundle"
+    write_report_bundle(
+        [diff_path],
+        diff_bundle,
+        bundle_metadata={
+            "sourceKind": "graph-diff",
+            "command": "edgp diff-bundle --fail-on-change added-node",
+        },
+        include_triage_summary=True,
+    )
+
+    report = build_bundle_catalog_report([diff_bundle])
+
+    assert report["status"] == "fail"
+    assert report["summary"]["triageFail"] == 1
+    assert report["summary"]["graphDiffPolicyFailures"] == 1
+    assert report["summary"]["diffTreePolicyFailures"] == 0
+    assert report["bundles"][0]["graphDiffPolicyFailures"] == 1
+    assert report["sourceKinds"] == [
+        {
+            "sourceKind": "graph-diff",
+            "bundles": 1,
+            "reports": 1,
+            "failures": 0,
+            "graphDiffPolicyFailures": 1,
+            "diffTreePolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 1,

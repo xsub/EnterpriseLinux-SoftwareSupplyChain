@@ -189,6 +189,57 @@ def test_cli_triage_summary_warn_threshold(capsys) -> None:
     assert json.loads(capsys.readouterr().out)["status"] == "warn"
 
 
+def test_triage_summary_fails_on_graph_diff_policy_gate(tmp_path, capsys) -> None:
+    diff_path = tmp_path / "graph-diff-policy.json"
+
+    assert (
+        main(
+            [
+                "diff",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--fail-on-change",
+                "added-node",
+            ]
+        )
+        == 2
+    )
+    diff_path.write_text(capsys.readouterr().out, encoding="utf-8")
+
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                str(diff_path),
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["status"] == "fail"
+    assert payload["summary"]["graphDiffReports"] == 1
+    assert payload["summary"]["graphDiffPolicyFailures"] == 1
+    assert payload["summary"]["failedChecks"] == 1
+    assert payload["checks"] == [
+        {
+            "kind": "graph-diff-policy",
+            "status": "fail",
+            "failOnChange": ["added-node"],
+            "matchedChanges": ["added-node"],
+            "exitCode": 2,
+        }
+    ]
+    assert payload["topFindings"]["graphDiffPolicies"][0]["matchedChanges"] == [
+        "added-node"
+    ]
+
+
 def test_triage_summary_fails_on_diff_tree_policy_gate(tmp_path, capsys) -> None:
     diff_tree_path = tmp_path / "graph-diff-tree-policy.json"
 
@@ -300,6 +351,7 @@ def test_triage_summary_includes_bundle_catalog_failures() -> None:
             "status": "fail",
             "failedBundles": 1,
             "failures": 1,
+            "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
             "triageWarn": 1,
             "triageFail": 0,
@@ -334,6 +386,7 @@ def test_triage_summary_rolls_up_catalog_diff_tree_policy_failures(tmp_path) -> 
             "status": "fail",
             "failedBundles": 0,
             "failures": 0,
+            "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 1,
             "triageWarn": 0,
             "triageFail": 1,

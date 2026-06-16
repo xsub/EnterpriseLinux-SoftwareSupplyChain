@@ -72,6 +72,8 @@
     "diffTreeReports": 0,
     "edges": 2,
     "failedChecks": 2,
+    "graphDiffPolicyFailures": 0,
+    "graphDiffReports": 0,
     "graphSnapshots": 1,
     "impactReports": 0,
     "licenseReports": 1,
@@ -93,6 +95,7 @@
       }
     ],
     "bundleCatalog": [],
+    "graphDiffPolicies": [],
     "diffTreePolicies": [],
     "licenses": [
       {

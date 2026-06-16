@@ -234,7 +234,8 @@ edgp report --input validation.json --output validation.html
 
 For deterministic bundle archives, validation text preserves the same triage
 gate fields as directory bundles, including `triageStatus=...` and
-`diffTreePolicyFailures=...` for focused snapshot-diff policy failures.
+`graphDiffPolicyFailures=...` or `diffTreePolicyFailures=...` for
+snapshot-diff policy failures.
 
 ### Benchmark
 
@@ -886,13 +887,13 @@ same read-only entrypoint and appear as `targetType=report-bundle-archive`.
 For bundles that already contain `manifest.triageSummary`, `validate
 --fail-on-status warn|fail` also gates on the generated triage status while
 leaving validation itself read-only. Text output includes `triageStatus=...`
-and `diffTreePolicyFailures=...` when present for bundle directories and
-deterministic bundle archives that embed that summary, which keeps CI logs
-readable even when the JSON report is archived.
+and graph-diff or diff-tree policy failure counters when present for bundle
+directories and deterministic bundle archives that embed that summary, which
+keeps CI logs readable even when the JSON report is archived.
 For standalone EDGP JSON reports with top-level `status` and `summary`, such as
 `edgp.bundle.catalog.v1`, validation also preserves `reportStatus=...` and
-`diffTreePolicyFailures=...` in text output, and `--fail-on-status warn|fail`
-gates on that copied report status.
+snapshot-diff policy failure counters in text output, and
+`--fail-on-status warn|fail` gates on that copied report status.
 Validation reports also render through `edgp report`, so CI gate output can be
 reviewed as static HTML with target details, failures, nested verifier state,
 and triage status when present. The validation triage panel breaks out failed
@@ -1046,17 +1047,20 @@ With `--triage-summary`, `report-bundle` also writes `triage-summary.json` and
 `triage-summary.html`, links the rollup from the bundle index, and records both
 artifact digests in `manifest.triageSummary` without adding the generated
 summary back into the input `reports` list. The bundle index triage card shows
-diff-tree policy failures beside advisory, license, and npm counts.
+graph-diff and diff-tree policy failures beside advisory, license, and npm
+counts.
 `--fail-on-status warn|fail` applies the same artifact-preserving gate directly
 to `report-bundle`.
 
 `edgp bundle-catalog` verifies multiple existing report bundle directories or
 deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
 with bundle paths, input type, source kinds, report schemas, triage status,
-diff-tree policy failure counts, failure codes, and bundle fingerprints.
+graph-diff and diff-tree policy failure counts, failure codes, and bundle
+fingerprints.
 Source-kind rows include triage pass/warn/fail counts plus
-`diffTreePolicyFailures`, so large evidence batches can show which input family
-contributed failed snapshot-drift policy gates. The top-level `status` is
+`graphDiffPolicyFailures` and `diffTreePolicyFailures`, so large evidence
+batches can show which input family contributed failed snapshot-drift policy
+gates. The top-level `status` is
 `pass`, `warn`, or `fail` so CI and workbench views do not need to infer the
 catalog verdict from several counters. The catalog can itself be
 rendered as a static, verifiable bundle, and `--archive-output` writes that
@@ -1064,18 +1068,18 @@ generated catalog bundle as a deterministic `.tar.gz` in the same pass. This
 gives CI systems and future workbench/RAG ingestion one compact index, plus one
 portable handoff archive, over a batch of public-input evidence bundles.
 Use `--format text` when the CI log should show the catalog's bundle counts,
-`catalogStatus`, triage status, and diff-tree policy failure count directly
-beside the generated index path.
+`catalogStatus`, triage status, and snapshot-diff policy failure counts
+directly beside the generated index path.
 
 `edgp triage-summary` turns a report bundle directory, a deterministic report
 bundle archive, or a list of EDGP JSON reports into one
 `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status, graph
 size, advisory findings, denied license findings, npm diagnostic signals,
-diff-tree policy gate failures, bundle-catalog integrity and underlying triage
-status, and the source report list so CI systems and workbench/RAG contexts can
-read one compact artifact instead of stitching together every report manually.
-Rendered triage-summary HTML includes a dedicated diff-tree policy findings
-panel when focused graph-drift gates fail.
+graph-diff and diff-tree policy gate failures, bundle-catalog integrity and
+underlying triage status, and the source report list so CI systems and
+workbench/RAG contexts can read one compact artifact instead of stitching
+together every report manually. Rendered triage-summary HTML includes dedicated
+graph-diff and diff-tree policy findings panels when graph-drift gates fail.
 `--fail-on-status warn|fail` still prints the JSON rollup and returns status `2`
 when the computed status reaches the selected threshold.
 

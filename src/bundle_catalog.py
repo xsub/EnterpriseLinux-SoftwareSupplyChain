@@ -129,6 +129,9 @@ def _catalog_entry(
         "failureCodes": failure_codes,
         "reportSchemas": _report_schemas(reports),
         "triageStatus": str(triage_summary.get("status") or "unknown"),
+        "graphDiffPolicyFailures": int(
+            triage_summary.get("graphDiffPolicyFailures", 0) or 0
+        ),
         "diffTreePolicyFailures": int(
             triage_summary.get("diffTreePolicyFailures", 0) or 0
         ),
@@ -195,15 +198,26 @@ def _triage_summary(
         triage_summary = {}
     source = triage_summary.get("source")
     if not isinstance(source, str) or not source:
-        return {"status": "not-present", "diffTreePolicyFailures": 0}
+        return {
+            "status": "not-present",
+            "graphDiffPolicyFailures": 0,
+            "diffTreePolicyFailures": 0,
+        }
     payload = load_member(source)
     if not isinstance(payload, dict):
-        return {"status": "unreadable", "diffTreePolicyFailures": 0}
+        return {
+            "status": "unreadable",
+            "graphDiffPolicyFailures": 0,
+            "diffTreePolicyFailures": 0,
+        }
     summary = payload.get("summary")
     if not isinstance(summary, dict):
         summary = {}
     return {
         "status": str(payload.get("status") or "unknown"),
+        "graphDiffPolicyFailures": int(
+            summary.get("graphDiffPolicyFailures", 0) or 0
+        ),
         "diffTreePolicyFailures": int(
             summary.get("diffTreePolicyFailures", 0) or 0
         ),
@@ -235,6 +249,9 @@ def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "triageWarn": triage_counts.get("warn", 0),
         "triageFail": triage_counts.get("fail", 0),
         "withoutTriage": triage_counts.get("not-present", 0),
+        "graphDiffPolicyFailures": sum(
+            int(entry.get("graphDiffPolicyFailures", 0) or 0) for entry in entries
+        ),
         "diffTreePolicyFailures": sum(
             int(entry.get("diffTreePolicyFailures", 0) or 0) for entry in entries
         ),
@@ -246,6 +263,7 @@ def _status(summary: dict[str, Any]) -> str:
         int(summary.get("failedBundles", 0) or 0)
         or int(summary.get("failures", 0) or 0)
         or int(summary.get("triageFail", 0) or 0)
+        or int(summary.get("graphDiffPolicyFailures", 0) or 0)
         or int(summary.get("diffTreePolicyFailures", 0) or 0)
     ):
         return "fail"
@@ -269,6 +287,7 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "triageWarn": 0,
                 "triageFail": 0,
                 "withoutTriage": 0,
+                "graphDiffPolicyFailures": 0,
                 "diffTreePolicyFailures": 0,
             },
         )
@@ -284,6 +303,9 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
             row["triageFail"] += 1
         elif triage_status == "not-present":
             row["withoutTriage"] += 1
+        row["graphDiffPolicyFailures"] += int(
+            entry.get("graphDiffPolicyFailures", 0) or 0
+        )
         row["diffTreePolicyFailures"] += int(
             entry.get("diffTreePolicyFailures", 0) or 0
         )

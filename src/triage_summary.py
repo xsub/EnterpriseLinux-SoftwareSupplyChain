@@ -24,6 +24,7 @@ def build_triage_summary_report(
     license_findings = []
     npm_findings = []
     bundle_catalog_findings = []
+    diff_policy_findings = []
     diff_tree_policy_findings = []
 
     for report in reports:
@@ -47,6 +48,11 @@ def build_triage_summary_report(
             license_findings.extend(_license_findings(report))
         elif schema == "edgp.npm.diagnostics.v1":
             npm_findings.extend(_npm_findings(report, summary))
+        elif schema == "edgp.graph.diff.v1":
+            policy_check = _diff_policy_check(report)
+            if policy_check is not None:
+                checks.append(policy_check)
+                diff_policy_findings.extend(_diff_policy_findings(report))
         elif schema == "edgp.graph.diff_tree.v1":
             policy_check = _diff_tree_policy_check(report)
             if policy_check is not None:
@@ -72,6 +78,7 @@ def build_triage_summary_report(
             "licenses": license_findings[:10],
             "npm": npm_findings[:10],
             "bundleCatalog": bundle_catalog_findings[:10],
+            "graphDiffPolicies": diff_policy_findings[:10],
             "diffTreePolicies": diff_tree_policy_findings[:10],
         },
         "reports": report_entries,
@@ -294,6 +301,8 @@ def _summary(report: dict[str, Any]) -> dict[str, Any]:
     summary = report.get("summary")
     if isinstance(summary, dict):
         payload_summary = dict(summary)
+        if report.get("schema") == "edgp.graph.diff.v1":
+            payload_summary["policyFailures"] = _diff_policy_failure_count(report)
         if report.get("schema") == "edgp.graph.diff_tree.v1":
             payload_summary["policyFailures"] = _diff_tree_policy_failure_count(report)
         return payload_summary
@@ -318,6 +327,8 @@ def _empty_rollup() -> dict[str, int]:
         "npmDuplicatePackageNames": 0,
         "npmNestedResolutionConflicts": 0,
         "npmUnresolvedDependencies": 0,
+        "graphDiffReports": 0,
+        "graphDiffPolicyFailures": 0,
         "diffTreeReports": 0,
         "diffTreePolicyFailures": 0,
         "bundleCatalogReports": 0,
@@ -358,6 +369,11 @@ def _accumulate_summary(
         rollup["npmUnresolvedDependencies"] += int(
             summary.get("unresolvedDependencies", 0)
         )
+    elif schema == "edgp.graph.diff.v1":
+        rollup["graphDiffReports"] += 1
+        rollup["graphDiffPolicyFailures"] += int(
+            summary.get("policyFailures", 0)
+        )
     elif schema == "edgp.graph.diff_tree.v1":
         rollup["diffTreeReports"] += 1
         rollup["diffTreePolicyFailures"] += int(
@@ -368,6 +384,9 @@ def _accumulate_summary(
         rollup["catalogBundles"] += int(summary.get("bundles", 0))
         rollup["catalogFailedBundles"] += int(summary.get("failedBundles", 0))
         rollup["catalogFailures"] += int(summary.get("failures", 0))
+        rollup["graphDiffPolicyFailures"] += int(
+            summary.get("graphDiffPolicyFailures", 0)
+        )
         rollup["diffTreePolicyFailures"] += int(
             summary.get("diffTreePolicyFailures", 0)
         )
@@ -398,11 +417,29 @@ def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
         "status": status,
         "failedBundles": failed_bundles,
         "failures": failures,
+        "graphDiffPolicyFailures": int(
+            summary.get("graphDiffPolicyFailures", 0) or 0
+        ),
         "diffTreePolicyFailures": int(
             summary.get("diffTreePolicyFailures", 0) or 0
         ),
         "triageWarn": triage_warn,
         "triageFail": triage_fail,
+    }
+
+
+def _diff_policy_check(report: dict[str, Any]) -> dict[str, Any] | None:
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        return None
+    status = str(policy.get("status") or "pass")
+    matched_changes = _string_list(policy.get("matchedChanges"))
+    return {
+        "kind": "graph-diff-policy",
+        "status": "fail" if status == "fail" else "pass",
+        "failOnChange": _string_list(policy.get("failOnChange")),
+        "matchedChanges": matched_changes,
+        "exitCode": int(policy.get("exitCode", 0) or 0),
     }
 
 
@@ -421,6 +458,13 @@ def _diff_tree_policy_check(report: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def _diff_policy_failure_count(report: dict[str, Any]) -> int:
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        return 0
+    return 1 if policy.get("status") == "fail" else 0
+
+
 def _diff_tree_policy_failure_count(report: dict[str, Any]) -> int:
     policy = report.get("policy")
     if not isinstance(policy, dict):
@@ -432,6 +476,7 @@ def _status(rollup: dict[str, int]) -> str:
     if (
         rollup["advisoryFindings"]
         or rollup["deniedLicenseFindings"]
+        or rollup["graphDiffPolicyFailures"]
         or rollup["diffTreePolicyFailures"]
         or rollup["catalogFailedBundles"]
         or rollup["catalogFailures"]
@@ -447,6 +492,21 @@ def _status(rollup: dict[str, int]) -> str:
     ):
         return "warn"
     return "pass"
+
+
+def _diff_policy_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
+    policy = report.get("policy")
+    if not isinstance(policy, dict) or policy.get("status") != "fail":
+        return []
+    return [
+        {
+            "leftRoot": report.get("leftRoot"),
+            "rightRoot": report.get("rightRoot"),
+            "failOnChange": _string_list(policy.get("failOnChange")),
+            "matchedChanges": _string_list(policy.get("matchedChanges")),
+            "exitCode": int(policy.get("exitCode", 0) or 0),
+        }
+    ]
 
 
 def _diff_tree_policy_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
@@ -544,6 +604,7 @@ def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "failureCount": bundle.get("failureCount"),
                 "failureCodes": bundle.get("failureCodes", []),
                 "triageStatus": bundle.get("triageStatus"),
+                "graphDiffPolicyFailures": bundle.get("graphDiffPolicyFailures", 0),
                 "diffTreePolicyFailures": bundle.get("diffTreePolicyFailures", 0),
             }
         )

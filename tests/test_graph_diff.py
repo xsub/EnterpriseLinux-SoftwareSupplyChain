@@ -209,6 +209,9 @@ def test_cli_diff_bundle_can_fail_after_writing_bundle(tmp_path, capsys) -> None
 
     assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
     report = json.loads((output_dir / "graph-diff.json").read_text(encoding="utf-8"))
+    triage = json.loads(
+        (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+    )
 
     assert output_dir.joinpath("index.html").exists()
     assert report["policy"] == {
@@ -218,10 +221,21 @@ def test_cli_diff_bundle_can_fail_after_writing_bundle(tmp_path, capsys) -> None
         "status": "fail",
     }
     assert report["summary"]["removedEdges"] == 1
+    assert triage["status"] == "fail"
+    assert triage["summary"]["graphDiffPolicyFailures"] == 1
+    assert triage["checks"][0]["kind"] == "graph-diff-policy"
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)
     assert verification["ok"] is True
+
+    assert main(["validate", "--path", str(output_dir), "--format", "text"]) == 0
+    validation_text = capsys.readouterr().out.strip()
+    assert validation_text == (
+        "OK targetType=report-bundle failures=0 "
+        "contract=edgp.report.bundle.v1 triageStatus=fail "
+        "graphDiffPolicyFailures=1"
+    )
 
 
 def test_cli_diff_tree_accepts_explicit_left_right_selectors(capsys) -> None:

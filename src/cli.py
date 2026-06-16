@@ -335,11 +335,7 @@ def _format_validation_report(report: dict[str, Any]) -> str:
         parts.append(f"reportStatus={report_status}")
     report_summary = report.get("reportSummary")
     if isinstance(report_summary, dict):
-        diff_tree_policy_failures = int(
-            report_summary.get("diffTreePolicyFailures", 0) or 0
-        )
-        if diff_tree_policy_failures:
-            parts.append(f"diffTreePolicyFailures={diff_tree_policy_failures}")
+        parts.extend(_policy_failure_text_parts(report_summary))
     triage_summary = report.get("triageSummary")
     if isinstance(triage_summary, dict):
         triage_status = triage_summary.get("status")
@@ -347,17 +343,26 @@ def _format_validation_report(report: dict[str, Any]) -> str:
             parts.append(f"triageStatus={triage_status}")
         summary = triage_summary.get("summary", {})
         if isinstance(summary, dict):
-            diff_tree_policy_failures = int(
-                summary.get("diffTreePolicyFailures", 0) or 0
-            )
-            if diff_tree_policy_failures:
-                parts.append(f"diffTreePolicyFailures={diff_tree_policy_failures}")
+            parts.extend(_policy_failure_text_parts(summary))
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
         if isinstance(first_failure, dict):
             parts.append(f"firstFailure={first_failure.get('code', 'unknown')}")
     return " ".join(parts)
+
+
+def _policy_failure_text_parts(summary: dict[str, Any]) -> list[str]:
+    graph_diff_policy_failures = int(
+        summary.get("graphDiffPolicyFailures", 0) or 0
+    )
+    diff_tree_policy_failures = int(summary.get("diffTreePolicyFailures", 0) or 0)
+    parts = []
+    if graph_diff_policy_failures:
+        parts.append(f"graphDiffPolicyFailures={graph_diff_policy_failures}")
+    if diff_tree_policy_failures:
+        parts.append(f"diffTreePolicyFailures={diff_tree_policy_failures}")
+    return parts
 
 
 def _format_failure_example_index(index: dict[str, Any]) -> str:
@@ -1002,9 +1007,8 @@ def _format_bundle_catalog_result(index_path: Path) -> str:
         f"failures={int(summary.get('failures', 0) or 0)}",
         f"triageWarn={int(summary.get('triageWarn', 0) or 0)}",
         f"triageFail={int(summary.get('triageFail', 0) or 0)}",
-        "diffTreePolicyFailures="
-        f"{int(summary.get('diffTreePolicyFailures', 0) or 0)}",
     ]
+    parts.extend(_policy_failure_text_parts(summary))
     triage = _load_optional_json(index_path.parent / "triage-summary.json")
     if isinstance(triage, dict):
         triage_status = triage.get("status")

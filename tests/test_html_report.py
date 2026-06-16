@@ -171,10 +171,18 @@ def test_render_report_supports_albs_build_timing_json() -> None:
 
 def test_render_report_supports_graph_diff_json() -> None:
     report = json.loads(Path("tests/fixtures/graph-diff.json").read_text())
+    report["policy"] = {
+        "exitCode": 2,
+        "failOnChange": ["added-node"],
+        "matchedChanges": ["added-node"],
+        "status": "fail",
+    }
 
     html = render_report(report)
 
     assert "EDGP Graph Diff" in html
+    assert 'data-testid="graph-diff-policy-panel"' in html
+    assert "Graph Diff Policy" in html
     assert 'data-testid="graph-diff-added-nodes-panel"' in html
     assert 'data-testid="graph-diff-added-edges-panel"' in html
     assert "core==1.0.0" in html
@@ -233,9 +241,19 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "htmlDigestMismatch" in html
 
 
-def test_render_report_supports_triage_diff_tree_policy_findings() -> None:
+def test_render_report_supports_triage_diff_policy_findings() -> None:
     report = json.loads(Path("tests/fixtures/triage-summary.json").read_text())
+    report["summary"]["graphDiffPolicyFailures"] = 1
     report["summary"]["diffTreePolicyFailures"] = 1
+    report["checks"].append(
+        {
+            "kind": "graph-diff-policy",
+            "status": "fail",
+            "failOnChange": ["added-node"],
+            "matchedChanges": ["added-node"],
+            "exitCode": 2,
+        }
+    )
     report["checks"].append(
         {
             "kind": "diff-tree-policy",
@@ -255,9 +273,20 @@ def test_render_report_supports_triage_diff_tree_policy_findings() -> None:
             "exitCode": 2,
         }
     ]
+    report["topFindings"]["graphDiffPolicies"] = [
+        {
+            "leftRoot": "app==1.0.0",
+            "rightRoot": "app==1.0.0",
+            "failOnChange": ["added-node"],
+            "matchedChanges": ["added-node"],
+            "exitCode": 2,
+        }
+    ]
 
     html = render_report(report)
 
+    assert 'data-testid="triage-graph-diff-policy-panel"' in html
+    assert "Graph Diff Policy Findings" in html
     assert 'data-testid="triage-diff-tree-policy-panel"' in html
     assert "Diff Tree Policy Findings" in html
     assert "upgrade" in html

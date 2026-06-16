@@ -140,12 +140,15 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
     nodes = report.get("nodes", {})
     edges = report.get("edges", {})
     classifications = report.get("classifications", [])
+    policy = report.get("policy")
     if not isinstance(nodes, dict):
         nodes = {}
     if not isinstance(edges, dict):
         edges = {}
     if not isinstance(classifications, list):
         classifications = []
+    if not isinstance(policy, dict):
+        policy = {}
     heading = f"{report.get('leftRoot') or 'left'} -> {report.get('rightRoot') or 'right'}"
     return _document(
         "EDGP Graph Diff",
@@ -165,6 +168,7 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
                     ),
                 ],
             ),
+            _graph_diff_policy_panel(policy),
             _package_list_panel(
                 "Added Nodes",
                 nodes.get("added", []),
@@ -194,6 +198,17 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
             ),
         ],
         scripts=[_table_sort_script()],
+    )
+
+
+def _graph_diff_policy_panel(policy: dict[str, Any]) -> str:
+    if not policy:
+        return ""
+    return _rows_panel(
+        "Graph Diff Policy",
+        [policy],
+        ["status", "exitCode", "failOnChange", "matchedChanges"],
+        test_id="graph-diff-policy-panel",
     )
 
 
@@ -883,6 +898,7 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                     "sourceKind",
                     "reportCount",
                     "triageStatus",
+                    "graphDiffPolicyFailures",
                     "diffTreePolicyFailures",
                     "failureCount",
                     "failureCodes",
@@ -899,6 +915,7 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                     "bundles",
                     "reports",
                     "failures",
+                    "graphDiffPolicyFailures",
                     "diffTreePolicyFailures",
                     "triagePass",
                     "triageWarn",
@@ -962,6 +979,7 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
     top_findings = top_findings if isinstance(top_findings, dict) else {}
     npm_findings = top_findings.get("npm", [])
     bundle_catalog_findings = top_findings.get("bundleCatalog", [])
+    diff_policy_findings = top_findings.get("graphDiffPolicies", [])
     diff_tree_policy_findings = top_findings.get("diffTreePolicies", [])
     return _document(
         "EDGP Triage Summary",
@@ -974,6 +992,10 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                     ("Reports", summary.get("reports", 0)),
                     ("Advisories", summary.get("advisoryFindings", 0)),
                     ("Denied Licenses", summary.get("deniedLicenseFindings", 0)),
+                    (
+                        "Graph Diff Policies",
+                        summary.get("graphDiffPolicyFailures", 0),
+                    ),
                     (
                         "Diff Tree Policies",
                         summary.get("diffTreePolicyFailures", 0),
@@ -988,6 +1010,8 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                     "status",
                     "findings",
                     "deniedFindings",
+                    "failOnChange",
+                    "matchedChanges",
                     "failOnKind",
                     "matchedKinds",
                     "exitCode",
@@ -1021,9 +1045,23 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                     "ok",
                     "failureCount",
                     "triageStatus",
+                    "graphDiffPolicyFailures",
+                    "diffTreePolicyFailures",
                     "failureCodes",
                 ],
                 test_id="triage-bundle-catalog-panel",
+            ),
+            _rows_panel(
+                "Graph Diff Policy Findings",
+                diff_policy_findings,
+                [
+                    "leftRoot",
+                    "rightRoot",
+                    "failOnChange",
+                    "matchedChanges",
+                    "exitCode",
+                ],
+                test_id="triage-graph-diff-policy-panel",
             ),
             _rows_panel(
                 "Diff Tree Policy Findings",
