@@ -49,6 +49,29 @@ def test_diff_tree_snapshot_files_reports_focused_dependency_cone_changes() -> N
     assert [node["id"] for node in payload["nodes"]["removed"]] == ["lib==1.0.0"]
 
 
+def test_diff_tree_snapshot_files_supports_explicit_left_right_selectors() -> None:
+    payload = json.loads(
+        diff_tree_snapshot_files(
+            Path("tests/fixtures/snapshot-left.json"),
+            Path("tests/fixtures/snapshot-right.json"),
+            left_selector="lib==1.0.0",
+            right_selector="lib==2.0.0",
+            depth=1,
+        )
+    )
+
+    assert payload["selector"] == "lib==1.0.0 -> lib==2.0.0"
+    assert payload["leftSelector"] == "lib==1.0.0"
+    assert payload["rightSelector"] == "lib==2.0.0"
+    assert payload["leftNode"] == "lib==1.0.0"
+    assert payload["rightNode"] == "lib==2.0.0"
+    assert [node["id"] for node in payload["nodes"]["added"]] == [
+        "core==1.0.0",
+        "lib==2.0.0",
+    ]
+    assert [node["id"] for node in payload["nodes"]["removed"]] == ["lib==1.0.0"]
+
+
 def test_cli_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     output_dir = tmp_path / "graph-diff-bundle"
 
@@ -83,6 +106,32 @@ def test_cli_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)
     assert verification["ok"] is True
+
+
+def test_cli_diff_tree_accepts_explicit_left_right_selectors(capsys) -> None:
+    assert (
+        main(
+            [
+                "diff-tree",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--left-node",
+                "lib==1.0.0",
+                "--right-node",
+                "lib==2.0.0",
+                "--depth",
+                "1",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["leftNode"] == "lib==1.0.0"
+    assert payload["rightNode"] == "lib==2.0.0"
+    assert payload["summary"]["addedNodes"] == 2
 
 
 def test_cli_diff_tree_bundle_writes_report_bundle(tmp_path, capsys) -> None:

@@ -1219,7 +1219,9 @@ def _write_graph_diff_tree_bundle(
     right_path: Path,
     output_dir: Path,
     *,
-    selector: str,
+    selector: str | None,
+    left_selector: str | None,
+    right_selector: str | None,
     direction: str,
     depth: int,
     command: str | None = None,
@@ -1232,6 +1234,8 @@ def _write_graph_diff_tree_bundle(
             left_path,
             right_path,
             selector=selector,
+            left_selector=left_selector,
+            right_selector=right_selector,
             direction=direction,
             depth=depth,
         ),
@@ -2214,6 +2218,21 @@ def _include_triage_summary(args: argparse.Namespace) -> bool:
     return bool(args.triage_summary or args.fail_on_status is not None)
 
 
+def _diff_tree_selector_args(args: argparse.Namespace) -> tuple[str | None, str | None, str | None]:
+    selector = getattr(args, "node", None)
+    left_selector = getattr(args, "left_node", None)
+    right_selector = getattr(args, "right_node", None)
+    has_selector = bool(selector)
+    has_explicit = bool(left_selector or right_selector)
+    if has_selector and has_explicit:
+        raise ValueError("use either --node or --left-node/--right-node")
+    if not has_selector and not has_explicit:
+        raise ValueError("diff-tree requires --node or --left-node/--right-node")
+    if has_explicit and not (left_selector and right_selector):
+        raise ValueError("diff-tree explicit selectors require both --left-node and --right-node")
+    return selector, left_selector, right_selector
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="edgp")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -2710,7 +2729,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     diff_tree.add_argument("--left", type=Path, required=True)
     diff_tree.add_argument("--right", type=Path, required=True)
-    diff_tree.add_argument("--node", required=True)
+    diff_tree.add_argument("--node")
+    diff_tree.add_argument("--left-node")
+    diff_tree.add_argument("--right-node")
     diff_tree.add_argument(
         "--direction",
         choices=["dependencies", "dependents"],
@@ -2724,7 +2745,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     diff_tree_bundle.add_argument("--left", type=Path, required=True)
     diff_tree_bundle.add_argument("--right", type=Path, required=True)
-    diff_tree_bundle.add_argument("--node", required=True)
+    diff_tree_bundle.add_argument("--node")
+    diff_tree_bundle.add_argument("--left-node")
+    diff_tree_bundle.add_argument("--right-node")
     diff_tree_bundle.add_argument(
         "--direction",
         choices=["dependencies", "dependents"],
@@ -3858,11 +3881,14 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.command == "diff-tree":
+        selector, left_selector, right_selector = _diff_tree_selector_args(args)
         print(
             diff_tree_snapshot_files(
                 args.left,
                 args.right,
-                selector=args.node,
+                selector=selector,
+                left_selector=left_selector,
+                right_selector=right_selector,
                 direction=args.direction,
                 depth=args.depth,
             )
@@ -3870,12 +3896,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "diff-tree-bundle":
+        selector, left_selector, right_selector = _diff_tree_selector_args(args)
         return _print_bundle_result(
             _write_graph_diff_tree_bundle(
                 args.left,
                 args.right,
                 args.output_dir,
-                selector=args.node,
+                selector=selector,
+                left_selector=left_selector,
+                right_selector=right_selector,
                 direction=args.direction,
                 depth=args.depth,
                 command=command,

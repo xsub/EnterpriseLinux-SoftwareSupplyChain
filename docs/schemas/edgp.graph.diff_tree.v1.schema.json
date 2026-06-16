@@ -18,6 +18,7 @@
     },
     "leftNode": {"type": ["string", "null"]},
     "leftRoot": {"type": ["string", "null"]},
+    "leftSelector": {"minLength": 1, "type": "string"},
     "neighborhoods": {
       "additionalProperties": false,
       "properties": {
@@ -43,6 +44,7 @@
     },
     "rightNode": {"type": ["string", "null"]},
     "rightRoot": {"type": ["string", "null"]},
+    "rightSelector": {"minLength": 1, "type": "string"},
     "schema": {"const": "edgp.graph.diff_tree.v1"},
     "selector": {"minLength": 1, "type": "string"},
     "summary": {
@@ -77,6 +79,8 @@
     "selector",
     "direction",
     "depth",
+    "leftSelector",
+    "rightSelector",
     "leftRoot",
     "rightRoot",
     "leftNode",

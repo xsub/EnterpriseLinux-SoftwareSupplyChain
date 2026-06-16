@@ -25,6 +25,7 @@
   },
   "leftNode": "app==1.0.0",
   "leftRoot": "app==1.0.0",
+  "leftSelector": "app",
   "neighborhoods": {
     "left": {
       "edges": [
@@ -96,6 +97,7 @@
   },
   "rightNode": "app==1.0.0",
   "rightRoot": "app==1.0.0",
+  "rightSelector": "app",
   "schema": "edgp.graph.diff_tree.v1",
   "selector": "app",
   "summary": {

@@ -18,7 +18,9 @@ def diff_tree_snapshot_files(
     left_path: Path,
     right_path: Path,
     *,
-    selector: str,
+    selector: str | None = None,
+    left_selector: str | None = None,
+    right_selector: str | None = None,
     direction: str = "dependencies",
     depth: int = 3,
 ) -> str:
@@ -29,6 +31,8 @@ def diff_tree_snapshot_files(
             left,
             right,
             selector=selector,
+            left_selector=left_selector,
+            right_selector=right_selector,
             direction=direction,
             depth=depth,
         ),
@@ -82,7 +86,9 @@ def diff_tree_snapshots(
     left: dict[str, Any],
     right: dict[str, Any],
     *,
-    selector: str,
+    selector: str | None = None,
+    left_selector: str | None = None,
+    right_selector: str | None = None,
     direction: str = "dependencies",
     depth: int = 3,
 ) -> dict[str, Any]:
@@ -95,10 +101,18 @@ def diff_tree_snapshots(
 
     left_index = _SnapshotIndex.from_snapshot(left, label="left")
     right_index = _SnapshotIndex.from_snapshot(right, label="right")
-    left_node = left_index.resolve_selector(selector)
-    right_node = right_index.resolve_selector(selector)
+    selectors = _resolve_diff_tree_selectors(
+        selector=selector,
+        left_selector=left_selector,
+        right_selector=right_selector,
+    )
+    left_node = left_index.resolve_selector(selectors["left"])
+    right_node = right_index.resolve_selector(selectors["right"])
     if left_node is None and right_node is None:
-        raise ValueError(f"diff tree selector does not match either snapshot: {selector}")
+        raise ValueError(
+            "diff tree selector does not match either snapshot: "
+            f"left={selectors['left']} right={selectors['right']}"
+        )
 
     left_view = _collect_neighborhood(left_index, left_node, direction=direction, depth=depth)
     right_view = _collect_neighborhood(
@@ -124,7 +138,9 @@ def diff_tree_snapshots(
 
     return {
         "schema": "edgp.graph.diff_tree.v1",
-        "selector": selector,
+        "selector": selectors["display"],
+        "leftSelector": selectors["left"],
+        "rightSelector": selectors["right"],
         "direction": direction,
         "depth": depth,
         "leftRoot": left.get("root"),
@@ -188,6 +204,36 @@ def _edge_payload(edge: tuple[str, str, int]) -> dict[str, Any]:
         "target": target,
         "relationshipType": relationship_type,
     }
+
+
+def _resolve_diff_tree_selectors(
+    *,
+    selector: str | None,
+    left_selector: str | None,
+    right_selector: str | None,
+) -> dict[str, str]:
+    left_value = _clean_selector(left_selector)
+    right_value = _clean_selector(right_selector)
+    shared_value = _clean_selector(selector)
+    if shared_value:
+        if left_value or right_value:
+            raise ValueError(
+                "use either a shared diff tree selector or explicit left/right selectors"
+            )
+        return {"display": shared_value, "left": shared_value, "right": shared_value}
+    if not left_value and not right_value:
+        raise ValueError("diff tree requires --node or --left-node/--right-node")
+    if not left_value or not right_value:
+        raise ValueError("diff tree explicit selectors require both left and right values")
+    return {
+        "display": f"{left_value} -> {right_value}",
+        "left": left_value,
+        "right": right_value,
+    }
+
+
+def _clean_selector(value: str | None) -> str:
+    return value.strip() if isinstance(value, str) else ""
 
 
 class _SnapshotIndex:

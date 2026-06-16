@@ -176,6 +176,7 @@ edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-di
 edgp diff --left before.json --right after.json
 edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --triage-summary
 edgp diff-tree --left before.json --right after.json --node openssl --direction dependencies --depth 4
+edgp diff-tree --left before.json --right after.json --left-node openssl==3.0.7 --right-node openssl==3.0.8 --direction dependencies --depth 4
 edgp diff-tree-bundle --left before.json --right after.json --node openssl --direction dependents --depth 4 --output-dir reports/openssl-impact-diff --triage-summary
 ```
 
@@ -748,12 +749,14 @@ manifest, which makes before/after graph changes shareable without rebuilding
 the original input adapters.
 
 `edgp diff-tree` compares the dependency or dependent cone around one selected
-node in two snapshots. It resolves the selector by exact node ID or unambiguous
-node name, traverses both snapshots to the requested depth, and reports the
-added, removed, unchanged, and metadata-changed nodes and edges inside that
-focused neighborhood. `edgp diff-tree-bundle` renders the same focused graph
-change as static HTML, which is the practical view for release-to-release
-package impact, repository snapshot drift, and build provenance changes.
+node in two snapshots. It resolves `--node` by exact node ID or unambiguous
+node name, or accepts explicit `--left-node` and `--right-node` selectors when
+versioned package IDs differ between snapshots. It then traverses both
+snapshots to the requested depth and reports the added, removed, unchanged, and
+metadata-changed nodes and edges inside that focused neighborhood.
+`edgp diff-tree-bundle` renders the same focused graph change as static HTML,
+which is the practical view for release-to-release package impact, repository
+snapshot drift, and build provenance changes.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
 optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`
