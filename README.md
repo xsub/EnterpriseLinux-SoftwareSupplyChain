@@ -755,9 +755,10 @@ versioned package IDs differ between snapshots. It then traverses both
 snapshots to the requested depth and reports the added, removed, unchanged, and
 metadata-changed nodes and edges inside that focused neighborhood.
 `edgp diff-tree-bundle` renders the same focused graph change as static HTML,
-including change paths from the selected node to each added or removed node.
-This is the practical view for release-to-release package impact, repository
-snapshot drift, and build provenance changes.
+including change paths from the selected node to each added or removed node and
+change classifications such as upgrade, downgrade, replacement, added, removed,
+or metadata-only change. This is the practical view for release-to-release
+package impact, repository snapshot drift, and build provenance changes.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
 optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`
@@ -937,7 +938,8 @@ Graph diff-tree reports add a focused SVG change map for the selected
 dependency or dependent cone, with added, removed, metadata-changed, unchanged,
 and selected nodes called out before the detailed tables. They also include
 change paths, which explain how each added or removed node is reached from the
-selected node.
+selected node, plus deterministic change classification for same-name
+replacements and version moves.
 
 `edgp report-bundle` renders multiple EDGP JSON documents into one static
 directory with deterministic member report filenames, an `index.html` summary,

@@ -54,6 +54,13 @@ def test_diff_tree_snapshot_files_reports_focused_dependency_cone_changes() -> N
     assert payload["nodes"]["added"][0]["distance"] == 2
     assert [node["id"] for node in payload["nodes"]["removed"]] == ["lib==1.0.0"]
     assert payload["nodes"]["removed"][0]["path"] == ["app==1.0.0", "lib==1.0.0"]
+    assert payload["summary"]["classifiedChanges"] == 2
+    assert payload["summary"]["upgradeChanges"] == 1
+    assert payload["summary"]["addedOnlyChanges"] == 1
+    assert payload["classifications"][0]["kind"] == "added"
+    assert payload["classifications"][1]["kind"] == "upgrade"
+    assert payload["classifications"][1]["leftNode"] == "lib==1.0.0"
+    assert payload["classifications"][1]["rightNode"] == "lib==2.0.0"
 
 
 def test_diff_tree_snapshot_files_supports_explicit_left_right_selectors() -> None:
@@ -77,6 +84,7 @@ def test_diff_tree_snapshot_files_supports_explicit_left_right_selectors() -> No
         "lib==2.0.0",
     ]
     assert [node["id"] for node in payload["nodes"]["removed"]] == ["lib==1.0.0"]
+    assert payload["summary"]["upgradeChanges"] == 1
 
 
 def test_diff_tree_snapshots_reports_paths_for_metadata_changes() -> None:
@@ -110,6 +118,8 @@ def test_diff_tree_snapshots_reports_paths_for_metadata_changes() -> None:
     assert changed["changedKeys"] == ["license"]
     assert changed["leftPath"] == ["app==1.0.0", "lib==1.0.0"]
     assert changed["rightPath"] == ["app==1.0.0", "lib==1.0.0"]
+    assert payload["classifications"][0]["kind"] == "metadataChange"
+    assert payload["classifications"][0]["changedKeys"] == ["license"]
 
 
 def test_cli_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:

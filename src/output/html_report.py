@@ -138,10 +138,13 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     nodes = report.get("nodes", {})
     edges = report.get("edges", {})
+    classifications = report.get("classifications", [])
     if not isinstance(nodes, dict):
         nodes = {}
     if not isinstance(edges, dict):
         edges = {}
+    if not isinstance(classifications, list):
+        classifications = []
     heading = f"{report.get('leftRoot') or 'left'} -> {report.get('rightRoot') or 'right'}"
     return _document(
         "EDGP Graph Diff",
@@ -200,10 +203,13 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     nodes = report.get("nodes", {})
     edges = report.get("edges", {})
+    classifications = report.get("classifications", [])
     if not isinstance(nodes, dict):
         nodes = {}
     if not isinstance(edges, dict):
         edges = {}
+    if not isinstance(classifications, list):
+        classifications = []
     heading = (
         f"{report.get('selector') or report.get('leftNode') or report.get('rightNode')} "
         f"({report.get('direction', 'dependencies')}, depth {report.get('depth', 0)})"
@@ -224,9 +230,12 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
                     ),
                     ("Added Edges", _dict_value(summary, "addedEdges")),
                     ("Removed Edges", _dict_value(summary, "removedEdges")),
+                    ("Upgrades", _dict_value(summary, "upgradeChanges")),
+                    ("Replacements", _dict_value(summary, "replacementChanges")),
                 ],
             ),
             _graph_diff_tree_visual_panel(report),
+            _graph_diff_tree_classification_panel(classifications),
             _graph_diff_tree_paths_panel(nodes),
             _rows_panel(
                 "Added Nodes In Focused Cone",
@@ -2646,6 +2655,30 @@ def _graph_diff_tree_visual_panel(report: dict[str, Any]) -> str:
   </svg>
   {legend}
 </section>""".strip()
+
+
+def _graph_diff_tree_classification_panel(classifications: list[object]) -> str:
+    rows = [
+        item
+        for item in classifications
+        if isinstance(item, dict)
+    ]
+    return _rows_panel(
+        "Change Classification",
+        rows,
+        [
+            "kind",
+            "name",
+            "leftNode",
+            "rightNode",
+            "leftVersion",
+            "rightVersion",
+            "leftDistance",
+            "rightDistance",
+            "changedKeys",
+        ],
+        test_id="graph-diff-tree-classification-panel",
+    )
 
 
 def _graph_diff_tree_paths_panel(nodes: dict[str, Any]) -> str:

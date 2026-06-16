@@ -4,6 +4,7 @@
   "additionalProperties": false,
   "description": "Focused dependency or dependent cone diff around one selected node in two EDGP graph snapshots.",
   "properties": {
+    "classifications": {"items": {"$ref": "#/$defs/classification"}, "type": "array"},
     "depth": {"minimum": 0, "type": "integer"},
     "direction": {"enum": ["dependencies", "dependents"]},
     "edges": {
@@ -52,13 +53,20 @@
       "properties": {
         "addedEdges": {"minimum": 0, "type": "integer"},
         "addedNodes": {"minimum": 0, "type": "integer"},
+        "addedOnlyChanges": {"minimum": 0, "type": "integer"},
+        "classifiedChanges": {"minimum": 0, "type": "integer"},
+        "downgradeChanges": {"minimum": 0, "type": "integer"},
         "leftNodes": {"minimum": 0, "type": "integer"},
         "metadataChangedNodes": {"minimum": 0, "type": "integer"},
+        "metadataOnlyChanges": {"minimum": 0, "type": "integer"},
         "removedEdges": {"minimum": 0, "type": "integer"},
         "removedNodes": {"minimum": 0, "type": "integer"},
+        "removedOnlyChanges": {"minimum": 0, "type": "integer"},
+        "replacementChanges": {"minimum": 0, "type": "integer"},
         "rightNodes": {"minimum": 0, "type": "integer"},
         "unchangedEdges": {"minimum": 0, "type": "integer"},
-        "unchangedNodes": {"minimum": 0, "type": "integer"}
+        "unchangedNodes": {"minimum": 0, "type": "integer"},
+        "upgradeChanges": {"minimum": 0, "type": "integer"}
       },
       "required": [
         "leftNodes",
@@ -69,7 +77,14 @@
         "unchangedNodes",
         "addedEdges",
         "removedEdges",
-        "unchangedEdges"
+        "unchangedEdges",
+        "classifiedChanges",
+        "upgradeChanges",
+        "downgradeChanges",
+        "replacementChanges",
+        "addedOnlyChanges",
+        "removedOnlyChanges",
+        "metadataOnlyChanges"
       ],
       "type": "object"
     }
@@ -87,12 +102,42 @@
     "rightNode",
     "summary",
     "nodes",
+    "classifications",
     "edges",
     "neighborhoods"
   ],
   "title": "EDGP Graph Diff Tree v1",
   "type": "object",
   "$defs": {
+    "classification": {
+      "additionalProperties": false,
+      "properties": {
+        "changedKeys": {"items": {"type": "string"}, "type": "array"},
+        "kind": {
+          "enum": [
+            "added",
+            "downgrade",
+            "metadataChange",
+            "removed",
+            "replacement",
+            "upgrade"
+          ]
+        },
+        "leftDistance": {"minimum": 0, "type": "integer"},
+        "leftNode": {"type": "string"},
+        "leftPath": {"items": {"type": "string"}, "type": "array"},
+        "leftVersion": {"type": "string"},
+        "name": {"type": "string"},
+        "node": {"type": "string"},
+        "pairIndex": {"minimum": 0, "type": "integer"},
+        "rightDistance": {"minimum": 0, "type": "integer"},
+        "rightNode": {"type": "string"},
+        "rightPath": {"items": {"type": "string"}, "type": "array"},
+        "rightVersion": {"type": "string"}
+      },
+      "required": ["kind", "name"],
+      "type": "object"
+    },
     "edge": {
       "additionalProperties": false,
       "properties": {

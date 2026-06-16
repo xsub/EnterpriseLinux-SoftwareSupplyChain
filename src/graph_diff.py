@@ -141,6 +141,28 @@ def diff_tree_snapshots(
     added_edges = sorted(right_view.edges - left_view.edges)
     removed_edges = sorted(left_view.edges - right_view.edges)
     unchanged_edges = sorted(left_view.edges & right_view.edges)
+    added_payloads = [
+        right_index.node_payload(
+            node_id,
+            distance=right_view.distance(node_id),
+            path=right_view.path_to(node_id),
+        )
+        for node_id in added_nodes
+    ]
+    removed_payloads = [
+        left_index.node_payload(
+            node_id,
+            distance=left_view.distance(node_id),
+            path=left_view.path_to(node_id),
+        )
+        for node_id in removed_nodes
+    ]
+    classifications = _classify_diff_tree_changes(
+        added_payloads,
+        removed_payloads,
+        metadata_changed,
+    )
+    classification_counts = _classification_counts(classifications)
 
     return {
         "schema": "edgp.graph.diff_tree.v1",
@@ -163,27 +185,21 @@ def diff_tree_snapshots(
             "addedEdges": len(added_edges),
             "removedEdges": len(removed_edges),
             "unchangedEdges": len(unchanged_edges),
+            "classifiedChanges": len(classifications),
+            "upgradeChanges": classification_counts.get("upgrade", 0),
+            "downgradeChanges": classification_counts.get("downgrade", 0),
+            "replacementChanges": classification_counts.get("replacement", 0),
+            "addedOnlyChanges": classification_counts.get("added", 0),
+            "removedOnlyChanges": classification_counts.get("removed", 0),
+            "metadataOnlyChanges": classification_counts.get("metadataChange", 0),
         },
         "nodes": {
-            "added": [
-                right_index.node_payload(
-                    node_id,
-                    distance=right_view.distance(node_id),
-                    path=right_view.path_to(node_id),
-                )
-                for node_id in added_nodes
-            ],
-            "removed": [
-                left_index.node_payload(
-                    node_id,
-                    distance=left_view.distance(node_id),
-                    path=left_view.path_to(node_id),
-                )
-                for node_id in removed_nodes
-            ],
+            "added": added_payloads,
+            "removed": removed_payloads,
             "metadataChanged": metadata_changed,
             "unchanged": unchanged_nodes,
         },
+        "classifications": classifications,
         "edges": {
             "added": [_edge_payload(edge) for edge in added_edges],
             "removed": [_edge_payload(edge) for edge in removed_edges],
@@ -254,6 +270,160 @@ def _resolve_diff_tree_selectors(
 
 def _clean_selector(value: str | None) -> str:
     return value.strip() if isinstance(value, str) else ""
+
+
+def _classify_diff_tree_changes(
+    added_nodes: list[dict[str, Any]],
+    removed_nodes: list[dict[str, Any]],
+    metadata_changed: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    added_by_name = _group_nodes_by_name(added_nodes)
+    removed_by_name = _group_nodes_by_name(removed_nodes)
+    classifications: list[dict[str, Any]] = []
+    paired_added: set[str] = set()
+    paired_removed: set[str] = set()
+
+    for name in sorted(set(added_by_name) & set(removed_by_name)):
+        added_group = added_by_name[name]
+        removed_group = removed_by_name[name]
+        for index, (removed, added) in enumerate(zip(removed_group, added_group, strict=False)):
+            paired_removed.add(str(removed["id"]))
+            paired_added.add(str(added["id"]))
+            classifications.append(_paired_change(name, removed, added, order=index))
+
+    for node in added_nodes:
+        node_id = str(node["id"])
+        if node_id not in paired_added:
+            classifications.append(_single_node_change("added", "right", node))
+    for node in removed_nodes:
+        node_id = str(node["id"])
+        if node_id not in paired_removed:
+            classifications.append(_single_node_change("removed", "left", node))
+    for change in metadata_changed:
+        classifications.append(_metadata_only_change(change))
+
+    return sorted(
+        classifications,
+        key=lambda item: (
+            str(item.get("kind", "")),
+            str(item.get("name", "")),
+            str(item.get("leftNode", "")),
+            str(item.get("rightNode", "")),
+            str(item.get("node", "")),
+        ),
+    )
+
+
+def _group_nodes_by_name(nodes: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for node in nodes:
+        name = str(node.get("name") or node.get("id") or "")
+        if not name:
+            continue
+        grouped.setdefault(name, []).append(node)
+    for group in grouped.values():
+        group.sort(key=lambda item: str(item.get("id", "")))
+    return grouped
+
+
+def _paired_change(
+    name: str,
+    removed: dict[str, Any],
+    added: dict[str, Any],
+    *,
+    order: int,
+) -> dict[str, Any]:
+    left_version = str(removed.get("version") or "")
+    right_version = str(added.get("version") or "")
+    return {
+        "kind": _version_change_kind(left_version, right_version),
+        "name": name,
+        "leftNode": str(removed.get("id") or ""),
+        "rightNode": str(added.get("id") or ""),
+        "leftVersion": left_version,
+        "rightVersion": right_version,
+        "leftDistance": removed.get("distance"),
+        "rightDistance": added.get("distance"),
+        "leftPath": removed.get("path", []),
+        "rightPath": added.get("path", []),
+        "pairIndex": order,
+    }
+
+
+def _single_node_change(kind: str, side: str, node: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "kind": kind,
+        "name": str(node.get("name") or node.get("id") or ""),
+        f"{side}Node": str(node.get("id") or ""),
+        f"{side}Version": str(node.get("version") or ""),
+        f"{side}Distance": node.get("distance"),
+        f"{side}Path": node.get("path", []),
+    }
+
+
+def _metadata_only_change(change: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "kind": "metadataChange",
+        "name": str(change.get("id") or ""),
+        "node": str(change.get("id") or ""),
+        "changedKeys": change.get("changedKeys", []),
+        "leftDistance": change.get("leftDistance"),
+        "rightDistance": change.get("rightDistance"),
+        "leftPath": change.get("leftPath", []),
+        "rightPath": change.get("rightPath", []),
+    }
+
+
+def _classification_counts(classifications: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for item in classifications:
+        kind = str(item.get("kind") or "")
+        counts[kind] = counts.get(kind, 0) + 1
+    return counts
+
+
+def _version_change_kind(left_version: str, right_version: str) -> str:
+    comparison = _compare_versions(left_version, right_version)
+    if comparison < 0:
+        return "upgrade"
+    if comparison > 0:
+        return "downgrade"
+    return "replacement"
+
+
+def _compare_versions(left_version: str, right_version: str) -> int:
+    left_parts = _version_parts(left_version)
+    right_parts = _version_parts(right_version)
+    for left, right in zip(left_parts, right_parts, strict=False):
+        if left == right:
+            continue
+        if isinstance(left, int) and isinstance(right, int):
+            return -1 if left < right else 1
+        return -1 if str(left) < str(right) else 1
+    if len(left_parts) == len(right_parts):
+        return 0
+    return -1 if len(left_parts) < len(right_parts) else 1
+
+
+def _version_parts(version: str) -> list[int | str]:
+    parts: list[int | str] = []
+    token = ""
+    token_is_digit: bool | None = None
+    for char in version:
+        is_digit = char.isdigit()
+        if token and token_is_digit is not None and is_digit != token_is_digit:
+            parts.append(int(token) if token_is_digit else token)
+            token = ""
+        if char.isalnum():
+            token += char.lower()
+            token_is_digit = is_digit
+        elif token:
+            parts.append(int(token) if token_is_digit else token)
+            token = ""
+            token_is_digit = None
+    if token:
+        parts.append(int(token) if token_is_digit else token)
+    return parts
 
 
 class _SnapshotIndex:

@@ -1,4 +1,37 @@
 {
+  "classifications": [
+    {
+      "kind": "added",
+      "name": "core",
+      "rightDistance": 2,
+      "rightNode": "core==1.0.0",
+      "rightPath": [
+        "app==1.0.0",
+        "lib==2.0.0",
+        "core==1.0.0"
+      ],
+      "rightVersion": "1.0.0"
+    },
+    {
+      "kind": "upgrade",
+      "leftDistance": 1,
+      "leftNode": "lib==1.0.0",
+      "leftPath": [
+        "app==1.0.0",
+        "lib==1.0.0"
+      ],
+      "leftVersion": "1.0.0",
+      "name": "lib",
+      "pairIndex": 0,
+      "rightDistance": 1,
+      "rightNode": "lib==2.0.0",
+      "rightPath": [
+        "app==1.0.0",
+        "lib==2.0.0"
+      ],
+      "rightVersion": "2.0.0"
+    }
+  ],
   "depth": 2,
   "direction": "dependencies",
   "edges": {
@@ -119,12 +152,19 @@
   "summary": {
     "addedEdges": 2,
     "addedNodes": 2,
+    "addedOnlyChanges": 1,
+    "classifiedChanges": 2,
+    "downgradeChanges": 0,
     "leftNodes": 2,
     "metadataChangedNodes": 0,
+    "metadataOnlyChanges": 0,
     "removedEdges": 1,
     "removedNodes": 1,
+    "removedOnlyChanges": 0,
+    "replacementChanges": 0,
     "rightNodes": 3,
     "unchangedEdges": 0,
-    "unchangedNodes": 1
+    "unchangedNodes": 1,
+    "upgradeChanges": 1
   }
 }
