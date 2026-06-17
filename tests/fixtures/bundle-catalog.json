@@ -7,6 +7,8 @@
       "diffTreePolicyFailures": 0,
       "realDataCoveragePolicyFailures": 0,
       "realDataCoverageDiffPolicyFailures": 0,
+      "realDataCoverageFailureCodes": [],
+      "realDataCoverageDiffFailureCodes": [],
       "failureCodes": [],
       "failureCount": 0,
       "inputType": "directory",
@@ -27,6 +29,8 @@
       "diffTreePolicyFailures": 0,
       "realDataCoveragePolicyFailures": 0,
       "realDataCoverageDiffPolicyFailures": 0,
+      "realDataCoverageFailureCodes": [],
+      "realDataCoverageDiffFailureCodes": [],
       "failureCodes": [
         "htmlDigestMismatch"
       ],

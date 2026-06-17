@@ -85,11 +85,15 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
     assert report["bundles"][0]["diffTreePolicyFailures"] == 0
     assert report["bundles"][0]["realDataCoveragePolicyFailures"] == 0
     assert report["bundles"][0]["realDataCoverageDiffPolicyFailures"] == 0
+    assert report["bundles"][0]["realDataCoverageFailureCodes"] == []
+    assert report["bundles"][0]["realDataCoverageDiffFailureCodes"] == []
     assert report["bundles"][1]["triageStatus"] == "warn"
     assert report["bundles"][1]["graphDiffPolicyFailures"] == 0
     assert report["bundles"][1]["diffTreePolicyFailures"] == 0
     assert report["bundles"][1]["realDataCoveragePolicyFailures"] == 0
     assert report["bundles"][1]["realDataCoverageDiffPolicyFailures"] == 0
+    assert report["bundles"][1]["realDataCoverageFailureCodes"] == []
+    assert report["bundles"][1]["realDataCoverageDiffFailureCodes"] == []
     assert report["bundles"][1]["bundleSha256"]
 
 
@@ -419,6 +423,10 @@ def test_build_bundle_catalog_groups_real_data_policy_failures_by_source_kind(
     assert report["summary"]["realDataCoverageDiffPolicyFailures"] == 0
     assert report["bundles"][0]["realDataCoveragePolicyFailures"] == 1
     assert report["bundles"][0]["realDataCoverageDiffPolicyFailures"] == 0
+    assert report["bundles"][0]["realDataCoverageFailureCodes"] == [
+        "replacementPriorityMatched"
+    ]
+    assert report["bundles"][0]["realDataCoverageDiffFailureCodes"] == []
     assert report["sourceKinds"][0]["sourceKind"] == "real-data-coverage"
     assert report["sourceKinds"][0]["realDataCoveragePolicyFailures"] == 1
 
@@ -439,6 +447,10 @@ def test_build_bundle_catalog_groups_real_data_diff_policy_failures_by_source_ki
             {
                 "code": "publicEvidenceCoverageDecreased",
                 "message": "Public evidence coverage decreased.",
+            },
+            {
+                "code": "publicEvidenceFilesDecreased",
+                "message": "Public evidence file count decreased.",
             }
         ],
         "status": "fail",
@@ -464,5 +476,10 @@ def test_build_bundle_catalog_groups_real_data_diff_policy_failures_by_source_ki
     assert report["summary"]["realDataCoverageDiffPolicyFailures"] == 1
     assert report["bundles"][0]["realDataCoveragePolicyFailures"] == 0
     assert report["bundles"][0]["realDataCoverageDiffPolicyFailures"] == 1
+    assert report["bundles"][0]["realDataCoverageFailureCodes"] == []
+    assert report["bundles"][0]["realDataCoverageDiffFailureCodes"] == [
+        "publicEvidenceCoverageDecreased",
+        "publicEvidenceFilesDecreased",
+    ]
     assert report["sourceKinds"][0]["sourceKind"] == "real-data-coverage-diff"
     assert report["sourceKinds"][0]["realDataCoverageDiffPolicyFailures"] == 1

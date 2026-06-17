@@ -141,6 +141,12 @@ def _catalog_entry(
         "realDataCoverageDiffPolicyFailures": int(
             triage_summary.get("realDataCoverageDiffPolicyFailures", 0) or 0
         ),
+        "realDataCoverageFailureCodes": _string_list(
+            triage_summary.get("realDataCoverageFailureCodes")
+        ),
+        "realDataCoverageDiffFailureCodes": _string_list(
+            triage_summary.get("realDataCoverageDiffFailureCodes")
+        ),
         "graphDiffFailOnChanges": _string_list(
             triage_summary.get("graphDiffFailOnChanges")
         ),
@@ -224,6 +230,8 @@ def _triage_summary(
             "diffTreePolicyFailures": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
+            "realDataCoverageFailureCodes": [],
+            "realDataCoverageDiffFailureCodes": [],
             "graphDiffFailOnChanges": [],
             "graphDiffMatchedChanges": [],
             "graphDiffFailOnKinds": [],
@@ -239,6 +247,8 @@ def _triage_summary(
             "diffTreePolicyFailures": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
+            "realDataCoverageFailureCodes": [],
+            "realDataCoverageDiffFailureCodes": [],
             "graphDiffFailOnChanges": [],
             "graphDiffMatchedChanges": [],
             "graphDiffFailOnKinds": [],
@@ -254,6 +264,10 @@ def _triage_summary(
         top_findings = {}
     graph_diff_policies = _object_list(top_findings.get("graphDiffPolicies"))
     diff_tree_policies = _object_list(top_findings.get("diffTreePolicies"))
+    real_data_coverage = _object_list(top_findings.get("realDataCoverage"))
+    real_data_coverage_diff = _object_list(
+        top_findings.get("realDataCoverageDiff")
+    )
     return {
         "status": str(payload.get("status") or "unknown"),
         "graphDiffPolicyFailures": int(
@@ -267,6 +281,10 @@ def _triage_summary(
         ),
         "realDataCoverageDiffPolicyFailures": int(
             summary.get("realDataCoverageDiffPolicyFailures", 0) or 0
+        ),
+        "realDataCoverageFailureCodes": _collect_failure_codes(real_data_coverage),
+        "realDataCoverageDiffFailureCodes": _collect_failure_codes(
+            real_data_coverage_diff
         ),
         "graphDiffFailOnChanges": _collect_policy_values(
             graph_diff_policies,
@@ -308,6 +326,21 @@ def _collect_policy_values(rows: list[dict[str, Any]], key: str) -> list[str]:
             if value not in values:
                 values.append(value)
     return values
+
+
+def _collect_failure_codes(rows: list[dict[str, Any]]) -> list[str]:
+    codes: list[str] = []
+    for row in rows:
+        failures = row.get("failures")
+        if not isinstance(failures, list):
+            continue
+        for failure in failures:
+            if not isinstance(failure, dict):
+                continue
+            code = failure.get("code")
+            if isinstance(code, str) and code and code not in codes:
+                codes.append(code)
+    return codes
 
 
 def _string_list(value: object) -> list[str]:

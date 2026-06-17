@@ -350,6 +350,10 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
             "diffTreePolicyFailures": 1,
             "realDataCoveragePolicyFailures": 1,
             "realDataCoverageDiffPolicyFailures": 1,
+            "realDataCoverageFailureCodes": ["replacementPriorityMatched"],
+            "realDataCoverageDiffFailureCodes": [
+                "publicEvidenceCoverageDecreased"
+            ],
             "graphDiffMatchedChanges": ["added-node"],
             "graphDiffMatchedKinds": ["upgrade"],
             "diffTreeMatchedKinds": ["replacement"],
@@ -365,6 +369,8 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     assert "replacement" in html
     assert "Real Data Coverage Policy Failures" in html
     assert "Real Data Coverage Diff Policy Failures" in html
+    assert "replacementPriorityMatched" in html
+    assert "publicEvidenceCoverageDecreased" in html
 
 
 def test_render_report_supports_validation_triage_policy_metrics() -> None:

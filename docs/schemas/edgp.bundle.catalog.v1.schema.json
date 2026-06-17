@@ -74,6 +74,18 @@
             "minimum": 0,
             "type": "integer"
           },
+          "realDataCoverageFailureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "realDataCoverageDiffFailureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "failureCodes": {
             "items": {
               "type": "string"
@@ -135,6 +147,8 @@
           "diffTreePolicyFailures",
           "realDataCoveragePolicyFailures",
           "realDataCoverageDiffPolicyFailures",
+          "realDataCoverageFailureCodes",
+          "realDataCoverageDiffFailureCodes",
           "failureCodes",
           "reportSchemas",
           "triageStatus"

@@ -378,6 +378,8 @@ surfaces are:
 - Roll real-data coverage and coverage-diff policy failures up through bundle
   catalogs so batch evidence directories expose those gates beside graph-diff
   and diff-tree policy failures.
+- Preserve real-data coverage and coverage-diff failure-code lists inside
+  bundle-catalog entries and aggregate triage findings for batch-level review.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

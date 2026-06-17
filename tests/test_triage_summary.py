@@ -567,6 +567,12 @@ def test_triage_summary_rolls_up_catalog_real_data_policy_failures(tmp_path) -> 
     catalog["bundles"][0]["triageStatus"] = "fail"
     catalog["bundles"][0]["realDataCoveragePolicyFailures"] = 1
     catalog["bundles"][0]["realDataCoverageDiffPolicyFailures"] = 1
+    catalog["bundles"][0]["realDataCoverageFailureCodes"] = [
+        "replacementPriorityMatched"
+    ]
+    catalog["bundles"][0]["realDataCoverageDiffFailureCodes"] = [
+        "publicEvidenceCoverageDecreased"
+    ]
     catalog["sourceKinds"][0]["triageFail"] = 1
     catalog["sourceKinds"][0]["realDataCoveragePolicyFailures"] = 1
     catalog["sourceKinds"][0]["realDataCoverageDiffPolicyFailures"] = 1
@@ -596,6 +602,10 @@ def test_triage_summary_rolls_up_catalog_real_data_policy_failures(tmp_path) -> 
     finding = report["topFindings"]["bundleCatalog"][0]
     assert finding["realDataCoveragePolicyFailures"] == 1
     assert finding["realDataCoverageDiffPolicyFailures"] == 1
+    assert finding["realDataCoverageFailureCodes"] == ["replacementPriorityMatched"]
+    assert finding["realDataCoverageDiffFailureCodes"] == [
+        "publicEvidenceCoverageDecreased"
+    ]
 
 
 def test_triage_summary_preserves_catalog_policy_detail_findings(tmp_path) -> None:

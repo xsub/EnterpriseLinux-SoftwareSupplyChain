@@ -1138,14 +1138,16 @@ to `report-bundle`.
 deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
 with bundle paths, input type, source kinds, report schemas, triage status,
 graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
-failure counts, failure codes, and bundle fingerprints.
+failure counts, real-data failure codes, verifier failure codes, and bundle
+fingerprints.
 Source-kind rows include triage pass/warn/fail counts plus
 `graphDiffPolicyFailures`, `diffTreePolicyFailures`,
 `realDataCoveragePolicyFailures`, and
 `realDataCoverageDiffPolicyFailures`, so large evidence batches can show which
 input family contributed failed snapshot-drift or real-data policy gates.
 Per-bundle rows also preserve matched graph-diff changes and package kinds,
-plus matched diff-tree package kinds, from embedded triage summaries.
+plus matched diff-tree package kinds and real-data failure codes, from embedded
+triage summaries.
 The top-level `status` is
 `pass`, `warn`, or `fail` so CI and workbench views do not need to infer the
 catalog verdict from several counters. The catalog can itself be
@@ -1175,7 +1177,7 @@ visible without parsing the full JSON rollup. `--fail-on-status warn|fail` still
 prints the selected format and returns status `2` when the computed status
 reaches the selected threshold. When a bundle catalog is one of the inputs,
 triage top findings preserve the catalog's matched graph-diff and diff-tree
-policy details for batch-level review.
+policy details plus real-data failure codes for batch-level review.
 
 ## Roadmap
 

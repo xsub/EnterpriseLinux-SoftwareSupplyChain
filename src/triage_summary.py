@@ -780,6 +780,12 @@ def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
                     "realDataCoverageDiffPolicyFailures",
                     0,
                 ),
+                "realDataCoverageFailureCodes": _string_list(
+                    bundle.get("realDataCoverageFailureCodes")
+                ),
+                "realDataCoverageDiffFailureCodes": _string_list(
+                    bundle.get("realDataCoverageDiffFailureCodes")
+                ),
                 "graphDiffFailOnChanges": _string_list(
                     bundle.get("graphDiffFailOnChanges")
                 ),

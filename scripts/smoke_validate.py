@@ -3427,6 +3427,10 @@ def _assert_public_vertical_reports() -> None:
         assert catalog["status"] == "fail"
         assert catalog["summary"]["realDataCoverageDiffPolicyFailures"] == 1
         assert catalog["bundles"][0]["realDataCoverageDiffPolicyFailures"] == 1
+        assert catalog["bundles"][0]["realDataCoverageDiffFailureCodes"] == [
+            "publicEvidenceCoverageDecreased",
+            "publicEvidenceFilesDecreased",
+        ]
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "real-data-coverage-bundle"
@@ -3528,6 +3532,9 @@ def _assert_public_vertical_reports() -> None:
         assert catalog["status"] == "fail"
         assert catalog["summary"]["realDataCoveragePolicyFailures"] == 1
         assert catalog["bundles"][0]["realDataCoveragePolicyFailures"] == 1
+        assert catalog["bundles"][0]["realDataCoverageFailureCodes"] == [
+            "replacementPriorityMatched"
+        ]
 
     performance = _run_cli(
         ["performance-report", "--scenario", "16:2", "--scenario", "32:3"]
