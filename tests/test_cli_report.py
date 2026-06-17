@@ -348,6 +348,47 @@ def test_cli_report_bundle_can_write_archive_in_same_pass(tmp_path, capsys) -> N
     )
 
 
+def test_cli_report_bundle_text_can_fail_on_triage_status(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "bundle"
+    archive_path = tmp_path / "bundle.tar.gz"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output-dir",
+                str(output_dir),
+                "--archive-output",
+                str(archive_path),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+
+    text = capsys.readouterr().out.strip()
+    assert text.startswith(
+        f"BUNDLE index={output_dir / 'index.html'} archive={archive_path} "
+        "sourceKind=edgp-json reports=1 bundleSha256="
+    )
+    assert text.endswith(" triageStatus=warn")
+    assert archive_path.exists()
+
+    assert (
+        main(["verify-bundle-archive", "--path", str(archive_path), "--format", "text"])
+        == 0
+    )
+    assert " verificationFailures=0 " in capsys.readouterr().out.strip()
+
+
 def test_cli_report_bundle_can_include_triage_summary(tmp_path, capsys) -> None:
     output_dir = tmp_path / "bundle"
 

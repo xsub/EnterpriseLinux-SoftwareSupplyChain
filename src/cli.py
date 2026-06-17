@@ -965,10 +965,15 @@ def _write_rpm_albs_provenance_report_if_requested(
 def _print_bundle_result(
     index_path: Path,
     *,
+    archive_output: Path | None = None,
     fail_on_denied: bool = False,
     fail_on_status: str | None = None,
+    output_format: str = "path",
 ) -> int:
-    print(index_path)
+    if output_format == "text":
+        print(_format_report_bundle_result(index_path, archive_output=archive_output))
+    else:
+        print(index_path)
     if fail_on_denied and _bundle_license_report_should_fail(index_path.parent):
         return 2
     if _bundle_triage_summary_should_fail(index_path.parent, min_status=fail_on_status):
@@ -1014,6 +1019,37 @@ def _format_bundle_catalog_result(index_path: Path) -> str:
         triage_status = triage.get("status")
         if isinstance(triage_status, str) and triage_status:
             parts.append(f"triageStatus={triage_status}")
+    return " ".join(parts)
+
+
+def _format_report_bundle_result(
+    index_path: Path,
+    *,
+    archive_output: Path | None = None,
+) -> str:
+    manifest = _load_optional_json(index_path.parent / "manifest.json")
+    bundle = manifest.get("bundle", {}) if isinstance(manifest, dict) else {}
+    if not isinstance(bundle, dict):
+        bundle = {}
+    parts = [
+        "BUNDLE",
+        f"index={_text_value(index_path)}",
+    ]
+    if archive_output is not None:
+        parts.append(f"archive={_text_value(archive_output)}")
+    parts.extend(
+        [
+            f"sourceKind={_text_value(bundle.get('sourceKind', 'unknown'))}",
+            f"reports={int(manifest.get('reportCount', 0) or 0)}",
+        ]
+    )
+    bundle_sha = manifest.get("bundleSha256")
+    if isinstance(bundle_sha, str) and bundle_sha:
+        parts.append(f"bundleSha256={bundle_sha}")
+    triage = _load_optional_json(index_path.parent / "triage-summary.json")
+    triage_status = triage.get("status") if isinstance(triage, dict) else None
+    if isinstance(triage_status, str) and triage_status:
+        parts.append(f"triageStatus={triage_status}")
     return " ".join(parts)
 
 
@@ -3513,6 +3549,12 @@ def build_parser() -> argparse.ArgumentParser:
     report_bundle.add_argument("--index-name", default="index.html")
     report_bundle.add_argument("--manifest-name", default="manifest.json")
     report_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+        help="output the generated index path or a compact text summary",
+    )
+    report_bundle.add_argument(
         "--archive-output",
         type=Path,
         help="also write the generated report bundle as a deterministic .tar.gz archive",
@@ -4713,7 +4755,12 @@ def main(argv: list[str] | None = None) -> int:
             )
             if archive_report.get("ok") is not True:
                 raise ValueError("Could not archive generated report bundle")
-        return _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        return _print_bundle_result(
+            index_path,
+            archive_output=args.archive_output,
+            fail_on_status=args.fail_on_status,
+            output_format=args.format,
+        )
 
     if args.command == "bundle-catalog":
         index_path = _write_bundle_catalog_bundle(

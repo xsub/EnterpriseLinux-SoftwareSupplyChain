@@ -218,7 +218,7 @@ edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-re
 edgp report --snapshot graph.json --output graph-report.html
 edgp report --input docs/schemas/index.json --output schema-index.html
 edgp validate --path docs/schemas/index.json
-edgp report-bundle --input graph.json --input impact.json --output-dir reports --archive-output reports.tar.gz --fail-on-status fail
+edgp report-bundle --input graph.json --input impact.json --output-dir reports --archive-output reports.tar.gz --format text --fail-on-status fail
 edgp bundle-catalog --bundle reports/npm --bundle reports/rpm-repo.tar.gz --output-dir reports/catalog --archive-output reports/catalog.tar.gz --triage-summary
 edgp bundle-catalog --bundle reports/openssl-impact-diff.tar.gz --output-dir reports/catalog --format text --fail-on-status fail
 edgp verify-bundle --path reports
@@ -984,7 +984,9 @@ surface for handing a graph snapshot plus related impact, advisory, or npm
 diagnostic reports to a browser, RAG context builder, or future workbench UI.
 Passing `--archive-output` writes the verified bundle as a deterministic
 `.tar.gz` in the same pass, so CI can keep both an inspectable directory and a
-portable handoff artifact without running a separate archive step.
+portable handoff artifact without running a separate archive step. Use
+`--format text` when the terminal log should show the generated index, optional
+archive path, report count, bundle fingerprint, and triage status in one line.
 The manifest records `bundle.sourceKind` as `edgp-json` and includes the
 generating command. Each member report entry also records SHA-256 digests for
 the source JSON and rendered HTML bytes, plus a top-level `bundleSha256`

@@ -475,7 +475,7 @@ python -B -m src.cli report --input tests/fixtures/advisory-report.json --output
 python -B -m src.cli report --input tests/fixtures/npm-diagnostics-report.json --output /tmp/edgp-npm-diagnostics-report.html
 python -B -m src.cli validate --path docs/schemas/index.json
 python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-schema-index.html
-python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle --archive-output /tmp/edgp-report-bundle.tar.gz --triage-summary
+python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --input tests/fixtures/npm-diagnostics-report.json --output-dir /tmp/edgp-report-bundle --archive-output /tmp/edgp-report-bundle.tar.gz --format text --triage-summary
 python -B -m src.cli report --input /tmp/edgp-report-bundle/manifest.json --output /tmp/edgp-report-bundle-manifest.html
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli report --input tests/fixtures/report-bundle-archive.json --output /tmp/edgp-report-bundle-archive.html
