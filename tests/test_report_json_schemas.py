@@ -188,6 +188,19 @@ def test_graph_diff_tree_schema_documents_policy_gate_shape() -> None:
     assert policy_def["properties"]["exitCode"]["enum"] == [0, 2]
 
 
+def test_graph_diff_tree_schema_documents_top_findings() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.graph.diff_tree.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    top_findings = schema["properties"]["topFindings"]
+    assert top_findings["required"] == ["packageChanges"]
+    package_changes = top_findings["properties"]["packageChanges"]
+    assert package_changes["items"]["$ref"] == "#/$defs/classification"
+
+
 def test_graph_diff_schema_documents_classification_gate_shape() -> None:
     schema = json.loads(
         Path("docs/schemas/edgp.graph.diff.v1.schema.json").read_text(

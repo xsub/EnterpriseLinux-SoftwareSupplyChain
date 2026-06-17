@@ -198,6 +198,18 @@ def test_render_report_supports_graph_diff_tree_json() -> None:
         "matchedKinds": ["upgrade"],
         "status": "fail",
     }
+    report["topFindings"] = {
+        "packageChanges": [
+            {
+                "kind": "upgrade",
+                "name": "lib",
+                "leftNode": "lib==1.0.0",
+                "rightNode": "lib==2.0.0",
+                "leftVersion": "1.0.0",
+                "rightVersion": "2.0.0",
+            }
+        ]
+    }
 
     html = render_report(report)
 
@@ -205,8 +217,10 @@ def test_render_report_supports_graph_diff_tree_json() -> None:
     assert 'data-testid="graph-diff-tree-policy-panel"' in html
     assert "Diff Tree Policy" in html
     assert 'data-testid="graph-diff-tree-visual-panel"' in html
+    assert 'data-testid="graph-diff-tree-top-findings-panel"' in html
     assert 'data-testid="graph-diff-tree-classification-panel"' in html
     assert 'data-testid="graph-diff-tree-paths-panel"' in html
+    assert "Top Package Changes" in html
     assert 'class="diff-edge diff-edge-added"' in html
     assert 'class="diff-edge diff-edge-removed"' in html
     assert "Selected Node" in html

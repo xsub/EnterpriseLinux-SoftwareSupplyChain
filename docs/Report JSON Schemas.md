@@ -27,7 +27,8 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
 - `edgp.graph.diff_tree.v1`:
   [`edgp.graph.diff_tree.v1.schema.json`](schemas/edgp.graph.diff_tree.v1.schema.json)
   documents dependency or dependent cone changes around one selected node in two
-  EDGP graph snapshots, including optional diff-tree policy gate verdicts.
+  EDGP graph snapshots, including top focused package-change findings and
+  optional diff-tree policy gate verdicts.
 - `edgp.query.report.v1`:
   [`edgp.query.report.v1.schema.json`](schemas/edgp.query.report.v1.schema.json)
   documents dependency, dependent, reachability, shortest-path, and

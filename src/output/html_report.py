@@ -249,6 +249,7 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
     nodes = report.get("nodes", {})
     edges = report.get("edges", {})
     classifications = report.get("classifications", [])
+    top_findings = report.get("topFindings", {})
     policy = report.get("policy")
     if not isinstance(nodes, dict):
         nodes = {}
@@ -256,6 +257,8 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
         edges = {}
     if not isinstance(classifications, list):
         classifications = []
+    if not isinstance(top_findings, dict):
+        top_findings = {}
     if not isinstance(policy, dict):
         policy = {}
     heading = (
@@ -284,6 +287,7 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
             ),
             _graph_diff_tree_policy_panel(policy),
             _graph_diff_tree_visual_panel(report),
+            _graph_diff_tree_top_findings_panel(top_findings),
             _graph_diff_tree_classification_panel(classifications),
             _graph_diff_tree_paths_panel(nodes),
             _rows_panel(
@@ -2948,6 +2952,27 @@ def _graph_diff_tree_classification_panel(classifications: list[object]) -> str:
             "changedKeys",
         ],
         test_id="graph-diff-tree-classification-panel",
+    )
+
+
+def _graph_diff_tree_top_findings_panel(top_findings: dict[str, Any]) -> str:
+    package_changes = top_findings.get("packageChanges", [])
+    rows = [item for item in package_changes if isinstance(item, dict)]
+    return _rows_panel(
+        "Top Package Changes",
+        rows,
+        [
+            "kind",
+            "name",
+            "leftNode",
+            "rightNode",
+            "leftVersion",
+            "rightVersion",
+            "leftDistance",
+            "rightDistance",
+            "changedKeys",
+        ],
+        test_id="graph-diff-tree-top-findings-panel",
     )
 
 

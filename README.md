@@ -201,11 +201,14 @@ replacements, upgrades, or downgrades. Use `--fail-on-kind` to keep the JSON or
 static bundle on disk while returning status `2` when selected change classes are
 present, which makes snapshot-to-snapshot graph drift usable in CI gates. Gated
 diff-tree reports include a `policy` block with the requested change kinds,
-matched kinds, pass/fail status, and expected exit code. `--format text` gives
-both direct reports and static bundles a terminal-friendly summary line while
-keeping the full JSON and HTML artifacts available. Bundle commands can also
-write deterministic `.tar.gz` archives in the same pass with `--archive-output`,
-which keeps CI handoff artifacts reproducible even when the drift policy fails.
+matched kinds, pass/fail status, and expected exit code. They also include
+`topFindings.packageChanges`, a bounded risk/proximity-ranked list of the
+highest-signal focused package changes for CI, workbench, and RAG consumers.
+`--format text` gives both direct reports and static bundles a terminal-friendly
+summary line while keeping the full JSON and HTML artifacts available. Bundle
+commands can also write deterministic `.tar.gz` archives in the same pass with
+`--archive-output`, which keeps CI handoff artifacts reproducible even when the
+drift policy fails.
 
 ### Reports And Bundles
 
@@ -793,8 +796,10 @@ metadata-changed nodes and edges inside that focused neighborhood.
 `edgp diff-tree-bundle` renders the same focused graph change as static HTML,
 including change paths from the selected node to each added or removed node and
 change classifications such as upgrade, downgrade, replacement, added, removed,
-or metadata-only change. This is the practical view for release-to-release
-package impact, repository snapshot drift, and build provenance changes.
+or metadata-only change. The report also exposes top package changes directly
+in JSON and HTML, so release-to-release package impact, repository snapshot
+drift, and build provenance changes can be reviewed without re-parsing every
+diff section.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
 optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`

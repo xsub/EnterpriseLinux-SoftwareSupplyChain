@@ -88,6 +88,18 @@
         "metadataOnlyChanges"
       ],
       "type": "object"
+    },
+    "topFindings": {
+      "additionalProperties": false,
+      "description": "Bounded high-signal findings for CI, workbench, and RAG consumers that need a compact focused snapshot-diff summary.",
+      "properties": {
+        "packageChanges": {
+          "items": {"$ref": "#/$defs/classification"},
+          "type": "array"
+        }
+      },
+      "required": ["packageChanges"],
+      "type": "object"
     }
   },
   "required": [

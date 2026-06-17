@@ -503,6 +503,8 @@ def test_cli_diff_tree_can_fail_on_classified_change_kind(capsys) -> None:
     }
     assert payload["summary"]["upgradeChanges"] == 1
     assert any(change["kind"] == "upgrade" for change in payload["classifications"])
+    assert payload["topFindings"]["packageChanges"][0]["kind"] == "upgrade"
+    assert payload["topFindings"]["packageChanges"][0]["name"] == "lib"
 
 
 def test_cli_diff_tree_text_can_fail_on_classified_change_kind(capsys) -> None:
@@ -601,7 +603,11 @@ def test_cli_diff_tree_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     assert manifest["reports"][0]["href"] == "001-graph-diff-tree.html"
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert report["summary"]["addedEdges"] == 2
+    assert report["topFindings"]["packageChanges"][0]["kind"] == "upgrade"
+    assert report["topFindings"]["packageChanges"][0]["leftNode"] == "lib==1.0.0"
     assert 'data-testid="graph-diff-tree-added-edges-panel"' in html
+    assert 'data-testid="graph-diff-tree-top-findings-panel"' in html
+    assert "Top Package Changes" in html
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)

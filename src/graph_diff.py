@@ -222,6 +222,7 @@ def diff_tree_snapshots(
             "unchanged": unchanged_nodes,
         },
         "classifications": classifications,
+        "topFindings": _diff_tree_top_findings(classifications),
         "edges": {
             "added": [_edge_payload(edge) for edge in added_edges],
             "removed": [_edge_payload(edge) for edge in removed_edges],
@@ -415,6 +416,45 @@ def _classification_counts(classifications: list[dict[str, Any]]) -> dict[str, i
         kind = str(item.get("kind") or "")
         counts[kind] = counts.get(kind, 0) + 1
     return counts
+
+
+def _diff_tree_top_findings(
+    classifications: list[dict[str, Any]],
+    *,
+    limit: int = 10,
+) -> dict[str, list[dict[str, Any]]]:
+    return {"packageChanges": _ranked_classification_findings(classifications)[:limit]}
+
+
+def _ranked_classification_findings(
+    classifications: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    priority = {
+        "downgrade": 0,
+        "replacement": 1,
+        "upgrade": 2,
+        "removed": 3,
+        "added": 4,
+        "metadataChange": 5,
+    }
+    return sorted(
+        (dict(item) for item in classifications),
+        key=lambda item: (
+            priority.get(str(item.get("kind") or ""), 99),
+            _classification_distance(item),
+            str(item.get("name") or ""),
+            str(item.get("leftNode") or item.get("rightNode") or item.get("node") or ""),
+        ),
+    )
+
+
+def _classification_distance(item: dict[str, Any]) -> int:
+    distances = [
+        item[key]
+        for key in ("leftDistance", "rightDistance")
+        if isinstance(item.get(key), int)
+    ]
+    return min(distances) if distances else 1_000_000
 
 
 def _version_change_kind(left_version: str, right_version: str) -> str:
