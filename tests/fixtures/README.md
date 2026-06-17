@@ -41,6 +41,18 @@ in sync with their source fixtures and generator functions:
 - `rpm-albs-provenance.json`
 - `libsolv-bridge.json`
 
+Regenerate all derived public fixtures with:
+
+```bash
+python -B scripts/generate_public_fixture_reports.py
+```
+
+Check freshness without writing files with:
+
+```bash
+python -B scripts/generate_public_fixture_reports.py --check
+```
+
 ## Synthetic Fixtures
 
 Some fixtures remain intentionally synthetic because they exercise parser

@@ -360,6 +360,8 @@ surfaces are:
   versus synthetic test inputs.
 - Verify committed public-derived report fixtures against their generator
   functions so source fixture and derived report drift is caught in tests.
+- Provide a deterministic public-derived report fixture generator with
+  write/check modes for maintainers.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

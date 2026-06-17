@@ -64,7 +64,9 @@ Fixture provenance is tracked in
 [`tests/fixtures/README.md`](tests/fixtures/README.md). The RPM repository
 fixtures include curated AlmaLinux 9 AppStream `primary.xml` excerpts, while
 small synthetic fixtures remain where they make parser and validation edge
-cases easier to audit.
+cases easier to audit. Public-derived report fixtures can be refreshed with
+`python -B scripts/generate_public_fixture_reports.py` and checked with
+`python -B scripts/generate_public_fixture_reports.py --check`.
 
 ## Quick Start
 

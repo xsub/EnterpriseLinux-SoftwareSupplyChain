@@ -1,8 +1,41 @@
 {
-  "schema": "edgp.rpm.albs_provenance.v1",
   "ecosystem": "rpm",
+  "matches": [
+    {
+      "albsArtifact": {
+        "artifactArch": "x86_64",
+        "artifactId": "3238000",
+        "artifactKind": "rpm",
+        "buildArch": "x86_64",
+        "buildTaskId": "188081",
+        "casHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "filename": "nginx-core-1.20.1-16.el9_4.1.x86_64.rpm",
+        "href": "/pulp/api/v3/content/rpm/packages/0191b819-core-x86/",
+        "key": "rpm|nginx-core|x86_64|x86_64",
+        "packageName": "nginx-core",
+        "release": "16.el9_4.1",
+        "version": "1.20.1"
+      },
+      "buildId": "17812",
+      "installedPackage": {
+        "arch": "x86_64",
+        "name": "nginx-core",
+        "nodeId": "nginx-core==1.20.1-16.el9_4.1",
+        "release": "16.el9_4.1",
+        "sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm",
+        "vendor": "",
+        "version": "1.20.1"
+      },
+      "releaseId": "7396"
+    }
+  ],
   "root": "rpm-installed==local",
-  "summary": {"installedPackages": 1, "albsArtifacts": 1, "matchedPackages": 1, "unmatchedPackages": 0},
-  "matches": [],
+  "schema": "edgp.rpm.albs_provenance.v1",
+  "summary": {
+    "albsArtifacts": 3,
+    "installedPackages": 1,
+    "matchedPackages": 1,
+    "unmatchedPackages": 0
+  },
   "unmatchedInstalledPackages": []
 }
