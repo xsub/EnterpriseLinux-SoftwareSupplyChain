@@ -362,6 +362,9 @@ surfaces are:
   functions so source fixture and derived report drift is caught in tests.
 - Provide a deterministic public-derived report fixture generator with
   write/check modes for maintainers.
+- Publish a machine-readable fixture provenance catalog with public source URLs,
+  generated report lineage, synthetic fixture groups, and stable file
+  fingerprints.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

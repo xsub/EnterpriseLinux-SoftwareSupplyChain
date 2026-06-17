@@ -103,6 +103,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.export.batch.verification.v1.schema.json",
+    "edgp.fixture.provenance.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.fixture.provenance.v1.schema.json",
     "edgp.report.bundle.archive.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -220,6 +224,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "export-batch-verification.json",
+    "edgp.fixture.provenance.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "fixture-provenance.json",
     "edgp.report.bundle.archive.v1": REPO_ROOT
     / "tests"
     / "fixtures"
@@ -2688,7 +2696,7 @@ def _assert_public_vertical_reports() -> None:
         ]
     )
     assert rpm_repo["schema"] == "edgp.graph.snapshot.v1"
-    assert rpm_repo["stats"] == {"edges": 3, "nodes": 3}
+    assert rpm_repo["stats"] == {"edges": 21, "nodes": 20}
 
     rpm_repo_summary = _run_cli(
         ["rpm-repo-summary", "--source", "tests/fixtures/repodata/repomd.xml"]
@@ -2745,6 +2753,8 @@ def _assert_public_vertical_reports() -> None:
     assert rpm_repo_diff["schema"] == "edgp.rpm.repository_diff.v1"
     assert rpm_repo_diff["summary"]["changedPackages"] == 1
 
+    rpm_repo_nginx_node = "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    rpm_repo_nginx_core_node = "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
     rpm_repo_query = _run_cli(
         [
             "query",
@@ -2758,10 +2768,11 @@ def _assert_public_vertical_reports() -> None:
             "nginx",
         ]
     )
-    assert rpm_repo_query["node"] == "nginx==1.20.1-16.el9_4.1.x86_64"
-    assert rpm_repo_query["result"] == [
-        "nginx-core==1.20.1-16.el9_4.1.x86_64"
-    ]
+    assert rpm_repo_query["node"] == rpm_repo_nginx_node
+    assert rpm_repo_query["result"][0] == rpm_repo_nginx_core_node
+    assert "rpm-capability:nginx-filesystem" in rpm_repo_query["result"]
+    assert "rpm-capability:systemd" in rpm_repo_query["result"]
+    assert len(rpm_repo_query["result"]) == 7
 
     rpm_repo_impact = _run_cli(
         [
@@ -2775,7 +2786,7 @@ def _assert_public_vertical_reports() -> None:
         ]
     )
     assert rpm_repo_impact["schema"] == "edgp.impact.report.v1"
-    assert rpm_repo_impact["node"] == "nginx-core==1.20.1-16.el9_4.1.x86_64"
+    assert rpm_repo_impact["node"] == rpm_repo_nginx_core_node
 
     rpm_repo_advisory = _run_cli(
         [
@@ -2811,7 +2822,7 @@ def _assert_public_vertical_reports() -> None:
     assert rpm_repo_public_advisory["summary"]["findings"] == 1
     assert rpm_repo_public_advisory["findings"][0]["advisory"]["ranges"][0][
         "fixed"
-    ] == "1.20.1-16.el9_4.2"
+    ] == "1.20.1-28.el9_8.2.alma.2"
     completed_advisory_gate = subprocess.run(
         [
             sys.executable,
@@ -3067,7 +3078,7 @@ def _assert_public_vertical_reports() -> None:
     assert libsolv["summary"]["transactionActions"] == 3
     assert libsolv["summary"]["parsedPackages"] == 4
     assert libsolv["transactionActions"][0]["nodeId"] == (
-        "nginx==1.20.1-16.el9_4.1.x86_64"
+        "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
     )
     assert libsolv["transactionActions"][1]["oldNodeId"] == (
         "openssl==3.0.7-1.el9.x86_64"
@@ -3149,7 +3160,7 @@ def _assert_public_vertical_reports() -> None:
     )
     assert advisory_range["schema"] == "edgp.public.advisory_feed.v1"
     assert advisory_range["advisories"][0]["ranges"][0]["fixed"] == (
-        "1.20.1-16.el9_4.2"
+        "1.20.1-28.el9_8.2.alma.2"
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -3250,7 +3261,7 @@ def _assert_public_vertical_reports() -> None:
         assert public_feed["summary"]["advisories"] == 1
         assert public_feed["advisories"][0]["versions"] == []
         assert public_feed["advisories"][0]["ranges"][0]["fixed"] == (
-            "1.20.1-16.el9_4.2"
+            "1.20.1-28.el9_8.2.alma.2"
         )
         triage = json.loads(
             (output_dir / "triage-summary.json").read_text(encoding="utf-8")
@@ -3386,13 +3397,14 @@ def _assert_snapshot_diff() -> None:
         ]
     )
     assert payload["schema"] == "edgp.graph.diff.v1"
-    assert payload["summary"] == {
-        "addedNodes": 2,
-        "removedNodes": 1,
-        "addedEdges": 2,
-        "removedEdges": 1,
-        "metadataChangedNodes": 0,
-    }
+    assert payload["summary"]["addedNodes"] == 2
+    assert payload["summary"]["removedNodes"] == 1
+    assert payload["summary"]["addedEdges"] == 2
+    assert payload["summary"]["removedEdges"] == 1
+    assert payload["summary"]["metadataChangedNodes"] == 0
+    assert payload["summary"]["classifiedChanges"] == 2
+    assert payload["summary"]["upgradeChanges"] == 1
+    assert payload["summary"]["downgradeChanges"] == 0
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "graph-diff-bundle"

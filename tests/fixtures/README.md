@@ -3,6 +3,8 @@
 This directory mixes public-derived samples with synthetic edge-case payloads.
 Tests must stay deterministic and offline, so public inputs are committed as
 small curated excerpts rather than fetched live during every test run.
+The same provenance is also available as the machine-readable EDGP report
+`fixture-provenance.json`.
 
 ## Public-Derived Fixtures
 
@@ -41,6 +43,11 @@ in sync with their source fixtures and generator functions:
 - `rpm-albs-provenance.json`
 - `libsolv-bridge.json`
 
+The provenance catalog is generated from the current fixture tree and committed
+as `fixture-provenance.json`. The `tests/test_fixture_provenance.py` suite
+verifies that it stays in sync with current fixture hashes, public source URLs,
+and synthetic fixture groups.
+
 Regenerate all derived public fixtures with:
 
 ```bash
@@ -51,6 +58,13 @@ Check freshness without writing files with:
 
 ```bash
 python -B scripts/generate_public_fixture_reports.py --check
+python -B scripts/generate_fixture_provenance.py --check
+```
+
+Render the provenance catalog as static HTML with:
+
+```bash
+python -B -m src.cli report --input tests/fixtures/fixture-provenance.json --output /tmp/edgp-fixture-provenance.html
 ```
 
 ## Synthetic Fixtures

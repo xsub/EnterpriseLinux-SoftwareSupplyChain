@@ -1,0 +1,104 @@
+{
+  "$id": "urn:edgp:schema:fixture-provenance:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Machine-readable provenance catalog for public-derived and synthetic EDGP test fixtures.",
+  "properties": {
+    "entries": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "bytes": {"type": "integer"},
+          "derivedFrom": {"items": {"type": "string"}, "type": "array"},
+          "generator": {"type": "string"},
+          "kind": {"type": "string"},
+          "notes": {"type": "string"},
+          "path": {"type": "string"},
+          "refreshedAt": {"type": "string"},
+          "reportSchema": {"type": "string"},
+          "sha256": {"type": "string"},
+          "source": {"type": "string"},
+          "sourceUrl": {"type": "string"}
+        },
+        "required": ["path", "kind", "bytes", "sha256"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fixtureRoot": {"type": "string"},
+    "generatedBy": {"type": "string"},
+    "refresh": {
+      "additionalProperties": true,
+      "properties": {
+        "checkedBy": {"items": {"type": "string"}, "type": "array"},
+        "checkCommands": {"items": {"type": "string"}, "type": "array"},
+        "commands": {"items": {"type": "string"}, "type": "array"}
+      },
+      "required": ["commands", "checkCommands", "checkedBy"],
+      "type": "object"
+    },
+    "schema": {"const": "edgp.fixture.provenance.v1"},
+    "sourceUrls": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "access": {"type": "string"},
+          "label": {"type": "string"},
+          "refreshedAt": {"type": "string"},
+          "url": {"type": "string"}
+        },
+        "required": ["label", "url", "access"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "summary": {
+      "additionalProperties": true,
+      "properties": {
+        "catalogedFiles": {"type": "integer"},
+        "deterministicPublicDerivedVariants": {"type": "integer"},
+        "generatedPublicReports": {"type": "integer"},
+        "publicDerivedSources": {"type": "integer"},
+        "sourceUrls": {"type": "integer"},
+        "syntheticGroups": {"type": "integer"}
+      },
+      "required": [
+        "publicDerivedSources",
+        "deterministicPublicDerivedVariants",
+        "generatedPublicReports",
+        "syntheticGroups",
+        "catalogedFiles",
+        "sourceUrls"
+      ],
+      "type": "object"
+    },
+    "syntheticGroups": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "fileCount": {"type": "integer"},
+          "files": {"items": {"type": "string"}, "type": "array"},
+          "group": {"type": "string"},
+          "kind": {"type": "string"},
+          "reason": {"type": "string"},
+          "sha256": {"type": "string"}
+        },
+        "required": ["group", "kind", "reason", "fileCount", "files", "sha256"],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "generatedBy",
+    "fixtureRoot",
+    "summary",
+    "sourceUrls",
+    "entries",
+    "syntheticGroups",
+    "refresh"
+  ],
+  "title": "EDGP Fixture Provenance v1",
+  "type": "object"
+}

@@ -449,6 +449,7 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
         ("tests/fixtures/libsolv-bridge.json", "libsolv-commands-panel"),
         ("tests/fixtures/license-report.json", "license-denied-panel"),
         ("tests/fixtures/public-advisory-feed.json", "public-advisory-feed-panel"),
+        ("tests/fixtures/fixture-provenance.json", "fixture-provenance-entries-panel"),
         ("tests/fixtures/performance-report.json", "performance-results-panel"),
         ("tests/fixtures/triage-summary.json", "triage-checks-panel"),
     ],

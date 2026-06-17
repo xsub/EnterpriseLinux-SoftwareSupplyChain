@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 36,
+  "schemaCount": 37,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -98,6 +98,14 @@
       "id": "urn:edgp:schema:export-batch-verification:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Export Batch Verification v1"
+    },
+    {
+      "contract": "edgp.fixture.provenance.v1",
+      "description": "Machine-readable provenance catalog for public-derived and synthetic EDGP test fixtures.",
+      "file": "edgp.fixture.provenance.v1.schema.json",
+      "id": "urn:edgp:schema:fixture-provenance:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Fixture Provenance v1"
     },
     {
       "contract": "edgp.graph.diff.v1",

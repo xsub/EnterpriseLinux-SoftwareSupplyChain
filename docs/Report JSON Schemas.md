@@ -40,6 +40,10 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
   [`edgp.csr.artifact.v1.schema.json`](schemas/edgp.csr.artifact.v1.schema.json)
   documents memory-mappable frozen CSR artifact manifests, array paths, shapes,
   and SHA-256 digests.
+- `edgp.fixture.provenance.v1`:
+  [`edgp.fixture.provenance.v1.schema.json`](schemas/edgp.fixture.provenance.v1.schema.json)
+  documents public-derived fixture sources, generated report fixtures, synthetic
+  fixture groups, refresh commands, and stable fixture fingerprints.
 - `edgp.impact.report.v1`:
   [`edgp.impact.report.v1.schema.json`](schemas/edgp.impact.report.v1.schema.json)
   documents reverse dependency impact for one selected node.

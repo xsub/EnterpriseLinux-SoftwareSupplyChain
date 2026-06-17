@@ -56,6 +56,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_libsolv_bridge_report(payload)
     if schema == "edgp.public.advisory_feed.v1":
         return render_public_advisory_feed_report(payload)
+    if schema == "edgp.fixture.provenance.v1":
+        return render_fixture_provenance_report(payload)
     if schema == "edgp.performance.report.v1":
         return render_performance_report(payload)
     if schema == "edgp.query.report.v1":
@@ -932,6 +934,71 @@ def render_public_advisory_feed_report(report: dict[str, Any]) -> str:
                 report.get("advisories", []),
                 ["id", "severity", "package", "versions", "ranges", "summary"],
                 test_id="public-advisory-feed-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_fixture_provenance_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.fixture.provenance.v1":
+        raise ValueError("HTML fixture provenance input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    return _document(
+        "EDGP Fixture Provenance",
+        [
+            _generic_hero(
+                eyebrow="fixtures",
+                heading="Fixture provenance catalog",
+                schema=str(report.get("schema")),
+                metrics=[
+                    (
+                        "Public Sources",
+                        summary.get("publicDerivedSources", 0),
+                    ),
+                    (
+                        "Public Variants",
+                        summary.get("deterministicPublicDerivedVariants", 0),
+                    ),
+                    (
+                        "Generated Reports",
+                        summary.get("generatedPublicReports", 0),
+                    ),
+                    ("Synthetic Groups", summary.get("syntheticGroups", 0)),
+                    ("Cataloged Files", summary.get("catalogedFiles", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Public Source URLs",
+                report.get("sourceUrls", []),
+                ["label", "url", "access", "refreshedAt"],
+                test_id="fixture-provenance-sources-panel",
+            ),
+            _rows_panel(
+                "Fixture Entries",
+                report.get("entries", []),
+                [
+                    "path",
+                    "kind",
+                    "source",
+                    "sourceUrl",
+                    "reportSchema",
+                    "generator",
+                    "derivedFrom",
+                    "bytes",
+                    "sha256",
+                    "notes",
+                ],
+                test_id="fixture-provenance-entries-panel",
+            ),
+            _rows_panel(
+                "Synthetic Fixture Groups",
+                report.get("syntheticGroups", []),
+                ["group", "kind", "fileCount", "files", "sha256", "reason"],
+                test_id="fixture-provenance-synthetic-groups-panel",
             ),
         ],
         scripts=[_table_sort_script()],
