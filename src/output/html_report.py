@@ -1088,6 +1088,8 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                     "rightRoot",
                     "failOnChange",
                     "matchedChanges",
+                    "failOnKind",
+                    "matchedKinds",
                     "exitCode",
                 ],
                 test_id="triage-graph-diff-policy-panel",

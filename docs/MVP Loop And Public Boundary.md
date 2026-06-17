@@ -337,6 +337,8 @@ surfaces are:
   triage status into aggregate triage summaries.
 - Promote focused graph diff-tree policy failures into aggregate triage
   summaries.
+- Promote global graph-diff package-kind policy failures into aggregate triage
+  checks, top findings, and HTML panels.
 - Catalog deterministic report bundle archives alongside report bundle
   directories for CI/workbench batch evidence handoff.
 - Write deterministic archive output directly from generated bundle catalogs

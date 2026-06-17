@@ -291,11 +291,70 @@ def test_triage_summary_fails_on_graph_diff_policy_gate(tmp_path, capsys) -> Non
             "status": "fail",
             "failOnChange": ["added-node"],
             "matchedChanges": ["added-node"],
+            "failOnKind": [],
+            "matchedKinds": [],
             "exitCode": 2,
         }
     ]
     assert payload["topFindings"]["graphDiffPolicies"][0]["matchedChanges"] == [
         "added-node"
+    ]
+    assert payload["topFindings"]["graphDiffPolicies"][0]["matchedKinds"] == []
+
+
+def test_triage_summary_fails_on_graph_diff_package_kind_gate(
+    tmp_path,
+    capsys,
+) -> None:
+    diff_path = tmp_path / "graph-diff-kind-policy.json"
+
+    assert (
+        main(
+            [
+                "diff",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+    diff_path.write_text(capsys.readouterr().out, encoding="utf-8")
+
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                str(diff_path),
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["status"] == "fail"
+    assert payload["summary"]["graphDiffReports"] == 1
+    assert payload["summary"]["graphDiffPolicyFailures"] == 1
+    assert payload["summary"]["failedChecks"] == 1
+    assert payload["checks"] == [
+        {
+            "kind": "graph-diff-policy",
+            "status": "fail",
+            "failOnChange": [],
+            "matchedChanges": [],
+            "failOnKind": ["upgrade"],
+            "matchedKinds": ["upgrade"],
+            "exitCode": 2,
+        }
+    ]
+    assert payload["topFindings"]["graphDiffPolicies"][0]["matchedKinds"] == [
+        "upgrade"
     ]
 
 
@@ -390,6 +449,45 @@ def test_diff_tree_bundle_triage_summary_reflects_policy_gate(tmp_path, capsys) 
     assert triage["checks"][0]["status"] == "fail"
     triage_html = (output_dir / "triage-summary.html").read_text(encoding="utf-8")
     assert 'data-testid="triage-diff-tree-policy-panel"' in triage_html
+
+
+def test_graph_diff_bundle_triage_summary_reflects_package_kind_policy_gate(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "graph-diff-kind-policy-bundle"
+
+    assert (
+        main(
+            [
+                "diff-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    triage = json.loads(
+        (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+    )
+
+    assert triage["status"] == "fail"
+    assert triage["summary"]["graphDiffPolicyFailures"] == 1
+    assert triage["checks"][0]["kind"] == "graph-diff-policy"
+    assert triage["checks"][0]["failOnKind"] == ["upgrade"]
+    assert triage["checks"][0]["matchedKinds"] == ["upgrade"]
+    triage_html = (output_dir / "triage-summary.html").read_text(encoding="utf-8")
+    assert 'data-testid="triage-graph-diff-policy-panel"' in triage_html
+    assert "upgrade" in triage_html
 
 
 def test_triage_summary_includes_bundle_catalog_failures() -> None:

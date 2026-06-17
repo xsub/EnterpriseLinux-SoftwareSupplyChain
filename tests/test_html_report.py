@@ -253,6 +253,8 @@ def test_render_report_supports_triage_diff_policy_findings() -> None:
             "status": "fail",
             "failOnChange": ["added-node"],
             "matchedChanges": ["added-node"],
+            "failOnKind": ["upgrade"],
+            "matchedKinds": ["upgrade"],
             "exitCode": 2,
         }
     )
@@ -281,6 +283,8 @@ def test_render_report_supports_triage_diff_policy_findings() -> None:
             "rightRoot": "app==1.0.0",
             "failOnChange": ["added-node"],
             "matchedChanges": ["added-node"],
+            "failOnKind": ["upgrade"],
+            "matchedKinds": ["upgrade"],
             "exitCode": 2,
         }
     ]
@@ -291,6 +295,7 @@ def test_render_report_supports_triage_diff_policy_findings() -> None:
     assert "Graph Diff Policy Findings" in html
     assert 'data-testid="triage-diff-tree-policy-panel"' in html
     assert "Diff Tree Policy Findings" in html
+    assert "added-node" in html
     assert "upgrade" in html
 
 

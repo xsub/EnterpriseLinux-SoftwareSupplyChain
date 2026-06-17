@@ -1102,7 +1102,9 @@ graph-diff and diff-tree policy gate failures, bundle-catalog integrity and
 underlying triage status, and the source report list so CI systems and
 workbench/RAG contexts can read one compact artifact instead of stitching
 together every report manually. Rendered triage-summary HTML includes dedicated
-graph-diff and diff-tree policy findings panels when graph-drift gates fail.
+graph-diff and diff-tree policy findings panels when graph-drift gates fail;
+graph-diff findings preserve both coarse `failOnChange`/`matchedChanges` and
+semantic package `failOnKind`/`matchedKinds` gates.
 Use `--format text` for a compact CI log line that keeps status, failed checks,
 graph-diff and diff-tree policy failures, npm signals, and catalog failures
 visible without parsing the full JSON rollup. `--fail-on-status warn|fail` still

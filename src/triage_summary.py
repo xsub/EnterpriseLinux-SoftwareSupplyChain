@@ -439,6 +439,8 @@ def _diff_policy_check(report: dict[str, Any]) -> dict[str, Any] | None:
         "status": "fail" if status == "fail" else "pass",
         "failOnChange": _string_list(policy.get("failOnChange")),
         "matchedChanges": matched_changes,
+        "failOnKind": _string_list(policy.get("failOnKind")),
+        "matchedKinds": _string_list(policy.get("matchedKinds")),
         "exitCode": int(policy.get("exitCode", 0) or 0),
     }
 
@@ -504,6 +506,8 @@ def _diff_policy_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
             "rightRoot": report.get("rightRoot"),
             "failOnChange": _string_list(policy.get("failOnChange")),
             "matchedChanges": _string_list(policy.get("matchedChanges")),
+            "failOnKind": _string_list(policy.get("failOnKind")),
+            "matchedKinds": _string_list(policy.get("matchedKinds")),
             "exitCode": int(policy.get("exitCode", 0) or 0),
         }
     ]
