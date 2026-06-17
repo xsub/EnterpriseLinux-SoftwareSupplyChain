@@ -175,11 +175,11 @@ edgp npm-diagnostics --path package-lock.json
 edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-diagnostics --triage-summary
 edgp diff --left before.json --right after.json
 edgp diff --left before.json --right after.json --format text --fail-on-change added-node --fail-on-change removed-edge
-edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --format text --triage-summary --fail-on-change added-node
+edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --archive-output reports/graph-diff.tar.gz --format text --triage-summary --fail-on-change added-node
 edgp diff-tree --left before.json --right after.json --node openssl --direction dependencies --depth 4
 edgp diff-tree --left before.json --right after.json --left-node openssl==3.0.7 --right-node openssl==3.0.8 --direction dependencies --depth 4
 edgp diff-tree --left before.json --right after.json --node openssl --format text --fail-on-kind downgrade --fail-on-kind replacement
-edgp diff-tree-bundle --left before.json --right after.json --node openssl --direction dependents --depth 4 --output-dir reports/openssl-impact-diff --format text --triage-summary
+edgp diff-tree-bundle --left before.json --right after.json --node openssl --direction dependents --depth 4 --output-dir reports/openssl-impact-diff --archive-output reports/openssl-impact-diff.tar.gz --format text --triage-summary
 ```
 
 Global snapshot diff commands compare the whole graph and can act as coarse CI
@@ -189,7 +189,7 @@ The command still prints or writes the full report first, then returns status
 `policy` block with requested changes, matched changes, pass/fail status, and
 expected exit code. Use `--format text` when CI logs should show one compact
 line instead of the full JSON report, or one compact bundle line with the
-generated `index.html` path.
+generated `index.html` and optional `--archive-output` paths.
 
 Focused diff-tree commands classify changes as additions, removals, metadata changes,
 replacements, upgrades, or downgrades. Use `--fail-on-kind` to keep the JSON or
@@ -198,7 +198,9 @@ present, which makes snapshot-to-snapshot graph drift usable in CI gates. Gated
 diff-tree reports include a `policy` block with the requested change kinds,
 matched kinds, pass/fail status, and expected exit code. `--format text` gives
 both direct reports and static bundles a terminal-friendly summary line while
-keeping the full JSON and HTML artifacts available.
+keeping the full JSON and HTML artifacts available. Bundle commands can also
+write deterministic `.tar.gz` archives in the same pass with `--archive-output`,
+which keeps CI handoff artifacts reproducible even when the drift policy fails.
 
 ### Reports And Bundles
 

@@ -269,6 +269,7 @@ def test_cli_diff_bundle_text_can_fail_after_writing_bundle(
     capsys,
 ) -> None:
     output_dir = tmp_path / "graph-diff-text-failing-bundle"
+    archive_path = tmp_path / "graph-diff-text-failing-bundle.tar.gz"
 
     assert (
         main(
@@ -282,6 +283,8 @@ def test_cli_diff_bundle_text_can_fail_after_writing_bundle(
                 str(output_dir),
                 "--format",
                 "text",
+                "--archive-output",
+                str(archive_path),
                 "--triage-summary",
                 "--fail-on-change",
                 "removed-edge",
@@ -292,6 +295,7 @@ def test_cli_diff_bundle_text_can_fail_after_writing_bundle(
 
     assert capsys.readouterr().out.strip() == (
         f"DIFF_BUNDLE index={output_dir / 'index.html'} "
+        f"archive={archive_path} "
         "leftRoot=app==1.0.0 rightRoot=app==1.0.0 "
         "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
         "addedEdges=2 removedEdges=1 policyStatus=fail "
@@ -299,6 +303,15 @@ def test_cli_diff_bundle_text_can_fail_after_writing_bundle(
     )
     assert output_dir.joinpath("index.html").exists()
     assert output_dir.joinpath("graph-diff.json").exists()
+    assert archive_path.exists()
+
+    assert (
+        main(["verify-bundle-archive", "--path", str(archive_path), "--format", "text"])
+        == 0
+    )
+    verified_text = capsys.readouterr().out.strip()
+    assert verified_text.startswith("OK files=")
+    assert " verificationFailures=0 " in verified_text
 
 
 def test_cli_diff_tree_accepts_explicit_left_right_selectors(capsys) -> None:
@@ -515,6 +528,7 @@ def test_cli_diff_tree_bundle_text_can_fail_after_writing_bundle(
     capsys,
 ) -> None:
     output_dir = tmp_path / "graph-diff-tree-text-failing-bundle"
+    archive_path = tmp_path / "graph-diff-tree-text-failing-bundle.tar.gz"
 
     assert (
         main(
@@ -532,6 +546,8 @@ def test_cli_diff_tree_bundle_text_can_fail_after_writing_bundle(
                 str(output_dir),
                 "--format",
                 "text",
+                "--archive-output",
+                str(archive_path),
                 "--triage-summary",
                 "--fail-on-kind",
                 "upgrade",
@@ -542,6 +558,7 @@ def test_cli_diff_tree_bundle_text_can_fail_after_writing_bundle(
 
     assert capsys.readouterr().out.strip() == (
         f"DIFF_TREE_BUNDLE index={output_dir / 'index.html'} "
+        f"archive={archive_path} "
         "selector=app direction=dependencies depth=2 "
         "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
         "addedEdges=2 removedEdges=1 classifiedChanges=2 "
@@ -550,3 +567,12 @@ def test_cli_diff_tree_bundle_text_can_fail_after_writing_bundle(
     )
     assert output_dir.joinpath("index.html").exists()
     assert output_dir.joinpath("graph-diff-tree.json").exists()
+    assert archive_path.exists()
+
+    assert (
+        main(["verify-bundle-archive", "--path", str(archive_path), "--format", "text"])
+        == 0
+    )
+    verified_text = capsys.readouterr().out.strip()
+    assert verified_text.startswith("OK files=")
+    assert " verificationFailures=0 " in verified_text

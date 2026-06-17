@@ -1086,9 +1086,17 @@ def _format_graph_diff_report(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def _format_graph_diff_bundle_result(index_path: Path, report: dict[str, Any]) -> str:
+def _format_graph_diff_bundle_result(
+    index_path: Path,
+    report: dict[str, Any],
+    *,
+    archive_output: Path | None = None,
+) -> str:
     details = _format_graph_diff_report(report).removeprefix("DIFF ")
-    return f"DIFF_BUNDLE index={_text_value(index_path)} {details}"
+    archive_part = (
+        f" archive={_text_value(archive_output)}" if archive_output is not None else ""
+    )
+    return f"DIFF_BUNDLE index={_text_value(index_path)}{archive_part} {details}"
 
 
 def _format_graph_diff_tree_report(report: dict[str, Any]) -> str:
@@ -1133,9 +1141,14 @@ def _format_graph_diff_tree_report(report: dict[str, Any]) -> str:
 def _format_graph_diff_tree_bundle_result(
     index_path: Path,
     report: dict[str, Any],
+    *,
+    archive_output: Path | None = None,
 ) -> str:
     details = _format_graph_diff_tree_report(report).removeprefix("DIFF_TREE ")
-    return f"DIFF_TREE_BUNDLE index={_text_value(index_path)} {details}"
+    archive_part = (
+        f" archive={_text_value(archive_output)}" if archive_output is not None else ""
+    )
+    return f"DIFF_TREE_BUNDLE index={_text_value(index_path)}{archive_part} {details}"
 
 
 def _policy_text_parts(
@@ -1165,11 +1178,18 @@ def _print_graph_diff_bundle_result(
     index_path: Path,
     report: dict[str, Any],
     *,
+    archive_output: Path | None = None,
     output_format: str = "path",
     fail_on_status: str | None = None,
 ) -> int:
     if output_format == "text":
-        print(_format_graph_diff_bundle_result(index_path, report))
+        print(
+            _format_graph_diff_bundle_result(
+                index_path,
+                report,
+                archive_output=archive_output,
+            )
+        )
     else:
         print(index_path)
     if _bundle_triage_summary_should_fail(index_path.parent, min_status=fail_on_status):
@@ -1183,11 +1203,18 @@ def _print_graph_diff_tree_bundle_result(
     index_path: Path,
     report: dict[str, Any],
     *,
+    archive_output: Path | None = None,
     output_format: str = "path",
     fail_on_status: str | None = None,
 ) -> int:
     if output_format == "text":
-        print(_format_graph_diff_tree_bundle_result(index_path, report))
+        print(
+            _format_graph_diff_tree_bundle_result(
+                index_path,
+                report,
+                archive_output=archive_output,
+            )
+        )
     else:
         print(index_path)
     if _bundle_triage_summary_should_fail(index_path.parent, min_status=fail_on_status):
@@ -3145,6 +3172,11 @@ def build_parser() -> argparse.ArgumentParser:
     diff_bundle.add_argument("--output-dir", type=Path, required=True)
     diff_bundle.add_argument("--format", choices=["path", "text"], default="path")
     diff_bundle.add_argument(
+        "--archive-output",
+        type=Path,
+        help="also write the generated graph diff bundle as deterministic .tar.gz",
+    )
+    diff_bundle.add_argument(
         "--fail-on-change",
         action="append",
         choices=DIFF_CHANGE_KINDS,
@@ -3197,6 +3229,11 @@ def build_parser() -> argparse.ArgumentParser:
     diff_tree_bundle.add_argument("--depth", type=int, default=3)
     diff_tree_bundle.add_argument("--output-dir", type=Path, required=True)
     diff_tree_bundle.add_argument("--format", choices=["path", "text"], default="path")
+    diff_tree_bundle.add_argument(
+        "--archive-output",
+        type=Path,
+        help="also write the generated graph diff-tree bundle as deterministic .tar.gz",
+    )
     diff_tree_bundle.add_argument(
         "--fail-on-kind",
         action="append",
@@ -4345,9 +4382,17 @@ def main(argv: list[str] | None = None) -> int:
         )
         report_path = args.output_dir / "graph-diff.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
+        if args.archive_output is not None:
+            archive_report = write_report_bundle_archive(
+                args.output_dir,
+                args.archive_output,
+            )
+            if archive_report.get("ok") is not True:
+                raise ValueError("Could not archive generated graph diff bundle")
         return _print_graph_diff_bundle_result(
             index_path,
             report,
+            archive_output=args.archive_output,
             output_format=args.format,
             fail_on_status=args.fail_on_status,
         )
@@ -4390,9 +4435,17 @@ def main(argv: list[str] | None = None) -> int:
         )
         report_path = args.output_dir / "graph-diff-tree.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
+        if args.archive_output is not None:
+            archive_report = write_report_bundle_archive(
+                args.output_dir,
+                args.archive_output,
+            )
+            if archive_report.get("ok") is not True:
+                raise ValueError("Could not archive generated graph diff-tree bundle")
         return _print_graph_diff_tree_bundle_result(
             index_path,
             report,
+            archive_output=args.archive_output,
             output_format=args.format,
             fail_on_status=args.fail_on_status,
         )
