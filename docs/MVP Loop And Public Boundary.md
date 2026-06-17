@@ -345,6 +345,8 @@ surfaces are:
   entries for CI/workbench batch evidence review.
 - Preserve bundle-catalog policy detail lists when catalog reports are rolled
   into aggregate triage-summary findings.
+- Preserve report and bundle triage top findings in validation reports and
+  validation HTML for persisted CI/workbench evidence.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

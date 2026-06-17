@@ -63,6 +63,10 @@
       "description": "Optional top-level summary copied from a successfully validated EDGP JSON report.",
       "type": "object"
     },
+    "reportTopFindings": {
+      "description": "Optional top findings copied from a successfully validated EDGP JSON report.",
+      "type": "object"
+    },
     "schema": {
       "const": "edgp.validation.report.v1",
       "description": "Validation report contract identifier."
@@ -121,6 +125,9 @@
           "type": "string"
         },
         "summary": {
+          "type": "object"
+        },
+        "topFindings": {
           "type": "object"
         }
       },

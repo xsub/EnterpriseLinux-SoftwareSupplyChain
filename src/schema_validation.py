@@ -247,12 +247,16 @@ def _load_archive_json_member(
 
 def _triage_summary_summary(source: str, payload: dict[str, Any]) -> dict[str, Any]:
     summary = payload.get("summary")
-    return {
+    result = {
         "schema": payload.get("schema"),
         "source": source,
         "status": payload.get("status"),
         "summary": summary if isinstance(summary, dict) else {},
     }
+    top_findings = payload.get("topFindings")
+    if isinstance(top_findings, dict):
+        result["topFindings"] = top_findings
+    return result
 
 
 def _bundle_member_path(bundle_dir: Path, label: str) -> Path | None:
@@ -328,6 +332,9 @@ def _json_report_context(payload: dict[str, Any]) -> dict[str, Any]:
     summary = payload.get("summary")
     if isinstance(summary, dict):
         context["reportSummary"] = summary
+    top_findings = payload.get("topFindings")
+    if isinstance(top_findings, dict):
+        context["reportTopFindings"] = top_findings
     return context
 
 

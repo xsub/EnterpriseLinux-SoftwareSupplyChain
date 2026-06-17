@@ -1316,6 +1316,14 @@ def render_validation_report(report: dict[str, Any]) -> str:
                 test_id="validation-triage-panel",
             )
         )
+        sections.append(
+            _rows_panel(
+                "Triage Top Findings",
+                _validation_top_finding_rows(triage_summary.get("topFindings")),
+                _validation_top_finding_columns(),
+                test_id="validation-triage-top-findings-panel",
+            )
+        )
     report_summary = report.get("reportSummary")
     report_status = report.get("reportStatus")
     if isinstance(report_summary, dict) or isinstance(report_status, str):
@@ -1338,6 +1346,14 @@ def render_validation_report(report: dict[str, Any]) -> str:
                 test_id="validation-report-summary-panel",
             )
         )
+    sections.append(
+        _rows_panel(
+            "Validated Report Top Findings",
+            _validation_top_finding_rows(report.get("reportTopFindings")),
+            _validation_top_finding_columns(),
+            test_id="validation-report-top-findings-panel",
+        )
+    )
     return _document(
         "EDGP Validation Report",
         sections,
@@ -1553,6 +1569,55 @@ def _validation_report_summary_row(report: dict[str, object]) -> dict[str, objec
         "diffTreePolicyFailures": summary.get("diffTreePolicyFailures", ""),
         "summary": summary,
     }
+
+
+def _validation_top_finding_rows(top_findings: object) -> list[dict[str, object]]:
+    if not isinstance(top_findings, dict):
+        return []
+    rows: list[dict[str, object]] = []
+    for category in sorted(top_findings):
+        findings = top_findings.get(category)
+        if not isinstance(findings, list):
+            continue
+        for finding in findings:
+            if not isinstance(finding, dict):
+                continue
+            row: dict[str, object] = {"category": category}
+            row.update(finding)
+            rows.append(row)
+    return rows
+
+
+def _validation_top_finding_columns() -> list[str]:
+    return [
+        "category",
+        "path",
+        "sourceKind",
+        "triageStatus",
+        "graphDiffPolicyFailures",
+        "diffTreePolicyFailures",
+        "graphDiffFailOnChanges",
+        "graphDiffMatchedChanges",
+        "graphDiffFailOnKinds",
+        "graphDiffMatchedKinds",
+        "diffTreeFailOnKinds",
+        "diffTreeMatchedKinds",
+        "leftRoot",
+        "rightRoot",
+        "failOnChange",
+        "matchedChanges",
+        "failOnKind",
+        "matchedKinds",
+        "selector",
+        "direction",
+        "depth",
+        "id",
+        "severity",
+        "package",
+        "license",
+        "kind",
+        "count",
+    ]
 
 
 def _triage_npm_signal_count(summary: Mapping[str, object]) -> int:

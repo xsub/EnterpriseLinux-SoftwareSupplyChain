@@ -365,6 +365,26 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
                 "npmNestedResolutionConflicts": 0,
                 "npmUnresolvedDependencies": 0,
             },
+            "topFindings": {
+                "diffTreePolicies": [
+                    {
+                        "selector": "app",
+                        "direction": "dependencies",
+                        "depth": 2,
+                        "matchedKinds": ["upgrade"],
+                    }
+                ]
+            },
+        },
+        "reportTopFindings": {
+            "bundleCatalog": [
+                {
+                    "path": "/tmp/reports/cataloged-diff",
+                    "sourceKind": "graph-diff",
+                    "triageStatus": "fail",
+                    "graphDiffMatchedKinds": ["upgrade"],
+                }
+            ]
         },
     }
 
@@ -372,8 +392,12 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
 
     assert 'data-testid="validation-triage-panel"' in html
     assert 'data-testid="validation-report-summary-panel"' in html
+    assert 'data-testid="validation-triage-top-findings-panel"' in html
+    assert 'data-testid="validation-report-top-findings-panel"' in html
     assert "diffTreePolicyFailures" in html
     assert "failedChecks" in html
+    assert "cataloged-diff" in html
+    assert "upgrade" in html
 
 
 @pytest.mark.parametrize(

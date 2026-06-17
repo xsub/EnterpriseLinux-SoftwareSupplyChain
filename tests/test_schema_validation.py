@@ -26,6 +26,47 @@ def test_validate_target_accepts_bundle_catalog_nullable_fingerprint() -> None:
     assert report["contract"] == "edgp.bundle.catalog.v1"
 
 
+def test_validate_target_preserves_report_top_findings() -> None:
+    report = validate_target(Path("tests/fixtures/triage-summary.json"))
+
+    assert report["ok"] is True
+    assert report["contract"] == "edgp.triage.summary.v1"
+    assert report["reportTopFindings"]["advisories"][0]["id"] == "ADV-LOCAL-0001"
+    assert report["reportTopFindings"]["npm"][0]["kind"] == "duplicatePackageNames"
+
+
+def test_validate_target_preserves_bundle_triage_top_findings(tmp_path) -> None:
+    diff_tree_report = json.loads(
+        Path("tests/fixtures/graph-diff-tree.json").read_text(encoding="utf-8")
+    )
+    diff_tree_report["policy"] = {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
+    report_path = tmp_path / "graph-diff-tree.json"
+    report_path.write_text(json.dumps(diff_tree_report), encoding="utf-8")
+    bundle_dir = tmp_path / "diff-tree-bundle"
+    write_report_bundle(
+        [report_path],
+        bundle_dir,
+        bundle_metadata={
+            "sourceKind": "graph-diff-tree",
+            "command": "edgp diff-tree-bundle --fail-on-kind upgrade",
+        },
+        include_triage_summary=True,
+    )
+
+    report = validate_target(bundle_dir)
+
+    assert report["ok"] is True
+    assert report["triageSummary"]["status"] == "fail"
+    assert report["triageSummary"]["topFindings"]["diffTreePolicies"][0][
+        "matchedKinds"
+    ] == ["upgrade"]
+
+
 def test_validate_target_accepts_schema_index() -> None:
     report = validate_target(Path("docs/schemas/index.json"))
 

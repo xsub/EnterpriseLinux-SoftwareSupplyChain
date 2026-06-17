@@ -228,6 +228,18 @@ def test_bundle_catalog_schema_documents_policy_detail_fields() -> None:
         assert bundle_props[key]["items"]["type"] == "string"
 
 
+def test_validation_report_schema_documents_top_findings_context() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.validation.report.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["reportTopFindings"]["type"] == "object"
+    triage_props = schema["properties"]["triageSummary"]["properties"]
+    assert triage_props["topFindings"]["type"] == "object"
+
+
 def test_report_bundle_submission_plan_schema_documents_triage_gate() -> None:
     schema = json.loads(
         Path("docs/schemas/edgp.report.bundle.submission_plan.v1.schema.json").read_text(
