@@ -208,6 +208,26 @@ def test_graph_diff_schema_documents_classification_gate_shape() -> None:
     assert "matchedKinds" in policy["properties"]
 
 
+def test_bundle_catalog_schema_documents_policy_detail_fields() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.bundle.catalog.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    bundle_props = schema["properties"]["bundles"]["items"]["properties"]
+    for key in (
+        "graphDiffFailOnChanges",
+        "graphDiffMatchedChanges",
+        "graphDiffFailOnKinds",
+        "graphDiffMatchedKinds",
+        "diffTreeFailOnKinds",
+        "diffTreeMatchedKinds",
+    ):
+        assert bundle_props[key]["type"] == "array"
+        assert bundle_props[key]["items"]["type"] == "string"
+
+
 def test_report_bundle_submission_plan_schema_documents_triage_gate() -> None:
     schema = json.loads(
         Path("docs/schemas/edgp.report.bundle.submission_plan.v1.schema.json").read_text(

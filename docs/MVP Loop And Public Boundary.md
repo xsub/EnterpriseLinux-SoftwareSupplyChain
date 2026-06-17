@@ -341,6 +341,8 @@ surfaces are:
   checks, top findings, and HTML panels.
 - Catalog deterministic report bundle archives alongside report bundle
   directories for CI/workbench batch evidence handoff.
+- Preserve graph-diff and diff-tree policy detail lists inside bundle-catalog
+  entries for CI/workbench batch evidence review.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

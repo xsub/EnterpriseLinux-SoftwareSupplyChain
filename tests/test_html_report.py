@@ -230,6 +230,9 @@ def test_render_report_supports_query_report_json() -> None:
 
 def test_render_report_supports_bundle_catalog_json() -> None:
     report = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
+    report["bundles"][0]["graphDiffMatchedKinds"] = ["upgrade"]
+    report["bundles"][0]["graphDiffMatchedChanges"] = ["added-node"]
+    report["bundles"][0]["diffTreeMatchedKinds"] = ["replacement"]
 
     html = render_report(report)
 
@@ -241,6 +244,9 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "Diff Tree Policies" in html
     assert "Diff Tree Policy Failures" in html
     assert "htmlDigestMismatch" in html
+    assert "upgrade" in html
+    assert "added-node" in html
+    assert "replacement" in html
 
 
 def test_render_report_supports_triage_diff_policy_findings() -> None:

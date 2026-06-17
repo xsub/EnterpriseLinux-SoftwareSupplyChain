@@ -48,7 +48,8 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
 - `edgp.bundle.catalog.v1`:
   [`edgp.bundle.catalog.v1.schema.json`](schemas/edgp.bundle.catalog.v1.schema.json)
   documents verified static report-bundle catalogs with source-kind triage
-  status for batch CI and workbench ingestion.
+  status and per-bundle graph-diff or diff-tree policy details for batch CI
+  and workbench ingestion.
 - `edgp.export.batch.archive.v1`:
   [`edgp.export.batch.archive.v1.schema.json`](schemas/edgp.export.batch.archive.v1.schema.json)
   documents deterministic graph export batch archives for portable CI handoff.

@@ -1083,7 +1083,9 @@ fingerprints.
 Source-kind rows include triage pass/warn/fail counts plus
 `graphDiffPolicyFailures` and `diffTreePolicyFailures`, so large evidence
 batches can show which input family contributed failed snapshot-drift policy
-gates. The top-level `status` is
+gates. Per-bundle rows also preserve matched graph-diff changes and package
+kinds, plus matched diff-tree package kinds, from embedded triage summaries.
+The top-level `status` is
 `pass`, `warn`, or `fail` so CI and workbench views do not need to infer the
 catalog verdict from several counters. The catalog can itself be
 rendered as a static, verifiable bundle, and `--archive-output` writes that

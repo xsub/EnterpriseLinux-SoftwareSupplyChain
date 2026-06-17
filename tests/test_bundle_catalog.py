@@ -265,6 +265,10 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
     assert report["summary"]["graphDiffPolicyFailures"] == 1
     assert report["summary"]["diffTreePolicyFailures"] == 0
     assert report["bundles"][0]["graphDiffPolicyFailures"] == 1
+    assert report["bundles"][0]["graphDiffFailOnChanges"] == ["added-node"]
+    assert report["bundles"][0]["graphDiffMatchedChanges"] == ["added-node"]
+    assert report["bundles"][0]["graphDiffFailOnKinds"] == []
+    assert report["bundles"][0]["graphDiffMatchedKinds"] == []
     assert report["sourceKinds"] == [
         {
             "sourceKind": "graph-diff",
@@ -279,6 +283,41 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
             "withoutTriage": 0,
         }
     ]
+
+
+def test_build_bundle_catalog_preserves_graph_diff_package_kind_details(
+    tmp_path,
+) -> None:
+    diff_report = json.loads(
+        Path("tests/fixtures/graph-diff.json").read_text(encoding="utf-8")
+    )
+    diff_report["policy"] = {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
+    diff_path = tmp_path / "graph-diff.json"
+    diff_path.write_text(json.dumps(diff_report), encoding="utf-8")
+    diff_bundle = tmp_path / "diff-bundle"
+    write_report_bundle(
+        [diff_path],
+        diff_bundle,
+        bundle_metadata={
+            "sourceKind": "graph-diff",
+            "command": "edgp diff-bundle --fail-on-kind upgrade",
+        },
+        include_triage_summary=True,
+    )
+
+    report = build_bundle_catalog_report([diff_bundle])
+
+    assert report["status"] == "fail"
+    assert report["summary"]["graphDiffPolicyFailures"] == 1
+    assert report["bundles"][0]["graphDiffFailOnChanges"] == []
+    assert report["bundles"][0]["graphDiffMatchedChanges"] == []
+    assert report["bundles"][0]["graphDiffFailOnKinds"] == ["upgrade"]
+    assert report["bundles"][0]["graphDiffMatchedKinds"] == ["upgrade"]
 
 
 def test_build_bundle_catalog_counts_archive_diff_tree_policy_failures(
@@ -316,4 +355,6 @@ def test_build_bundle_catalog_counts_archive_diff_tree_policy_failures(
     assert report["bundles"][0]["inputType"] == "archive"
     assert report["bundles"][0]["triageStatus"] == "fail"
     assert report["bundles"][0]["diffTreePolicyFailures"] == 1
+    assert report["bundles"][0]["diffTreeFailOnKinds"] == ["upgrade"]
+    assert report["bundles"][0]["diffTreeMatchedKinds"] == ["upgrade"]
     assert report["sourceKinds"][0]["diffTreePolicyFailures"] == 1

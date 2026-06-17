@@ -135,6 +135,20 @@ def _catalog_entry(
         "diffTreePolicyFailures": int(
             triage_summary.get("diffTreePolicyFailures", 0) or 0
         ),
+        "graphDiffFailOnChanges": _string_list(
+            triage_summary.get("graphDiffFailOnChanges")
+        ),
+        "graphDiffMatchedChanges": _string_list(
+            triage_summary.get("graphDiffMatchedChanges")
+        ),
+        "graphDiffFailOnKinds": _string_list(
+            triage_summary.get("graphDiffFailOnKinds")
+        ),
+        "graphDiffMatchedKinds": _string_list(
+            triage_summary.get("graphDiffMatchedKinds")
+        ),
+        "diffTreeFailOnKinds": _string_list(triage_summary.get("diffTreeFailOnKinds")),
+        "diffTreeMatchedKinds": _string_list(triage_summary.get("diffTreeMatchedKinds")),
     }
 
 
@@ -202,6 +216,12 @@ def _triage_summary(
             "status": "not-present",
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "graphDiffFailOnChanges": [],
+            "graphDiffMatchedChanges": [],
+            "graphDiffFailOnKinds": [],
+            "graphDiffMatchedKinds": [],
+            "diffTreeFailOnKinds": [],
+            "diffTreeMatchedKinds": [],
         }
     payload = load_member(source)
     if not isinstance(payload, dict):
@@ -209,10 +229,21 @@ def _triage_summary(
             "status": "unreadable",
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "graphDiffFailOnChanges": [],
+            "graphDiffMatchedChanges": [],
+            "graphDiffFailOnKinds": [],
+            "graphDiffMatchedKinds": [],
+            "diffTreeFailOnKinds": [],
+            "diffTreeMatchedKinds": [],
         }
     summary = payload.get("summary")
     if not isinstance(summary, dict):
         summary = {}
+    top_findings = payload.get("topFindings")
+    if not isinstance(top_findings, dict):
+        top_findings = {}
+    graph_diff_policies = _object_list(top_findings.get("graphDiffPolicies"))
+    diff_tree_policies = _object_list(top_findings.get("diffTreePolicies"))
     return {
         "status": str(payload.get("status") or "unknown"),
         "graphDiffPolicyFailures": int(
@@ -221,7 +252,52 @@ def _triage_summary(
         "diffTreePolicyFailures": int(
             summary.get("diffTreePolicyFailures", 0) or 0
         ),
+        "graphDiffFailOnChanges": _collect_policy_values(
+            graph_diff_policies,
+            "failOnChange",
+        ),
+        "graphDiffMatchedChanges": _collect_policy_values(
+            graph_diff_policies,
+            "matchedChanges",
+        ),
+        "graphDiffFailOnKinds": _collect_policy_values(
+            graph_diff_policies,
+            "failOnKind",
+        ),
+        "graphDiffMatchedKinds": _collect_policy_values(
+            graph_diff_policies,
+            "matchedKinds",
+        ),
+        "diffTreeFailOnKinds": _collect_policy_values(
+            diff_tree_policies,
+            "failOnKind",
+        ),
+        "diffTreeMatchedKinds": _collect_policy_values(
+            diff_tree_policies,
+            "matchedKinds",
+        ),
     }
+
+
+def _object_list(value: object) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _collect_policy_values(rows: list[dict[str, Any]], key: str) -> list[str]:
+    values: list[str] = []
+    for row in rows:
+        for value in _string_list(row.get(key)):
+            if value not in values:
+                values.append(value)
+    return values
+
+
+def _string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, str)]
 
 
 def _bundle_member_path(bundle_dir: Path, label: str) -> Path:

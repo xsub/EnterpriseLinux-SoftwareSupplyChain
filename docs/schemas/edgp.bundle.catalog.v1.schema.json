@@ -26,9 +26,45 @@
             "minimum": 0,
             "type": "integer"
           },
+          "diffTreeFailOnKinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "diffTreeMatchedKinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "graphDiffPolicyFailures": {
             "minimum": 0,
             "type": "integer"
+          },
+          "graphDiffFailOnChanges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "graphDiffFailOnKinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "graphDiffMatchedChanges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "graphDiffMatchedKinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "failureCodes": {
             "items": {
