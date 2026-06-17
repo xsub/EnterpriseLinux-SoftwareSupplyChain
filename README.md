@@ -72,7 +72,10 @@ fixtures can be refreshed with
 can be refreshed with `python -B scripts/generate_fixture_provenance.py`.
 Both generators support `--check` for CI. The same catalog is available through
 `edgp fixture-provenance` and can be rendered as a verifiable static bundle with
-`edgp fixture-provenance-bundle`.
+`edgp fixture-provenance-bundle`. `edgp real-data-coverage` turns that catalog
+into a compact data-quality report that separates direct public evidence,
+generated public reports, and intentionally synthetic fixtures with replacement
+priorities.
 
 ## Quick Start
 
@@ -155,6 +158,8 @@ edgp public-advisory-feed --url https://example.com/osv.json --ecosystem rpm
 edgp public-advisory-feed-bundle --path osv.json --ecosystem rpm --output-dir reports/public-advisory-feed --triage-summary
 edgp fixture-provenance --fixture-dir tests/fixtures
 edgp fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir reports/fixture-provenance --triage-summary
+edgp real-data-coverage --fixture-dir tests/fixtures
+edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --triage-summary
 ```
 
 ### Query And Analyze
@@ -726,6 +731,11 @@ public URL and local file inputs:
   synthetic fixture groups, and file fingerprints. `edgp
   fixture-provenance-bundle` renders the same catalog as static HTML with a
   verifiable manifest for demo and audit handoff.
+- `edgp real-data-coverage` converts fixture provenance into a data-quality
+  coverage report: direct public sources, deterministic public variants,
+  generated public reports, remaining synthetic fixture groups, and a concrete
+  replacement-priority plan. `edgp real-data-coverage-bundle` renders the same
+  assessment as a verifiable static bundle.
 - `edgp libsolv-bridge` reports local libsolv command availability and parses
   transaction transcripts so EDGP can explain solved RPM actions while leaving
   SAT solving to libsolv. Parsed actions are normalized into RPM package

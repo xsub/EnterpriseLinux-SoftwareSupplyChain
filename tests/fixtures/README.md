@@ -42,6 +42,7 @@ in sync with their source fixtures and generator functions:
 - `albs-release-completeness.json`
 - `rpm-albs-provenance.json`
 - `libsolv-bridge.json`
+- `real-data-coverage.json`
 
 The provenance catalog is generated from the current fixture tree and committed
 as `fixture-provenance.json`. The `tests/test_fixture_provenance.py` suite
@@ -67,6 +68,9 @@ Render the provenance catalog as static HTML with:
 python -B -m src.cli fixture-provenance --fixture-dir tests/fixtures
 python -B -m src.cli fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-fixture-provenance-bundle
 python -B -m src.cli report --input tests/fixtures/fixture-provenance.json --output /tmp/edgp-fixture-provenance.html
+python -B -m src.cli real-data-coverage --fixture-dir tests/fixtures
+python -B -m src.cli real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-coverage-bundle
+python -B -m src.cli report --input tests/fixtures/real-data-coverage.json --output /tmp/edgp-real-data-coverage.html
 ```
 
 ## Synthetic Fixtures

@@ -44,6 +44,10 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
   [`edgp.fixture.provenance.v1.schema.json`](schemas/edgp.fixture.provenance.v1.schema.json)
   documents public-derived fixture sources, generated report fixtures, synthetic
   fixture groups, refresh commands, and stable fixture fingerprints.
+- `edgp.real_data.coverage.v1`:
+  [`edgp.real_data.coverage.v1.schema.json`](schemas/edgp.real_data.coverage.v1.schema.json)
+  documents public evidence coverage, remaining synthetic fixture groups, and
+  replacement-priority decisions derived from fixture provenance.
 - `edgp.impact.report.v1`:
   [`edgp.impact.report.v1.schema.json`](schemas/edgp.impact.report.v1.schema.json)
   documents reverse dependency impact for one selected node.

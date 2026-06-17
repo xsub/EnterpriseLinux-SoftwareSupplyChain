@@ -1,0 +1,145 @@
+{
+  "$id": "urn:edgp:schema:real-data-coverage:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Coverage report that separates public-derived evidence, generated public reports, and intentionally synthetic EDGP fixtures.",
+  "properties": {
+    "fixtureRoot": {"type": "string"},
+    "generatedBy": {"type": "string"},
+    "publicEvidence": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "derivedFrom": {"items": {"type": "string"}, "type": "array"},
+          "generator": {"type": "string"},
+          "kind": {"type": "string"},
+          "notes": {"type": "string"},
+          "path": {"type": "string"},
+          "refreshedAt": {"type": "string"},
+          "reportSchema": {"type": "string"},
+          "source": {"type": "string"},
+          "sourceUrl": {"type": "string"}
+        },
+        "required": ["path", "kind"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "qualityGates": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {"type": "string"},
+          "name": {"type": "string"}
+        },
+        "required": ["name", "command"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "replacementPlan": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {"type": "string"},
+          "fileCount": {"type": "integer"},
+          "group": {"type": "string"},
+          "kind": {"type": "string"},
+          "nextStep": {"type": "string"},
+          "priority": {"enum": ["high", "medium", "low"], "type": "string"}
+        },
+        "required": [
+          "group",
+          "kind",
+          "fileCount",
+          "decision",
+          "priority",
+          "nextStep"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema": {"const": "edgp.real_data.coverage.v1"},
+    "sourceSchema": {"const": "edgp.fixture.provenance.v1"},
+    "sourceUrls": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "access": {"type": "string"},
+          "label": {"type": "string"},
+          "refreshedAt": {"type": "string"},
+          "url": {"type": "string"}
+        },
+        "required": ["label", "url", "access", "refreshedAt"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "status": {"enum": ["pass", "warn"], "type": "string"},
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "catalogedFiles": {"type": "integer"},
+        "deterministicPublicDerivedVariants": {"type": "integer"},
+        "directPublicSourceCoveragePercent": {"type": "number"},
+        "directPublicSources": {"type": "integer"},
+        "generatedPublicReports": {"type": "integer"},
+        "intentionallySyntheticGroups": {"type": "integer"},
+        "localPointerFixtures": {"type": "integer"},
+        "publicEvidenceCoveragePercent": {"type": "number"},
+        "publicEvidenceFiles": {"type": "integer"},
+        "replacementCandidateGroups": {"type": "integer"},
+        "sourceUrls": {"type": "integer"},
+        "syntheticFiles": {"type": "integer"},
+        "syntheticGroups": {"type": "integer"}
+      },
+      "required": [
+        "catalogedFiles",
+        "directPublicSources",
+        "deterministicPublicDerivedVariants",
+        "localPointerFixtures",
+        "generatedPublicReports",
+        "publicEvidenceFiles",
+        "syntheticGroups",
+        "syntheticFiles",
+        "sourceUrls",
+        "publicEvidenceCoveragePercent",
+        "directPublicSourceCoveragePercent",
+        "replacementCandidateGroups",
+        "intentionallySyntheticGroups"
+      ],
+      "type": "object"
+    },
+    "syntheticGroups": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "fileCount": {"type": "integer"},
+          "files": {"items": {"type": "string"}, "type": "array"},
+          "group": {"type": "string"},
+          "kind": {"type": "string"},
+          "reason": {"type": "string"}
+        },
+        "required": ["group", "kind", "fileCount", "reason", "files"],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "sourceSchema",
+    "generatedBy",
+    "fixtureRoot",
+    "status",
+    "summary",
+    "sourceUrls",
+    "publicEvidence",
+    "syntheticGroups",
+    "replacementPlan",
+    "qualityGates"
+  ],
+  "title": "EDGP Real-Data Coverage v1",
+  "type": "object"
+}

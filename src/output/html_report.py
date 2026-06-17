@@ -58,6 +58,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_public_advisory_feed_report(payload)
     if schema == "edgp.fixture.provenance.v1":
         return render_fixture_provenance_report(payload)
+    if schema == "edgp.real_data.coverage.v1":
+        return render_real_data_coverage_report(payload)
     if schema == "edgp.performance.report.v1":
         return render_performance_report(payload)
     if schema == "edgp.query.report.v1":
@@ -999,6 +1001,74 @@ def render_fixture_provenance_report(report: dict[str, Any]) -> str:
                 report.get("syntheticGroups", []),
                 ["group", "kind", "fileCount", "files", "sha256", "reason"],
                 test_id="fixture-provenance-synthetic-groups-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_real_data_coverage_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.real_data.coverage.v1":
+        raise ValueError("HTML real-data coverage input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    return _document(
+        "EDGP Real-Data Coverage",
+        [
+            _generic_hero(
+                eyebrow=str(report.get("status", "coverage")),
+                heading="Fixture data quality coverage",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Public Evidence", summary.get("publicEvidenceFiles", 0)),
+                    ("Direct Sources", summary.get("directPublicSources", 0)),
+                    ("Generated Reports", summary.get("generatedPublicReports", 0)),
+                    ("Synthetic Files", summary.get("syntheticFiles", 0)),
+                    (
+                        "Coverage %",
+                        summary.get("publicEvidenceCoveragePercent", 0.0),
+                    ),
+                    (
+                        "Replacement Candidates",
+                        summary.get("replacementCandidateGroups", 0),
+                    ),
+                ],
+            ),
+            _rows_panel(
+                "Public Evidence",
+                report.get("publicEvidence", []),
+                [
+                    "path",
+                    "kind",
+                    "source",
+                    "sourceUrl",
+                    "reportSchema",
+                    "generator",
+                    "derivedFrom",
+                    "refreshedAt",
+                    "notes",
+                ],
+                test_id="real-data-coverage-public-panel",
+            ),
+            _rows_panel(
+                "Synthetic Fixture Groups",
+                report.get("syntheticGroups", []),
+                ["group", "kind", "fileCount", "files", "reason"],
+                test_id="real-data-coverage-synthetic-panel",
+            ),
+            _rows_panel(
+                "Replacement Plan",
+                report.get("replacementPlan", []),
+                ["group", "kind", "fileCount", "decision", "priority", "nextStep"],
+                test_id="real-data-coverage-plan-panel",
+            ),
+            _rows_panel(
+                "Quality Gates",
+                report.get("qualityGates", []),
+                ["name", "command"],
+                test_id="real-data-coverage-gates-panel",
             ),
         ],
         scripts=[_table_sort_script()],

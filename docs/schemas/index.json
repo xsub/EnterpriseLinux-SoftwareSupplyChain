@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 37,
+  "schemaCount": 38,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -194,6 +194,14 @@
       "id": "urn:edgp:schema:query-report:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Query Report v1"
+    },
+    {
+      "contract": "edgp.real_data.coverage.v1",
+      "description": "Coverage report that separates public-derived evidence, generated public reports, and intentionally synthetic EDGP fixtures.",
+      "file": "edgp.real_data.coverage.v1.schema.json",
+      "id": "urn:edgp:schema:real-data-coverage:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Real-Data Coverage v1"
     },
     {
       "contract": "edgp.report.bundle.archive.v1",

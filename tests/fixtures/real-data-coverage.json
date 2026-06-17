@@ -1,17 +1,16 @@
 {
-  "entries": [
+  "fixtureRoot": "tests/fixtures",
+  "generatedBy": "src.real_data_coverage.build_real_data_coverage_report",
+  "publicEvidence": [
     {
-      "bytes": 5072,
       "kind": "public-derived-source",
       "notes": "Curated public RPM metadata excerpt preserving real nginx, nginx-core, and nginx-filesystem package metadata.",
       "path": "tests/fixtures/rpm-primary.xml",
       "refreshedAt": "2026-06-17",
-      "sha256": "25c0adda39d1d43dc0f3b5d1f56eb2df39ff79335247ef1a926c9b1d82f20071",
       "source": "AlmaLinux 9 AppStream x86_64 primary.xml.gz excerpt",
       "sourceUrl": "https://repo.almalinux.org/almalinux/9/AppStream/x86_64/os/"
     },
     {
-      "bytes": 4060,
       "derivedFrom": [
         "tests/fixtures/rpm-primary.xml"
       ],
@@ -19,12 +18,10 @@
       "notes": "Companion snapshot used to exercise repository diff behavior.",
       "path": "tests/fixtures/rpm-primary-updated.xml",
       "refreshedAt": "2026-06-17",
-      "sha256": "928e73e59484433c7ee9b5fd6e3de006e914b3e289261eeef4d792f34f90569a",
       "source": "AlmaLinux 9 AppStream x86_64 primary.xml.gz excerpt",
       "sourceUrl": "https://repo.almalinux.org/almalinux/9/AppStream/x86_64/os/"
     },
     {
-      "bytes": 178,
       "derivedFrom": [
         "tests/fixtures/rpm-primary.xml"
       ],
@@ -32,22 +29,18 @@
       "notes": "Keeps repodata discovery tests offline and deterministic.",
       "path": "tests/fixtures/repodata/repomd.xml",
       "refreshedAt": "2026-06-17",
-      "sha256": "ffc395971b29a6ab6126c161cffc83f5a80d9675d170eb44a379f19973e5fc35",
       "source": "Local repomd.xml pointer for the committed primary excerpt",
       "sourceUrl": "https://repo.almalinux.org/almalinux/9/AppStream/x86_64/os/"
     },
     {
-      "bytes": 3730,
       "kind": "public-derived-source",
       "notes": "Compact excerpt preserving real build ID, artifacts, build tasks, sign tasks, and package names.",
       "path": "tests/fixtures/albs-build.json",
       "refreshedAt": "2026-06-17",
-      "sha256": "bd5a95f02a3afa9316f089b60d9789b0d56a0c9220885e266a5d0b896730880c",
       "source": "Public ALBS build 17812 API excerpt",
       "sourceUrl": "https://build.almalinux.org/api/v1/builds/17812/"
     },
     {
-      "bytes": 3682,
       "derivedFrom": [
         "tests/fixtures/albs-build.json"
       ],
@@ -55,23 +48,19 @@
       "notes": "Companion snapshot used for build diff and release coverage tests.",
       "path": "tests/fixtures/albs-build-updated.json",
       "refreshedAt": "2026-06-17",
-      "sha256": "eeebb4d28fa6844dfa672b07068fa8eec0eb3832087889ca06aa06d38ed7039d",
       "source": "Public ALBS build 17812 API excerpt",
       "sourceUrl": "https://build.almalinux.org/api/v1/builds/17812/"
     },
     {
-      "bytes": 2610,
       "derivedFrom": [
         "tests/fixtures/rpm-primary.xml"
       ],
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
       "path": "tests/fixtures/rpm-repository-summary.json",
-      "reportSchema": "edgp.rpm.repository_summary.v1",
-      "sha256": "0f694aad93cdb0ae767086712925faeee6c798004abd6fa8e626ab45759ceb3f"
+      "reportSchema": "edgp.rpm.repository_summary.v1"
     },
     {
-      "bytes": 5198,
       "derivedFrom": [
         "tests/fixtures/rpm-primary.xml",
         "tests/fixtures/rpm-primary-updated.xml"
@@ -79,33 +68,27 @@
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
       "path": "tests/fixtures/rpm-repository-diff.json",
-      "reportSchema": "edgp.rpm.repository_diff.v1",
-      "sha256": "e5c70b366a1c7498bceef8c316d565150748edc1f5fff8e2844c7afe39eb919f"
+      "reportSchema": "edgp.rpm.repository_diff.v1"
     },
     {
-      "bytes": 3205,
       "derivedFrom": [
         "tests/fixtures/albs-build.json"
       ],
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
       "path": "tests/fixtures/albs-artifact-inventory.json",
-      "reportSchema": "edgp.albs.artifact_inventory.v1",
-      "sha256": "2fd5b03d552325efeca1f41dccd01fddeee4b82912dc8f7d471488eb38739421"
+      "reportSchema": "edgp.albs.artifact_inventory.v1"
     },
     {
-      "bytes": 3411,
       "derivedFrom": [
         "tests/fixtures/albs-build.json"
       ],
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
       "path": "tests/fixtures/albs-build-timing.json",
-      "reportSchema": "edgp.albs.build_timing.v1",
-      "sha256": "15c8489af82e0cfff0b3dfe0763aab1939b0628b11d05469cace7cf6ae43abc8"
+      "reportSchema": "edgp.albs.build_timing.v1"
     },
     {
-      "bytes": 12446,
       "derivedFrom": [
         "tests/fixtures/albs-build.json",
         "tests/fixtures/albs-build-updated.json"
@@ -113,22 +96,18 @@
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
       "path": "tests/fixtures/albs-build-diff.json",
-      "reportSchema": "edgp.albs.build_diff.v1",
-      "sha256": "617d2deceb5d866e4ac18a0e9f41493ccfde31e7a062e5239a16b77543c93df8"
+      "reportSchema": "edgp.albs.build_diff.v1"
     },
     {
-      "bytes": 892,
       "derivedFrom": [
         "tests/fixtures/albs-build-updated.json"
       ],
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
       "path": "tests/fixtures/albs-log-intelligence.json",
-      "reportSchema": "edgp.albs.log_intelligence.v1",
-      "sha256": "44978ee7026649f86bbefa466b748b1167502e5347015a12c8a6c60b03f7cd20"
+      "reportSchema": "edgp.albs.log_intelligence.v1"
     },
     {
-      "bytes": 1374,
       "derivedFrom": [
         "tests/fixtures/albs-build.json",
         "tests/fixtures/albs-build-updated.json"
@@ -136,11 +115,9 @@
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
       "path": "tests/fixtures/albs-release-completeness.json",
-      "reportSchema": "edgp.albs.release_completeness.v1",
-      "sha256": "0ae41d420fd4a049b05571716a76080b1c8c1a8e8e5e8749f0e990fa2d884cd2"
+      "reportSchema": "edgp.albs.release_completeness.v1"
     },
     {
-      "bytes": 1192,
       "derivedFrom": [
         "tests/fixtures/albs-build.json"
       ],
@@ -148,22 +125,18 @@
       "kind": "generated-public-report",
       "notes": "Joins a tiny installed RPM graph to the public ALBS artifact excerpt.",
       "path": "tests/fixtures/rpm-albs-provenance.json",
-      "reportSchema": "edgp.rpm.albs_provenance.v1",
-      "sha256": "7161fb08865bbecbcd26b29aaa5e88a010b33798ae80db254095a00e239d4d49"
+      "reportSchema": "edgp.rpm.albs_provenance.v1"
     },
     {
-      "bytes": 3740,
       "derivedFrom": [
         "tests/fixtures/libsolv-transaction.txt"
       ],
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
       "path": "tests/fixtures/libsolv-bridge.json",
-      "reportSchema": "edgp.libsolv.bridge.v1",
-      "sha256": "3746a15364ce8776767158f0a24e525e3166a707a9340cdc0a97ba80e1a6a35a"
+      "reportSchema": "edgp.libsolv.bridge.v1"
     },
     {
-      "bytes": 15919,
       "derivedFrom": [
         "tests/fixtures/fixture-provenance.json"
       ],
@@ -171,27 +144,91 @@
       "kind": "generated-public-report",
       "notes": "Summarizes which committed fixtures are public-derived, generated, or intentionally synthetic.",
       "path": "tests/fixtures/real-data-coverage.json",
-      "reportSchema": "edgp.real_data.coverage.v1",
-      "sha256": "61f52015519a2f1b35cbe8beb375e32c2370ae03e7406ee6704406d6d9e948aa"
+      "reportSchema": "edgp.real_data.coverage.v1"
     }
   ],
-  "fixtureRoot": "tests/fixtures",
-  "generatedBy": "scripts/generate_fixture_provenance.py",
-  "refresh": {
-    "checkCommands": [
-      "python -B scripts/generate_public_fixture_reports.py --check",
-      "python -B scripts/generate_fixture_provenance.py --check"
-    ],
-    "checkedBy": [
-      "tests/test_public_fixture_freshness.py",
-      "tests/test_fixture_provenance.py"
-    ],
-    "commands": [
-      "python -B scripts/generate_public_fixture_reports.py",
-      "python -B scripts/generate_fixture_provenance.py"
-    ]
-  },
-  "schema": "edgp.fixture.provenance.v1",
+  "qualityGates": [
+    {
+      "command": "python -B scripts/generate_public_fixture_reports.py --check && python -B scripts/generate_fixture_provenance.py --check",
+      "name": "public fixture freshness"
+    },
+    {
+      "command": "edgp real-data-coverage --fixture-dir tests/fixtures",
+      "name": "real-data coverage JSON"
+    },
+    {
+      "command": "edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --triage-summary",
+      "name": "real-data coverage bundle"
+    }
+  ],
+  "replacementPlan": [
+    {
+      "decision": "hybrid",
+      "fileCount": 3,
+      "group": "npm lockfiles and registry mock",
+      "kind": "synthetic-edge-case",
+      "nextStep": "Replace the happy-path package-lock with a tiny public npm project lockfile; keep conflict and registry-mock fixtures synthetic because they isolate resolver edge cases.",
+      "priority": "medium"
+    },
+    {
+      "decision": "replace-where-practical",
+      "fileCount": 2,
+      "group": "Python and Rust lockfiles",
+      "kind": "synthetic-edge-case",
+      "nextStep": "Use small public Poetry and Cargo lockfiles when their dependency shape is useful; keep parser-minimal fixtures for offline format smoke.",
+      "priority": "medium"
+    },
+    {
+      "decision": "replace-where-practical",
+      "fileCount": 4,
+      "group": "Maven dependency trees",
+      "kind": "synthetic-edge-case",
+      "nextStep": "Add a captured dependency tree from a public Maven project, while keeping classifier, scope, marker, and packaging snippets synthetic.",
+      "priority": "medium"
+    },
+    {
+      "decision": "hybrid",
+      "fileCount": 8,
+      "group": "Generic graph and SBOM examples",
+      "kind": "synthetic-edge-case",
+      "nextStep": "Add one public CycloneDX SBOM when available; keep tiny graph snapshots synthetic so traversal and diff assertions stay auditable.",
+      "priority": "low"
+    },
+    {
+      "decision": "replace-where-practical",
+      "fileCount": 9,
+      "group": "Advisory and OSV-shaped samples",
+      "kind": "synthetic-public-shape",
+      "nextStep": "Replace public advisory feed samples with curated OSV/GHSA/RHSA records where licensing and stability allow; keep severity edge cases synthetic.",
+      "priority": "high"
+    },
+    {
+      "decision": "keep-generated",
+      "fileCount": 10,
+      "group": "Report and export bundle fixtures",
+      "kind": "synthetic-validation-case",
+      "nextStep": "Keep these as generated contract fixtures; they document EDGP output shape rather than upstream data fidelity.",
+      "priority": "low"
+    },
+    {
+      "decision": "keep-synthetic",
+      "fileCount": 28,
+      "group": "Validation failure examples",
+      "kind": "synthetic-validation-case",
+      "nextStep": "Keep negative fixtures synthetic because they deliberately model invalid states that public sources should not provide.",
+      "priority": "low"
+    },
+    {
+      "decision": "keep-generated",
+      "fileCount": 5,
+      "group": "Performance, CSR, and license reports",
+      "kind": "synthetic-report",
+      "nextStep": "Refresh from deterministic EDGP generators; public replacement is less useful than stable performance and rendering contracts.",
+      "priority": "low"
+    }
+  ],
+  "schema": "edgp.real_data.coverage.v1",
+  "sourceSchema": "edgp.fixture.provenance.v1",
   "sourceUrls": [
     {
       "access": "public",
@@ -206,12 +243,20 @@
       "url": "https://build.almalinux.org/api/v1/builds/17812/"
     }
   ],
+  "status": "warn",
   "summary": {
     "catalogedFiles": 84,
     "deterministicPublicDerivedVariants": 2,
+    "directPublicSourceCoveragePercent": 2.38,
+    "directPublicSources": 2,
     "generatedPublicReports": 10,
-    "publicDerivedSources": 2,
+    "intentionallySyntheticGroups": 4,
+    "localPointerFixtures": 1,
+    "publicEvidenceCoveragePercent": 17.86,
+    "publicEvidenceFiles": 15,
+    "replacementCandidateGroups": 4,
     "sourceUrls": 2,
+    "syntheticFiles": 69,
     "syntheticGroups": 8
   },
   "syntheticGroups": [
@@ -224,8 +269,7 @@
       ],
       "group": "npm lockfiles and registry mock",
       "kind": "synthetic-edge-case",
-      "reason": "Small lockfile topologies make duplicate and conflict assertions auditable.",
-      "sha256": "7ad741ef23c0e249e8996b2fddff0dbc098fcd24a36a141fca81d4c4c5c113b4"
+      "reason": "Small lockfile topologies make duplicate and conflict assertions auditable."
     },
     {
       "fileCount": 2,
@@ -235,8 +279,7 @@
       ],
       "group": "Python and Rust lockfiles",
       "kind": "synthetic-edge-case",
-      "reason": "Parser smoke inputs cover additional ecosystem formats offline.",
-      "sha256": "341d2c88dc051829cb2ce0f6c2b15bce748de8f7ef12c0a19ec97f4cb55e85c1"
+      "reason": "Parser smoke inputs cover additional ecosystem formats offline."
     },
     {
       "fileCount": 4,
@@ -248,8 +291,7 @@
       ],
       "group": "Maven dependency trees",
       "kind": "synthetic-edge-case",
-      "reason": "Hand-sized snippets isolate classifier, scope, marker, and packaging behavior.",
-      "sha256": "a89cc51aa231812ff21cc69a768c9c663732137d8459ccbd0a4190043c5b891e"
+      "reason": "Hand-sized snippets isolate classifier, scope, marker, and packaging behavior."
     },
     {
       "fileCount": 8,
@@ -265,8 +307,7 @@
       ],
       "group": "Generic graph and SBOM examples",
       "kind": "synthetic-edge-case",
-      "reason": "Tiny graphs keep traversal, diff, and export assertions readable.",
-      "sha256": "81806a22d050a403369d29508d737f3d663436af4955d9223b80b4ab00b2d415"
+      "reason": "Tiny graphs keep traversal, diff, and export assertions readable."
     },
     {
       "fileCount": 9,
@@ -283,8 +324,7 @@
       ],
       "group": "Advisory and OSV-shaped samples",
       "kind": "synthetic-public-shape",
-      "reason": "Shape-compatible advisory samples exercise severity and matching logic without live feeds.",
-      "sha256": "86c417a37a5e0bfdb7e18548e114ad03c5f040b89166971e988034d4b7b26292"
+      "reason": "Shape-compatible advisory samples exercise severity and matching logic without live feeds."
     },
     {
       "fileCount": 10,
@@ -302,8 +342,7 @@
       ],
       "group": "Report and export bundle fixtures",
       "kind": "synthetic-validation-case",
-      "reason": "Committed outputs document portable bundle, archive, and submission-plan contracts.",
-      "sha256": "fda79313b3b34df69f6f6a521f919a6c082f13711cb7eb2c38220dbea8d68579"
+      "reason": "Committed outputs document portable bundle, archive, and submission-plan contracts."
     },
     {
       "fileCount": 28,
@@ -339,8 +378,7 @@
       ],
       "group": "Validation failure examples",
       "kind": "synthetic-validation-case",
-      "reason": "Negative fixtures make validator behavior reviewable and reproducible.",
-      "sha256": "afad5ee9174d2c3903ef46745c155931702e947f58447a00dd28b2eaeb10153d"
+      "reason": "Negative fixtures make validator behavior reviewable and reproducible."
     },
     {
       "fileCount": 5,
@@ -353,8 +391,7 @@
       ],
       "group": "Performance, CSR, and license reports",
       "kind": "synthetic-report",
-      "reason": "Stable report samples cover static rendering and schema contracts.",
-      "sha256": "ea5a2f5d9632122dcb3e14d93f6969cc0ace933853e0cd710e606e6a160111ef"
+      "reason": "Stable report samples cover static rendering and schema contracts."
     }
   ]
 }

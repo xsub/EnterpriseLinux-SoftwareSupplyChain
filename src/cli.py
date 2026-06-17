@@ -59,6 +59,7 @@ from src.output.sbom_security import CycloneDXExporter
 from src.performance_report import build_performance_report
 from src.public_advisory_feed import build_public_advisory_feed_report
 from src.query_report import build_query_report
+from src.real_data_coverage import build_real_data_coverage_report
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
@@ -1777,6 +1778,27 @@ def _write_fixture_provenance_bundle(
     )
 
 
+def _write_real_data_coverage_bundle(
+    output_dir: Path,
+    *,
+    fixture_dir: Path,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "real-data-coverage.json"
+    report_path.write_text(
+        _json(build_real_data_coverage_report(build_fixture_provenance(fixture_dir))),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "real-data-coverage", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_graph_diff_bundle(
     left_path: Path,
     right_path: Path,
@@ -3332,6 +3354,30 @@ def build_parser() -> argparse.ArgumentParser:
     fixture_provenance_bundle.add_argument("--output-dir", type=Path, required=True)
     _add_triage_bundle_option(fixture_provenance_bundle)
 
+    real_data_coverage = subparsers.add_parser(
+        "real-data-coverage",
+        help="Summarize public-derived, generated, and synthetic fixture coverage",
+    )
+    real_data_coverage.add_argument(
+        "--fixture-dir",
+        type=Path,
+        default=Path("tests/fixtures"),
+        help="fixture directory to assess",
+    )
+
+    real_data_coverage_bundle = subparsers.add_parser(
+        "real-data-coverage-bundle",
+        help="Render real-data fixture coverage as a static bundle",
+    )
+    real_data_coverage_bundle.add_argument(
+        "--fixture-dir",
+        type=Path,
+        default=Path("tests/fixtures"),
+        help="fixture directory to assess",
+    )
+    real_data_coverage_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(real_data_coverage_bundle)
+
     diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
@@ -4583,6 +4629,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "fixture-provenance-bundle":
         return _print_bundle_result(
             _write_fixture_provenance_bundle(
+                args.output_dir,
+                fixture_dir=args.fixture_dir,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
+
+    if args.command == "real-data-coverage":
+        report = build_real_data_coverage_report(
+            build_fixture_provenance(args.fixture_dir)
+        )
+        print(_json(report))
+        return 0
+
+    if args.command == "real-data-coverage-bundle":
+        return _print_bundle_result(
+            _write_real_data_coverage_bundle(
                 args.output_dir,
                 fixture_dir=args.fixture_dir,
                 command=command,

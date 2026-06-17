@@ -21,9 +21,11 @@ from src.albs_log_intelligence import build_albs_log_intelligence_report
 from src.albs_release_completeness import build_albs_release_completeness_report
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.libsolv_bridge import build_libsolv_bridge_report
+from src.real_data_coverage import build_real_data_coverage_report
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
 from src.rpm_repository_diff import build_rpm_repository_diff_report
 from src.rpm_repository_summary import build_rpm_repository_summary_report
+from scripts.generate_fixture_provenance import build_fixture_provenance
 
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures"
 
@@ -78,6 +80,9 @@ def build_public_fixture_reports(
         ),
         fixture_dir / "libsolv-bridge.json": build_libsolv_bridge_report(
             fixture_dir / "libsolv-transaction.txt"
+        ),
+        fixture_dir / "real-data-coverage.json": build_real_data_coverage_report(
+            build_fixture_provenance(fixture_dir)
         ),
     }
 

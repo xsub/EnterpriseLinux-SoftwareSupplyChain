@@ -366,6 +366,9 @@ surfaces are:
   generated report lineage, synthetic fixture groups, and stable file
   fingerprints.
 - Expose fixture provenance as a CLI report and static verifiable report bundle.
+- Expose real-data coverage as a CLI report and static verifiable report bundle
+  so public-derived evidence, generated public reports, and intentionally
+  synthetic fixture groups can be reviewed together.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

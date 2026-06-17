@@ -124,6 +124,15 @@ GENERATED_REPORTS: list[dict[str, Any]] = [
         "reportSchema": "edgp.libsolv.bridge.v1",
         "derivedFrom": ["tests/fixtures/libsolv-transaction.txt"],
     },
+    {
+        "path": "real-data-coverage.json",
+        "reportSchema": "edgp.real_data.coverage.v1",
+        "derivedFrom": ["tests/fixtures/fixture-provenance.json"],
+        "notes": (
+            "Summarizes which committed fixtures are public-derived, generated, "
+            "or intentionally synthetic."
+        ),
+    },
 ]
 
 SYNTHETIC_GROUPS: list[dict[str, Any]] = [
