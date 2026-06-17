@@ -127,7 +127,7 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
 - `edgp.triage.summary.v1`:
   [`edgp.triage.summary.v1.schema.json`](schemas/edgp.triage.summary.v1.schema.json)
   documents aggregate triage status for EDGP reports and report bundles,
-  including graph-diff and diff-tree policy gate failures.
+  including graph-diff, diff-tree, and bundle-catalog policy gate failures.
 - `edgp.validation.report.v1`:
   [`edgp.validation.report.v1.schema.json`](schemas/edgp.validation.report.v1.schema.json)
   documents validation results emitted by `edgp validate` for JSON reports,

@@ -1111,7 +1111,9 @@ Use `--format text` for a compact CI log line that keeps status, failed checks,
 graph-diff and diff-tree policy failures, npm signals, and catalog failures
 visible without parsing the full JSON rollup. `--fail-on-status warn|fail` still
 prints the selected format and returns status `2` when the computed status
-reaches the selected threshold.
+reaches the selected threshold. When a bundle catalog is one of the inputs,
+triage top findings preserve the catalog's matched graph-diff and diff-tree
+policy details for batch-level review.
 
 ## Roadmap
 

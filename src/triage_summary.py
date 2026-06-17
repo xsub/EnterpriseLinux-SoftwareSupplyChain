@@ -610,6 +610,22 @@ def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "triageStatus": bundle.get("triageStatus"),
                 "graphDiffPolicyFailures": bundle.get("graphDiffPolicyFailures", 0),
                 "diffTreePolicyFailures": bundle.get("diffTreePolicyFailures", 0),
+                "graphDiffFailOnChanges": _string_list(
+                    bundle.get("graphDiffFailOnChanges")
+                ),
+                "graphDiffMatchedChanges": _string_list(
+                    bundle.get("graphDiffMatchedChanges")
+                ),
+                "graphDiffFailOnKinds": _string_list(
+                    bundle.get("graphDiffFailOnKinds")
+                ),
+                "graphDiffMatchedKinds": _string_list(
+                    bundle.get("graphDiffMatchedKinds")
+                ),
+                "diffTreeFailOnKinds": _string_list(bundle.get("diffTreeFailOnKinds")),
+                "diffTreeMatchedKinds": _string_list(
+                    bundle.get("diffTreeMatchedKinds")
+                ),
             }
         )
     return rows

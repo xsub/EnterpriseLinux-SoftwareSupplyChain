@@ -343,6 +343,8 @@ surfaces are:
   directories for CI/workbench batch evidence handoff.
 - Preserve graph-diff and diff-tree policy detail lists inside bundle-catalog
   entries for CI/workbench batch evidence review.
+- Preserve bundle-catalog policy detail lists when catalog reports are rolled
+  into aggregate triage-summary findings.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

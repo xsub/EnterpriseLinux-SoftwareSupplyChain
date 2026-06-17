@@ -305,6 +305,33 @@ def test_render_report_supports_triage_diff_policy_findings() -> None:
     assert "upgrade" in html
 
 
+def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
+    report = json.loads(Path("tests/fixtures/triage-summary.json").read_text())
+    report["topFindings"]["bundleCatalog"] = [
+        {
+            "path": "/tmp/reports/cataloged-diff",
+            "sourceKind": "graph-diff",
+            "ok": True,
+            "failureCount": 0,
+            "failureCodes": [],
+            "triageStatus": "fail",
+            "graphDiffPolicyFailures": 1,
+            "diffTreePolicyFailures": 1,
+            "graphDiffMatchedChanges": ["added-node"],
+            "graphDiffMatchedKinds": ["upgrade"],
+            "diffTreeMatchedKinds": ["replacement"],
+        }
+    ]
+
+    html = render_report(report)
+
+    assert 'data-testid="triage-bundle-catalog-panel"' in html
+    assert "cataloged-diff" in html
+    assert "added-node" in html
+    assert "upgrade" in html
+    assert "replacement" in html
+
+
 def test_render_report_supports_validation_triage_policy_metrics() -> None:
     report = {
         "schema": "edgp.validation.report.v1",

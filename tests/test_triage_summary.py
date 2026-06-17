@@ -552,6 +552,37 @@ def test_triage_summary_rolls_up_catalog_diff_tree_policy_failures(tmp_path) -> 
     assert report["topFindings"]["bundleCatalog"][0]["diffTreePolicyFailures"] == 1
 
 
+def test_triage_summary_preserves_catalog_policy_detail_findings(tmp_path) -> None:
+    catalog = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
+    catalog["summary"]["failedBundles"] = 0
+    catalog["summary"]["failures"] = 0
+    catalog["summary"]["triageWarn"] = 0
+    catalog["summary"]["triageFail"] = 1
+    catalog["summary"]["graphDiffPolicyFailures"] = 1
+    catalog["summary"]["diffTreePolicyFailures"] = 1
+    catalog["bundles"][0]["triageStatus"] = "fail"
+    catalog["bundles"][0]["graphDiffPolicyFailures"] = 1
+    catalog["bundles"][0]["diffTreePolicyFailures"] = 1
+    catalog["bundles"][0]["graphDiffFailOnChanges"] = ["added-node"]
+    catalog["bundles"][0]["graphDiffMatchedChanges"] = ["added-node"]
+    catalog["bundles"][0]["graphDiffFailOnKinds"] = ["upgrade"]
+    catalog["bundles"][0]["graphDiffMatchedKinds"] = ["upgrade"]
+    catalog["bundles"][0]["diffTreeFailOnKinds"] = ["replacement"]
+    catalog["bundles"][0]["diffTreeMatchedKinds"] = ["replacement"]
+    path = tmp_path / "bundle-catalog.json"
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+
+    report = build_triage_summary_from_paths([path])
+
+    finding = report["topFindings"]["bundleCatalog"][0]
+    assert finding["graphDiffFailOnChanges"] == ["added-node"]
+    assert finding["graphDiffMatchedChanges"] == ["added-node"]
+    assert finding["graphDiffFailOnKinds"] == ["upgrade"]
+    assert finding["graphDiffMatchedKinds"] == ["upgrade"]
+    assert finding["diffTreeFailOnKinds"] == ["replacement"]
+    assert finding["diffTreeMatchedKinds"] == ["replacement"]
+
+
 def test_triage_summary_warns_on_catalog_underlying_warns(tmp_path, capsys) -> None:
     graph_bundle = tmp_path / "graph-bundle"
     diagnostics_bundle = tmp_path / "diagnostics-bundle"
