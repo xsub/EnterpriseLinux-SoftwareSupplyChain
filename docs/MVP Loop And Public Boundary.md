@@ -365,6 +365,7 @@ surfaces are:
 - Publish a machine-readable fixture provenance catalog with public source URLs,
   generated report lineage, synthetic fixture groups, and stable file
   fingerprints.
+- Expose fixture provenance as a CLI report and static verifiable report bundle.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`
@@ -488,6 +489,8 @@ python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv.json 
 python -B -m src.cli public-advisory-feed --path tests/fixtures/public-osv-ranges.json --ecosystem rpm
 python -B -m src.cli public-advisory-feed --url file://$PWD/tests/fixtures/public-osv.json --ecosystem rpm
 python -B -m src.cli public-advisory-feed-bundle --path tests/fixtures/public-osv.json --ecosystem rpm --output-dir /tmp/edgp-public-advisory-feed-bundle
+python -B -m src.cli fixture-provenance --fixture-dir tests/fixtures
+python -B -m src.cli fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-fixture-provenance-bundle
 python -B -m src.cli performance-report --scenario 1000:3 --scenario 10000:5
 python -B -m src.cli performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir /tmp/edgp-performance-report-bundle
 python -B -m src.cli query --source dot --path tests/fixtures/repograph.dot --ecosystem rpm --operation dependents --node glibc

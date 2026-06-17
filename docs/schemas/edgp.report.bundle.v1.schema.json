@@ -29,6 +29,7 @@
             "cyclonedx-sbom",
             "dot",
             "edgp-json",
+            "fixture-provenance",
             "graph-diff",
             "impact-report",
             "license-report",

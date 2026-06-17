@@ -64,6 +64,8 @@ python -B scripts/generate_fixture_provenance.py --check
 Render the provenance catalog as static HTML with:
 
 ```bash
+python -B -m src.cli fixture-provenance --fixture-dir tests/fixtures
+python -B -m src.cli fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-fixture-provenance-bundle
 python -B -m src.cli report --input tests/fixtures/fixture-provenance.json --output /tmp/edgp-fixture-provenance.html
 ```
 

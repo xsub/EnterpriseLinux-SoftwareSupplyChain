@@ -70,7 +70,9 @@ parser and validation edge cases easier to audit. Public-derived report
 fixtures can be refreshed with
 `python -B scripts/generate_public_fixture_reports.py`; the provenance catalog
 can be refreshed with `python -B scripts/generate_fixture_provenance.py`.
-Both generators support `--check` for CI.
+Both generators support `--check` for CI. The same catalog is available through
+`edgp fixture-provenance` and can be rendered as a verifiable static bundle with
+`edgp fixture-provenance-bundle`.
 
 ## Quick Start
 
@@ -151,6 +153,8 @@ edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-re
 edgp public-advisory-feed --path osv.json --ecosystem rpm
 edgp public-advisory-feed --url https://example.com/osv.json --ecosystem rpm
 edgp public-advisory-feed-bundle --path osv.json --ecosystem rpm --output-dir reports/public-advisory-feed --triage-summary
+edgp fixture-provenance --fixture-dir tests/fixtures
+edgp fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir reports/fixture-provenance --triage-summary
 ```
 
 ### Query And Analyze
@@ -717,6 +721,11 @@ public URL and local file inputs:
   preserves explicit OSV `versions` and simple `ranges.events` intervals using
   inclusive `introduced`, exclusive `fixed`/`limit`, and inclusive
   `lastAffected` bounds for report matching.
+- `edgp fixture-provenance` emits the machine-readable provenance catalog for a
+  fixture tree, including public source URLs, generated report lineage,
+  synthetic fixture groups, and file fingerprints. `edgp
+  fixture-provenance-bundle` renders the same catalog as static HTML with a
+  verifiable manifest for demo and audit handoff.
 - `edgp libsolv-bridge` reports local libsolv command availability and parses
   transaction transcripts so EDGP can explain solved RPM actions while leaving
   SAT solving to libsolv. Parsed actions are normalized into RPM package

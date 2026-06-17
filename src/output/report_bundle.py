@@ -33,6 +33,7 @@ SOURCE_KINDS = {
     "cyclonedx-sbom",
     "dot",
     "edgp-json",
+    "fixture-provenance",
     "graph-diff",
     "graph-diff-tree",
     "impact-report",

@@ -716,6 +716,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "cyclonedx-sbom",
         "dot",
         "edgp-json",
+        "fixture-provenance",
         "graph-diff",
         "impact-report",
         "license-report",
@@ -3200,6 +3201,49 @@ def _assert_public_vertical_reports() -> None:
         assert report["summary"]["advisories"] == 1
         assert 'data-testid="public-advisory-feed-panel"' in (
             output_dir / "001-public-advisory-feed.html"
+        ).read_text(encoding="utf-8")
+
+    fixture_provenance = _run_cli(
+        ["fixture-provenance", "--fixture-dir", "tests/fixtures"]
+    )
+    assert fixture_provenance["schema"] == "edgp.fixture.provenance.v1"
+    assert fixture_provenance["summary"]["publicDerivedSources"] == 2
+    assert fixture_provenance["summary"]["generatedPublicReports"] == 9
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "fixture-provenance-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "fixture-provenance-bundle",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "fixture-provenance"
+        assert manifest["reports"][0]["href"] == "001-fixture-provenance.html"
+        assert manifest["reports"][0]["schema"] == "edgp.fixture.provenance.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        report = json.loads(
+            (output_dir / "fixture-provenance.json").read_text(encoding="utf-8")
+        )
+        assert report["summary"]["catalogedFiles"] >= 70
+        assert 'data-testid="fixture-provenance-entries-panel"' in (
+            output_dir / "001-fixture-provenance.html"
         ).read_text(encoding="utf-8")
 
     performance = _run_cli(

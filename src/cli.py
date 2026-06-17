@@ -70,6 +70,7 @@ from src.triage_summary import (
     build_triage_summary_from_bundle,
     build_triage_summary_from_paths,
 )
+from scripts.generate_fixture_provenance import build_fixture_provenance
 from scripts.generate_failure_example_index import (
     build_failure_example_filter_listing,
     build_failure_example_index,
@@ -1755,6 +1756,27 @@ def _write_public_advisory_feed_bundle(
     )
 
 
+def _write_fixture_provenance_bundle(
+    output_dir: Path,
+    *,
+    fixture_dir: Path,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "fixture-provenance.json"
+    report_path.write_text(
+        _json(build_fixture_provenance(fixture_dir)),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "fixture-provenance", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_graph_diff_bundle(
     left_path: Path,
     right_path: Path,
@@ -3286,6 +3308,30 @@ def build_parser() -> argparse.ArgumentParser:
     public_advisory_feed_bundle.add_argument("--output-dir", type=Path, required=True)
     _add_triage_bundle_option(public_advisory_feed_bundle)
 
+    fixture_provenance = subparsers.add_parser(
+        "fixture-provenance",
+        help="Generate the EDGP fixture provenance catalog",
+    )
+    fixture_provenance.add_argument(
+        "--fixture-dir",
+        type=Path,
+        default=Path("tests/fixtures"),
+        help="fixture directory to catalog",
+    )
+
+    fixture_provenance_bundle = subparsers.add_parser(
+        "fixture-provenance-bundle",
+        help="Render the EDGP fixture provenance catalog as a static bundle",
+    )
+    fixture_provenance_bundle.add_argument(
+        "--fixture-dir",
+        type=Path,
+        default=Path("tests/fixtures"),
+        help="fixture directory to catalog",
+    )
+    fixture_provenance_bundle.add_argument("--output-dir", type=Path, required=True)
+    _add_triage_bundle_option(fixture_provenance_bundle)
+
     diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
@@ -4524,6 +4570,21 @@ def main(argv: list[str] | None = None) -> int:
                 path=args.path,
                 url=args.url,
                 ecosystem=args.ecosystem,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+        )
+
+    if args.command == "fixture-provenance":
+        print(_json(build_fixture_provenance(args.fixture_dir)))
+        return 0
+
+    if args.command == "fixture-provenance-bundle":
+        return _print_bundle_result(
+            _write_fixture_provenance_bundle(
+                args.output_dir,
+                fixture_dir=args.fixture_dir,
                 command=command,
                 include_triage_summary=_include_triage_summary(args),
             ),
