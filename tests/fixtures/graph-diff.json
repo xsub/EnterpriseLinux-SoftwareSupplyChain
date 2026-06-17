@@ -1,4 +1,21 @@
 {
+  "classifications": [
+    {
+      "kind": "added",
+      "name": "core",
+      "rightNode": "core==1.0.0",
+      "rightVersion": "1.0.0"
+    },
+    {
+      "kind": "upgrade",
+      "leftNode": "lib==1.0.0",
+      "leftVersion": "1.0.0",
+      "name": "lib",
+      "pairIndex": 0,
+      "rightNode": "lib==2.0.0",
+      "rightVersion": "2.0.0"
+    }
+  ],
   "edges": {
     "added": [
       {
@@ -35,9 +52,16 @@
   "schema": "edgp.graph.diff.v1",
   "summary": {
     "addedEdges": 2,
+    "addedOnlyChanges": 1,
     "addedNodes": 2,
+    "classifiedChanges": 2,
+    "downgradeChanges": 0,
     "metadataChangedNodes": 0,
+    "metadataOnlyChanges": 0,
     "removedEdges": 1,
-    "removedNodes": 1
+    "removedNodes": 1,
+    "removedOnlyChanges": 0,
+    "replacementChanges": 0,
+    "upgradeChanges": 1
   }
 }

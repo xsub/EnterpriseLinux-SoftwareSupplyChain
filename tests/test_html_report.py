@@ -183,8 +183,10 @@ def test_render_report_supports_graph_diff_json() -> None:
     assert "EDGP Graph Diff" in html
     assert 'data-testid="graph-diff-policy-panel"' in html
     assert "Graph Diff Policy" in html
+    assert 'data-testid="graph-diff-classification-panel"' in html
     assert 'data-testid="graph-diff-added-nodes-panel"' in html
     assert 'data-testid="graph-diff-added-edges-panel"' in html
+    assert "upgrade" in html
     assert "core==1.0.0" in html
 
 

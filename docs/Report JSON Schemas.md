@@ -22,7 +22,8 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
 - `edgp.graph.diff.v1`:
   [`edgp.graph.diff.v1.schema.json`](schemas/edgp.graph.diff.v1.schema.json)
   documents added, removed, and metadata-changed graph elements between two
-  EDGP graph snapshots.
+  EDGP graph snapshots, including optional package-level change classifications
+  and graph-diff policy gate verdicts.
 - `edgp.graph.diff_tree.v1`:
   [`edgp.graph.diff_tree.v1.schema.json`](schemas/edgp.graph.diff_tree.v1.schema.json)
   documents dependency or dependent cone changes around one selected node in two

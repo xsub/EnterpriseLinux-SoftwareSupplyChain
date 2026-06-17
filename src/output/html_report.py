@@ -166,9 +166,13 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
                         "Metadata Changed",
                         _dict_value(summary, "metadataChangedNodes"),
                     ),
+                    ("Classified Changes", _dict_value(summary, "classifiedChanges")),
+                    ("Upgrades", _dict_value(summary, "upgradeChanges")),
+                    ("Downgrades", _dict_value(summary, "downgradeChanges")),
                 ],
             ),
             _graph_diff_policy_panel(policy),
+            _graph_diff_classification_panel(classifications),
             _package_list_panel(
                 "Added Nodes",
                 nodes.get("added", []),
@@ -207,8 +211,33 @@ def _graph_diff_policy_panel(policy: dict[str, Any]) -> str:
     return _rows_panel(
         "Graph Diff Policy",
         [policy],
-        ["status", "exitCode", "failOnChange", "matchedChanges"],
+        [
+            "status",
+            "exitCode",
+            "failOnChange",
+            "matchedChanges",
+            "failOnKind",
+            "matchedKinds",
+        ],
         test_id="graph-diff-policy-panel",
+    )
+
+
+def _graph_diff_classification_panel(classifications: list[object]) -> str:
+    rows = [item for item in classifications if isinstance(item, dict)]
+    return _rows_panel(
+        "Change Classification",
+        rows,
+        [
+            "kind",
+            "name",
+            "leftNode",
+            "rightNode",
+            "leftVersion",
+            "rightVersion",
+            "changedKeys",
+        ],
+        test_id="graph-diff-classification-panel",
     )
 
 

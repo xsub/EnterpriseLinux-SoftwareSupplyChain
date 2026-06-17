@@ -45,8 +45,10 @@ def diff_snapshots(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any
     _require_snapshot(left, label="left")
     _require_snapshot(right, label="right")
 
-    left_nodes = {node["id"]: node for node in left["nodes"]}
-    right_nodes = {node["id"]: node for node in right["nodes"]}
+    left_index = _SnapshotIndex.from_snapshot(left, label="left")
+    right_index = _SnapshotIndex.from_snapshot(right, label="right")
+    left_nodes = left_index.nodes
+    right_nodes = right_index.nodes
     left_edges = {_edge_key(edge) for edge in left["edges"]}
     right_edges = {_edge_key(edge) for edge in right["edges"]}
 
@@ -58,6 +60,18 @@ def diff_snapshots(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any
         for node_id in common_nodes
         if left_nodes[node_id].get("metadata", {}) != right_nodes[node_id].get("metadata", {})
     ]
+    added_payloads = [right_index.node_payload(node_id) for node_id in added_nodes]
+    removed_payloads = [left_index.node_payload(node_id) for node_id in removed_nodes]
+    metadata_changed_payloads = [
+        _metadata_change(left_index, right_index, node_id)
+        for node_id in metadata_changed
+    ]
+    classifications = _classify_diff_tree_changes(
+        added_payloads,
+        removed_payloads,
+        metadata_changed_payloads,
+    )
+    classification_counts = _classification_counts(classifications)
 
     return {
         "schema": "edgp.graph.diff.v1",
@@ -69,12 +83,20 @@ def diff_snapshots(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any
             "addedEdges": len(right_edges - left_edges),
             "removedEdges": len(left_edges - right_edges),
             "metadataChangedNodes": len(metadata_changed),
+            "classifiedChanges": len(classifications),
+            "upgradeChanges": classification_counts.get("upgrade", 0),
+            "downgradeChanges": classification_counts.get("downgrade", 0),
+            "replacementChanges": classification_counts.get("replacement", 0),
+            "addedOnlyChanges": classification_counts.get("added", 0),
+            "removedOnlyChanges": classification_counts.get("removed", 0),
+            "metadataOnlyChanges": classification_counts.get("metadataChange", 0),
         },
         "nodes": {
             "added": added_nodes,
             "removed": removed_nodes,
             "metadataChanged": metadata_changed,
         },
+        "classifications": classifications,
         "edges": {
             "added": [_edge_payload(edge) for edge in sorted(right_edges - left_edges)],
             "removed": [_edge_payload(edge) for edge in sorted(left_edges - right_edges)],
@@ -335,43 +357,56 @@ def _paired_change(
 ) -> dict[str, Any]:
     left_version = str(removed.get("version") or "")
     right_version = str(added.get("version") or "")
-    return {
+    payload: dict[str, Any] = {
         "kind": _version_change_kind(left_version, right_version),
         "name": name,
         "leftNode": str(removed.get("id") or ""),
         "rightNode": str(added.get("id") or ""),
         "leftVersion": left_version,
         "rightVersion": right_version,
-        "leftDistance": removed.get("distance"),
-        "rightDistance": added.get("distance"),
-        "leftPath": removed.get("path", []),
-        "rightPath": added.get("path", []),
         "pairIndex": order,
     }
+    _copy_optional_number(payload, "leftDistance", removed.get("distance"))
+    _copy_optional_number(payload, "rightDistance", added.get("distance"))
+    _copy_optional_list(payload, "leftPath", removed.get("path"))
+    _copy_optional_list(payload, "rightPath", added.get("path"))
+    return payload
 
 
 def _single_node_change(kind: str, side: str, node: dict[str, Any]) -> dict[str, Any]:
-    return {
+    payload: dict[str, Any] = {
         "kind": kind,
         "name": str(node.get("name") or node.get("id") or ""),
         f"{side}Node": str(node.get("id") or ""),
         f"{side}Version": str(node.get("version") or ""),
-        f"{side}Distance": node.get("distance"),
-        f"{side}Path": node.get("path", []),
     }
+    _copy_optional_number(payload, f"{side}Distance", node.get("distance"))
+    _copy_optional_list(payload, f"{side}Path", node.get("path"))
+    return payload
 
 
 def _metadata_only_change(change: dict[str, Any]) -> dict[str, Any]:
-    return {
+    payload: dict[str, Any] = {
         "kind": "metadataChange",
         "name": str(change.get("id") or ""),
         "node": str(change.get("id") or ""),
         "changedKeys": change.get("changedKeys", []),
-        "leftDistance": change.get("leftDistance"),
-        "rightDistance": change.get("rightDistance"),
-        "leftPath": change.get("leftPath", []),
-        "rightPath": change.get("rightPath", []),
     }
+    _copy_optional_number(payload, "leftDistance", change.get("leftDistance"))
+    _copy_optional_number(payload, "rightDistance", change.get("rightDistance"))
+    _copy_optional_list(payload, "leftPath", change.get("leftPath"))
+    _copy_optional_list(payload, "rightPath", change.get("rightPath"))
+    return payload
+
+
+def _copy_optional_number(payload: dict[str, Any], key: str, value: object) -> None:
+    if isinstance(value, int):
+        payload[key] = value
+
+
+def _copy_optional_list(payload: dict[str, Any], key: str, value: object) -> None:
+    if isinstance(value, list) and value:
+        payload[key] = value
 
 
 def _classification_counts(classifications: list[dict[str, Any]]) -> dict[str, int]:
@@ -579,8 +614,8 @@ def _metadata_change(
     right_index: _SnapshotIndex,
     node_id: str,
     *,
-    left_view: _Neighborhood,
-    right_view: _Neighborhood,
+    left_view: _Neighborhood | None = None,
+    right_view: _Neighborhood | None = None,
 ) -> dict[str, Any]:
     left_metadata = left_index.metadata(node_id)
     right_metadata = right_index.metadata(node_id)
@@ -593,12 +628,14 @@ def _metadata_change(
         "leftMetadata": left_metadata,
         "rightMetadata": right_metadata,
     }
-    left_distance = left_view.distance(node_id)
-    right_distance = right_view.distance(node_id)
-    if left_distance is not None:
-        payload["leftDistance"] = left_distance
-        payload["leftPath"] = left_view.path_to(node_id)
-    if right_distance is not None:
-        payload["rightDistance"] = right_distance
-        payload["rightPath"] = right_view.path_to(node_id)
+    if left_view is not None:
+        left_distance = left_view.distance(node_id)
+        if left_distance is not None:
+            payload["leftDistance"] = left_distance
+            payload["leftPath"] = left_view.path_to(node_id)
+    if right_view is not None:
+        right_distance = right_view.distance(node_id)
+        if right_distance is not None:
+            payload["rightDistance"] = right_distance
+            payload["rightPath"] = right_view.path_to(node_id)
     return payload

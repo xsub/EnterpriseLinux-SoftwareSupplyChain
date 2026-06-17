@@ -22,9 +22,33 @@ def test_diff_snapshot_files_reports_added_and_removed_graph_elements() -> None:
         "addedEdges": 2,
         "removedEdges": 1,
         "metadataChangedNodes": 0,
+        "classifiedChanges": 2,
+        "upgradeChanges": 1,
+        "downgradeChanges": 0,
+        "replacementChanges": 0,
+        "addedOnlyChanges": 1,
+        "removedOnlyChanges": 0,
+        "metadataOnlyChanges": 0,
     }
     assert payload["nodes"]["added"] == ["core==1.0.0", "lib==2.0.0"]
     assert payload["nodes"]["removed"] == ["lib==1.0.0"]
+    assert payload["classifications"] == [
+        {
+            "kind": "added",
+            "name": "core",
+            "rightNode": "core==1.0.0",
+            "rightVersion": "1.0.0",
+        },
+        {
+            "kind": "upgrade",
+            "leftNode": "lib==1.0.0",
+            "leftVersion": "1.0.0",
+            "name": "lib",
+            "pairIndex": 0,
+            "rightNode": "lib==2.0.0",
+            "rightVersion": "2.0.0",
+        },
+    ]
 
 
 def test_cli_diff_can_fail_on_selected_change_kind(capsys) -> None:
@@ -76,8 +100,62 @@ def test_cli_diff_text_can_fail_on_selected_change_kind(capsys) -> None:
     assert capsys.readouterr().out.strip() == (
         "DIFF leftRoot=app==1.0.0 rightRoot=app==1.0.0 "
         "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
-        "addedEdges=2 removedEdges=1 policyStatus=fail "
+        "addedEdges=2 removedEdges=1 classifiedChanges=2 "
+        "upgradeChanges=1 addedOnlyChanges=1 policyStatus=fail "
         "failOnChange=added-node matchedChanges=added-node"
+    )
+
+
+def test_cli_diff_can_fail_on_classified_package_change_kind(capsys) -> None:
+    assert (
+        main(
+            [
+                "diff",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["policy"] == {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
+    assert payload["summary"]["upgradeChanges"] == 1
+
+
+def test_cli_diff_text_can_fail_on_classified_package_change_kind(capsys) -> None:
+    assert (
+        main(
+            [
+                "diff",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--format",
+                "text",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        "DIFF leftRoot=app==1.0.0 rightRoot=app==1.0.0 "
+        "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
+        "addedEdges=2 removedEdges=1 classifiedChanges=2 "
+        "upgradeChanges=1 addedOnlyChanges=1 policyStatus=fail "
+        "failOnKind=upgrade matchedKinds=upgrade"
     )
 
 
@@ -205,6 +283,9 @@ def test_cli_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     assert manifest["reports"][0]["href"] == "001-graph-diff.html"
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert report["summary"]["addedEdges"] == 2
+    assert report["summary"]["upgradeChanges"] == 1
+    assert any(change["kind"] == "upgrade" for change in report["classifications"])
+    assert 'data-testid="graph-diff-classification-panel"' in html
     assert 'data-testid="graph-diff-added-edges-panel"' in html
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
@@ -264,6 +345,54 @@ def test_cli_diff_bundle_can_fail_after_writing_bundle(tmp_path, capsys) -> None
     )
 
 
+def test_cli_diff_bundle_can_fail_on_classified_package_change_kind(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "graph-diff-kind-failing-bundle"
+
+    assert (
+        main(
+            [
+                "diff-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    text = capsys.readouterr().out.strip()
+    assert "policyStatus=fail failOnKind=upgrade matchedKinds=upgrade" in text
+    report = json.loads((output_dir / "graph-diff.json").read_text(encoding="utf-8"))
+    triage = json.loads(
+        (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+    )
+
+    assert report["policy"] == {
+        "exitCode": 2,
+        "failOnKind": ["upgrade"],
+        "matchedKinds": ["upgrade"],
+        "status": "fail",
+    }
+    assert report["summary"]["upgradeChanges"] == 1
+    assert triage["status"] == "fail"
+    assert triage["summary"]["graphDiffPolicyFailures"] == 1
+
+    assert main(["verify-bundle", "--path", str(output_dir)]) == 0
+    verification = json.loads(capsys.readouterr().out)
+    assert verification["ok"] is True
+
+
 def test_cli_diff_bundle_text_can_fail_after_writing_bundle(
     tmp_path,
     capsys,
@@ -298,7 +427,8 @@ def test_cli_diff_bundle_text_can_fail_after_writing_bundle(
         f"archive={archive_path} "
         "leftRoot=app==1.0.0 rightRoot=app==1.0.0 "
         "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
-        "addedEdges=2 removedEdges=1 policyStatus=fail "
+        "addedEdges=2 removedEdges=1 classifiedChanges=2 "
+        "upgradeChanges=1 addedOnlyChanges=1 policyStatus=fail "
         "failOnChange=removed-edge matchedChanges=removed-edge"
     )
     assert output_dir.joinpath("index.html").exists()

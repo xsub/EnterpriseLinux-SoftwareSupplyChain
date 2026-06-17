@@ -188,6 +188,26 @@ def test_graph_diff_tree_schema_documents_policy_gate_shape() -> None:
     assert policy_def["properties"]["exitCode"]["enum"] == [0, 2]
 
 
+def test_graph_diff_schema_documents_classification_gate_shape() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.graph.diff.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["classifications"]["items"]["$ref"] == (
+        "#/$defs/classification"
+    )
+    summary = schema["properties"]["summary"]["properties"]
+    assert "classifiedChanges" in summary
+    assert "upgradeChanges" in summary
+    assert "downgradeChanges" in summary
+    policy = schema["$defs"]["policy"]
+    assert set(policy["required"]) == {"status", "exitCode"}
+    assert "failOnKind" in policy["properties"]
+    assert "matchedKinds" in policy["properties"]
+
+
 def test_report_bundle_submission_plan_schema_documents_triage_gate() -> None:
     schema = json.loads(
         Path("docs/schemas/edgp.report.bundle.submission_plan.v1.schema.json").read_text(

@@ -1129,7 +1129,19 @@ def _format_graph_diff_report(report: dict[str, Any]) -> str:
         f"metadataChangedNodes={int(summary.get('metadataChangedNodes', 0) or 0)}",
         f"addedEdges={int(summary.get('addedEdges', 0) or 0)}",
         f"removedEdges={int(summary.get('removedEdges', 0) or 0)}",
+        f"classifiedChanges={int(summary.get('classifiedChanges', 0) or 0)}",
     ]
+    for key in (
+        "upgradeChanges",
+        "downgradeChanges",
+        "replacementChanges",
+        "addedOnlyChanges",
+        "removedOnlyChanges",
+        "metadataOnlyChanges",
+    ):
+        value = int(summary.get(key, 0) or 0)
+        if value:
+            parts.append(f"{key}={value}")
     policy = report.get("policy")
     if isinstance(policy, dict):
         parts.extend(
@@ -1137,6 +1149,13 @@ def _format_graph_diff_report(report: dict[str, Any]) -> str:
                 policy,
                 requested_key="failOnChange",
                 matched_key="matchedChanges",
+            )
+        )
+        parts.extend(
+            _policy_list_text_parts(
+                policy,
+                requested_key="failOnKind",
+                matched_key="matchedKinds",
             )
         )
     return " ".join(parts)
@@ -1217,6 +1236,23 @@ def _policy_text_parts(
     status = policy.get("status")
     if isinstance(status, str) and status:
         parts.append(f"policyStatus={status}")
+    parts.extend(
+        _policy_list_text_parts(
+            policy,
+            requested_key=requested_key,
+            matched_key=matched_key,
+        )
+    )
+    return parts
+
+
+def _policy_list_text_parts(
+    policy: dict[str, Any],
+    *,
+    requested_key: str,
+    matched_key: str,
+) -> list[str]:
+    parts = []
     requested = _string_list(policy.get(requested_key))
     if requested:
         parts.append(f"{requested_key}={_text_value(','.join(requested))}")
@@ -1370,12 +1406,15 @@ def _attach_diff_policy(
     report: dict[str, Any],
     *,
     fail_on_change: Sequence[str] = (),
+    fail_on_kind: Sequence[str] = (),
 ) -> dict[str, Any]:
     requested_changes = _unique_diff_change_kinds(fail_on_change)
-    if requested_changes:
+    requested_kinds = _unique_diff_tree_change_kinds(fail_on_kind)
+    if requested_changes or requested_kinds:
         report["policy"] = _diff_policy_verdict(
             report,
             fail_on_change=requested_changes,
+            fail_on_kind=requested_kinds,
         )
     return report
 
@@ -1384,26 +1423,28 @@ def _diff_policy_verdict(
     report: dict[str, Any],
     *,
     fail_on_change: Sequence[str] = (),
+    fail_on_kind: Sequence[str] = (),
 ) -> dict[str, Any]:
     requested_changes = _unique_diff_change_kinds(fail_on_change)
-    if not requested_changes:
-        return {
-            "failOnChange": [],
-            "matchedChanges": [],
-            "status": "pass",
-            "exitCode": 0,
-        }
+    requested_kinds = _unique_diff_tree_change_kinds(fail_on_kind)
     observed_changes = _diff_change_kinds(report)
+    observed_kinds = _diff_tree_classification_kinds(report)
     matched_changes = [
         change for change in requested_changes if change in observed_changes
     ]
-    failed = bool(matched_changes)
-    return {
-        "failOnChange": requested_changes,
-        "matchedChanges": matched_changes,
+    matched_kinds = [kind for kind in requested_kinds if kind in observed_kinds]
+    failed = bool(matched_changes or matched_kinds)
+    policy: dict[str, Any] = {
         "status": "fail" if failed else "pass",
         "exitCode": 2 if failed else 0,
     }
+    if requested_changes:
+        policy["failOnChange"] = requested_changes
+        policy["matchedChanges"] = matched_changes
+    if requested_kinds:
+        policy["failOnKind"] = requested_kinds
+        policy["matchedKinds"] = matched_kinds
+    return policy
 
 
 def _unique_diff_change_kinds(kinds: Sequence[str]) -> list[str]:
@@ -1722,11 +1763,16 @@ def _write_graph_diff_bundle(
     command: str | None = None,
     include_triage_summary: bool = False,
     fail_on_change: Sequence[str] = (),
+    fail_on_kind: Sequence[str] = (),
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / "graph-diff.json"
     report = json.loads(diff_snapshot_files(left_path, right_path))
-    _attach_diff_policy(report, fail_on_change=fail_on_change)
+    _attach_diff_policy(
+        report,
+        fail_on_change=fail_on_change,
+        fail_on_kind=fail_on_kind,
+    )
     report_path.write_text(
         _json(report),
         encoding="utf-8",
@@ -3251,6 +3297,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="return status 2 when the graph diff includes this change kind",
     )
+    diff.add_argument(
+        "--fail-on-kind",
+        action="append",
+        choices=DIFF_TREE_CHANGE_KINDS,
+        default=[],
+        help="return status 2 when the graph diff includes this package change kind",
+    )
 
     diff_bundle = subparsers.add_parser(
         "diff-bundle",
@@ -3271,6 +3324,13 @@ def build_parser() -> argparse.ArgumentParser:
         choices=DIFF_CHANGE_KINDS,
         default=[],
         help="return status 2 when the graph diff includes this change kind",
+    )
+    diff_bundle.add_argument(
+        "--fail-on-kind",
+        action="append",
+        choices=DIFF_TREE_CHANGE_KINDS,
+        default=[],
+        help="return status 2 when the graph diff includes this package change kind",
     )
     _add_triage_bundle_option(diff_bundle)
 
@@ -4472,7 +4532,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "diff":
         report = json.loads(diff_snapshot_files(args.left, args.right))
-        _attach_diff_policy(report, fail_on_change=args.fail_on_change)
+        _attach_diff_policy(
+            report,
+            fail_on_change=args.fail_on_change,
+            fail_on_kind=args.fail_on_kind,
+        )
         if args.format == "text":
             print(_format_graph_diff_report(report))
         else:
@@ -4489,6 +4553,7 @@ def main(argv: list[str] | None = None) -> int:
             command=command,
             include_triage_summary=_include_triage_summary(args),
             fail_on_change=args.fail_on_change,
+            fail_on_kind=args.fail_on_kind,
         )
         report_path = args.output_dir / "graph-diff.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
