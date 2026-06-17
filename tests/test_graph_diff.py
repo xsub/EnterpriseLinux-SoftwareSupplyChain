@@ -264,6 +264,43 @@ def test_cli_diff_bundle_can_fail_after_writing_bundle(tmp_path, capsys) -> None
     )
 
 
+def test_cli_diff_bundle_text_can_fail_after_writing_bundle(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "graph-diff-text-failing-bundle"
+
+    assert (
+        main(
+            [
+                "diff-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+                "--format",
+                "text",
+                "--triage-summary",
+                "--fail-on-change",
+                "removed-edge",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        f"DIFF_BUNDLE index={output_dir / 'index.html'} "
+        "leftRoot=app==1.0.0 rightRoot=app==1.0.0 "
+        "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
+        "addedEdges=2 removedEdges=1 policyStatus=fail "
+        "failOnChange=removed-edge matchedChanges=removed-edge"
+    )
+    assert output_dir.joinpath("index.html").exists()
+    assert output_dir.joinpath("graph-diff.json").exists()
+
+
 def test_cli_diff_tree_accepts_explicit_left_right_selectors(capsys) -> None:
     assert (
         main(
@@ -471,3 +508,45 @@ def test_cli_diff_tree_bundle_can_fail_after_writing_bundle(tmp_path, capsys) ->
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)
     assert verification["ok"] is True
+
+
+def test_cli_diff_tree_bundle_text_can_fail_after_writing_bundle(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "graph-diff-tree-text-failing-bundle"
+
+    assert (
+        main(
+            [
+                "diff-tree-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--output-dir",
+                str(output_dir),
+                "--format",
+                "text",
+                "--triage-summary",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        f"DIFF_TREE_BUNDLE index={output_dir / 'index.html'} "
+        "selector=app direction=dependencies depth=2 "
+        "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
+        "addedEdges=2 removedEdges=1 classifiedChanges=2 "
+        "upgradeChanges=1 addedOnlyChanges=1 policyStatus=fail "
+        "failOnKind=upgrade matchedKinds=upgrade"
+    )
+    assert output_dir.joinpath("index.html").exists()
+    assert output_dir.joinpath("graph-diff-tree.json").exists()

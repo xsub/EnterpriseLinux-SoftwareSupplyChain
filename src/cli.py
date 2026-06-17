@@ -1086,6 +1086,11 @@ def _format_graph_diff_report(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_graph_diff_bundle_result(index_path: Path, report: dict[str, Any]) -> str:
+    details = _format_graph_diff_report(report).removeprefix("DIFF ")
+    return f"DIFF_BUNDLE index={_text_value(index_path)} {details}"
+
+
 def _format_graph_diff_tree_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -1125,6 +1130,14 @@ def _format_graph_diff_tree_report(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_graph_diff_tree_bundle_result(
+    index_path: Path,
+    report: dict[str, Any],
+) -> str:
+    details = _format_graph_diff_tree_report(report).removeprefix("DIFF_TREE ")
+    return f"DIFF_TREE_BUNDLE index={_text_value(index_path)} {details}"
+
+
 def _policy_text_parts(
     policy: dict[str, Any],
     *,
@@ -1146,6 +1159,42 @@ def _policy_text_parts(
 
 def _text_value(value: object) -> str:
     return shlex.quote(str(value))
+
+
+def _print_graph_diff_bundle_result(
+    index_path: Path,
+    report: dict[str, Any],
+    *,
+    output_format: str = "path",
+    fail_on_status: str | None = None,
+) -> int:
+    if output_format == "text":
+        print(_format_graph_diff_bundle_result(index_path, report))
+    else:
+        print(index_path)
+    if _bundle_triage_summary_should_fail(index_path.parent, min_status=fail_on_status):
+        return 2
+    if _diff_policy_failed(report):
+        return 2
+    return 0
+
+
+def _print_graph_diff_tree_bundle_result(
+    index_path: Path,
+    report: dict[str, Any],
+    *,
+    output_format: str = "path",
+    fail_on_status: str | None = None,
+) -> int:
+    if output_format == "text":
+        print(_format_graph_diff_tree_bundle_result(index_path, report))
+    else:
+        print(index_path)
+    if _bundle_triage_summary_should_fail(index_path.parent, min_status=fail_on_status):
+        return 2
+    if _diff_tree_policy_failed(report):
+        return 2
+    return 0
 
 
 def _load_optional_json(path: Path) -> dict[str, Any]:
@@ -3094,6 +3143,7 @@ def build_parser() -> argparse.ArgumentParser:
     diff_bundle.add_argument("--left", type=Path, required=True)
     diff_bundle.add_argument("--right", type=Path, required=True)
     diff_bundle.add_argument("--output-dir", type=Path, required=True)
+    diff_bundle.add_argument("--format", choices=["path", "text"], default="path")
     diff_bundle.add_argument(
         "--fail-on-change",
         action="append",
@@ -3146,6 +3196,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     diff_tree_bundle.add_argument("--depth", type=int, default=3)
     diff_tree_bundle.add_argument("--output-dir", type=Path, required=True)
+    diff_tree_bundle.add_argument("--format", choices=["path", "text"], default="path")
     diff_tree_bundle.add_argument(
         "--fail-on-kind",
         action="append",
@@ -4292,17 +4343,14 @@ def main(argv: list[str] | None = None) -> int:
             include_triage_summary=_include_triage_summary(args),
             fail_on_change=args.fail_on_change,
         )
-        result = _print_bundle_result(
-            index_path,
-            fail_on_status=args.fail_on_status,
-        )
-        if result != 0:
-            return result
         report_path = args.output_dir / "graph-diff.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
-        if _diff_policy_failed(report):
-            return 2
-        return 0
+        return _print_graph_diff_bundle_result(
+            index_path,
+            report,
+            output_format=args.format,
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "diff-tree":
         selector, left_selector, right_selector = _diff_tree_selector_args(args)
@@ -4340,17 +4388,14 @@ def main(argv: list[str] | None = None) -> int:
             include_triage_summary=_include_triage_summary(args),
             fail_on_kind=args.fail_on_kind,
         )
-        result = _print_bundle_result(
-            index_path,
-            fail_on_status=args.fail_on_status,
-        )
-        if result != 0:
-            return result
         report_path = args.output_dir / "graph-diff-tree.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
-        if _diff_tree_policy_failed(report):
-            return 2
-        return 0
+        return _print_graph_diff_tree_bundle_result(
+            index_path,
+            report,
+            output_format=args.format,
+            fail_on_status=args.fail_on_status,
+        )
 
     if args.command == "impact":
         root_identifier, graph, resolved_ecosystem = _load_source_project_graph(
