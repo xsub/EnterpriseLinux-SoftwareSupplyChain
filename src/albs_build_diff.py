@@ -54,6 +54,15 @@ def build_albs_build_diff_report(
         "addedArtifacts": added,
         "removedArtifacts": removed,
         "changedArtifacts": changed,
+        "topFindings": _top_findings(
+            added=added,
+            removed=removed,
+            changed=changed,
+            missing_arches=missing_arches,
+            timing=timing,
+            left_summary=left_summary,
+            right_summary=right_summary,
+        ),
         "timingDelta": timing,
     }
 
@@ -137,6 +146,96 @@ def _artifact_change(left: dict[str, str], right: dict[str, str]) -> dict[str, A
         "left": left,
         "right": right,
     }
+
+
+def _top_findings(
+    *,
+    added: list[dict[str, str]],
+    removed: list[dict[str, str]],
+    changed: list[dict[str, Any]],
+    missing_arches: dict[str, list[str]],
+    timing: dict[str, Any],
+    left_summary: dict[str, Any],
+    right_summary: dict[str, Any],
+    limit: int = 10,
+) -> dict[str, list[dict[str, Any]]]:
+    return {
+        "changedArtifacts": sorted(
+            changed,
+            key=lambda item: (
+                -len(item.get("changedFields", [])),
+                str(item.get("packageName", "")),
+                str(item.get("artifactArch", "")),
+                str(item.get("buildArch", "")),
+            ),
+        )[:limit],
+        "addedArtifacts": _rank_artifacts(added)[:limit],
+        "removedArtifacts": _rank_artifacts(removed)[:limit],
+        "missingBuildArchitectures": _missing_arch_findings(missing_arches)[:limit],
+        "timingDeltas": _timing_findings(timing),
+        "gitCommitChanges": _git_commit_findings(left_summary, right_summary),
+    }
+
+
+def _rank_artifacts(artifacts: list[dict[str, str]]) -> list[dict[str, str]]:
+    return sorted(
+        artifacts,
+        key=lambda item: (
+            str(item.get("packageName", "")),
+            str(item.get("artifactArch", "")),
+            str(item.get("buildArch", "")),
+            str(item.get("filename", "")),
+        ),
+    )
+
+
+def _missing_arch_findings(missing_arches: dict[str, list[str]]) -> list[dict[str, str]]:
+    findings: list[dict[str, str]] = []
+    for side in ("left", "right"):
+        for arch in missing_arches.get(side, []):
+            findings.append({"side": side, "arch": arch})
+    return findings
+
+
+def _timing_findings(timing: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for metric, left_key, right_key, delta_key in (
+        (
+            "wallSeconds",
+            "leftWallSeconds",
+            "rightWallSeconds",
+            "wallSecondsDelta",
+        ),
+        (
+            "criticalBuildTaskWallSeconds",
+            "leftCriticalBuildTaskWallSeconds",
+            "rightCriticalBuildTaskWallSeconds",
+            "criticalBuildTaskWallSecondsDelta",
+        ),
+    ):
+        delta = timing.get(delta_key)
+        if not isinstance(delta, int | float) or delta == 0:
+            continue
+        rows.append(
+            {
+                "metric": metric,
+                "left": timing.get(left_key),
+                "right": timing.get(right_key),
+                "delta": delta,
+            }
+        )
+    return rows
+
+
+def _git_commit_findings(
+    left_summary: dict[str, Any],
+    right_summary: dict[str, Any],
+) -> list[dict[str, Any]]:
+    left_commits = left_summary.get("gitCommits", [])
+    right_commits = right_summary.get("gitCommits", [])
+    if left_commits == right_commits:
+        return []
+    return [{"left": left_commits, "right": right_commits}]
 
 
 def _timing_delta(left: Mapping[str, Any], right: Mapping[str, Any]) -> dict[str, Any]:

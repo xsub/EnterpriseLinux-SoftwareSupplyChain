@@ -19,8 +19,8 @@
             {
               "type": "ECOSYSTEM",
               "events": [
-                {"introduced": "1.20.1-16.el9_4.0"},
-                {"fixed": "1.20.1-16.el9_4.2"}
+                {"introduced": "1.20.1-28.el9_8.2.alma.0"},
+                {"fixed": "1.20.1-28.el9_8.2.alma.2"}
               ]
             }
           ]

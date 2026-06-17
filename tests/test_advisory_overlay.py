@@ -46,7 +46,7 @@ def test_advisory_overlay_matches_rpm_repo_evr_without_arch_suffix() -> None:
     )
 
     assert payload["summary"]["findings"] == 1
-    assert payload["findings"][0]["package"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+    assert payload["findings"][0]["package"] == "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
 
 
 def test_advisory_overlay_matches_osv_range_for_rpm_evr() -> None:
@@ -68,9 +68,9 @@ def test_advisory_overlay_matches_osv_range_for_rpm_evr() -> None:
     )
 
     assert payload["summary"]["findings"] == 1
-    assert payload["findings"][0]["package"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+    assert payload["findings"][0]["package"] == "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
     assert payload["findings"][0]["advisory"]["ranges"][0]["fixed"] == (
-        "1.20.1-16.el9_4.2"
+        "1.20.1-28.el9_8.2.alma.2"
     )
 
     nonmatching = build_advisory_report(
@@ -84,8 +84,8 @@ def test_advisory_overlay_matches_osv_range_for_rpm_evr() -> None:
                     "ranges": [
                         {
                             "type": "ECOSYSTEM",
-                            "introduced": "1.20.1-16.el9_4.2",
-                            "fixed": "1.20.1-16.el9_4.3",
+                            "introduced": "1.20.1-28.el9_8.2.alma.2",
+                            "fixed": "1.20.1-28.el9_8.2.alma.3",
                         }
                     ],
                 }

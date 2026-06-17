@@ -140,6 +140,26 @@ def test_report_json_schemas_document_fixture_shapes() -> None:
         assert set(payload) <= set(schema["properties"])
 
 
+def test_albs_build_diff_schema_documents_top_findings() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.albs.build_diff.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    top_findings = schema["properties"]["topFindings"]
+    assert top_findings["required"] == [
+        "changedArtifacts",
+        "addedArtifacts",
+        "removedArtifacts",
+        "missingBuildArchitectures",
+        "timingDeltas",
+        "gitCommitChanges",
+    ]
+    for key in top_findings["required"]:
+        assert top_findings["properties"][key]["type"] == "array"
+
+
 def test_graph_snapshot_schema_documents_nested_shapes() -> None:
     schema = json.loads(
         Path("docs/schemas/edgp.graph.snapshot.v1.schema.json").read_text(

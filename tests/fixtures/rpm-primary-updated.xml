@@ -1,31 +1,81 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="2">
-  <package type="rpm">
-    <name>nginx</name>
-    <arch>x86_64</arch>
-    <version epoch="0" ver="1.20.1" rel="17.el9_4.2"/>
-    <summary>web server security update</summary>
-    <format>
-      <rpm:sourcerpm>nginx-1.20.1-17.el9_4.2.src.rpm</rpm:sourcerpm>
-      <rpm:provides>
-        <rpm:entry name="nginx"/>
-      </rpm:provides>
-      <rpm:requires>
-        <rpm:entry name="nginx-filesystem"/>
-      </rpm:requires>
-    </format>
-  </package>
-  <package type="rpm">
-    <name>nginx-filesystem</name>
-    <arch>noarch</arch>
-    <version epoch="0" ver="1.20.1" rel="17.el9_4.2"/>
-    <summary>web server filesystem layout</summary>
-    <format>
-      <rpm:sourcerpm>nginx-1.20.1-17.el9_4.2.src.rpm</rpm:sourcerpm>
-      <rpm:provides>
-        <rpm:entry name="nginx-filesystem"/>
-      </rpm:provides>
-      <rpm:requires/>
-    </format>
-  </package>
+<?xml version='1.0' encoding='UTF-8'?>
+<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="2"><package type="rpm">
+  <name>nginx</name>
+  <arch>x86_64</arch>
+  <version epoch="2" ver="1.26.3" rel="9.module_el9.8.0+247+aa936373" />
+  <checksum type="sha256" pkgid="YES">b030f7af33b6699cfa285cb02f517b0bdbfbdb818196db618bb662420a1f47b0</checksum>
+  <summary>A high performance web server and reverse proxy server</summary>
+  <description>Nginx is a web server and a reverse proxy server for HTTP, SMTP, POP3 and
+IMAP protocols, with a strong focus on high concurrency, performance and low
+memory usage.</description>
+  <packager>AlmaLinux Packaging Team &lt;packager@almalinux.org&gt;</packager>
+  <url>https://nginx.org</url>
+  <time file="1779348556" build="1779346414" />
+  <size package="32226" installed="123007" archive="125848" />
+  <location href="Packages/nginx-1.26.3-9.module_el9.8.0+247+aa936373.x86_64.rpm" />
+  <format>
+    <rpm:license>BSD-2-Clause</rpm:license>
+    <rpm:vendor>AlmaLinux</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>x64-builder03.almalinux.org</rpm:buildhost>
+    <rpm:sourcerpm>nginx-1.26.3-9.module_el9.8.0+247+aa936373.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="12197" />
+    <rpm:provides>
+      <rpm:entry name="nginx" flags="EQ" epoch="2" ver="1.26.3" rel="9.module_el9.8.0+247+aa936373" />
+      <rpm:entry name="nginx(abi)" flags="EQ" epoch="0" ver="1.26.3" />
+      <rpm:entry name="nginx(x86-64)" flags="EQ" epoch="2" ver="1.26.3" rel="9.module_el9.8.0+247+aa936373" />
+      <rpm:entry name="webserver" />
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/bin/sh" pre="1" />
+      <rpm:entry name="/bin/sh" />
+      <rpm:entry name="/usr/bin/sh" />
+      <rpm:entry name="nginx-core" flags="EQ" epoch="2" ver="1.26.3" rel="9.module_el9.8.0+247+aa936373" />
+      <rpm:entry name="nginx-filesystem" flags="EQ" epoch="2" ver="1.26.3" rel="9.module_el9.8.0+247+aa936373" />
+      <rpm:entry name="system-logos-httpd" />
+      <rpm:entry name="systemd" pre="1" />
+      <rpm:entry name="systemd" />
+    </rpm:requires>
+    <rpm:recommends>
+      <rpm:entry name="logrotate" />
+    </rpm:recommends>
+    <file>/usr/bin/nginx-upgrade</file>
+  </format>
+</package>
+<package type="rpm">
+  <name>nginx-filesystem</name>
+  <arch>noarch</arch>
+  <version epoch="2" ver="1.26.3" rel="9.module_el9.8.0+247+aa936373" />
+  <checksum type="sha256" pkgid="YES">a588c17f4b6c26252592c622da00137b3b8c446004b63892f235b283b8a7484e</checksum>
+  <summary>The basic directory layout for the Nginx server</summary>
+  <description>The nginx-filesystem package contains the basic directory layout
+for the Nginx server including the correct permissions for the
+directories.</description>
+  <packager>AlmaLinux Packaging Team &lt;packager@almalinux.org&gt;</packager>
+  <url>https://nginx.org</url>
+  <time file="1779348550" build="1779346391" />
+  <size package="9839" installed="141" archive="1364" />
+  <location href="Packages/nginx-filesystem-1.26.3-9.module_el9.8.0+247+aa936373.noarch.rpm" />
+  <format>
+    <rpm:license>BSD-2-Clause</rpm:license>
+    <rpm:vendor>AlmaLinux</rpm:vendor>
+    <rpm:group>Unspecified</rpm:group>
+    <rpm:buildhost>s390x-builder02.almalinux.org</rpm:buildhost>
+    <rpm:sourcerpm>nginx-1.26.3-9.module_el9.8.0+247+aa936373.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="4504" end="9549" />
+    <rpm:provides>
+      <rpm:entry name="group(nginx)" />
+      <rpm:entry name="nginx-filesystem" flags="EQ" epoch="2" ver="1.26.3" rel="9.module_el9.8.0+247+aa936373" />
+      <rpm:entry name="user(nginx)" />
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/bin/sh" pre="1" />
+      <rpm:entry name="shadow-utils" pre="1" />
+    </rpm:requires>
+    <file type="dir">/etc/nginx</file>
+    <file type="dir">/etc/nginx/conf.d</file>
+    <file type="dir">/etc/nginx/default.d</file>
+    <file type="dir">/etc/systemd/system/nginx.service.d</file>
+  </format>
+</package>
 </metadata>

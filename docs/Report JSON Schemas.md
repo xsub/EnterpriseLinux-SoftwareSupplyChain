@@ -90,7 +90,8 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
   documents public ALBS build task, sign task, and artifact timing.
 - `edgp.albs.build_diff.v1`:
   [`edgp.albs.build_diff.v1.schema.json`](schemas/edgp.albs.build_diff.v1.schema.json)
-  documents public ALBS build-to-build artifact, commit, and timing changes.
+  documents public ALBS build-to-build artifact, commit, and timing changes,
+  including compact top findings for build-diff review.
 - `edgp.albs.log_intelligence.v1`:
   [`edgp.albs.log_intelligence.v1.schema.json`](schemas/edgp.albs.log_intelligence.v1.schema.json)
   documents build-log artifacts and extracted warning/error/failure signals.

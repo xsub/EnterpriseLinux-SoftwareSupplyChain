@@ -1,9 +1,98 @@
 {
-  "schema": "edgp.rpm.repository_summary.v1",
+  "architectures": [
+    {
+      "arch": "x86_64",
+      "packages": 2
+    }
+  ],
   "ecosystem": "rpm",
   "root": "rpm-repository==public-rpm-repository",
-  "summary": {"packages": 2, "sourceRpms": 1, "architectures": 1, "requirementEdges": 1, "unresolvedRequirements": 0},
-  "architectures": [{"arch": "x86_64", "packages": 2}],
-  "topSourceRpms": [{"sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm", "packages": 2}],
-  "unresolvedRequirements": []
+  "schema": "edgp.rpm.repository_summary.v1",
+  "summary": {
+    "architectures": 1,
+    "packages": 2,
+    "requirementEdges": 19,
+    "sourceRpms": 1,
+    "unresolvedRequirements": 18
+  },
+  "topSourceRpms": [
+    {
+      "packages": 2,
+      "sourceRpm": "nginx-1.20.1-28.el9_8.2.alma.1.src.rpm"
+    }
+  ],
+  "unresolvedRequirements": [
+    {
+      "capability": "libc.so.6(GLIBC_2.34)(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "libcrypt.so.2()(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "libcrypt.so.2(XCRYPT_2.0)(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "libcrypto.so.3()(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "libcrypto.so.3(OPENSSL_3.0.0)(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "libpcre.so.1()(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "libssl.so.3()(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "libssl.so.3(OPENSSL_3.0.0)(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "libz.so.1()(64bit)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "nginx-filesystem",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "openssl-libs",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "rtld(GNU_HASH)",
+      "package": "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "/bin/sh",
+      "package": "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "/usr/bin/sh",
+      "package": "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "nginx-filesystem",
+      "package": "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "pcre",
+      "package": "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "system-logos-httpd",
+      "package": "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    },
+    {
+      "capability": "systemd",
+      "package": "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    }
+  ]
 }

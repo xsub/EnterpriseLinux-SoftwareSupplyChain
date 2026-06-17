@@ -33,6 +33,15 @@ def test_albs_build_diff_detects_artifact_and_commit_changes() -> None:
     assert report["summary"]["removedArtifacts"] == 1
     assert report["summary"]["changedArtifacts"] == 3
     assert report["summary"]["gitCommitChanged"] is True
+    assert report["topFindings"]["changedArtifacts"][0]["packageName"] == "nginx"
+    assert report["topFindings"]["addedArtifacts"][0]["packageName"] == (
+        "nginx-mod-stream"
+    )
+    assert report["topFindings"]["removedArtifacts"][0]["packageName"] == "nginx"
+    assert report["topFindings"]["timingDeltas"][0]["metric"] == "wallSeconds"
+    assert report["topFindings"]["gitCommitChanges"][0]["left"] == [
+        "911945c71710c83cf6f760447c32d8d6cae737dc"
+    ]
 
 
 def test_albs_log_intelligence_extracts_inline_signals() -> None:
@@ -94,8 +103,11 @@ def test_rpm_repository_adapter_links_requires_to_providers() -> None:
     )
 
     assert resolved.root_identifier == "rpm-repository==public-rpm-repository"
-    assert "nginx-core==1.20.1-16.el9_4.1.x86_64" in resolved.graph.get_dependencies(
-        "nginx==1.20.1-16.el9_4.1.x86_64"
+    assert (
+        "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+        in resolved.graph.get_dependencies(
+            "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+        )
     )
 
 
@@ -123,8 +135,8 @@ def test_rpm_repository_summary_counts_arches_and_source_rpms() -> None:
         "packages": 2,
         "sourceRpms": 1,
         "architectures": 1,
-        "requirementEdges": 1,
-        "unresolvedRequirements": 0,
+        "requirementEdges": 19,
+        "unresolvedRequirements": 18,
     }
     assert report["architectures"] == [{"arch": "x86_64", "packages": 2}]
 
@@ -155,9 +167,9 @@ def test_rpm_repository_diff_detects_snapshot_changes() -> None:
     }
     assert report["changedPackages"][0]["name"] == "nginx"
     assert report["changedPackages"][0]["changedFields"] == [
+        "version",
         "release",
         "sourceRpm",
-        "summary",
         "nodeId",
     ]
     assert report["addedPackages"][0]["name"] == "nginx-filesystem"
@@ -166,8 +178,14 @@ def test_rpm_repository_diff_detects_snapshot_changes() -> None:
     assert report["topFindings"]["addedPackages"][0]["name"] == "nginx-filesystem"
     assert report["topFindings"]["removedPackages"][0]["name"] == "nginx-core"
     assert report["topFindings"]["sourceRpmDelta"] == [
-        {"status": "added", "sourceRpm": "nginx-1.20.1-17.el9_4.2.src.rpm"},
-        {"status": "removed", "sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm"},
+        {
+            "status": "added",
+            "sourceRpm": "nginx-1.26.3-9.module_el9.8.0+247+aa936373.src.rpm",
+        },
+        {
+            "status": "removed",
+            "sourceRpm": "nginx-1.20.1-28.el9_8.2.alma.1.src.rpm",
+        },
     ]
 
 
@@ -181,8 +199,10 @@ def test_libsolv_bridge_parses_transaction_actions() -> None:
     assert report["summary"]["architectures"] == [{"arch": "x86_64", "actions": 3}]
     install = report["transactionActions"][0]
     assert install["packageName"] == "nginx"
-    assert install["nodeId"] == "nginx==1.20.1-16.el9_4.1.x86_64"
-    assert install["purl"] == "pkg:rpm/nginx@1.20.1-16.el9_4.1?arch=x86_64"
+    assert install["nodeId"] == "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    assert install["purl"] == (
+        "pkg:rpm/nginx@1.20.1-28.el9_8.2.alma.1?arch=x86_64"
+    )
     upgrade = report["transactionActions"][1]
     assert upgrade["oldNodeId"] == "openssl==3.0.7-1.el9.x86_64"
     assert upgrade["newNodeId"] == "openssl==3.0.7-2.el9.x86_64"
@@ -209,7 +229,7 @@ def test_libsolv_bridge_matches_transaction_actions_to_graph_snapshot(
     )
 
     assert report["graphContext"]["schema"] == "edgp.graph.snapshot.v1"
-    assert report["graphContext"]["nodes"] == 3
+    assert report["graphContext"]["nodes"] == 20
     assert report["summary"]["graphMatchedActions"] == 1
     assert report["summary"]["graphImpactedActions"] == 1
     assert report["summary"]["graphExactActions"] == 1
@@ -218,15 +238,15 @@ def test_libsolv_bridge_matches_transaction_actions_to_graph_snapshot(
     assert report["transactionImpact"][0]["actionIndex"] == 1
     assert report["transactionImpact"][0]["matchStatus"] == "exact"
     assert report["transactionImpact"][0]["matchedNodeIds"] == [
-        "nginx==1.20.1-16.el9_4.1.x86_64"
+        "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
     ]
     assert report["transactionImpact"][0]["affectedDependents"] == 1
     install = report["transactionActions"][0]
     assert install["graphMatchStatus"] == "exact"
     assert install["graphMatchedNodeIds"] == [
-        "nginx==1.20.1-16.el9_4.1.x86_64"
+        "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
     ]
-    assert install["graphMatches"][0]["directDependencies"] == 1
+    assert install["graphMatches"][0]["directDependencies"] == 7
     assert install["graphMatches"][0]["affectedDependents"] == 1
     assert report["transactionActions"][1]["graphMatchStatus"] == "unmatched"
 
@@ -294,8 +314,8 @@ def test_public_advisory_feed_normalizes_osv_to_overlay() -> None:
     assert range_advisory["ranges"] == [
         {
             "type": "ECOSYSTEM",
-            "introduced": "1.20.1-16.el9_4.0",
-            "fixed": "1.20.1-16.el9_4.2",
+            "introduced": "1.20.1-28.el9_8.2.alma.0",
+            "fixed": "1.20.1-28.el9_8.2.alma.2",
         }
     ]
     cvss_report = build_public_advisory_feed_report(
@@ -421,8 +441,16 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
         ]
     ) == 0
     query = json.loads(capsys.readouterr().out)
-    assert query["node"] == "nginx==1.20.1-16.el9_4.1.x86_64"
-    assert query["result"] == ["nginx-core==1.20.1-16.el9_4.1.x86_64"]
+    assert query["node"] == "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    assert query["result"] == [
+        "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64",
+        "rpm-capability:/bin/sh",
+        "rpm-capability:/usr/bin/sh",
+        "rpm-capability:nginx-filesystem",
+        "rpm-capability:pcre",
+        "rpm-capability:system-logos-httpd",
+        "rpm-capability:systemd",
+    ]
 
     assert main(
         [
@@ -437,8 +465,10 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     ) == 0
     impact = json.loads(capsys.readouterr().out)
     assert impact["schema"] == "edgp.impact.report.v1"
-    assert impact["node"] == "nginx-core==1.20.1-16.el9_4.1.x86_64"
-    assert "nginx==1.20.1-16.el9_4.1.x86_64" in impact["directDependents"]
+    assert impact["node"] == "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+    assert "nginx==1.20.1-28.el9_8.2.alma.1.x86_64" in impact[
+        "directDependents"
+    ]
 
     assert main(
         [
@@ -456,7 +486,9 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     advisory = json.loads(capsys.readouterr().out)
     assert advisory["schema"] == "edgp.advisory.report.v1"
     assert advisory["summary"]["findings"] == 1
-    assert advisory["findings"][0]["package"] == "nginx==1.20.1-16.el9_4.1.x86_64"
+    assert advisory["findings"][0]["package"] == (
+        "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
+    )
 
     assert main(
         [
@@ -475,7 +507,7 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     assert public_advisory["schema"] == "edgp.advisory.report.v1"
     assert public_advisory["summary"]["findings"] == 1
     assert public_advisory["findings"][0]["advisory"]["ranges"][0]["fixed"] == (
-        "1.20.1-16.el9_4.2"
+        "1.20.1-28.el9_8.2.alma.2"
     )
 
     assert (
@@ -714,7 +746,7 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     assert manifest["reports"][0]["href"] == "001-rpm-repository-graph.html"
     assert manifest["reports"][1]["href"] == "002-rpm-repository-summary.html"
     assert manifest["reports"][2]["href"] == (
-        "003-impact-nginx-core-1.20.1-16.el9_4.1.x86_64.html"
+        "003-impact-nginx-core-1.20.1-28.el9_8.2.alma.1.x86_64.html"
     )
     assert manifest["reports"][3]["href"] == "004-advisory-report.html"
     assert manifest["reports"][4]["href"] == "005-public-advisory-feed.html"
@@ -736,7 +768,7 @@ def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:
     assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
     assert public_feed["summary"]["advisories"] == 1
     assert public_feed["advisories"][0]["ranges"][0]["fixed"] == (
-        "1.20.1-16.el9_4.2"
+        "1.20.1-28.el9_8.2.alma.2"
     )
     public_advisory = json.loads(
         (output_dir / "public-advisory-report.json").read_text(encoding="utf-8")
@@ -940,8 +972,11 @@ def test_cli_albs_build_diff_bundle_writes_report_bundle(tmp_path, capsys) -> No
     diff = json.loads((output_dir / "albs-build-diff.json").read_text(encoding="utf-8"))
     assert diff["schema"] == "edgp.albs.build_diff.v1"
     assert diff["summary"]["changedArtifacts"] == 3
+    assert diff["topFindings"]["changedArtifacts"][0]["packageName"] == "nginx"
+    assert diff["topFindings"]["timingDeltas"][0]["delta"] == 70.0
     html = (output_dir / "001-albs-build-diff.html").read_text(encoding="utf-8")
     assert "EDGP ALBS Build Diff" in html
+    assert 'data-testid="albs-build-diff-top-findings-panel"' in html
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)

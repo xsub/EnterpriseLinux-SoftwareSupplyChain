@@ -13,7 +13,28 @@
     "right": {"type": "object"},
     "schema": {"const": "edgp.albs.build_diff.v1"},
     "summary": {"type": "object"},
-    "timingDelta": {"type": "object"}
+    "timingDelta": {"type": "object"},
+    "topFindings": {
+      "additionalProperties": false,
+      "description": "Bounded high-signal ALBS build changes for CI, workbench, and RAG consumers.",
+      "properties": {
+        "addedArtifacts": {"items": {"type": "object"}, "type": "array"},
+        "changedArtifacts": {"items": {"type": "object"}, "type": "array"},
+        "gitCommitChanges": {"items": {"type": "object"}, "type": "array"},
+        "missingBuildArchitectures": {"items": {"type": "object"}, "type": "array"},
+        "removedArtifacts": {"items": {"type": "object"}, "type": "array"},
+        "timingDeltas": {"items": {"type": "object"}, "type": "array"}
+      },
+      "required": [
+        "changedArtifacts",
+        "addedArtifacts",
+        "removedArtifacts",
+        "missingBuildArchitectures",
+        "timingDeltas",
+        "gitCommitChanges"
+      ],
+      "type": "object"
+    }
   },
   "required": [
     "schema",

@@ -57,8 +57,14 @@ src/
   output/          Cypher and CycloneDX exporters
   resolver/        CDCL-inspired resolver and mock registry
 tests/
-  fixtures/        Small registry and manifest examples
+  fixtures/        Public-derived samples plus synthetic edge-case payloads
 ```
+
+Fixture provenance is tracked in
+[`tests/fixtures/README.md`](tests/fixtures/README.md). The RPM repository
+fixtures include curated AlmaLinux 9 AppStream `primary.xml` excerpts, while
+small synthetic fixtures remain where they make parser and validation edge
+cases easier to audit.
 
 ## Quick Start
 
@@ -683,7 +689,9 @@ public URL and local file inputs:
   traversal, impact, advisory, and license report layer as other graphs.
 - `edgp albs-build-diff` compares two builds for artifact, source commit, and
   timing changes. `edgp albs-build-diff-bundle` renders the same comparison as
-  static HTML with `manifest.json` for review and verification.
+  static HTML with `manifest.json` for review and verification. Diff reports
+  include `topFindings` for changed, added, and removed artifacts, missing build
+  architectures, timing deltas, and git commit movement.
 - `edgp rpm-albs-provenance` joins installed RPMs from the local RPM database to
   artifacts from one public ALBS build. `edgp rpm-albs-provenance-bundle`
   renders that join as static HTML with `manifest.json` for browser review and

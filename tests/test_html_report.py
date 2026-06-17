@@ -466,6 +466,52 @@ def test_render_report_supports_public_vertical_reports(
     assert "data-sortable-table" in html
 
 
+def test_render_report_supports_albs_build_diff_top_findings() -> None:
+    report = json.loads(Path("tests/fixtures/albs-build-diff.json").read_text())
+    report["topFindings"] = {
+        "changedArtifacts": [
+            {
+                "packageName": "nginx",
+                "artifactArch": "x86_64",
+                "buildArch": "x86_64",
+                "changedFields": ["release", "casHash"],
+            }
+        ],
+        "addedArtifacts": [
+            {
+                "filename": "nginx-mod-stream-1.20.1-16.el9_4.2.x86_64.rpm",
+                "packageName": "nginx-mod-stream",
+                "artifactArch": "x86_64",
+                "buildArch": "x86_64",
+            }
+        ],
+        "removedArtifacts": [
+            {
+                "filename": "nginx-1.20.1-16.el9_4.1.x86_64.rpm",
+                "packageName": "nginx",
+                "artifactArch": "x86_64",
+                "buildArch": "x86_64",
+            }
+        ],
+        "missingBuildArchitectures": [{"side": "left", "arch": "aarch64"}],
+        "timingDeltas": [
+            {
+                "metric": "criticalBuildTaskWallSeconds",
+                "left": 371.070048,
+                "right": 424.070048,
+                "delta": 53.0,
+            }
+        ],
+        "gitCommitChanges": [{"left": ["old"], "right": ["new"]}],
+    }
+
+    html = render_report(report)
+
+    assert 'data-testid="albs-build-diff-top-findings-panel"' in html
+    assert "Top Build Changes" in html
+    assert "gitCommitChange" in html
+
+
 def test_render_report_supports_rpm_repository_diff_top_findings() -> None:
     report = json.loads(Path("tests/fixtures/rpm-repository-diff.json").read_text())
     report["topFindings"] = {
@@ -473,29 +519,32 @@ def test_render_report_supports_rpm_repository_diff_top_findings() -> None:
             {
                 "name": "nginx",
                 "arch": "x86_64",
-                "changedFields": ["release", "sourceRpm"],
+                "changedFields": ["version", "release", "sourceRpm"],
             }
         ],
         "addedPackages": [
             {
                 "name": "nginx-filesystem",
-                "version": "1.20.1",
-                "release": "17.el9_4.2",
+                "version": "1.26.3",
+                "release": "9.module_el9.8.0+247+aa936373",
                 "arch": "noarch",
-                "sourceRpm": "nginx-1.20.1-17.el9_4.2.src.rpm",
+                "sourceRpm": "nginx-1.26.3-9.module_el9.8.0+247+aa936373.src.rpm",
             }
         ],
         "removedPackages": [
             {
                 "name": "nginx-core",
                 "version": "1.20.1",
-                "release": "16.el9_4.1",
+                "release": "28.el9_8.2.alma.1",
                 "arch": "x86_64",
-                "sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm",
+                "sourceRpm": "nginx-1.20.1-28.el9_8.2.alma.1.src.rpm",
             }
         ],
         "sourceRpmDelta": [
-            {"status": "added", "sourceRpm": "nginx-1.20.1-17.el9_4.2.src.rpm"}
+            {
+                "status": "added",
+                "sourceRpm": "nginx-1.26.3-9.module_el9.8.0+247+aa936373.src.rpm",
+            }
         ],
     }
 

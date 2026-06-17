@@ -475,6 +475,9 @@ def render_albs_build_diff_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     left = report.get("left", {})
     right = report.get("right", {})
+    top_findings = report.get("topFindings", {})
+    if not isinstance(top_findings, dict):
+        top_findings = {}
     title = "EDGP ALBS Build Diff"
     return _document(
         title,
@@ -489,6 +492,7 @@ def render_albs_build_diff_report(report: dict[str, Any]) -> str:
                     ("Changed", summary.get("changedArtifacts", 0)),
                 ],
             ),
+            _albs_build_diff_top_findings_panel(top_findings),
             _rows_panel(
                 "Changed Artifacts",
                 report.get("changedArtifacts", []),
@@ -509,6 +513,73 @@ def render_albs_build_diff_report(report: dict[str, Any]) -> str:
             ),
         ],
         scripts=[_table_sort_script()],
+    )
+
+
+def _albs_build_diff_top_findings_panel(top_findings: dict[str, Any]) -> str:
+    rows: list[dict[str, Any]] = []
+    for category, columns in (
+        (
+            "changed",
+            ["packageName", "artifactArch", "buildArch", "changedFields"],
+        ),
+        (
+            "added",
+            ["filename", "packageName", "artifactArch", "buildArch"],
+        ),
+        (
+            "removed",
+            ["filename", "packageName", "artifactArch", "buildArch"],
+        ),
+        (
+            "missingBuildArchitecture",
+            ["side", "arch"],
+        ),
+        (
+            "timingDelta",
+            ["metric", "left", "right", "delta"],
+        ),
+        (
+            "gitCommitChange",
+            ["left", "right"],
+        ),
+    ):
+        source_key = {
+            "changed": "changedArtifacts",
+            "added": "addedArtifacts",
+            "removed": "removedArtifacts",
+            "missingBuildArchitecture": "missingBuildArchitectures",
+            "timingDelta": "timingDeltas",
+            "gitCommitChange": "gitCommitChanges",
+        }[category]
+        findings = top_findings.get(source_key, [])
+        if not isinstance(findings, list):
+            continue
+        for item in findings:
+            if not isinstance(item, dict):
+                continue
+            row = {"category": category}
+            for column in columns:
+                row[column] = item.get(column, "")
+            rows.append(row)
+    return _rows_panel(
+        "Top Build Changes",
+        rows,
+        [
+            "category",
+            "packageName",
+            "filename",
+            "artifactArch",
+            "buildArch",
+            "changedFields",
+            "side",
+            "arch",
+            "metric",
+            "left",
+            "right",
+            "delta",
+        ],
+        test_id="albs-build-diff-top-findings-panel",
     )
 
 

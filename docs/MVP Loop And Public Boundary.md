@@ -353,6 +353,11 @@ surfaces are:
   snapshot-drift evidence can be consumed without re-parsing every diff table.
 - Emit public RPM repository diff top findings for changed, added, removed, and
   source-RPM delta records in JSON and HTML.
+- Emit public ALBS build diff top findings for artifact, architecture, timing,
+  and git commit changes in JSON and HTML.
+- Replace the core RPM repository fixtures with curated AlmaLinux 9 AppStream
+  primary metadata excerpts and document fixture provenance for public-derived
+  versus synthetic test inputs.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`
