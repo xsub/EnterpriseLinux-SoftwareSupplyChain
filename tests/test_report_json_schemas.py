@@ -204,6 +204,26 @@ def test_report_bundle_submission_plan_schema_documents_triage_gate() -> None:
     }
 
 
+def test_submission_plan_index_schema_documents_triage_rollup() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.submission.plan.index.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    plan = schema["properties"]["plans"]["items"]
+    assert plan["properties"]["triageStatus"]["enum"] == ["pass", "warn", "fail"]
+    summary = schema["properties"]["summary"]
+    assert summary["properties"]["triageWarn"] == {
+        "minimum": 0,
+        "type": "integer",
+    }
+    assert summary["properties"]["triageFail"] == {
+        "minimum": 0,
+        "type": "integer",
+    }
+
+
 def test_impact_and_advisory_schemas_share_impact_summary_shape() -> None:
     impact_schema = json.loads(
         Path("docs/schemas/edgp.impact.report.v1.schema.json").read_text(

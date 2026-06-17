@@ -1931,6 +1931,8 @@ def render_submission_plan_index_report(index: dict[str, Any]) -> str:
                     ("Artifacts", _dict_value(summary, "artifacts")),
                     ("Bytes", _dict_value(summary, "bytes")),
                     ("Failures", _dict_value(summary, "failures")),
+                    ("Triage Warn", _dict_value(summary, "triageWarn")),
+                    ("Triage Fail", _dict_value(summary, "triageFail")),
                 ],
             ),
             _rows_panel(
@@ -1945,6 +1947,7 @@ def render_submission_plan_index_report(index: dict[str, Any]) -> str:
                     "artifacts",
                     "bytes",
                     "failures",
+                    "triageStatus",
                     "path",
                 ],
                 test_id="submission-plan-index-panel",
@@ -2048,6 +2051,7 @@ def _submission_index_plan_rows(plans: object) -> list[dict[str, object]]:
                 "artifacts": plan.get("artifacts", ""),
                 "bytes": plan.get("bytes", ""),
                 "failures": plan.get("failures", ""),
+                "triageStatus": plan.get("triageStatus", ""),
                 "path": plan.get("path", ""),
             }
         )

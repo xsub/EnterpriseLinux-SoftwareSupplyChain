@@ -31,6 +31,8 @@ def build_submission_plan_index(
         failures.extend(entry_failures)
 
     failed_plans = [entry for entry in plans if not entry["ok"]]
+    triage_warn = sum(1 for entry in plans if entry.get("triageStatus") == "warn")
+    triage_fail = sum(1 for entry in plans if entry.get("triageStatus") == "fail")
     summary = {
         "plans": len(plans),
         "okPlans": len(plans) - len(failed_plans),
@@ -55,6 +57,9 @@ def build_submission_plan_index(
             }
         ),
     }
+    if triage_warn or triage_fail:
+        summary["triageWarn"] = triage_warn
+        summary["triageFail"] = triage_fail
     index = {
         "schema": SUBMISSION_PLAN_INDEX_SCHEMA,
         "ok": not failed_plans,
@@ -112,6 +117,12 @@ def _load_plan_entry(path: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
 
     summary = payload.get("summary", {}) if isinstance(payload, dict) else {}
     target = payload.get("target", {}) if isinstance(payload, dict) else {}
+    triage_summary = (
+        payload.get("triageSummary", {}) if isinstance(payload, dict) else {}
+    )
+    triage_status = (
+        triage_summary.get("status", "") if isinstance(triage_summary, dict) else ""
+    )
     plan_failures = payload.get("failures", []) if isinstance(payload, dict) else []
     entry_failure_count = len(failures) + (
         len(plan_failures) if isinstance(plan_failures, list) else 0
@@ -133,6 +144,8 @@ def _load_plan_entry(path: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
         "bytes": _summary_int(summary, "bytes"),
         "failures": entry_failure_count,
     }
+    if triage_status:
+        entry["triageStatus"] = str(triage_status)
     if not payload:
         entry["ok"] = False
     return entry, failures

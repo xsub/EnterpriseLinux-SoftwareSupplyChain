@@ -81,6 +81,57 @@ def test_cli_submission_plan_index_writes_output_and_text_summary(
     assert index["ok"] is True
 
 
+def test_cli_submission_plan_index_can_gate_on_triage_status(
+    tmp_path,
+    capsys,
+) -> None:
+    bundle_plan_payload = json.loads(
+        Path("tests/fixtures/report-bundle-submission-plan.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    bundle_plan_payload["triageSummary"] = {
+        "status": "warn",
+        "summary": {
+            "failedChecks": 0,
+            "npmDuplicatePackageNames": 1,
+        },
+    }
+    bundle_plan = tmp_path / "bundle-plan.json"
+    bundle_plan.write_text(
+        json.dumps(bundle_plan_payload, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "submission-plan-index.json"
+
+    assert (
+        main(
+            [
+                "submission-plan-index",
+                "--input",
+                str(bundle_plan),
+                "--output",
+                str(output_path),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+
+    text = capsys.readouterr().out.strip()
+    assert text.startswith(
+        "OK plans=1 failedPlans=0 artifacts=3 bytes=6656 failures=0 "
+    )
+    assert text.endswith("targets=workbench triageWarn=1 triageFail=0")
+    index = json.loads(output_path.read_text(encoding="utf-8"))
+    assert index["summary"]["triageWarn"] == 1
+    assert index["summary"]["triageFail"] == 0
+    assert index["plans"][0]["triageStatus"] == "warn"
+
+
 def test_submission_plan_index_reports_failed_plan(tmp_path) -> None:
     failed_plan = json.loads(
         Path("tests/fixtures/export-batch-submission-plan.json").read_text(

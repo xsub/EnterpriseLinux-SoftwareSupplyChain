@@ -305,6 +305,12 @@ def _format_submission_plan_index(index: dict[str, Any]) -> str:
     artifacts = summary.get("artifacts", 0) if isinstance(summary, dict) else 0
     bytes_written = summary.get("bytes", 0) if isinstance(summary, dict) else 0
     failures = summary.get("failures", 0) if isinstance(summary, dict) else 0
+    triage_warn = (
+        int(summary.get("triageWarn", 0) or 0) if isinstance(summary, dict) else 0
+    )
+    triage_fail = (
+        int(summary.get("triageFail", 0) or 0) if isinstance(summary, dict) else 0
+    )
     targets = summary.get("targets", []) if isinstance(summary, dict) else []
     target_text = (
         ",".join(str(target) for target in targets)
@@ -321,6 +327,9 @@ def _format_submission_plan_index(index: dict[str, Any]) -> str:
     ]
     if target_text:
         parts.append(f"targets={target_text}")
+    if triage_warn or triage_fail:
+        parts.append(f"triageWarn={triage_warn}")
+        parts.append(f"triageFail={triage_fail}")
     failure_list = index.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
@@ -1321,6 +1330,26 @@ def _submission_plan_should_fail_on_status(
     if not isinstance(triage_summary, dict):
         return False
     return _triage_summary_should_fail(triage_summary, min_status=min_status)
+
+
+def _submission_plan_index_should_fail_on_status(
+    index: dict[str, Any],
+    *,
+    min_status: str | None = None,
+) -> bool:
+    if min_status is None:
+        return False
+    plans = index.get("plans", [])
+    if not isinstance(plans, list):
+        return False
+    threshold = _TRIAGE_STATUS_RANKS[min_status]
+    for plan in plans:
+        if not isinstance(plan, dict):
+            continue
+        status = str(plan.get("triageStatus", "pass")).lower()
+        if _TRIAGE_STATUS_RANKS.get(status, 0) >= threshold:
+            return True
+    return False
 
 
 def _attach_diff_tree_policy(
@@ -3674,6 +3703,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     submission_plan_index.add_argument("--output", type=Path)
     submission_plan_index.add_argument(
+        "--fail-on-status",
+        choices=["warn", "fail"],
+        help="return status 2 when any indexed plan carries this triage severity",
+    )
+    submission_plan_index.add_argument(
         "--format",
         choices=["json", "text"],
         default="json",
@@ -4868,6 +4902,11 @@ def main(argv: list[str] | None = None) -> int:
             print(_format_submission_plan_index(index))
         else:
             print(_json(index))
+        if _submission_plan_index_should_fail_on_status(
+            index,
+            min_status=args.fail_on_status,
+        ):
+            return 2
         return 0 if index["ok"] else 1
 
     if args.command == "validate":

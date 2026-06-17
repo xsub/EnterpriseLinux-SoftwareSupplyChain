@@ -80,6 +80,14 @@
               "endpoint"
             ],
             "type": "object"
+          },
+          "triageStatus": {
+            "enum": [
+              "pass",
+              "warn",
+              "fail"
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -124,6 +132,14 @@
           "type": "integer"
         },
         "plans": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "triageFail": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "triageWarn": {
           "minimum": 0,
           "type": "integer"
         },
