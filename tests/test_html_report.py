@@ -465,6 +465,10 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
         ("tests/fixtures/fixture-provenance.json", "fixture-provenance-entries-panel"),
         ("tests/fixtures/real-data-coverage.json", "real-data-coverage-plan-panel"),
         (
+            "tests/fixtures/real-data-replacement-plan.json",
+            "real-data-replacement-plan-candidates-panel",
+        ),
+        (
             "tests/fixtures/real-data-coverage-diff.json",
             "real-data-coverage-diff-sides-panel",
         ),

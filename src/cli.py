@@ -61,6 +61,7 @@ from src.public_advisory_feed import build_public_advisory_feed_report
 from src.query_report import build_query_report
 from src.real_data_coverage import build_real_data_coverage_report
 from src.real_data_coverage_diff import build_real_data_coverage_diff_report
+from src.real_data_replacement_plan import build_real_data_replacement_plan_report
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
@@ -386,6 +387,9 @@ def _policy_failure_text_parts(summary: dict[str, Any]) -> list[str]:
     real_data_diff_policy_failures = int(
         summary.get("realDataCoverageDiffPolicyFailures", 0) or 0
     )
+    real_data_replacement_policy_failures = int(
+        summary.get("realDataReplacementPlanPolicyFailures", 0) or 0
+    )
     parts = []
     if graph_diff_policy_failures:
         parts.append(f"graphDiffPolicyFailures={graph_diff_policy_failures}")
@@ -397,6 +401,11 @@ def _policy_failure_text_parts(summary: dict[str, Any]) -> list[str]:
         parts.append(
             "realDataCoverageDiffPolicyFailures="
             f"{real_data_diff_policy_failures}"
+        )
+    if real_data_replacement_policy_failures:
+        parts.append(
+            "realDataReplacementPlanPolicyFailures="
+            f"{real_data_replacement_policy_failures}"
         )
     return parts
 
@@ -1346,6 +1355,12 @@ def _real_data_coverage_policy_should_fail(output_dir: Path) -> bool:
     return isinstance(policy, dict) and policy.get("status") == "fail"
 
 
+def _real_data_replacement_plan_policy_should_fail(output_dir: Path) -> bool:
+    report = _load_optional_json(output_dir / "real-data-replacement-plan.json")
+    policy = report.get("policy")
+    return isinstance(policy, dict) and policy.get("status") == "fail"
+
+
 def _real_data_coverage_diff_policy_should_fail(output_dir: Path) -> bool:
     report = _load_optional_json(output_dir / "real-data-coverage-diff.json")
     policy = report.get("policy")
@@ -1829,6 +1844,56 @@ def _write_real_data_coverage_bundle(
         [report_path],
         output_dir,
         bundle_metadata={"sourceKind": "real-data-coverage", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
+def _real_data_replacement_plan_input_report(
+    *,
+    coverage_path: Path | None,
+    fixture_dir: Path | None,
+    fail_on_priority: str | None = None,
+) -> dict[str, Any]:
+    if coverage_path is not None:
+        coverage = _load_real_data_coverage_report(coverage_path)
+    else:
+        coverage = build_real_data_coverage_report(
+            build_fixture_provenance(fixture_dir or Path("tests/fixtures"))
+        )
+    return build_real_data_replacement_plan_report(
+        coverage,
+        fail_on_priority=fail_on_priority,
+    )
+
+
+def _write_real_data_replacement_plan_bundle(
+    output_dir: Path,
+    *,
+    coverage_path: Path | None = None,
+    fixture_dir: Path | None = None,
+    fail_on_priority: str | None = None,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "real-data-replacement-plan.json"
+    report_path.write_text(
+        _json(
+            _real_data_replacement_plan_input_report(
+                coverage_path=coverage_path,
+                fixture_dir=fixture_dir,
+                fail_on_priority=fail_on_priority,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={
+            "sourceKind": "real-data-replacement-plan",
+            "command": command,
+        },
         include_triage_summary=include_triage_summary,
     )
 
@@ -3490,6 +3555,64 @@ def build_parser() -> argparse.ArgumentParser:
     real_data_coverage_bundle.add_argument("--output-dir", type=Path, required=True)
     _add_triage_bundle_option(real_data_coverage_bundle)
 
+    real_data_replacement_plan = subparsers.add_parser(
+        "real-data-replacement-plan",
+        help="Rank synthetic fixture groups that should move toward public data",
+    )
+    real_data_replacement_plan_input = (
+        real_data_replacement_plan.add_mutually_exclusive_group()
+    )
+    real_data_replacement_plan_input.add_argument(
+        "--fixture-dir",
+        type=Path,
+        help="fixture directory to assess; defaults to tests/fixtures",
+    )
+    real_data_replacement_plan_input.add_argument(
+        "--coverage",
+        type=Path,
+        help="existing edgp.real_data.coverage.v1 JSON report",
+    )
+    real_data_replacement_plan.add_argument(
+        "--fail-on-priority",
+        choices=["high", "medium", "low"],
+        help=(
+            "return status 2 when replacement candidates exist at this priority "
+            "or higher"
+        ),
+    )
+
+    real_data_replacement_plan_bundle = subparsers.add_parser(
+        "real-data-replacement-plan-bundle",
+        help="Render ranked fixture replacement planning as a static bundle",
+    )
+    real_data_replacement_plan_bundle_input = (
+        real_data_replacement_plan_bundle.add_mutually_exclusive_group()
+    )
+    real_data_replacement_plan_bundle_input.add_argument(
+        "--fixture-dir",
+        type=Path,
+        help="fixture directory to assess; defaults to tests/fixtures",
+    )
+    real_data_replacement_plan_bundle_input.add_argument(
+        "--coverage",
+        type=Path,
+        help="existing edgp.real_data.coverage.v1 JSON report",
+    )
+    real_data_replacement_plan_bundle.add_argument(
+        "--fail-on-priority",
+        choices=["high", "medium", "low"],
+        help=(
+            "mark the bundle policy as failed when replacement candidates exist "
+            "at this priority or higher"
+        ),
+    )
+    real_data_replacement_plan_bundle.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+    )
+    _add_triage_bundle_option(real_data_replacement_plan_bundle)
+
     real_data_coverage_diff = subparsers.add_parser(
         "real-data-coverage-diff",
         help="Compare two real-data coverage reports or fixture directories",
@@ -4856,6 +4979,34 @@ def main(argv: list[str] | None = None) -> int:
         if result:
             return result
         if _real_data_coverage_policy_should_fail(index_path.parent):
+            return 2
+        return 0
+
+    if args.command == "real-data-replacement-plan":
+        report = _real_data_replacement_plan_input_report(
+            coverage_path=args.coverage,
+            fixture_dir=args.fixture_dir,
+            fail_on_priority=args.fail_on_priority,
+        )
+        print(_json(report))
+        policy = report.get("policy")
+        if isinstance(policy, dict) and policy.get("status") == "fail":
+            return 2
+        return 0
+
+    if args.command == "real-data-replacement-plan-bundle":
+        index_path = _write_real_data_replacement_plan_bundle(
+            args.output_dir,
+            coverage_path=args.coverage,
+            fixture_dir=args.fixture_dir,
+            fail_on_priority=args.fail_on_priority,
+            command=command,
+            include_triage_summary=_include_triage_summary(args),
+        )
+        result = _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        if result:
+            return result
+        if _real_data_replacement_plan_policy_should_fail(index_path.parent):
             return 2
         return 0
 

@@ -28,6 +28,7 @@ def build_triage_summary_report(
     diff_tree_policy_findings = []
     real_data_coverage_findings = []
     real_data_coverage_diff_findings = []
+    real_data_replacement_plan_findings = []
 
     for report in reports:
         schema = str(report.get("schema", ""))
@@ -74,6 +75,13 @@ def build_triage_summary_report(
                 real_data_coverage_diff_findings.extend(
                     _real_data_coverage_diff_policy_findings(report)
                 )
+        elif schema == "edgp.real_data.replacement_plan.v1":
+            policy_check = _real_data_replacement_plan_policy_check(report)
+            if policy_check is not None:
+                checks.append(policy_check)
+                real_data_replacement_plan_findings.extend(
+                    _real_data_replacement_plan_policy_findings(report)
+                )
         elif schema == "edgp.bundle.catalog.v1":
             checks.append(_bundle_catalog_check(summary))
             bundle_catalog_findings.extend(_bundle_catalog_findings(report))
@@ -91,6 +99,10 @@ def build_triage_summary_report(
         top_findings["realDataCoverage"] = real_data_coverage_findings[:10]
     if real_data_coverage_diff_findings:
         top_findings["realDataCoverageDiff"] = real_data_coverage_diff_findings[:10]
+    if real_data_replacement_plan_findings:
+        top_findings["realDataReplacementPlan"] = (
+            real_data_replacement_plan_findings[:10]
+        )
     return {
         "schema": TRIAGE_SUMMARY_SCHEMA,
         "source": source or {"kind": "report-list"},
@@ -334,6 +346,10 @@ def _summary(report: dict[str, Any]) -> dict[str, Any]:
             payload_summary["policyFailures"] = (
                 _real_data_coverage_diff_policy_failure_count(report)
             )
+        if report.get("schema") == "edgp.real_data.replacement_plan.v1":
+            payload_summary["policyFailures"] = (
+                _real_data_replacement_plan_policy_failure_count(report)
+            )
         return payload_summary
     stats = report.get("stats")
     if isinstance(stats, dict):
@@ -422,6 +438,14 @@ def _accumulate_summary(
         )
         rollup["realDataCoverageDiffPolicyFailures"] = (
             rollup.get("realDataCoverageDiffPolicyFailures", 0)
+            + int(summary.get("policyFailures", 0))
+        )
+    elif schema == "edgp.real_data.replacement_plan.v1":
+        rollup["realDataReplacementPlanReports"] = (
+            rollup.get("realDataReplacementPlanReports", 0) + 1
+        )
+        rollup["realDataReplacementPlanPolicyFailures"] = (
+            rollup.get("realDataReplacementPlanPolicyFailures", 0)
             + int(summary.get("policyFailures", 0))
         )
     elif schema == "edgp.bundle.catalog.v1":
@@ -563,6 +587,24 @@ def _real_data_coverage_diff_policy_check(
     }
 
 
+def _real_data_replacement_plan_policy_check(
+    report: dict[str, Any],
+) -> dict[str, Any] | None:
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        return None
+    status = str(policy.get("status") or "pass")
+    return {
+        "kind": "real-data-replacement-plan-policy",
+        "status": "fail" if status == "fail" else "pass",
+        "failOnPriority": policy.get("failOnPriority"),
+        "matchedReplacementGroups": int(
+            policy.get("matchedReplacementGroups", 0) or 0
+        ),
+        "exitCode": int(policy.get("exitCode", 0) or 0),
+    }
+
+
 def _diff_policy_failure_count(report: dict[str, Any]) -> int:
     policy = report.get("policy")
     if not isinstance(policy, dict):
@@ -591,6 +633,13 @@ def _real_data_coverage_diff_policy_failure_count(report: dict[str, Any]) -> int
     return 1 if policy.get("status") == "fail" else 0
 
 
+def _real_data_replacement_plan_policy_failure_count(report: dict[str, Any]) -> int:
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        return 0
+    return 1 if policy.get("status") == "fail" else 0
+
+
 def _status(rollup: dict[str, int]) -> str:
     if (
         rollup["advisoryFindings"]
@@ -599,6 +648,7 @@ def _status(rollup: dict[str, int]) -> str:
         or rollup["diffTreePolicyFailures"]
         or rollup.get("realDataCoveragePolicyFailures", 0)
         or rollup.get("realDataCoverageDiffPolicyFailures", 0)
+        or rollup.get("realDataReplacementPlanPolicyFailures", 0)
         or rollup["catalogFailedBundles"]
         or rollup["catalogFailures"]
         or rollup["catalogTriageFail"]
@@ -685,6 +735,26 @@ def _real_data_coverage_diff_policy_findings(
             "left": report.get("left"),
             "right": report.get("right"),
             "failOnRegression": policy.get("failOnRegression"),
+            "failures": failures,
+            "exitCode": int(policy.get("exitCode", 0) or 0),
+        }
+    ]
+
+
+def _real_data_replacement_plan_policy_findings(
+    report: dict[str, Any],
+) -> list[dict[str, Any]]:
+    policy = report.get("policy")
+    if not isinstance(policy, dict) or policy.get("status") != "fail":
+        return []
+    failures = policy.get("failures", [])
+    if not isinstance(failures, list):
+        failures = []
+    return [
+        {
+            "fixtureRoot": report.get("fixtureRoot"),
+            "failOnPriority": policy.get("failOnPriority"),
+            "matchedReplacementGroups": policy.get("matchedReplacementGroups", 0),
             "failures": failures,
             "exitCode": int(policy.get("exitCode", 0) or 0),
         }

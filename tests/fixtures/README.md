@@ -43,6 +43,7 @@ in sync with their source fixtures and generator functions:
 - `rpm-albs-provenance.json`
 - `libsolv-bridge.json`
 - `real-data-coverage.json`
+- `real-data-replacement-plan.json`
 - `real-data-coverage-diff.json`
 
 The provenance catalog is generated from the current fixture tree and committed
@@ -73,11 +74,15 @@ python -B -m src.cli real-data-coverage --fixture-dir tests/fixtures
 python -B -m src.cli real-data-coverage --fixture-dir tests/fixtures --fail-on-priority high
 python -B -m src.cli real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-coverage-bundle
 python -B -m src.cli real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-coverage-bundle --fail-on-priority high --fail-on-status fail
+python -B -m src.cli real-data-replacement-plan --fixture-dir tests/fixtures
+python -B -m src.cli real-data-replacement-plan --coverage tests/fixtures/real-data-coverage.json --fail-on-priority high
+python -B -m src.cli real-data-replacement-plan-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-replacement-plan-bundle
 python -B -m src.cli real-data-coverage-diff --left tests/fixtures/real-data-coverage.json --right tests/fixtures/real-data-coverage.json
 python -B -m src.cli real-data-coverage-diff --left-fixture-dir tests/fixtures --right-fixture-dir tests/fixtures
 python -B -m src.cli real-data-coverage-diff-bundle --left tests/fixtures/real-data-coverage.json --right tests/fixtures/real-data-coverage.json --output-dir /tmp/edgp-real-data-coverage-diff-bundle
 python -B -m src.cli real-data-coverage-diff-bundle --left-fixture-dir tests/fixtures --right-fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-coverage-diff-fixture-dir-bundle
 python -B -m src.cli report --input tests/fixtures/real-data-coverage.json --output /tmp/edgp-real-data-coverage.html
+python -B -m src.cli report --input tests/fixtures/real-data-replacement-plan.json --output /tmp/edgp-real-data-replacement-plan.html
 ```
 
 ## Synthetic Fixtures

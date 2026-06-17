@@ -57,6 +57,9 @@ The public source-kind values are:
 - `performance-report`
 - `public-advisory-feed`
 - `query-report`
+- `real-data-coverage`
+- `real-data-coverage-diff`
+- `real-data-replacement-plan`
 - `edgp-json`
 
 ## Example

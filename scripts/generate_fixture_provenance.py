@@ -134,6 +134,15 @@ GENERATED_REPORTS: list[dict[str, Any]] = [
         ),
     },
     {
+        "path": "real-data-replacement-plan.json",
+        "reportSchema": "edgp.real_data.replacement_plan.v1",
+        "derivedFrom": ["tests/fixtures/real-data-coverage.json"],
+        "notes": (
+            "Ranks synthetic fixture groups that should move toward public "
+            "evidence where doing so improves data fidelity."
+        ),
+    },
+    {
         "path": "real-data-coverage-diff.json",
         "reportSchema": "edgp.real_data.coverage_diff.v1",
         "derivedFrom": ["tests/fixtures/real-data-coverage.json"],

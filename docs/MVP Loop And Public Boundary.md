@@ -372,6 +372,9 @@ surfaces are:
 - Gate real-data coverage with CLI policy thresholds for minimum public
   evidence percentage and replacement-plan priority, preserving report bundle
   artifacts before returning a failing CI status.
+- Expose ranked real-data replacement plans as CLI reports and static
+  verifiable report bundles so high-value public fixture replacement work is
+  visible without private infrastructure.
 - Compare real-data coverage reports between snapshots so public evidence
   regressions, added evidence, removed evidence, and replacement-plan changes
   can be reviewed as JSON, static HTML, and triage-aware report bundles.

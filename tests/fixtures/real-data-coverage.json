@@ -152,6 +152,16 @@
       ],
       "generator": "scripts/generate_public_fixture_reports.py",
       "kind": "generated-public-report",
+      "notes": "Ranks synthetic fixture groups that should move toward public evidence where doing so improves data fidelity.",
+      "path": "tests/fixtures/real-data-replacement-plan.json",
+      "reportSchema": "edgp.real_data.replacement_plan.v1"
+    },
+    {
+      "derivedFrom": [
+        "tests/fixtures/real-data-coverage.json"
+      ],
+      "generator": "scripts/generate_public_fixture_reports.py",
+      "kind": "generated-public-report",
       "notes": "No-regression baseline for comparing public evidence coverage between two fixture snapshots.",
       "path": "tests/fixtures/real-data-coverage-diff.json",
       "reportSchema": "edgp.real_data.coverage_diff.v1"
@@ -255,15 +265,15 @@
   ],
   "status": "warn",
   "summary": {
-    "catalogedFiles": 85,
+    "catalogedFiles": 86,
     "deterministicPublicDerivedVariants": 2,
-    "directPublicSourceCoveragePercent": 2.35,
+    "directPublicSourceCoveragePercent": 2.33,
     "directPublicSources": 2,
-    "generatedPublicReports": 11,
+    "generatedPublicReports": 12,
     "intentionallySyntheticGroups": 4,
     "localPointerFixtures": 1,
-    "publicEvidenceCoveragePercent": 18.82,
-    "publicEvidenceFiles": 16,
+    "publicEvidenceCoveragePercent": 19.77,
+    "publicEvidenceFiles": 17,
     "replacementCandidateGroups": 4,
     "sourceUrls": 2,
     "syntheticFiles": 69,

@@ -151,6 +151,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.real_data.coverage_diff.v1.schema.json",
+    "edgp.real_data.replacement_plan.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.real_data.replacement_plan.v1.schema.json",
     "edgp.query.report.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -276,6 +280,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "real-data-coverage-diff.json",
+    "edgp.real_data.replacement_plan.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "real-data-replacement-plan.json",
     "edgp.query.report.v1": REPO_ROOT / "tests" / "fixtures" / "query-report.json",
     "edgp.rpm.albs_provenance.v1": REPO_ROOT
     / "tests"
@@ -745,6 +753,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "query-report",
         "real-data-coverage",
         "real-data-coverage-diff",
+        "real-data-replacement-plan",
         "rpm-albs-provenance",
         "rpm-installed",
         "rpm-repository",
@@ -3226,7 +3235,7 @@ def _assert_public_vertical_reports() -> None:
     )
     assert fixture_provenance["schema"] == "edgp.fixture.provenance.v1"
     assert fixture_provenance["summary"]["publicDerivedSources"] == 2
-    assert fixture_provenance["summary"]["generatedPublicReports"] == 11
+    assert fixture_provenance["summary"]["generatedPublicReports"] == 12
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "fixture-provenance-bundle"
@@ -3269,7 +3278,7 @@ def _assert_public_vertical_reports() -> None:
     )
     assert real_data_coverage["schema"] == "edgp.real_data.coverage.v1"
     assert real_data_coverage["summary"]["directPublicSources"] == 2
-    assert real_data_coverage["summary"]["generatedPublicReports"] == 11
+    assert real_data_coverage["summary"]["generatedPublicReports"] == 12
     assert real_data_coverage["summary"]["replacementCandidateGroups"] >= 4
     policy_completed = subprocess.run(
         [
@@ -3292,6 +3301,119 @@ def _assert_public_vertical_reports() -> None:
     policy_report = json.loads(policy_completed.stdout)
     assert policy_report["policy"]["status"] == "fail"
     assert policy_report["policy"]["matchedReplacementGroups"] == 1
+
+    real_data_replacement_plan = _run_cli(
+        ["real-data-replacement-plan", "--fixture-dir", "tests/fixtures"]
+    )
+    assert real_data_replacement_plan["schema"] == (
+        "edgp.real_data.replacement_plan.v1"
+    )
+    assert real_data_replacement_plan["summary"]["replacementCandidates"] >= 1
+    assert real_data_replacement_plan["replacementCandidates"][0]["priority"] == "high"
+    coverage_plan = _run_cli(
+        [
+            "real-data-replacement-plan",
+            "--coverage",
+            "tests/fixtures/real-data-coverage.json",
+        ]
+    )
+    assert coverage_plan == real_data_replacement_plan
+    replacement_policy_completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "real-data-replacement-plan",
+            "--fixture-dir",
+            "tests/fixtures",
+            "--fail-on-priority",
+            "high",
+        ],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert replacement_policy_completed.returncode == 2
+    replacement_policy_report = json.loads(replacement_policy_completed.stdout)
+    assert replacement_policy_report["policy"]["status"] == "fail"
+    assert replacement_policy_report["policy"]["matchedReplacementGroups"] == 1
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "real-data-replacement-plan-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "real-data-replacement-plan-bundle",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "real-data-replacement-plan"
+        assert manifest["reports"][0]["href"] == "001-real-data-replacement-plan.html"
+        assert manifest["reports"][0]["schema"] == (
+            "edgp.real_data.replacement_plan.v1"
+        )
+        report = json.loads(
+            (output_dir / "real-data-replacement-plan.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert report == real_data_replacement_plan
+        assert 'data-testid="real-data-replacement-plan-candidates-panel"' in (
+            output_dir / "001-real-data-replacement-plan.html"
+        ).read_text(encoding="utf-8")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "real-data-replacement-plan-policy-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "real-data-replacement-plan-bundle",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--output-dir",
+                str(output_dir),
+                "--fail-on-priority",
+                "high",
+                "--fail-on-status",
+                "fail",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        policy_bundle_report = json.loads(
+            (output_dir / "real-data-replacement-plan.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        triage = json.loads(
+            (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
+        assert policy_bundle_report["policy"]["status"] == "fail"
+        assert triage["status"] == "fail"
+        assert triage["summary"]["realDataReplacementPlanPolicyFailures"] == 1
 
     real_data_coverage_diff = _run_cli(
         [

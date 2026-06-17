@@ -75,8 +75,10 @@ Both generators support `--check` for CI. The same catalog is available through
 `edgp fixture-provenance-bundle`. `edgp real-data-coverage` turns that catalog
 into a compact data-quality report that separates direct public evidence,
 generated public reports, and intentionally synthetic fixtures with replacement
-priorities. `edgp real-data-coverage-diff` compares two such reports so public
-evidence regressions can be reviewed or blocked in CI.
+priorities. `edgp real-data-replacement-plan` turns those priorities into a
+ranked backlog of fixture groups that should move toward public-derived data
+where practical. `edgp real-data-coverage-diff` compares two such reports so
+public evidence regressions can be reviewed or blocked in CI.
 
 ## Quick Start
 
@@ -163,6 +165,9 @@ edgp real-data-coverage --fixture-dir tests/fixtures
 edgp real-data-coverage --fixture-dir tests/fixtures --fail-on-priority high
 edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --triage-summary
 edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --fail-on-priority high --fail-on-status fail
+edgp real-data-replacement-plan --fixture-dir tests/fixtures
+edgp real-data-replacement-plan --coverage tests/fixtures/real-data-coverage.json --fail-on-priority high
+edgp real-data-replacement-plan-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-replacement-plan --triage-summary
 edgp real-data-coverage-diff --left coverage-baseline.json --right coverage-current.json --fail-on-regression
 edgp real-data-coverage-diff --left-fixture-dir old-fixtures --right-fixture-dir tests/fixtures --fail-on-regression
 edgp real-data-coverage-diff-bundle --left coverage-baseline.json --right coverage-current.json --output-dir reports/real-data-coverage-diff --fail-on-regression --fail-on-status fail
@@ -748,6 +753,13 @@ public URL and local file inputs:
   `--min-public-evidence-percent` or `--fail-on-priority high|medium|low` to
   turn the assessment into a CI gate; the bundle form preserves artifacts before
   returning status `2` on policy failure.
+- `edgp real-data-replacement-plan` turns the replacement priorities into a
+  ranked backlog: high and medium public-data candidates first, followed by
+  deferred generated or intentionally synthetic fixture groups. It can read a
+  fixture tree directly with `--fixture-dir` or a prebuilt coverage report with
+  `--coverage`. `edgp real-data-replacement-plan-bundle` renders the same plan
+  as a static, verifiable bundle, and `--fail-on-priority high|medium|low`
+  makes high-value replacement gaps visible to CI.
 - `edgp real-data-coverage-diff` compares two coverage reports, highlights
   added or removed public evidence, changed replacement-plan groups, and
   optional regression policy failures. It can compare prebuilt coverage JSON

@@ -42,6 +42,7 @@
             "query-report",
             "real-data-coverage",
             "real-data-coverage-diff",
+            "real-data-replacement-plan",
             "rpm-albs-provenance",
             "rpm-installed",
             "rpm-repository",

@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 39,
+  "schemaCount": 40,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -210,6 +210,14 @@
       "id": "urn:edgp:schema:real-data-coverage-diff:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Real-Data Coverage Diff v1"
+    },
+    {
+      "contract": "edgp.real_data.replacement_plan.v1",
+      "description": "Ranked replacement plan for moving EDGP synthetic fixtures toward public-derived evidence where practical.",
+      "file": "edgp.real_data.replacement_plan.v1.schema.json",
+      "id": "urn:edgp:schema:real-data-replacement-plan:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Real-Data Replacement Plan v1"
     },
     {
       "contract": "edgp.report.bundle.archive.v1",

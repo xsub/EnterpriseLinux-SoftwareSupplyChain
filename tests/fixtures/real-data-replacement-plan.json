@@ -1,0 +1,213 @@
+{
+  "coverageSummary": {
+    "catalogedFiles": 86,
+    "coverageStatus": "warn",
+    "directPublicSources": 2,
+    "generatedPublicReports": 12,
+    "publicEvidenceCoveragePercent": 19.77,
+    "publicEvidenceFiles": 17,
+    "syntheticFiles": 69
+  },
+  "deferredGroups": [
+    {
+      "decision": "keep-synthetic",
+      "fileCount": 28,
+      "files": [
+        "tests/fixtures/validation-failure-invalid-bundle-digest.json",
+        "tests/fixtures/validation-failure-invalid-bundle-metadata.json",
+        "tests/fixtures/validation-failure-invalid-bundle-source-kind.json",
+        "tests/fixtures/validation-failure-invalid-index-path.json",
+        "tests/fixtures/validation-failure-invalid-json-manifest.json",
+        "tests/fixtures/validation-failure-invalid-manifest-missing-report-count.json",
+        "tests/fixtures/validation-failure-invalid-manifest-schema.json",
+        "tests/fixtures/validation-failure-invalid-manifest-type.json",
+        "tests/fixtures/validation-failure-invalid-manifest-unknown-field.json",
+        "tests/fixtures/validation-failure-invalid-report-count.json",
+        "tests/fixtures/validation-failure-invalid-report-digest.json",
+        "tests/fixtures/validation-failure-invalid-report-entry.json",
+        "tests/fixtures/validation-failure-invalid-report-field.json",
+        "tests/fixtures/validation-failure-invalid-report-href.json",
+        "tests/fixtures/validation-failure-invalid-report-missing-title.json",
+        "tests/fixtures/validation-failure-invalid-report-summary.json",
+        "tests/fixtures/validation-failure-invalid-report-unknown-field.json",
+        "tests/fixtures/validation-failure-invalid-reports-list.json",
+        "tests/fixtures/validation-failure-missing-bundle-archive.json",
+        "tests/fixtures/validation-failure-missing-bundle-html.json",
+        "tests/fixtures/validation-failure-missing-bundle-source.json",
+        "tests/fixtures/validation-failure-missing-edge-count.json",
+        "tests/fixtures/validation-failure-missing-index.json",
+        "tests/fixtures/validation-failure-missing-manifest.json",
+        "tests/fixtures/validation-failure-source-digest-mismatch.json",
+        "tests/fixtures/validation-failure-tampered-bundle-manifest.json",
+        "tests/fixtures/validation-failure-tampered-bundle-member.json",
+        "tests/fixtures/validation-failure-unsupported-schema.json"
+      ],
+      "group": "Validation failure examples",
+      "kind": "synthetic-validation-case",
+      "nextStep": "Keep negative fixtures synthetic because they deliberately model invalid states that public sources should not provide.",
+      "priority": "low"
+    },
+    {
+      "decision": "keep-generated",
+      "fileCount": 10,
+      "files": [
+        "tests/fixtures/bundle-catalog.json",
+        "tests/fixtures/export-batch.json",
+        "tests/fixtures/export-batch-archive.json",
+        "tests/fixtures/export-batch-submission-plan.json",
+        "tests/fixtures/export-batch-verification.json",
+        "tests/fixtures/report-bundle-archive.json",
+        "tests/fixtures/report-bundle-submission-plan.json",
+        "tests/fixtures/report-bundle-verification.json",
+        "tests/fixtures/submission-plan-index.json",
+        "tests/fixtures/triage-summary.json"
+      ],
+      "group": "Report and export bundle fixtures",
+      "kind": "synthetic-validation-case",
+      "nextStep": "Keep these as generated contract fixtures; they document EDGP output shape rather than upstream data fidelity.",
+      "priority": "low"
+    },
+    {
+      "decision": "hybrid",
+      "fileCount": 8,
+      "files": [
+        "tests/fixtures/snapshot-left.json",
+        "tests/fixtures/snapshot-right.json",
+        "tests/fixtures/graph-diff.json",
+        "tests/fixtures/graph-diff-tree.json",
+        "tests/fixtures/query-report.json",
+        "tests/fixtures/impact-report.json",
+        "tests/fixtures/sample-bom.json",
+        "tests/fixtures/repograph.dot"
+      ],
+      "group": "Generic graph and SBOM examples",
+      "kind": "synthetic-edge-case",
+      "nextStep": "Add one public CycloneDX SBOM when available; keep tiny graph snapshots synthetic so traversal and diff assertions stay auditable.",
+      "priority": "low"
+    },
+    {
+      "decision": "keep-generated",
+      "fileCount": 5,
+      "files": [
+        "tests/fixtures/csr-artifact-manifest.json",
+        "tests/fixtures/license-report.json",
+        "tests/fixtures/parallel-query-report.json",
+        "tests/fixtures/performance-report.json",
+        "tests/fixtures/npm-diagnostics-report.json"
+      ],
+      "group": "Performance, CSR, and license reports",
+      "kind": "synthetic-report",
+      "nextStep": "Refresh from deterministic EDGP generators; public replacement is less useful than stable performance and rendering contracts.",
+      "priority": "low"
+    }
+  ],
+  "fixtureRoot": "tests/fixtures",
+  "generatedBy": "src.real_data_replacement_plan.build_real_data_replacement_plan_report",
+  "qualityGates": [
+    {
+      "command": "python -B scripts/generate_public_fixture_reports.py --check && python -B scripts/generate_fixture_provenance.py --check",
+      "name": "fixture provenance freshness"
+    },
+    {
+      "command": "edgp real-data-replacement-plan --fixture-dir tests/fixtures",
+      "name": "real-data replacement plan JSON"
+    },
+    {
+      "command": "edgp real-data-replacement-plan-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-replacement-plan --triage-summary",
+      "name": "real-data replacement plan bundle"
+    }
+  ],
+  "replacementCandidates": [
+    {
+      "decision": "replace-where-practical",
+      "fileCount": 9,
+      "files": [
+        "tests/fixtures/advisories.json",
+        "tests/fixtures/advisory-report.json",
+        "tests/fixtures/rpm-advisories.json",
+        "tests/fixtures/rpm-repo-advisories.json",
+        "tests/fixtures/public-osv.json",
+        "tests/fixtures/public-osv-ranges.json",
+        "tests/fixtures/public-osv-purl.json",
+        "tests/fixtures/public-osv-cvss-score.json",
+        "tests/fixtures/public-advisory-feed.json"
+      ],
+      "group": "Advisory and OSV-shaped samples",
+      "kind": "synthetic-public-shape",
+      "nextStep": "Replace public advisory feed samples with curated OSV/GHSA/RHSA records where licensing and stability allow; keep severity edge cases synthetic.",
+      "priority": "high",
+      "rank": 1
+    },
+    {
+      "decision": "replace-where-practical",
+      "fileCount": 4,
+      "files": [
+        "tests/fixtures/maven-tree.txt",
+        "tests/fixtures/maven-tree-classifier.txt",
+        "tests/fixtures/maven-tree-markers.txt",
+        "tests/fixtures/maven-tree-packaging.txt"
+      ],
+      "group": "Maven dependency trees",
+      "kind": "synthetic-edge-case",
+      "nextStep": "Add a captured dependency tree from a public Maven project, while keeping classifier, scope, marker, and packaging snippets synthetic.",
+      "priority": "medium",
+      "rank": 2
+    },
+    {
+      "decision": "hybrid",
+      "fileCount": 3,
+      "files": [
+        "tests/fixtures/package-lock.json",
+        "tests/fixtures/package-lock-conflict.json",
+        "tests/fixtures/registry.json"
+      ],
+      "group": "npm lockfiles and registry mock",
+      "kind": "synthetic-edge-case",
+      "nextStep": "Replace the happy-path package-lock with a tiny public npm project lockfile; keep conflict and registry-mock fixtures synthetic because they isolate resolver edge cases.",
+      "priority": "medium",
+      "rank": 3
+    },
+    {
+      "decision": "replace-where-practical",
+      "fileCount": 2,
+      "files": [
+        "tests/fixtures/poetry.lock",
+        "tests/fixtures/Cargo.lock"
+      ],
+      "group": "Python and Rust lockfiles",
+      "kind": "synthetic-edge-case",
+      "nextStep": "Use small public Poetry and Cargo lockfiles when their dependency shape is useful; keep parser-minimal fixtures for offline format smoke.",
+      "priority": "medium",
+      "rank": 4
+    }
+  ],
+  "schema": "edgp.real_data.replacement_plan.v1",
+  "sourceSchema": "edgp.real_data.coverage.v1",
+  "sourceUrls": [
+    {
+      "access": "public",
+      "label": "AlmaLinux 9 AppStream x86_64 repository metadata",
+      "refreshedAt": "2026-06-17",
+      "url": "https://repo.almalinux.org/almalinux/9/AppStream/x86_64/os/"
+    },
+    {
+      "access": "public",
+      "label": "AlmaLinux Build System build 17812 API",
+      "refreshedAt": "2026-06-17",
+      "url": "https://build.almalinux.org/api/v1/builds/17812/"
+    }
+  ],
+  "status": "warn",
+  "summary": {
+    "candidateFiles": 18,
+    "deferredGroups": 4,
+    "highPriorityGroups": 1,
+    "lowPriorityGroups": 4,
+    "mediumPriorityGroups": 3,
+    "publicEvidenceCoveragePercent": 19.77,
+    "publicEvidenceFiles": 17,
+    "replacementCandidates": 4,
+    "syntheticFiles": 69,
+    "totalGroups": 8
+  }
+}

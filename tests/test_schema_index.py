@@ -45,6 +45,7 @@ def test_schema_index_matches_generated_schema_contracts() -> None:
         "edgp.public.advisory_feed.v1",
         "edgp.real_data.coverage.v1",
         "edgp.real_data.coverage_diff.v1",
+        "edgp.real_data.replacement_plan.v1",
         "edgp.query.report.v1",
         "edgp.report.bundle.archive.v1",
         "edgp.report.bundle.submission_plan.v1",

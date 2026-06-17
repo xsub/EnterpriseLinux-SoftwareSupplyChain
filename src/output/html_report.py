@@ -60,6 +60,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_fixture_provenance_report(payload)
     if schema == "edgp.real_data.coverage.v1":
         return render_real_data_coverage_report(payload)
+    if schema == "edgp.real_data.replacement_plan.v1":
+        return render_real_data_replacement_plan_report(payload)
     if schema == "edgp.real_data.coverage_diff.v1":
         return render_real_data_coverage_diff_report(payload)
     if schema == "edgp.performance.report.v1":
@@ -1108,6 +1110,129 @@ def _real_data_coverage_policy_rows(value: object) -> list[dict[str, Any]]:
             "minPublicEvidenceCoveragePercent": value.get(
                 "minPublicEvidenceCoveragePercent"
             ),
+            "failOnPriority": value.get("failOnPriority"),
+            "matchedReplacementGroups": value.get("matchedReplacementGroups"),
+            "exitCode": value.get("exitCode"),
+            "failures": failure_codes,
+        }
+    ]
+
+
+def render_real_data_replacement_plan_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.real_data.replacement_plan.v1":
+        raise ValueError(
+            "HTML real-data replacement plan input must be an EDGP report"
+        )
+
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    return _document(
+        "EDGP Real-Data Replacement Plan",
+        [
+            _generic_hero(
+                eyebrow=str(report.get("status", "plan")),
+                heading="Public fixture replacement plan",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Candidates", summary.get("replacementCandidates", 0)),
+                    ("Candidate Files", summary.get("candidateFiles", 0)),
+                    ("High Priority", summary.get("highPriorityGroups", 0)),
+                    ("Medium Priority", summary.get("mediumPriorityGroups", 0)),
+                    ("Deferred", summary.get("deferredGroups", 0)),
+                    (
+                        "Coverage %",
+                        summary.get("publicEvidenceCoveragePercent", 0.0),
+                    ),
+                ],
+            ),
+            _rows_panel(
+                "Ranked Replacement Candidates",
+                report.get("replacementCandidates", []),
+                [
+                    "rank",
+                    "group",
+                    "kind",
+                    "fileCount",
+                    "priority",
+                    "decision",
+                    "nextStep",
+                    "files",
+                ],
+                test_id="real-data-replacement-plan-candidates-panel",
+            ),
+            _rows_panel(
+                "Deferred Groups",
+                report.get("deferredGroups", []),
+                [
+                    "group",
+                    "kind",
+                    "fileCount",
+                    "priority",
+                    "decision",
+                    "nextStep",
+                    "files",
+                ],
+                test_id="real-data-replacement-plan-deferred-panel",
+            ),
+            _rows_panel(
+                "Coverage Context",
+                [report.get("coverageSummary", {})],
+                [
+                    "coverageStatus",
+                    "catalogedFiles",
+                    "directPublicSources",
+                    "generatedPublicReports",
+                    "publicEvidenceFiles",
+                    "syntheticFiles",
+                    "publicEvidenceCoveragePercent",
+                ],
+                test_id="real-data-replacement-plan-coverage-panel",
+            ),
+            _rows_panel(
+                "Policy Gate",
+                _real_data_replacement_plan_policy_rows(report.get("policy")),
+                [
+                    "status",
+                    "failOnPriority",
+                    "matchedReplacementGroups",
+                    "exitCode",
+                    "failures",
+                ],
+                test_id="real-data-replacement-plan-policy-panel",
+            ),
+            _rows_panel(
+                "Quality Gates",
+                report.get("qualityGates", []),
+                ["name", "command"],
+                test_id="real-data-replacement-plan-gates-panel",
+            ),
+            _rows_panel(
+                "Public Source URLs",
+                report.get("sourceUrls", []),
+                ["label", "url", "access", "refreshedAt"],
+                test_id="real-data-replacement-plan-sources-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def _real_data_replacement_plan_policy_rows(value: object) -> list[dict[str, Any]]:
+    if not isinstance(value, dict):
+        return []
+    failures = value.get("failures", [])
+    if isinstance(failures, list):
+        failure_codes = [
+            str(item.get("code", "unknown"))
+            for item in failures
+            if isinstance(item, dict)
+        ]
+    else:
+        failure_codes = []
+    return [
+        {
+            "status": value.get("status"),
             "failOnPriority": value.get("failOnPriority"),
             "matchedReplacementGroups": value.get("matchedReplacementGroups"),
             "exitCode": value.get("exitCode"),

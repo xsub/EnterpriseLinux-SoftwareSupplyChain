@@ -1,0 +1,189 @@
+{
+  "$id": "urn:edgp:schema:real-data-replacement-plan:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Ranked replacement plan for moving EDGP synthetic fixtures toward public-derived evidence where practical.",
+  "properties": {
+    "coverageSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "catalogedFiles": {"type": "integer"},
+        "coverageStatus": {"type": "string"},
+        "directPublicSources": {"type": "integer"},
+        "generatedPublicReports": {"type": "integer"},
+        "publicEvidenceCoveragePercent": {"type": "number"},
+        "publicEvidenceFiles": {"type": "integer"},
+        "syntheticFiles": {"type": "integer"}
+      },
+      "required": [
+        "coverageStatus",
+        "catalogedFiles",
+        "directPublicSources",
+        "generatedPublicReports",
+        "publicEvidenceFiles",
+        "syntheticFiles",
+        "publicEvidenceCoveragePercent"
+      ],
+      "type": "object"
+    },
+    "deferredGroups": {
+      "items": {"$ref": "#/$defs/plan_entry"},
+      "type": "array"
+    },
+    "fixtureRoot": {"type": "string"},
+    "generatedBy": {"type": "string"},
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "exitCode": {"enum": [0, 2], "type": "integer"},
+        "failOnPriority": {"enum": ["high", "medium", "low"], "type": "string"},
+        "failures": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "code": {"type": "string"},
+              "message": {"type": "string"}
+            },
+            "required": ["code", "message"],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "matchedReplacementGroups": {"type": "integer"},
+        "status": {"enum": ["pass", "fail"], "type": "string"}
+      },
+      "required": [
+        "failOnPriority",
+        "matchedReplacementGroups",
+        "status",
+        "exitCode",
+        "failures"
+      ],
+      "type": "object"
+    },
+    "qualityGates": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {"type": "string"},
+          "name": {"type": "string"}
+        },
+        "required": ["name", "command"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "replacementCandidates": {
+      "items": {"$ref": "#/$defs/ranked_plan_entry"},
+      "type": "array"
+    },
+    "schema": {"const": "edgp.real_data.replacement_plan.v1"},
+    "sourceSchema": {"const": "edgp.real_data.coverage.v1"},
+    "sourceUrls": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "access": {"type": "string"},
+          "label": {"type": "string"},
+          "refreshedAt": {"type": "string"},
+          "url": {"type": "string"}
+        },
+        "required": ["label", "url", "access", "refreshedAt"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "status": {"enum": ["pass", "warn", "fail"], "type": "string"},
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "candidateFiles": {"type": "integer"},
+        "deferredGroups": {"type": "integer"},
+        "highPriorityGroups": {"type": "integer"},
+        "lowPriorityGroups": {"type": "integer"},
+        "mediumPriorityGroups": {"type": "integer"},
+        "publicEvidenceCoveragePercent": {"type": "number"},
+        "publicEvidenceFiles": {"type": "integer"},
+        "replacementCandidates": {"type": "integer"},
+        "syntheticFiles": {"type": "integer"},
+        "totalGroups": {"type": "integer"}
+      },
+      "required": [
+        "totalGroups",
+        "replacementCandidates",
+        "candidateFiles",
+        "deferredGroups",
+        "highPriorityGroups",
+        "mediumPriorityGroups",
+        "lowPriorityGroups",
+        "publicEvidenceFiles",
+        "publicEvidenceCoveragePercent",
+        "syntheticFiles"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "sourceSchema",
+    "generatedBy",
+    "fixtureRoot",
+    "status",
+    "summary",
+    "coverageSummary",
+    "sourceUrls",
+    "replacementCandidates",
+    "deferredGroups",
+    "qualityGates"
+  ],
+  "title": "EDGP Real-Data Replacement Plan v1",
+  "type": "object",
+  "$defs": {
+    "plan_entry": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {"type": "string"},
+        "fileCount": {"type": "integer"},
+        "files": {"items": {"type": "string"}, "type": "array"},
+        "group": {"type": "string"},
+        "kind": {"type": "string"},
+        "nextStep": {"type": "string"},
+        "priority": {"enum": ["high", "medium", "low"], "type": "string"}
+      },
+      "required": [
+        "group",
+        "kind",
+        "fileCount",
+        "decision",
+        "priority",
+        "nextStep",
+        "files"
+      ],
+      "type": "object"
+    },
+    "ranked_plan_entry": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {"type": "string"},
+        "fileCount": {"type": "integer"},
+        "files": {"items": {"type": "string"}, "type": "array"},
+        "group": {"type": "string"},
+        "kind": {"type": "string"},
+        "nextStep": {"type": "string"},
+        "priority": {"enum": ["high", "medium", "low"], "type": "string"},
+        "rank": {"type": "integer"}
+      },
+      "required": [
+        "rank",
+        "group",
+        "kind",
+        "fileCount",
+        "decision",
+        "priority",
+        "nextStep",
+        "files"
+      ],
+      "type": "object"
+    }
+  }
+}

@@ -23,6 +23,7 @@ from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.libsolv_bridge import build_libsolv_bridge_report
 from src.real_data_coverage import build_real_data_coverage_report
 from src.real_data_coverage_diff import build_real_data_coverage_diff_report
+from src.real_data_replacement_plan import build_real_data_replacement_plan_report
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
 from src.rpm_repository_diff import build_rpm_repository_diff_report
 from src.rpm_repository_summary import build_rpm_repository_summary_report
@@ -87,6 +88,9 @@ def build_public_fixture_reports(
             fixture_dir / "libsolv-transaction.txt"
         ),
         fixture_dir / "real-data-coverage.json": real_data_coverage,
+        fixture_dir / "real-data-replacement-plan.json": (
+            build_real_data_replacement_plan_report(real_data_coverage)
+        ),
         fixture_dir / "real-data-coverage-diff.json": (
             build_real_data_coverage_diff_report(
                 real_data_coverage,

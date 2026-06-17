@@ -163,7 +163,7 @@
       "sha256": "3746a15364ce8776767158f0a24e525e3166a707a9340cdc0a97ba80e1a6a35a"
     },
     {
-      "bytes": 16347,
+      "bytes": 16798,
       "derivedFrom": [
         "tests/fixtures/fixture-provenance.json"
       ],
@@ -172,7 +172,19 @@
       "notes": "Summarizes which committed fixtures are public-derived, generated, or intentionally synthetic.",
       "path": "tests/fixtures/real-data-coverage.json",
       "reportSchema": "edgp.real_data.coverage.v1",
-      "sha256": "256b52b53c1c537da69d3296551874943da81e70c9724eb8809d5dc5fcb04513"
+      "sha256": "7605868d8a480ef7c78081c2ac2fb20d422658b66e3417f6e783ad4614804ff5"
+    },
+    {
+      "bytes": 8886,
+      "derivedFrom": [
+        "tests/fixtures/real-data-coverage.json"
+      ],
+      "generator": "scripts/generate_public_fixture_reports.py",
+      "kind": "generated-public-report",
+      "notes": "Ranks synthetic fixture groups that should move toward public evidence where doing so improves data fidelity.",
+      "path": "tests/fixtures/real-data-replacement-plan.json",
+      "reportSchema": "edgp.real_data.replacement_plan.v1",
+      "sha256": "989a789730ae06695fbbdd11f7a735c7018f40cedbd286e45db470cc43951059"
     },
     {
       "bytes": 1242,
@@ -184,7 +196,7 @@
       "notes": "No-regression baseline for comparing public evidence coverage between two fixture snapshots.",
       "path": "tests/fixtures/real-data-coverage-diff.json",
       "reportSchema": "edgp.real_data.coverage_diff.v1",
-      "sha256": "a38121117dea23c3b2d041b4d690ad8cbfa5115a171156e6faf8671b9abae441"
+      "sha256": "a785b7f130a8678182b897aa0eb3342a78534d0a66b2fdfc05589699f68c33b0"
     }
   ],
   "fixtureRoot": "tests/fixtures",
@@ -219,9 +231,9 @@
     }
   ],
   "summary": {
-    "catalogedFiles": 85,
+    "catalogedFiles": 86,
     "deterministicPublicDerivedVariants": 2,
-    "generatedPublicReports": 11,
+    "generatedPublicReports": 12,
     "publicDerivedSources": 2,
     "sourceUrls": 2,
     "syntheticGroups": 8
