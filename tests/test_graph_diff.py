@@ -55,6 +55,32 @@ def test_cli_diff_can_fail_on_selected_change_kind(capsys) -> None:
     assert payload["summary"]["addedNodes"] == 2
 
 
+def test_cli_diff_text_can_fail_on_selected_change_kind(capsys) -> None:
+    assert (
+        main(
+            [
+                "diff",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--format",
+                "text",
+                "--fail-on-change",
+                "added-node",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        "DIFF leftRoot=app==1.0.0 rightRoot=app==1.0.0 "
+        "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
+        "addedEdges=2 removedEdges=1 policyStatus=fail "
+        "failOnChange=added-node matchedChanges=added-node"
+    )
+
+
 def test_diff_tree_snapshot_files_reports_focused_dependency_cone_changes() -> None:
     payload = json.loads(
         diff_tree_snapshot_files(
@@ -297,6 +323,37 @@ def test_cli_diff_tree_can_fail_on_classified_change_kind(capsys) -> None:
     }
     assert payload["summary"]["upgradeChanges"] == 1
     assert any(change["kind"] == "upgrade" for change in payload["classifications"])
+
+
+def test_cli_diff_tree_text_can_fail_on_classified_change_kind(capsys) -> None:
+    assert (
+        main(
+            [
+                "diff-tree",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--format",
+                "text",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        "DIFF_TREE selector=app direction=dependencies depth=2 "
+        "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
+        "addedEdges=2 removedEdges=1 classifiedChanges=2 "
+        "upgradeChanges=1 addedOnlyChanges=1 policyStatus=fail "
+        "failOnKind=upgrade matchedKinds=upgrade"
+    )
 
 
 def test_cli_diff_tree_does_not_fail_on_absent_classified_change_kind(capsys) -> None:

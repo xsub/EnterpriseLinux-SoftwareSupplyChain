@@ -1060,6 +1060,94 @@ def _format_triage_summary_report(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_graph_diff_report(report: dict[str, Any]) -> str:
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    parts = [
+        "DIFF",
+        f"leftRoot={_text_value(report.get('leftRoot') or '')}",
+        f"rightRoot={_text_value(report.get('rightRoot') or '')}",
+        f"addedNodes={int(summary.get('addedNodes', 0) or 0)}",
+        f"removedNodes={int(summary.get('removedNodes', 0) or 0)}",
+        f"metadataChangedNodes={int(summary.get('metadataChangedNodes', 0) or 0)}",
+        f"addedEdges={int(summary.get('addedEdges', 0) or 0)}",
+        f"removedEdges={int(summary.get('removedEdges', 0) or 0)}",
+    ]
+    policy = report.get("policy")
+    if isinstance(policy, dict):
+        parts.extend(
+            _policy_text_parts(
+                policy,
+                requested_key="failOnChange",
+                matched_key="matchedChanges",
+            )
+        )
+    return " ".join(parts)
+
+
+def _format_graph_diff_tree_report(report: dict[str, Any]) -> str:
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    parts = [
+        "DIFF_TREE",
+        f"selector={_text_value(report.get('selector') or '')}",
+        f"direction={_text_value(report.get('direction') or '')}",
+        f"depth={int(report.get('depth', 0) or 0)}",
+        f"addedNodes={int(summary.get('addedNodes', 0) or 0)}",
+        f"removedNodes={int(summary.get('removedNodes', 0) or 0)}",
+        f"metadataChangedNodes={int(summary.get('metadataChangedNodes', 0) or 0)}",
+        f"addedEdges={int(summary.get('addedEdges', 0) or 0)}",
+        f"removedEdges={int(summary.get('removedEdges', 0) or 0)}",
+        f"classifiedChanges={int(summary.get('classifiedChanges', 0) or 0)}",
+    ]
+    for key in (
+        "upgradeChanges",
+        "downgradeChanges",
+        "replacementChanges",
+        "addedOnlyChanges",
+        "removedOnlyChanges",
+        "metadataOnlyChanges",
+    ):
+        value = int(summary.get(key, 0) or 0)
+        if value:
+            parts.append(f"{key}={value}")
+    policy = report.get("policy")
+    if isinstance(policy, dict):
+        parts.extend(
+            _policy_text_parts(
+                policy,
+                requested_key="failOnKind",
+                matched_key="matchedKinds",
+            )
+        )
+    return " ".join(parts)
+
+
+def _policy_text_parts(
+    policy: dict[str, Any],
+    *,
+    requested_key: str,
+    matched_key: str,
+) -> list[str]:
+    parts = []
+    status = policy.get("status")
+    if isinstance(status, str) and status:
+        parts.append(f"policyStatus={status}")
+    requested = _string_list(policy.get(requested_key))
+    if requested:
+        parts.append(f"{requested_key}={_text_value(','.join(requested))}")
+    matched = _string_list(policy.get(matched_key))
+    if matched:
+        parts.append(f"{matched_key}={_text_value(','.join(matched))}")
+    return parts
+
+
+def _text_value(value: object) -> str:
+    return shlex.quote(str(value))
+
+
 def _load_optional_json(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -2990,6 +3078,7 @@ def build_parser() -> argparse.ArgumentParser:
     diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
+    diff.add_argument("--format", choices=["json", "text"], default="json")
     diff.add_argument(
         "--fail-on-change",
         action="append",
@@ -3023,6 +3112,7 @@ def build_parser() -> argparse.ArgumentParser:
     diff_tree.add_argument("--node")
     diff_tree.add_argument("--left-node")
     diff_tree.add_argument("--right-node")
+    diff_tree.add_argument("--format", choices=["json", "text"], default="json")
     diff_tree.add_argument(
         "--direction",
         choices=["dependencies", "dependents"],
@@ -4185,7 +4275,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "diff":
         report = json.loads(diff_snapshot_files(args.left, args.right))
         _attach_diff_policy(report, fail_on_change=args.fail_on_change)
-        print(_json(report))
+        if args.format == "text":
+            print(_format_graph_diff_report(report))
+        else:
+            print(_json(report))
         if _diff_policy_failed(report):
             return 2
         return 0
@@ -4224,7 +4317,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         report = json.loads(report_text)
         _attach_diff_tree_policy(report, fail_on_kind=args.fail_on_kind)
-        print(_json(report))
+        if args.format == "text":
+            print(_format_graph_diff_tree_report(report))
+        else:
+            print(_json(report))
         if _diff_tree_policy_failed(report):
             return 2
         return 0
