@@ -3512,6 +3512,11 @@ def build_parser() -> argparse.ArgumentParser:
     report_bundle.add_argument("--output-dir", type=Path, required=True)
     report_bundle.add_argument("--index-name", default="index.html")
     report_bundle.add_argument("--manifest-name", default="manifest.json")
+    report_bundle.add_argument(
+        "--archive-output",
+        type=Path,
+        help="also write the generated report bundle as a deterministic .tar.gz archive",
+    )
     _add_triage_bundle_option(report_bundle)
 
     bundle_catalog = subparsers.add_parser(
@@ -4700,6 +4705,14 @@ def main(argv: list[str] | None = None) -> int:
             bundle_metadata={"sourceKind": "edgp-json", "command": command},
             include_triage_summary=_include_triage_summary(args),
         )
+        if args.archive_output is not None:
+            archive_report = write_report_bundle_archive(
+                args.output_dir,
+                args.archive_output,
+                manifest_name=args.manifest_name,
+            )
+            if archive_report.get("ok") is not True:
+                raise ValueError("Could not archive generated report bundle")
         return _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
 
     if args.command == "bundle-catalog":

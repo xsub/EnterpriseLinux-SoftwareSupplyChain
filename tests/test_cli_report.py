@@ -309,6 +309,45 @@ def test_cli_report_bundle_writes_index_and_member_reports(tmp_path, capsys) -> 
     assert text.startswith("OK reports=2 failures=0 bundleSha256=")
 
 
+def test_cli_report_bundle_can_write_archive_in_same_pass(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "bundle"
+    archive_path = tmp_path / "bundle.tar.gz"
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                "tests/fixtures/snapshot-right.json",
+                "--input",
+                "tests/fixtures/npm-diagnostics-report.json",
+                "--output-dir",
+                str(output_dir),
+                "--archive-output",
+                str(archive_path),
+            ]
+        )
+        == 0
+    )
+
+    assert Path(capsys.readouterr().out.strip()) == output_dir / "index.html"
+    assert archive_path.exists()
+
+    assert (
+        main(["verify-bundle-archive", "--path", str(archive_path), "--format", "text"])
+        == 0
+    )
+    verified_text = capsys.readouterr().out.strip()
+    assert verified_text.startswith("OK files=4 bytes=")
+    assert " verificationFailures=0 " in verified_text
+
+    assert main(["validate", "--path", str(archive_path), "--format", "text"]) == 0
+    assert capsys.readouterr().out.strip() == (
+        "OK targetType=report-bundle-archive failures=0 "
+        "contract=edgp.report.bundle.archive.v1"
+    )
+
+
 def test_cli_report_bundle_can_include_triage_summary(tmp_path, capsys) -> None:
     output_dir = tmp_path / "bundle"
 
