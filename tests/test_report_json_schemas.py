@@ -234,6 +234,24 @@ def test_graph_diff_schema_documents_top_findings() -> None:
     assert package_changes["items"]["$ref"] == "#/$defs/classification"
 
 
+def test_rpm_repository_diff_schema_documents_top_findings() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.rpm.repository_diff.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    top_findings = schema["properties"]["topFindings"]
+    assert top_findings["required"] == [
+        "changedPackages",
+        "addedPackages",
+        "removedPackages",
+        "sourceRpmDelta",
+    ]
+    for key in top_findings["required"]:
+        assert top_findings["properties"][key]["type"] == "array"
+
+
 def test_bundle_catalog_schema_documents_policy_detail_fields() -> None:
     schema = json.loads(
         Path("docs/schemas/edgp.bundle.catalog.v1.schema.json").read_text(

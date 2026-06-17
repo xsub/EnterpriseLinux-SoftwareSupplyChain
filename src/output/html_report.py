@@ -609,6 +609,9 @@ def render_rpm_repository_diff_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     left = report.get("left", {})
     right = report.get("right", {})
+    top_findings = report.get("topFindings", {})
+    if not isinstance(top_findings, dict):
+        top_findings = {}
     heading = f"{_dict_value(left, 'root')} -> {_dict_value(right, 'root')}"
     return _document(
         "EDGP RPM Repository Diff",
@@ -623,6 +626,7 @@ def render_rpm_repository_diff_report(report: dict[str, Any]) -> str:
                     ("Changed", summary.get("changedPackages", 0)),
                 ],
             ),
+            _rpm_repository_diff_top_findings_panel(top_findings),
             _rows_panel(
                 "Changed Packages",
                 report.get("changedPackages", []),
@@ -643,6 +647,58 @@ def render_rpm_repository_diff_report(report: dict[str, Any]) -> str:
             ),
         ],
         scripts=[_table_sort_script()],
+    )
+
+
+def _rpm_repository_diff_top_findings_panel(top_findings: dict[str, Any]) -> str:
+    rows: list[dict[str, Any]] = []
+    for category, columns in (
+        (
+            "changed",
+            ["name", "arch", "changedFields"],
+        ),
+        (
+            "added",
+            ["name", "version", "release", "arch", "sourceRpm"],
+        ),
+        (
+            "removed",
+            ["name", "version", "release", "arch", "sourceRpm"],
+        ),
+        (
+            "sourceRpmDelta",
+            ["status", "sourceRpm"],
+        ),
+    ):
+        source_key = (
+            f"{category}Packages"
+            if category in {"changed", "added", "removed"}
+            else category
+        )
+        findings = top_findings.get(source_key, [])
+        if not isinstance(findings, list):
+            continue
+        for item in findings:
+            if not isinstance(item, dict):
+                continue
+            row = {"category": category}
+            for column in columns:
+                row[column] = item.get(column, "")
+            rows.append(row)
+    return _rows_panel(
+        "Top Repository Changes",
+        rows,
+        [
+            "category",
+            "name",
+            "version",
+            "release",
+            "arch",
+            "changedFields",
+            "sourceRpm",
+            "status",
+        ],
+        test_id="rpm-repository-diff-top-findings-panel",
     )
 
 

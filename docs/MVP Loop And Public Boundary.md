@@ -351,6 +351,8 @@ surfaces are:
   snapshot-drift evidence can be consumed without re-parsing every diff table.
 - Emit focused graph diff-tree top package-change findings in JSON and HTML so
   snapshot-drift evidence can be consumed without re-parsing every diff table.
+- Emit public RPM repository diff top findings for changed, added, removed, and
+  source-RPM delta records in JSON and HTML.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

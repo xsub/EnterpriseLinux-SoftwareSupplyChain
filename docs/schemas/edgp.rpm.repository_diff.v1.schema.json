@@ -12,7 +12,24 @@
     "right": {"type": "object"},
     "schema": {"const": "edgp.rpm.repository_diff.v1"},
     "sourceRpmDelta": {"type": "object"},
-    "summary": {"type": "object"}
+    "summary": {"type": "object"},
+    "topFindings": {
+      "additionalProperties": false,
+      "description": "Bounded high-signal RPM repository changes for CI, workbench, and RAG consumers.",
+      "properties": {
+        "addedPackages": {"items": {"type": "object"}, "type": "array"},
+        "changedPackages": {"items": {"type": "object"}, "type": "array"},
+        "removedPackages": {"items": {"type": "object"}, "type": "array"},
+        "sourceRpmDelta": {"items": {"type": "object"}, "type": "array"}
+      },
+      "required": [
+        "changedPackages",
+        "addedPackages",
+        "removedPackages",
+        "sourceRpmDelta"
+      ],
+      "type": "object"
+    }
   },
   "required": [
     "schema",

@@ -162,6 +162,13 @@ def test_rpm_repository_diff_detects_snapshot_changes() -> None:
     ]
     assert report["addedPackages"][0]["name"] == "nginx-filesystem"
     assert report["removedPackages"][0]["name"] == "nginx-core"
+    assert report["topFindings"]["changedPackages"][0]["name"] == "nginx"
+    assert report["topFindings"]["addedPackages"][0]["name"] == "nginx-filesystem"
+    assert report["topFindings"]["removedPackages"][0]["name"] == "nginx-core"
+    assert report["topFindings"]["sourceRpmDelta"] == [
+        {"status": "added", "sourceRpm": "nginx-1.20.1-17.el9_4.2.src.rpm"},
+        {"status": "removed", "sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm"},
+    ]
 
 
 def test_libsolv_bridge_parses_transaction_actions() -> None:
@@ -790,7 +797,9 @@ def test_cli_rpm_repo_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None
     )
     assert diff["schema"] == "edgp.rpm.repository_diff.v1"
     assert diff["summary"]["changedPackages"] == 1
+    assert diff["topFindings"]["changedPackages"][0]["name"] == "nginx"
     html = (output_dir / "001-rpm-repository-diff.html").read_text(encoding="utf-8")
+    assert 'data-testid="rpm-repository-diff-top-findings-panel"' in html
     assert 'data-testid="rpm-repository-diff-changed-panel"' in html
 
 

@@ -55,6 +55,15 @@ def build_rpm_repository_diff_report(
         "addedPackages": added,
         "removedPackages": removed,
         "changedPackages": changed,
+        "topFindings": _top_findings(
+            added=added,
+            removed=removed,
+            changed=changed,
+            source_delta={
+                "added": sorted(right_source_rpms - left_source_rpms),
+                "removed": sorted(left_source_rpms - right_source_rpms),
+            },
+        ),
         "sourceRpmDelta": {
             "added": sorted(right_source_rpms - left_source_rpms),
             "removed": sorted(left_source_rpms - right_source_rpms),
@@ -123,6 +132,51 @@ def _package_change(left: dict[str, str], right: dict[str, str]) -> dict[str, An
         "left": left,
         "right": right,
     }
+
+
+def _top_findings(
+    *,
+    added: list[dict[str, str]],
+    removed: list[dict[str, str]],
+    changed: list[dict[str, Any]],
+    source_delta: dict[str, list[str]],
+    limit: int = 10,
+) -> dict[str, list[dict[str, Any]]]:
+    return {
+        "changedPackages": sorted(
+            changed,
+            key=lambda item: (
+                -len(item.get("changedFields", [])),
+                str(item.get("name", "")),
+                str(item.get("arch", "")),
+            ),
+        )[:limit],
+        "addedPackages": _rank_packages(added)[:limit],
+        "removedPackages": _rank_packages(removed)[:limit],
+        "sourceRpmDelta": _source_rpm_delta_findings(source_delta)[:limit],
+    }
+
+
+def _rank_packages(packages: list[dict[str, str]]) -> list[dict[str, str]]:
+    return sorted(
+        packages,
+        key=lambda item: (
+            str(item.get("name", "")),
+            str(item.get("arch", "")),
+            str(item.get("version", "")),
+            str(item.get("release", "")),
+        ),
+    )
+
+
+def _source_rpm_delta_findings(
+    source_delta: dict[str, list[str]],
+) -> list[dict[str, str]]:
+    findings: list[dict[str, str]] = []
+    for status in ("added", "removed"):
+        for source_rpm in source_delta.get(status, []):
+            findings.append({"status": status, "sourceRpm": source_rpm})
+    return findings
 
 
 def _source_rpms(packages: Iterable[Mapping[str, str]]) -> set[str]:

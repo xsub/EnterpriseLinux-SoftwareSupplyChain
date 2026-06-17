@@ -464,3 +464,43 @@ def test_render_report_supports_public_vertical_reports(
     assert "<!doctype html>" in html
     assert f'data-testid="{test_id}"' in html
     assert "data-sortable-table" in html
+
+
+def test_render_report_supports_rpm_repository_diff_top_findings() -> None:
+    report = json.loads(Path("tests/fixtures/rpm-repository-diff.json").read_text())
+    report["topFindings"] = {
+        "changedPackages": [
+            {
+                "name": "nginx",
+                "arch": "x86_64",
+                "changedFields": ["release", "sourceRpm"],
+            }
+        ],
+        "addedPackages": [
+            {
+                "name": "nginx-filesystem",
+                "version": "1.20.1",
+                "release": "17.el9_4.2",
+                "arch": "noarch",
+                "sourceRpm": "nginx-1.20.1-17.el9_4.2.src.rpm",
+            }
+        ],
+        "removedPackages": [
+            {
+                "name": "nginx-core",
+                "version": "1.20.1",
+                "release": "16.el9_4.1",
+                "arch": "x86_64",
+                "sourceRpm": "nginx-1.20.1-16.el9_4.1.src.rpm",
+            }
+        ],
+        "sourceRpmDelta": [
+            {"status": "added", "sourceRpm": "nginx-1.20.1-17.el9_4.2.src.rpm"}
+        ],
+    }
+
+    html = render_report(report)
+
+    assert 'data-testid="rpm-repository-diff-top-findings-panel"' in html
+    assert "Top Repository Changes" in html
+    assert "sourceRpmDelta" in html

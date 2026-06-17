@@ -632,7 +632,9 @@ with a verifiable manifest.
 `edgp rpm-repo-diff` compares two repository snapshots by package name and
 architecture, surfacing added, removed, and changed EVR/source-RPM records.
 `edgp rpm-repo-diff-bundle` renders that comparison as a static HTML bundle
-with a verifiable manifest for browser review.
+with a verifiable manifest for browser review. Diff reports also include
+`topFindings` for changed, added, removed, and source-RPM delta records so
+public repository drift can be skimmed before opening the full package tables.
 The same repository input can also feed `edgp query`, `edgp impact`, and
 `edgp advisory` via `--source rpm-repo`, which makes public repo metadata usable
 in the generic traversal and advisory workflows.
