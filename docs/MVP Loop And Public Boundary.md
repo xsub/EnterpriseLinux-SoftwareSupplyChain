@@ -358,6 +358,8 @@ surfaces are:
 - Replace the core RPM repository fixtures with curated AlmaLinux 9 AppStream
   primary metadata excerpts and document fixture provenance for public-derived
   versus synthetic test inputs.
+- Verify committed public-derived report fixtures against their generator
+  functions so source fixture and derived report drift is caught in tests.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

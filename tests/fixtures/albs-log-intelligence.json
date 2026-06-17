@@ -1,8 +1,36 @@
 {
-  "schema": "edgp.albs.log_intelligence.v1",
   "ecosystem": "albs",
+  "logs": [
+    {
+      "artifactId": "4237071",
+      "buildArch": "ppc64le",
+      "buildTaskId": "188180",
+      "casHash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "contentAvailable": true,
+      "href": "/pulp/api/v3/content/file/files/0191c812-log/",
+      "lineCount": 3,
+      "name": "mock.srpm.188180.1725456234.log",
+      "sample": "warning: macro expanded | error: dependency libdemo not found | failed build step",
+      "signals": {
+        "error": 1,
+        "failed": 1,
+        "missing": 1,
+        "warning": 1
+      }
+    }
+  ],
   "root": "albs-build:17813",
-  "summary": {"logArtifacts": 1, "logsWithInlineContent": 1, "signalKinds": 4, "signals": 4},
-  "signalCounts": {"error": 1, "failed": 1, "missing": 1, "warning": 1},
-  "logs": []
+  "schema": "edgp.albs.log_intelligence.v1",
+  "signalCounts": {
+    "error": 1,
+    "failed": 1,
+    "missing": 1,
+    "warning": 1
+  },
+  "summary": {
+    "logArtifacts": 1,
+    "logsWithInlineContent": 1,
+    "signalKinds": 4,
+    "signals": 4
+  }
 }

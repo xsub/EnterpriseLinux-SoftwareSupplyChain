@@ -1,6 +1,67 @@
 {
-  "schema": "edgp.albs.release_completeness.v1",
+  "builds": [
+    {
+      "buildId": "17812",
+      "buildTasks": 2,
+      "expectedBuildArchitectures": [
+        "x86_64",
+        "aarch64",
+        "ppc64le",
+        "s390x",
+        "i686"
+      ],
+      "failedBuildTasks": 0,
+      "missingBuildArchitectures": [
+        "aarch64",
+        "s390x",
+        "i686"
+      ],
+      "observedBuildArchitectures": [
+        "x86_64",
+        "ppc64le"
+      ],
+      "releaseId": "7396",
+      "released": true,
+      "rpmArtifacts": 4,
+      "signTasks": 1,
+      "testTasks": 1
+    },
+    {
+      "buildId": "17813",
+      "buildTasks": 2,
+      "expectedBuildArchitectures": [
+        "x86_64",
+        "aarch64",
+        "ppc64le",
+        "s390x",
+        "i686"
+      ],
+      "failedBuildTasks": 0,
+      "missingBuildArchitectures": [
+        "aarch64",
+        "s390x",
+        "i686"
+      ],
+      "observedBuildArchitectures": [
+        "x86_64",
+        "ppc64le"
+      ],
+      "releaseId": "7397",
+      "released": true,
+      "rpmArtifacts": 4,
+      "signTasks": 1,
+      "testTasks": 1
+    }
+  ],
   "ecosystem": "albs",
-  "summary": {"builds": 1, "releasedBuilds": 1, "buildsWithMissingArchitectures": 1, "missingBuildArchitectures": 3, "failedBuildTasks": 0, "buildsWithoutSignTasks": 0, "buildsWithoutTestTasks": 0},
-  "builds": []
+  "schema": "edgp.albs.release_completeness.v1",
+  "summary": {
+    "builds": 2,
+    "buildsWithMissingArchitectures": 2,
+    "buildsWithoutSignTasks": 0,
+    "buildsWithoutTestTasks": 0,
+    "failedBuildTasks": 0,
+    "missingBuildArchitectures": 6,
+    "releasedBuilds": 2
+  }
 }

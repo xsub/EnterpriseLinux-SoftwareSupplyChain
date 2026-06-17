@@ -27,7 +27,9 @@ small curated excerpts rather than fetched live during every test run.
 ## Derived Report Fixtures
 
 These files are generated from the public-derived inputs by EDGP code and are
-committed to test schema stability and HTML rendering:
+committed to test schema stability and HTML rendering. The
+`tests/test_public_fixture_freshness.py` suite verifies that these reports stay
+in sync with their source fixtures and generator functions:
 
 - `rpm-repository-summary.json`
 - `rpm-repository-diff.json`
@@ -46,4 +48,3 @@ boundary cases, validation failures, advisory severity behavior, or tiny graph
 topologies that are easier to audit by hand. Examples include npm lockfiles,
 Maven tree snippets, SBOM snippets, graph snapshots, tampered bundles, and OSV
 overlay examples.
-
