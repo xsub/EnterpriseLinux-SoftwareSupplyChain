@@ -226,7 +226,7 @@ edgp report --input reports/manifest.json --output report-bundle-manifest.html
 edgp archive-bundle --path reports --output reports.tar.gz
 edgp verify-bundle-archive --path reports.tar.gz
 edgp report --input report-bundle-archive.json --output report-bundle-archive.html
-edgp plan-bundle-submission --path reports.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
+edgp plan-bundle-submission --path reports.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text --fail-on-status warn
 edgp submission-plan-index --input export-submission.json --input bundle-submission.json --output submission-index.json --format text
 edgp report --input submission-index.json --output submission-index.html
 edgp triage-summary --bundle reports.tar.gz --format text --fail-on-status fail
@@ -1044,7 +1044,10 @@ metadata, member report digests, and triage summary entries as static HTML.
 emits a dry-run JSON plan for the bundle artifacts that would be submitted to a
 workbench, RAG context builder, or generic collector endpoint. It selects only
 artifacts that can be read safely from the directory or archive and does not
-perform network calls or require credentials.
+perform network calls or require credentials. When the source bundle includes a
+triage summary, the plan copies its status and numeric summary so
+`--fail-on-status warn|fail` can gate the handoff before any future
+authenticated upload step.
 `edgp submission-plan-index` aggregates multiple dry-run submission plans into
 one deterministic JSON status document for CI, workbench intake, or review. It
 summarizes target kinds, source schemas, artifact counts, bytes, and failed

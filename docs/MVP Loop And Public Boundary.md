@@ -479,7 +479,7 @@ python -B -m src.cli report-bundle --input tests/fixtures/snapshot-right.json --
 python -B -m src.cli report --input /tmp/edgp-report-bundle/manifest.json --output /tmp/edgp-report-bundle-manifest.html
 python -B -m src.cli verify-bundle-archive --path /tmp/edgp-report-bundle.tar.gz
 python -B -m src.cli report --input tests/fixtures/report-bundle-archive.json --output /tmp/edgp-report-bundle-archive.html
-python -B -m src.cli plan-bundle-submission --path /tmp/edgp-report-bundle.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text
+python -B -m src.cli plan-bundle-submission --path /tmp/edgp-report-bundle.tar.gz --target workbench --endpoint https://workbench.example/api/bundles --format text --fail-on-status warn
 python -B -m src.cli submission-plan-index --input tests/fixtures/export-batch-submission-plan.json --input tests/fixtures/report-bundle-submission-plan.json --format text
 python -B -m src.cli report --input tests/fixtures/submission-plan-index.json --output /tmp/edgp-submission-plan-index.html
 python -B -m src.cli validate --path /tmp/edgp-report-bundle.tar.gz --format text --fail-on-status warn

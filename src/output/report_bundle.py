@@ -429,6 +429,7 @@ def build_report_bundle_submission_plan(
         if not failures
         else []
     )
+    triage_summary = _submission_triage_summary(source["manifest"], source=source)
     if not artifacts and not failures:
         failures.append(
             {
@@ -466,7 +467,44 @@ def build_report_bundle_submission_plan(
     }
     if command:
         plan["command"] = command
+    if triage_summary is not None:
+        plan["triageSummary"] = triage_summary
     return plan
+
+
+def _submission_triage_summary(
+    manifest: dict[str, Any],
+    *,
+    source: dict[str, Any],
+) -> dict[str, Any] | None:
+    triage_entry = manifest.get("triageSummary")
+    if not isinstance(triage_entry, dict):
+        return None
+    source_label = triage_entry.get("source")
+    if not isinstance(source_label, str) or not source_label:
+        return None
+    read_artifact = source["readArtifact"]
+    content = read_artifact(source_label)
+    if content is None:
+        return None
+    try:
+        payload = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    status = payload.get("status")
+    if not isinstance(status, str) or not status:
+        return None
+    summary = payload.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    numeric_summary = {
+        str(key): int(value)
+        for key, value in summary.items()
+        if isinstance(value, int) and not isinstance(value, bool)
+    }
+    return {"status": status, "summary": numeric_summary}
 
 
 def _archive_report(

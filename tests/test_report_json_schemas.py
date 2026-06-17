@@ -188,6 +188,22 @@ def test_graph_diff_tree_schema_documents_policy_gate_shape() -> None:
     assert policy_def["properties"]["exitCode"]["enum"] == [0, 2]
 
 
+def test_report_bundle_submission_plan_schema_documents_triage_gate() -> None:
+    schema = json.loads(
+        Path("docs/schemas/edgp.report.bundle.submission_plan.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    triage = schema["properties"]["triageSummary"]
+    assert triage["required"] == ["status", "summary"]
+    assert triage["properties"]["status"]["enum"] == ["pass", "warn", "fail"]
+    assert triage["properties"]["summary"]["additionalProperties"] == {
+        "minimum": 0,
+        "type": "integer",
+    }
+
+
 def test_impact_and_advisory_schemas_share_impact_summary_shape() -> None:
     impact_schema = json.loads(
         Path("docs/schemas/edgp.impact.report.v1.schema.json").read_text(

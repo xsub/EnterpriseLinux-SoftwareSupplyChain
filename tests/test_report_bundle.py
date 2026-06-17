@@ -404,6 +404,49 @@ def test_cli_report_bundle_submission_plan_writes_output_and_text(
     ]
 
 
+def test_cli_report_bundle_submission_plan_can_gate_on_triage_status(
+    tmp_path,
+    capsys,
+) -> None:
+    write_report_bundle(
+        [Path("tests/fixtures/npm-diagnostics-report.json")],
+        tmp_path,
+        include_triage_summary=True,
+    )
+    archive_path = tmp_path / "bundle.tar.gz"
+    write_report_bundle_archive(tmp_path, archive_path)
+    plan_path = tmp_path / "bundle-submission-plan.json"
+
+    assert (
+        main(
+            [
+                "plan-bundle-submission",
+                "--path",
+                str(archive_path),
+                "--target",
+                "generic",
+                "--endpoint",
+                "https://collector.example/upload",
+                "--output",
+                str(plan_path),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "warn",
+            ]
+        )
+        == 2
+    )
+
+    text = capsys.readouterr().out.strip()
+    assert text.startswith("OK target=generic reports=1 artifacts=5")
+    assert " triageStatus=warn" in text
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert plan["triageSummary"]["status"] == "warn"
+    assert plan["triageSummary"]["summary"]["npmDuplicatePackageNames"] == 1
+    assert plan["summary"]["reports"] == 1
+
+
 def test_report_bundle_submission_plan_reports_verification_failure(tmp_path) -> None:
     write_report_bundle([Path("tests/fixtures/snapshot-right.json")], tmp_path)
     (tmp_path / "001-snapshot-right.html").write_text(

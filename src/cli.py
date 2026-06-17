@@ -278,6 +278,17 @@ def _format_report_bundle_submission_plan(report: dict[str, Any]) -> str:
         f"bytes={bytes_written}",
         f"failures={failures}",
     ]
+    triage_summary = report.get("triageSummary")
+    if isinstance(triage_summary, dict):
+        triage_status = triage_summary.get("status")
+        if isinstance(triage_status, str) and triage_status:
+            parts.append(f"triageStatus={triage_status}")
+        summary = triage_summary.get("summary", {})
+        if isinstance(summary, dict):
+            failed_checks = int(summary.get("failedChecks", 0) or 0)
+            if failed_checks:
+                parts.append(f"failedChecks={failed_checks}")
+            parts.extend(_policy_failure_text_parts(summary))
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
@@ -1297,6 +1308,19 @@ def _validation_report_should_fail_on_status(
     else:
         status = str(report.get("reportStatus", "pass")).lower()
     return _TRIAGE_STATUS_RANKS.get(status, 0) >= _TRIAGE_STATUS_RANKS[min_status]
+
+
+def _submission_plan_should_fail_on_status(
+    plan: dict[str, Any],
+    *,
+    min_status: str | None = None,
+) -> bool:
+    if min_status is None:
+        return False
+    triage_summary = plan.get("triageSummary")
+    if not isinstance(triage_summary, dict):
+        return False
+    return _triage_summary_should_fail(triage_summary, min_status=min_status)
 
 
 def _attach_diff_tree_policy(
@@ -3627,6 +3651,11 @@ def build_parser() -> argparse.ArgumentParser:
     plan_bundle_submission.add_argument("--manifest-name", default="manifest.json")
     plan_bundle_submission.add_argument("--output", type=Path)
     plan_bundle_submission.add_argument(
+        "--fail-on-status",
+        choices=["warn", "fail"],
+        help="return status 2 when the source bundle triage summary reaches this severity",
+    )
+    plan_bundle_submission.add_argument(
         "--format",
         choices=["json", "text"],
         default="json",
@@ -4823,6 +4852,11 @@ def main(argv: list[str] | None = None) -> int:
             print(_format_report_bundle_submission_plan(plan))
         else:
             print(_json(plan))
+        if _submission_plan_should_fail_on_status(
+            plan,
+            min_status=args.fail_on_status,
+        ):
+            return 2
         return 0 if plan["ok"] else 1
 
     if args.command == "submission-plan-index":
