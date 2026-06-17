@@ -375,6 +375,9 @@ surfaces are:
 - Compare real-data coverage reports between snapshots so public evidence
   regressions, added evidence, removed evidence, and replacement-plan changes
   can be reviewed as JSON, static HTML, and triage-aware report bundles.
+- Roll real-data coverage and coverage-diff policy failures up through bundle
+  catalogs so batch evidence directories expose those gates beside graph-diff
+  and diff-tree policy failures.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

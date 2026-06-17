@@ -3397,6 +3397,36 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="real-data-coverage-diff-sides-panel"' in (
             output_dir / "001-real-data-coverage-diff.html"
         ).read_text(encoding="utf-8")
+        catalog_dir = Path(temp_dir) / "real-data-coverage-diff-catalog"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "bundle-catalog",
+                "--bundle",
+                str(output_dir),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        assert "realDataCoverageDiffPolicyFailures=1" in completed.stdout
+        catalog = json.loads(
+            (catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8")
+        )
+        assert catalog["status"] == "fail"
+        assert catalog["summary"]["realDataCoverageDiffPolicyFailures"] == 1
+        assert catalog["bundles"][0]["realDataCoverageDiffPolicyFailures"] == 1
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "real-data-coverage-bundle"
@@ -3468,6 +3498,36 @@ def _assert_public_vertical_reports() -> None:
         assert policy_bundle_report["policy"]["status"] == "fail"
         assert triage["status"] == "fail"
         assert triage["summary"]["realDataCoveragePolicyFailures"] == 1
+        catalog_dir = Path(temp_dir) / "real-data-coverage-catalog"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "bundle-catalog",
+                "--bundle",
+                str(output_dir),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        assert "realDataCoveragePolicyFailures=1" in completed.stdout
+        catalog = json.loads(
+            (catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8")
+        )
+        assert catalog["status"] == "fail"
+        assert catalog["summary"]["realDataCoveragePolicyFailures"] == 1
+        assert catalog["bundles"][0]["realDataCoveragePolicyFailures"] == 1
 
     performance = _run_cli(
         ["performance-report", "--scenario", "16:2", "--scenario", "32:3"]

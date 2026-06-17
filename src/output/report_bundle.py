@@ -1296,6 +1296,11 @@ def _triage_summary_card(entry: BundleEntry | None) -> str:
         ("Denied Licenses", summary.get("deniedLicenseFindings", 0)),
         ("Graph Diff Policies", summary.get("graphDiffPolicyFailures", 0)),
         ("Diff Tree Policies", summary.get("diffTreePolicyFailures", 0)),
+        ("Real-Data Policies", summary.get("realDataCoveragePolicyFailures", 0)),
+        (
+            "Real-Data Diff Policies",
+            summary.get("realDataCoverageDiffPolicyFailures", 0),
+        ),
         ("npm Signals", _npm_signal_count(summary)),
     ]
     metric_items = "".join(

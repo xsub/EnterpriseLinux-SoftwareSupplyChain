@@ -271,6 +271,9 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "fail" in html
     assert "Diff Tree Policies" in html
     assert "Diff Tree Policy Failures" in html
+    assert "Real-Data Policies" in html
+    assert "Real Data Coverage Policy Failures" in html
+    assert "Real Data Coverage Diff Policy Failures" in html
     assert "htmlDigestMismatch" in html
     assert "upgrade" in html
     assert "added-node" in html
@@ -345,6 +348,8 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
             "triageStatus": "fail",
             "graphDiffPolicyFailures": 1,
             "diffTreePolicyFailures": 1,
+            "realDataCoveragePolicyFailures": 1,
+            "realDataCoverageDiffPolicyFailures": 1,
             "graphDiffMatchedChanges": ["added-node"],
             "graphDiffMatchedKinds": ["upgrade"],
             "diffTreeMatchedKinds": ["replacement"],
@@ -358,6 +363,8 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     assert "added-node" in html
     assert "upgrade" in html
     assert "replacement" in html
+    assert "Real Data Coverage Policy Failures" in html
+    assert "Real Data Coverage Diff Policy Failures" in html
 
 
 def test_render_report_supports_validation_triage_policy_metrics() -> None:

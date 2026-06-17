@@ -66,6 +66,14 @@
             },
             "type": "array"
           },
+          "realDataCoveragePolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "realDataCoverageDiffPolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "failureCodes": {
             "items": {
               "type": "string"
@@ -125,6 +133,8 @@
           "failureCount",
           "graphDiffPolicyFailures",
           "diffTreePolicyFailures",
+          "realDataCoveragePolicyFailures",
+          "realDataCoverageDiffPolicyFailures",
           "failureCodes",
           "reportSchemas",
           "triageStatus"
@@ -154,6 +164,14 @@
             "type": "integer"
           },
           "graphDiffPolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "realDataCoveragePolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "realDataCoverageDiffPolicyFailures": {
             "minimum": 0,
             "type": "integer"
           },
@@ -193,6 +211,8 @@
           "failures",
           "graphDiffPolicyFailures",
           "diffTreePolicyFailures",
+          "realDataCoveragePolicyFailures",
+          "realDataCoverageDiffPolicyFailures",
           "triagePass",
           "triageWarn",
           "triageFail",
@@ -227,6 +247,14 @@
           "type": "integer"
         },
         "graphDiffPolicyFailures": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "realDataCoveragePolicyFailures": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "realDataCoverageDiffPolicyFailures": {
           "minimum": 0,
           "type": "integer"
         },
@@ -267,6 +295,8 @@
         "failures",
         "graphDiffPolicyFailures",
         "diffTreePolicyFailures",
+        "realDataCoveragePolicyFailures",
+        "realDataCoverageDiffPolicyFailures",
         "triagePass",
         "triageWarn",
         "triageFail",

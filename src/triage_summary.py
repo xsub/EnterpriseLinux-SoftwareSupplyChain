@@ -435,6 +435,14 @@ def _accumulate_summary(
         rollup["diffTreePolicyFailures"] += int(
             summary.get("diffTreePolicyFailures", 0)
         )
+        rollup["realDataCoveragePolicyFailures"] = (
+            rollup.get("realDataCoveragePolicyFailures", 0)
+            + int(summary.get("realDataCoveragePolicyFailures", 0))
+        )
+        rollup["realDataCoverageDiffPolicyFailures"] = (
+            rollup.get("realDataCoverageDiffPolicyFailures", 0)
+            + int(summary.get("realDataCoverageDiffPolicyFailures", 0))
+        )
         rollup["catalogTriageWarn"] += int(summary.get("triageWarn", 0))
         rollup["catalogTriageFail"] += int(summary.get("triageFail", 0))
 
@@ -450,10 +458,22 @@ def _check(kind: str, count: int, count_key: str) -> dict[str, Any]:
 def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
     failed_bundles = int(summary.get("failedBundles", 0))
     failures = int(summary.get("failures", 0))
+    real_data_policy_failures = int(
+        summary.get("realDataCoveragePolicyFailures", 0) or 0
+    )
+    real_data_diff_policy_failures = int(
+        summary.get("realDataCoverageDiffPolicyFailures", 0) or 0
+    )
     triage_fail = int(summary.get("triageFail", 0))
     triage_warn = int(summary.get("triageWarn", 0))
     status = "pass"
-    if failed_bundles or failures or triage_fail:
+    if (
+        failed_bundles
+        or failures
+        or triage_fail
+        or real_data_policy_failures
+        or real_data_diff_policy_failures
+    ):
         status = "fail"
     elif triage_warn:
         status = "warn"
@@ -468,6 +488,10 @@ def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
         "diffTreePolicyFailures": int(
             summary.get("diffTreePolicyFailures", 0) or 0
         ),
+        "realDataCoveragePolicyFailures": int(
+            summary.get("realDataCoveragePolicyFailures", 0) or 0
+        ),
+        "realDataCoverageDiffPolicyFailures": real_data_diff_policy_failures,
         "triageWarn": triage_warn,
         "triageFail": triage_fail,
     }
@@ -748,6 +772,14 @@ def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "triageStatus": bundle.get("triageStatus"),
                 "graphDiffPolicyFailures": bundle.get("graphDiffPolicyFailures", 0),
                 "diffTreePolicyFailures": bundle.get("diffTreePolicyFailures", 0),
+                "realDataCoveragePolicyFailures": bundle.get(
+                    "realDataCoveragePolicyFailures",
+                    0,
+                ),
+                "realDataCoverageDiffPolicyFailures": bundle.get(
+                    "realDataCoverageDiffPolicyFailures",
+                    0,
+                ),
                 "graphDiffFailOnChanges": _string_list(
                     bundle.get("graphDiffFailOnChanges")
                 ),

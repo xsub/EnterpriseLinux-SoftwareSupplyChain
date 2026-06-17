@@ -42,6 +42,8 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
         "failures": 0,
         "graphDiffPolicyFailures": 0,
         "diffTreePolicyFailures": 0,
+        "realDataCoveragePolicyFailures": 0,
+        "realDataCoverageDiffPolicyFailures": 0,
         "triagePass": 0,
         "triageWarn": 1,
         "triageFail": 0,
@@ -55,6 +57,8 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "failures": 0,
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "realDataCoveragePolicyFailures": 0,
+            "realDataCoverageDiffPolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 0,
@@ -67,6 +71,8 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "failures": 0,
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "realDataCoveragePolicyFailures": 0,
+            "realDataCoverageDiffPolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 1,
             "triageFail": 0,
@@ -77,9 +83,13 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
     assert report["bundles"][0]["inputType"] == "directory"
     assert report["bundles"][0]["graphDiffPolicyFailures"] == 0
     assert report["bundles"][0]["diffTreePolicyFailures"] == 0
+    assert report["bundles"][0]["realDataCoveragePolicyFailures"] == 0
+    assert report["bundles"][0]["realDataCoverageDiffPolicyFailures"] == 0
     assert report["bundles"][1]["triageStatus"] == "warn"
     assert report["bundles"][1]["graphDiffPolicyFailures"] == 0
     assert report["bundles"][1]["diffTreePolicyFailures"] == 0
+    assert report["bundles"][1]["realDataCoveragePolicyFailures"] == 0
+    assert report["bundles"][1]["realDataCoverageDiffPolicyFailures"] == 0
     assert report["bundles"][1]["bundleSha256"]
 
 
@@ -132,6 +142,8 @@ def test_build_bundle_catalog_report_accepts_bundle_archives(tmp_path) -> None:
     assert report["summary"]["reports"] == 2
     assert report["summary"]["triageWarn"] == 1
     assert report["summary"]["diffTreePolicyFailures"] == 0
+    assert report["summary"]["realDataCoveragePolicyFailures"] == 0
+    assert report["summary"]["realDataCoverageDiffPolicyFailures"] == 0
     assert report["bundles"][0]["inputType"] == "directory"
     assert report["bundles"][1]["inputType"] == "archive"
     assert report["bundles"][1]["path"] == str(diagnostics_archive.resolve())
@@ -225,6 +237,8 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
             "failures": 0,
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 1,
+            "realDataCoveragePolicyFailures": 0,
+            "realDataCoverageDiffPolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 1,
@@ -264,6 +278,8 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
     assert report["summary"]["triageFail"] == 1
     assert report["summary"]["graphDiffPolicyFailures"] == 1
     assert report["summary"]["diffTreePolicyFailures"] == 0
+    assert report["summary"]["realDataCoveragePolicyFailures"] == 0
+    assert report["summary"]["realDataCoverageDiffPolicyFailures"] == 0
     assert report["bundles"][0]["graphDiffPolicyFailures"] == 1
     assert report["bundles"][0]["graphDiffFailOnChanges"] == ["added-node"]
     assert report["bundles"][0]["graphDiffMatchedChanges"] == ["added-node"]
@@ -277,6 +293,8 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
             "failures": 0,
             "graphDiffPolicyFailures": 1,
             "diffTreePolicyFailures": 0,
+            "realDataCoveragePolicyFailures": 0,
+            "realDataCoverageDiffPolicyFailures": 0,
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 1,
@@ -358,3 +376,93 @@ def test_build_bundle_catalog_counts_archive_diff_tree_policy_failures(
     assert report["bundles"][0]["diffTreeFailOnKinds"] == ["upgrade"]
     assert report["bundles"][0]["diffTreeMatchedKinds"] == ["upgrade"]
     assert report["sourceKinds"][0]["diffTreePolicyFailures"] == 1
+
+
+def test_build_bundle_catalog_groups_real_data_policy_failures_by_source_kind(
+    tmp_path,
+) -> None:
+    coverage_report = json.loads(
+        Path("tests/fixtures/real-data-coverage.json").read_text(encoding="utf-8")
+    )
+    coverage_report["status"] = "fail"
+    coverage_report["policy"] = {
+        "exitCode": 2,
+        "failOnPriority": "high",
+        "failures": [
+            {
+                "code": "replacementPriorityMatched",
+                "message": "Replacement-plan groups matched the configured gate.",
+            }
+        ],
+        "matchedReplacementGroups": 1,
+        "minPublicEvidenceCoveragePercent": None,
+        "status": "fail",
+    }
+    coverage_path = tmp_path / "real-data-coverage.json"
+    coverage_path.write_text(json.dumps(coverage_report), encoding="utf-8")
+    coverage_bundle = tmp_path / "real-data-coverage-bundle"
+    write_report_bundle(
+        [coverage_path],
+        coverage_bundle,
+        bundle_metadata={
+            "sourceKind": "real-data-coverage",
+            "command": "edgp real-data-coverage-bundle --fail-on-priority high",
+        },
+        include_triage_summary=True,
+    )
+
+    report = build_bundle_catalog_report([coverage_bundle])
+
+    assert report["status"] == "fail"
+    assert report["summary"]["triageFail"] == 1
+    assert report["summary"]["realDataCoveragePolicyFailures"] == 1
+    assert report["summary"]["realDataCoverageDiffPolicyFailures"] == 0
+    assert report["bundles"][0]["realDataCoveragePolicyFailures"] == 1
+    assert report["bundles"][0]["realDataCoverageDiffPolicyFailures"] == 0
+    assert report["sourceKinds"][0]["sourceKind"] == "real-data-coverage"
+    assert report["sourceKinds"][0]["realDataCoveragePolicyFailures"] == 1
+
+
+def test_build_bundle_catalog_groups_real_data_diff_policy_failures_by_source_kind(
+    tmp_path,
+) -> None:
+    diff_report = json.loads(
+        Path("tests/fixtures/real-data-coverage-diff.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    diff_report["status"] = "fail"
+    diff_report["policy"] = {
+        "exitCode": 2,
+        "failOnRegression": True,
+        "failures": [
+            {
+                "code": "publicEvidenceCoverageDecreased",
+                "message": "Public evidence coverage decreased.",
+            }
+        ],
+        "status": "fail",
+    }
+    diff_path = tmp_path / "real-data-coverage-diff.json"
+    diff_path.write_text(json.dumps(diff_report), encoding="utf-8")
+    diff_bundle = tmp_path / "real-data-coverage-diff-bundle"
+    write_report_bundle(
+        [diff_path],
+        diff_bundle,
+        bundle_metadata={
+            "sourceKind": "real-data-coverage-diff",
+            "command": "edgp real-data-coverage-diff-bundle --fail-on-regression",
+        },
+        include_triage_summary=True,
+    )
+
+    report = build_bundle_catalog_report([diff_bundle])
+
+    assert report["status"] == "fail"
+    assert report["summary"]["triageFail"] == 1
+    assert report["summary"]["realDataCoveragePolicyFailures"] == 0
+    assert report["summary"]["realDataCoverageDiffPolicyFailures"] == 1
+    assert report["bundles"][0]["realDataCoveragePolicyFailures"] == 0
+    assert report["bundles"][0]["realDataCoverageDiffPolicyFailures"] == 1
+    assert report["sourceKinds"][0]["sourceKind"] == "real-data-coverage-diff"
+    assert report["sourceKinds"][0]["realDataCoverageDiffPolicyFailures"] == 1

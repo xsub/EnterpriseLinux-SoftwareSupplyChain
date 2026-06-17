@@ -1352,6 +1352,8 @@ def test_cli_validate_json_text_surfaces_report_status_and_summary(
         Path("tests/fixtures/bundle-catalog.json").read_text(encoding="utf-8")
     )
     payload["summary"]["diffTreePolicyFailures"] = 1
+    payload["summary"]["realDataCoveragePolicyFailures"] = 1
+    payload["summary"]["realDataCoverageDiffPolicyFailures"] = 1
     path = tmp_path / "bundle-catalog.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -1359,13 +1361,16 @@ def test_cli_validate_json_text_surfaces_report_status_and_summary(
     report = json.loads(capsys.readouterr().out)
     assert report["reportStatus"] == "fail"
     assert report["reportSummary"]["diffTreePolicyFailures"] == 1
+    assert report["reportSummary"]["realDataCoveragePolicyFailures"] == 1
+    assert report["reportSummary"]["realDataCoverageDiffPolicyFailures"] == 1
 
     assert main(["validate", "--path", str(path), "--format", "text"]) == 0
     text = capsys.readouterr().out.strip()
     assert text == (
         "OK targetType=json-file failures=0 "
         "contract=edgp.bundle.catalog.v1 reportStatus=fail "
-        "diffTreePolicyFailures=1"
+        "diffTreePolicyFailures=1 realDataCoveragePolicyFailures=1 "
+        "realDataCoverageDiffPolicyFailures=1"
     )
 
     assert (
@@ -1386,7 +1391,8 @@ def test_cli_validate_json_text_surfaces_report_status_and_summary(
     assert text == (
         "OK targetType=json-file failures=0 "
         "contract=edgp.bundle.catalog.v1 reportStatus=fail "
-        "diffTreePolicyFailures=1"
+        "diffTreePolicyFailures=1 realDataCoveragePolicyFailures=1 "
+        "realDataCoverageDiffPolicyFailures=1"
     )
 
 

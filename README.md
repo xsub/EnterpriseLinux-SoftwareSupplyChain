@@ -275,8 +275,10 @@ edgp report --input validation.json --output validation.html
 
 For deterministic bundle archives, validation text preserves the same triage
 gate fields as directory bundles, including `triageStatus=...` and
-`graphDiffPolicyFailures=...` or `diffTreePolicyFailures=...` for
-snapshot-diff policy failures.
+`graphDiffPolicyFailures=...`, `diffTreePolicyFailures=...`,
+`realDataCoveragePolicyFailures=...`, or
+`realDataCoverageDiffPolicyFailures=...` for snapshot-diff and real-data
+evidence policy failures.
 
 ### Benchmark
 
@@ -1135,13 +1137,15 @@ to `report-bundle`.
 `edgp bundle-catalog` verifies multiple existing report bundle directories or
 deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
 with bundle paths, input type, source kinds, report schemas, triage status,
-graph-diff and diff-tree policy failure counts, failure codes, and bundle
-fingerprints.
+graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
+failure counts, failure codes, and bundle fingerprints.
 Source-kind rows include triage pass/warn/fail counts plus
-`graphDiffPolicyFailures` and `diffTreePolicyFailures`, so large evidence
-batches can show which input family contributed failed snapshot-drift policy
-gates. Per-bundle rows also preserve matched graph-diff changes and package
-kinds, plus matched diff-tree package kinds, from embedded triage summaries.
+`graphDiffPolicyFailures`, `diffTreePolicyFailures`,
+`realDataCoveragePolicyFailures`, and
+`realDataCoverageDiffPolicyFailures`, so large evidence batches can show which
+input family contributed failed snapshot-drift or real-data policy gates.
+Per-bundle rows also preserve matched graph-diff changes and package kinds,
+plus matched diff-tree package kinds, from embedded triage summaries.
 The top-level `status` is
 `pass`, `warn`, or `fail` so CI and workbench views do not need to infer the
 catalog verdict from several counters. The catalog can itself be
@@ -1157,8 +1161,9 @@ directly beside the generated index path.
 bundle archive, or a list of EDGP JSON reports into one
 `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status, graph
 size, advisory findings, denied license findings, npm diagnostic signals,
-graph-diff and diff-tree policy gate failures, bundle-catalog integrity and
-underlying triage status, and the source report list so CI systems and
+graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
+gate failures, bundle-catalog integrity and underlying triage status, and the
+source report list so CI systems and
 workbench/RAG contexts can read one compact artifact instead of stitching
 together every report manually. Rendered triage-summary HTML includes dedicated
 graph-diff and diff-tree policy findings panels when graph-drift gates fail;

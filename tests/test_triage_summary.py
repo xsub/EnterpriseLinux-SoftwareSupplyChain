@@ -510,6 +510,8 @@ def test_triage_summary_includes_bundle_catalog_failures() -> None:
             "failures": 1,
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "realDataCoveragePolicyFailures": 0,
+            "realDataCoverageDiffPolicyFailures": 0,
             "triageWarn": 1,
             "triageFail": 0,
         }
@@ -545,11 +547,55 @@ def test_triage_summary_rolls_up_catalog_diff_tree_policy_failures(tmp_path) -> 
             "failures": 0,
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 1,
+            "realDataCoveragePolicyFailures": 0,
+            "realDataCoverageDiffPolicyFailures": 0,
             "triageWarn": 0,
             "triageFail": 1,
         }
     ]
     assert report["topFindings"]["bundleCatalog"][0]["diffTreePolicyFailures"] == 1
+
+
+def test_triage_summary_rolls_up_catalog_real_data_policy_failures(tmp_path) -> None:
+    catalog = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
+    catalog["summary"]["failedBundles"] = 0
+    catalog["summary"]["failures"] = 0
+    catalog["summary"]["triageWarn"] = 0
+    catalog["summary"]["triageFail"] = 1
+    catalog["summary"]["realDataCoveragePolicyFailures"] = 1
+    catalog["summary"]["realDataCoverageDiffPolicyFailures"] = 1
+    catalog["bundles"][0]["triageStatus"] = "fail"
+    catalog["bundles"][0]["realDataCoveragePolicyFailures"] = 1
+    catalog["bundles"][0]["realDataCoverageDiffPolicyFailures"] = 1
+    catalog["sourceKinds"][0]["triageFail"] = 1
+    catalog["sourceKinds"][0]["realDataCoveragePolicyFailures"] = 1
+    catalog["sourceKinds"][0]["realDataCoverageDiffPolicyFailures"] = 1
+    path = tmp_path / "bundle-catalog.json"
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+
+    report = build_triage_summary_from_paths([path])
+
+    assert report["status"] == "fail"
+    assert report["summary"]["realDataCoveragePolicyFailures"] == 1
+    assert report["summary"]["realDataCoverageDiffPolicyFailures"] == 1
+    assert report["summary"]["catalogTriageFail"] == 1
+    assert report["checks"] == [
+        {
+            "kind": "bundle-catalog",
+            "status": "fail",
+            "failedBundles": 0,
+            "failures": 0,
+            "graphDiffPolicyFailures": 0,
+            "diffTreePolicyFailures": 0,
+            "realDataCoveragePolicyFailures": 1,
+            "realDataCoverageDiffPolicyFailures": 1,
+            "triageWarn": 0,
+            "triageFail": 1,
+        }
+    ]
+    finding = report["topFindings"]["bundleCatalog"][0]
+    assert finding["realDataCoveragePolicyFailures"] == 1
+    assert finding["realDataCoverageDiffPolicyFailures"] == 1
 
 
 def test_triage_summary_preserves_catalog_policy_detail_findings(tmp_path) -> None:

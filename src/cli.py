@@ -380,11 +380,24 @@ def _policy_failure_text_parts(summary: dict[str, Any]) -> list[str]:
         summary.get("graphDiffPolicyFailures", 0) or 0
     )
     diff_tree_policy_failures = int(summary.get("diffTreePolicyFailures", 0) or 0)
+    real_data_policy_failures = int(
+        summary.get("realDataCoveragePolicyFailures", 0) or 0
+    )
+    real_data_diff_policy_failures = int(
+        summary.get("realDataCoverageDiffPolicyFailures", 0) or 0
+    )
     parts = []
     if graph_diff_policy_failures:
         parts.append(f"graphDiffPolicyFailures={graph_diff_policy_failures}")
     if diff_tree_policy_failures:
         parts.append(f"diffTreePolicyFailures={diff_tree_policy_failures}")
+    if real_data_policy_failures:
+        parts.append(f"realDataCoveragePolicyFailures={real_data_policy_failures}")
+    if real_data_diff_policy_failures:
+        parts.append(
+            "realDataCoverageDiffPolicyFailures="
+            f"{real_data_diff_policy_failures}"
+        )
     return parts
 
 
