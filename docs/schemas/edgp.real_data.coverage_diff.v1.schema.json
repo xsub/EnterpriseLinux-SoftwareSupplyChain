@@ -1,0 +1,133 @@
+{
+  "$id": "urn:edgp:schema:real-data-coverage-diff:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Diff report for comparing two EDGP real-data coverage reports and detecting public-evidence regressions.",
+  "properties": {
+    "left": {"$ref": "#/$defs/side"},
+    "policy": {"$ref": "#/$defs/policy"},
+    "publicEvidence": {"$ref": "#/$defs/add_remove"},
+    "regressions": {
+      "items": {"$ref": "#/$defs/regression"},
+      "type": "array"
+    },
+    "replacementPlan": {"$ref": "#/$defs/group_diff"},
+    "right": {"$ref": "#/$defs/side"},
+    "schema": {"const": "edgp.real_data.coverage_diff.v1"},
+    "status": {"enum": ["pass", "fail"], "type": "string"},
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "addedPublicEvidence": {"type": "integer"},
+        "changedReplacementGroups": {"type": "integer"},
+        "changedSyntheticGroups": {"type": "integer"},
+        "directPublicSourceCoveragePercentDelta": {"type": "number"},
+        "directPublicSourcesDelta": {"type": "integer"},
+        "generatedPublicReportsDelta": {"type": "integer"},
+        "publicEvidenceCoveragePercentDelta": {"type": "number"},
+        "publicEvidenceFilesDelta": {"type": "integer"},
+        "regressions": {"type": "integer"},
+        "removedPublicEvidence": {"type": "integer"},
+        "replacementCandidateGroupsDelta": {"type": "integer"},
+        "syntheticFilesDelta": {"type": "integer"}
+      },
+      "required": [
+        "publicEvidenceCoveragePercentDelta",
+        "directPublicSourceCoveragePercentDelta",
+        "directPublicSourcesDelta",
+        "publicEvidenceFilesDelta",
+        "generatedPublicReportsDelta",
+        "syntheticFilesDelta",
+        "replacementCandidateGroupsDelta",
+        "addedPublicEvidence",
+        "removedPublicEvidence",
+        "changedSyntheticGroups",
+        "changedReplacementGroups",
+        "regressions"
+      ],
+      "type": "object"
+    },
+    "syntheticGroups": {"$ref": "#/$defs/group_diff"}
+  },
+  "required": [
+    "schema",
+    "left",
+    "right",
+    "status",
+    "summary",
+    "publicEvidence",
+    "syntheticGroups",
+    "replacementPlan",
+    "regressions"
+  ],
+  "title": "EDGP Real-Data Coverage Diff v1",
+  "type": "object",
+  "$defs": {
+    "add_remove": {
+      "additionalProperties": false,
+      "properties": {
+        "added": {"items": {"type": "object"}, "type": "array"},
+        "removed": {"items": {"type": "object"}, "type": "array"}
+      },
+      "required": ["added", "removed"],
+      "type": "object"
+    },
+    "group_diff": {
+      "additionalProperties": false,
+      "properties": {
+        "added": {"items": {"type": "object"}, "type": "array"},
+        "changed": {"items": {"type": "object"}, "type": "array"},
+        "removed": {"items": {"type": "object"}, "type": "array"}
+      },
+      "required": ["added", "removed", "changed"],
+      "type": "object"
+    },
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "exitCode": {"enum": [0, 2], "type": "integer"},
+        "failOnRegression": {"type": "boolean"},
+        "failures": {
+          "items": {"$ref": "#/$defs/regression"},
+          "type": "array"
+        },
+        "status": {"enum": ["pass", "fail"], "type": "string"}
+      },
+      "required": ["failOnRegression", "status", "exitCode", "failures"],
+      "type": "object"
+    },
+    "regression": {
+      "additionalProperties": true,
+      "properties": {
+        "code": {"type": "string"},
+        "delta": {"type": "number"},
+        "message": {"type": "string"},
+        "metric": {"type": "string"}
+      },
+      "required": ["code", "metric", "delta", "message"],
+      "type": "object"
+    },
+    "side": {
+      "additionalProperties": false,
+      "properties": {
+        "fixtureRoot": {"type": "string"},
+        "label": {"type": "string"},
+        "publicEvidenceCoveragePercent": {"type": "number"},
+        "publicEvidenceFiles": {"type": "integer"},
+        "replacementCandidateGroups": {"type": "integer"},
+        "status": {"type": "string"},
+        "syntheticFiles": {"type": "integer"}
+      },
+      "required": [
+        "label",
+        "fixtureRoot",
+        "status",
+        "publicEvidenceCoveragePercent",
+        "publicEvidenceFiles",
+        "syntheticFiles",
+        "replacementCandidateGroups"
+      ],
+      "type": "object"
+    }
+  }
+}

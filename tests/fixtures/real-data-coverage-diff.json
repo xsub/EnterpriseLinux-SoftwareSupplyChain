@@ -1,0 +1,51 @@
+{
+  "left": {
+    "fixtureRoot": "tests/fixtures",
+    "label": "baseline",
+    "publicEvidenceCoveragePercent": 18.82,
+    "publicEvidenceFiles": 16,
+    "replacementCandidateGroups": 4,
+    "status": "warn",
+    "syntheticFiles": 69
+  },
+  "publicEvidence": {
+    "added": [],
+    "removed": []
+  },
+  "regressions": [],
+  "replacementPlan": {
+    "added": [],
+    "changed": [],
+    "removed": []
+  },
+  "right": {
+    "fixtureRoot": "tests/fixtures",
+    "label": "current",
+    "publicEvidenceCoveragePercent": 18.82,
+    "publicEvidenceFiles": 16,
+    "replacementCandidateGroups": 4,
+    "status": "warn",
+    "syntheticFiles": 69
+  },
+  "schema": "edgp.real_data.coverage_diff.v1",
+  "status": "pass",
+  "summary": {
+    "addedPublicEvidence": 0,
+    "changedReplacementGroups": 0,
+    "changedSyntheticGroups": 0,
+    "directPublicSourceCoveragePercentDelta": 0.0,
+    "directPublicSourcesDelta": 0,
+    "generatedPublicReportsDelta": 0,
+    "publicEvidenceCoveragePercentDelta": 0.0,
+    "publicEvidenceFilesDelta": 0,
+    "regressions": 0,
+    "removedPublicEvidence": 0,
+    "replacementCandidateGroupsDelta": 0,
+    "syntheticFilesDelta": 0
+  },
+  "syntheticGroups": {
+    "added": [],
+    "changed": [],
+    "removed": []
+  }
+}

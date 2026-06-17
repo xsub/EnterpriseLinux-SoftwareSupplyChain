@@ -60,6 +60,7 @@ from src.performance_report import build_performance_report
 from src.public_advisory_feed import build_public_advisory_feed_report
 from src.query_report import build_query_report
 from src.real_data_coverage import build_real_data_coverage_report
+from src.real_data_coverage_diff import build_real_data_coverage_diff_report
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
@@ -1332,6 +1333,12 @@ def _real_data_coverage_policy_should_fail(output_dir: Path) -> bool:
     return isinstance(policy, dict) and policy.get("status") == "fail"
 
 
+def _real_data_coverage_diff_policy_should_fail(output_dir: Path) -> bool:
+    report = _load_optional_json(output_dir / "real-data-coverage-diff.json")
+    policy = report.get("policy")
+    return isinstance(policy, dict) and policy.get("status") == "fail"
+
+
 def _bundle_triage_summary_should_fail(
     output_dir: Path,
     *,
@@ -1809,6 +1816,46 @@ def _write_real_data_coverage_bundle(
         [report_path],
         output_dir,
         bundle_metadata={"sourceKind": "real-data-coverage", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
+def _load_real_data_coverage_report(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path} must contain a JSON object")
+    return payload
+
+
+def _write_real_data_coverage_diff_bundle(
+    left_path: Path,
+    right_path: Path,
+    output_dir: Path,
+    *,
+    left_label: str = "left",
+    right_label: str = "right",
+    fail_on_regression: bool = False,
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "real-data-coverage-diff.json"
+    report_path.write_text(
+        _json(
+            build_real_data_coverage_diff_report(
+                _load_real_data_coverage_report(left_path),
+                _load_real_data_coverage_report(right_path),
+                left_label=left_label,
+                right_label=right_label,
+                fail_on_regression=fail_on_regression,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "real-data-coverage-diff", "command": command},
         include_triage_summary=include_triage_summary,
     )
 
@@ -3418,6 +3465,40 @@ def build_parser() -> argparse.ArgumentParser:
     real_data_coverage_bundle.add_argument("--output-dir", type=Path, required=True)
     _add_triage_bundle_option(real_data_coverage_bundle)
 
+    real_data_coverage_diff = subparsers.add_parser(
+        "real-data-coverage-diff",
+        help="Compare two real-data coverage reports",
+    )
+    real_data_coverage_diff.add_argument("--left", type=Path, required=True)
+    real_data_coverage_diff.add_argument("--right", type=Path, required=True)
+    real_data_coverage_diff.add_argument("--left-label", default="left")
+    real_data_coverage_diff.add_argument("--right-label", default="right")
+    real_data_coverage_diff.add_argument(
+        "--fail-on-regression",
+        action="store_true",
+        help="return status 2 when public evidence coverage regresses",
+    )
+
+    real_data_coverage_diff_bundle = subparsers.add_parser(
+        "real-data-coverage-diff-bundle",
+        help="Render a real-data coverage diff as a static bundle",
+    )
+    real_data_coverage_diff_bundle.add_argument("--left", type=Path, required=True)
+    real_data_coverage_diff_bundle.add_argument("--right", type=Path, required=True)
+    real_data_coverage_diff_bundle.add_argument("--left-label", default="left")
+    real_data_coverage_diff_bundle.add_argument("--right-label", default="right")
+    real_data_coverage_diff_bundle.add_argument(
+        "--fail-on-regression",
+        action="store_true",
+        help="mark the bundle triage as failed when coverage regresses",
+    )
+    real_data_coverage_diff_bundle.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+    )
+    _add_triage_bundle_option(real_data_coverage_diff_bundle)
+
     diff = subparsers.add_parser("diff", help="Diff two EDGP JSON graph snapshots")
     diff.add_argument("--left", type=Path, required=True)
     diff.add_argument("--right", type=Path, required=True)
@@ -4702,6 +4783,38 @@ def main(argv: list[str] | None = None) -> int:
         if result:
             return result
         if _real_data_coverage_policy_should_fail(index_path.parent):
+            return 2
+        return 0
+
+    if args.command == "real-data-coverage-diff":
+        report = build_real_data_coverage_diff_report(
+            _load_real_data_coverage_report(args.left),
+            _load_real_data_coverage_report(args.right),
+            left_label=args.left_label,
+            right_label=args.right_label,
+            fail_on_regression=args.fail_on_regression,
+        )
+        print(_json(report))
+        policy = report.get("policy")
+        if isinstance(policy, dict) and policy.get("status") == "fail":
+            return 2
+        return 0
+
+    if args.command == "real-data-coverage-diff-bundle":
+        index_path = _write_real_data_coverage_diff_bundle(
+            args.left,
+            args.right,
+            args.output_dir,
+            left_label=args.left_label,
+            right_label=args.right_label,
+            fail_on_regression=args.fail_on_regression,
+            command=command,
+            include_triage_summary=_include_triage_summary(args),
+        )
+        result = _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        if result:
+            return result
+        if _real_data_coverage_diff_policy_should_fail(index_path.parent):
             return 2
         return 0
 

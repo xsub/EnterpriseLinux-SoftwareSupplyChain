@@ -60,6 +60,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_fixture_provenance_report(payload)
     if schema == "edgp.real_data.coverage.v1":
         return render_real_data_coverage_report(payload)
+    if schema == "edgp.real_data.coverage_diff.v1":
+        return render_real_data_coverage_diff_report(payload)
     if schema == "edgp.performance.report.v1":
         return render_performance_report(payload)
     if schema == "edgp.query.report.v1":
@@ -1112,6 +1114,116 @@ def _real_data_coverage_policy_rows(value: object) -> list[dict[str, Any]]:
             "failures": failure_codes,
         }
     ]
+
+
+def render_real_data_coverage_diff_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.real_data.coverage_diff.v1":
+        raise ValueError("HTML real-data coverage diff input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    return _document(
+        "EDGP Real-Data Coverage Diff",
+        [
+            _generic_hero(
+                eyebrow=str(report.get("status", "diff")),
+                heading="Real-data coverage trend",
+                schema=str(report.get("schema")),
+                metrics=[
+                    (
+                        "Coverage Delta",
+                        summary.get("publicEvidenceCoveragePercentDelta", 0.0),
+                    ),
+                    (
+                        "Public Evidence Delta",
+                        summary.get("publicEvidenceFilesDelta", 0),
+                    ),
+                    ("Synthetic Delta", summary.get("syntheticFilesDelta", 0)),
+                    (
+                        "Replacement Delta",
+                        summary.get("replacementCandidateGroupsDelta", 0),
+                    ),
+                    ("Regressions", summary.get("regressions", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Compared Reports",
+                [report.get("left", {}), report.get("right", {})],
+                [
+                    "label",
+                    "fixtureRoot",
+                    "status",
+                    "publicEvidenceCoveragePercent",
+                    "publicEvidenceFiles",
+                    "syntheticFiles",
+                    "replacementCandidateGroups",
+                ],
+                test_id="real-data-coverage-diff-sides-panel",
+            ),
+            _rows_panel(
+                "Regressions",
+                report.get("regressions", []),
+                ["code", "metric", "delta", "message"],
+                test_id="real-data-coverage-diff-regressions-panel",
+            ),
+            _rows_panel(
+                "Added Public Evidence",
+                _nested_rows(report, "publicEvidence", "added"),
+                ["path", "kind", "source", "sourceUrl", "reportSchema"],
+                test_id="real-data-coverage-diff-added-public-panel",
+            ),
+            _rows_panel(
+                "Removed Public Evidence",
+                _nested_rows(report, "publicEvidence", "removed"),
+                ["path", "kind", "source", "sourceUrl", "reportSchema"],
+                test_id="real-data-coverage-diff-removed-public-panel",
+            ),
+            _rows_panel(
+                "Changed Replacement Groups",
+                _nested_rows(report, "replacementPlan", "changed"),
+                ["group", "changedKeys", "left", "right"],
+                test_id="real-data-coverage-diff-plan-panel",
+            ),
+            _rows_panel(
+                "Policy Gate",
+                _real_data_coverage_diff_policy_rows(report.get("policy")),
+                ["status", "failOnRegression", "exitCode", "failures"],
+                test_id="real-data-coverage-diff-policy-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def _real_data_coverage_diff_policy_rows(value: object) -> list[dict[str, Any]]:
+    if not isinstance(value, dict):
+        return []
+    failures = value.get("failures", [])
+    if isinstance(failures, list):
+        failure_codes = [
+            str(item.get("code", "unknown"))
+            for item in failures
+            if isinstance(item, dict)
+        ]
+    else:
+        failure_codes = []
+    return [
+        {
+            "status": value.get("status"),
+            "failOnRegression": value.get("failOnRegression"),
+            "exitCode": value.get("exitCode"),
+            "failures": failure_codes,
+        }
+    ]
+
+
+def _nested_rows(report: dict[str, Any], section: str, key: str) -> list[Any]:
+    value = report.get(section)
+    if not isinstance(value, dict):
+        return []
+    rows = value.get(key, [])
+    return rows if isinstance(rows, list) else []
 
 
 def render_performance_report(report: dict[str, Any]) -> str:

@@ -451,6 +451,10 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
         ("tests/fixtures/public-advisory-feed.json", "public-advisory-feed-panel"),
         ("tests/fixtures/fixture-provenance.json", "fixture-provenance-entries-panel"),
         ("tests/fixtures/real-data-coverage.json", "real-data-coverage-plan-panel"),
+        (
+            "tests/fixtures/real-data-coverage-diff.json",
+            "real-data-coverage-diff-sides-panel",
+        ),
         ("tests/fixtures/performance-report.json", "performance-results-panel"),
         ("tests/fixtures/triage-summary.json", "triage-checks-panel"),
     ],

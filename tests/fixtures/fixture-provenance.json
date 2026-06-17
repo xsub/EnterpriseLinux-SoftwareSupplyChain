@@ -163,7 +163,7 @@
       "sha256": "3746a15364ce8776767158f0a24e525e3166a707a9340cdc0a97ba80e1a6a35a"
     },
     {
-      "bytes": 15919,
+      "bytes": 16347,
       "derivedFrom": [
         "tests/fixtures/fixture-provenance.json"
       ],
@@ -172,7 +172,19 @@
       "notes": "Summarizes which committed fixtures are public-derived, generated, or intentionally synthetic.",
       "path": "tests/fixtures/real-data-coverage.json",
       "reportSchema": "edgp.real_data.coverage.v1",
-      "sha256": "61f52015519a2f1b35cbe8beb375e32c2370ae03e7406ee6704406d6d9e948aa"
+      "sha256": "256b52b53c1c537da69d3296551874943da81e70c9724eb8809d5dc5fcb04513"
+    },
+    {
+      "bytes": 1242,
+      "derivedFrom": [
+        "tests/fixtures/real-data-coverage.json"
+      ],
+      "generator": "scripts/generate_public_fixture_reports.py",
+      "kind": "generated-public-report",
+      "notes": "No-regression baseline for comparing public evidence coverage between two fixture snapshots.",
+      "path": "tests/fixtures/real-data-coverage-diff.json",
+      "reportSchema": "edgp.real_data.coverage_diff.v1",
+      "sha256": "a38121117dea23c3b2d041b4d690ad8cbfa5115a171156e6faf8671b9abae441"
     }
   ],
   "fixtureRoot": "tests/fixtures",
@@ -207,9 +219,9 @@
     }
   ],
   "summary": {
-    "catalogedFiles": 84,
+    "catalogedFiles": 85,
     "deterministicPublicDerivedVariants": 2,
-    "generatedPublicReports": 10,
+    "generatedPublicReports": 11,
     "publicDerivedSources": 2,
     "sourceUrls": 2,
     "syntheticGroups": 8

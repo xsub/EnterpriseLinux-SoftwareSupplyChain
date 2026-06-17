@@ -22,6 +22,7 @@ from src.albs_release_completeness import build_albs_release_completeness_report
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.libsolv_bridge import build_libsolv_bridge_report
 from src.real_data_coverage import build_real_data_coverage_report
+from src.real_data_coverage_diff import build_real_data_coverage_diff_report
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
 from src.rpm_repository_diff import build_rpm_repository_diff_report
 from src.rpm_repository_summary import build_rpm_repository_summary_report
@@ -43,6 +44,10 @@ def build_public_fixture_reports(
     left_rpm = RpmRepositoryAdapter().parse_primary(left_rpm_path)
     right_rpm = RpmRepositoryAdapter().parse_primary(right_rpm_path)
     installed_graph = _rpm_albs_fixture_graph()
+
+    real_data_coverage = build_real_data_coverage_report(
+        build_fixture_provenance(fixture_dir)
+    )
 
     return {
         fixture_dir / "albs-artifact-inventory.json": build_albs_artifact_inventory(
@@ -81,8 +86,14 @@ def build_public_fixture_reports(
         fixture_dir / "libsolv-bridge.json": build_libsolv_bridge_report(
             fixture_dir / "libsolv-transaction.txt"
         ),
-        fixture_dir / "real-data-coverage.json": build_real_data_coverage_report(
-            build_fixture_provenance(fixture_dir)
+        fixture_dir / "real-data-coverage.json": real_data_coverage,
+        fixture_dir / "real-data-coverage-diff.json": (
+            build_real_data_coverage_diff_report(
+                real_data_coverage,
+                real_data_coverage,
+                left_label="baseline",
+                right_label="current",
+            )
         ),
     }
 

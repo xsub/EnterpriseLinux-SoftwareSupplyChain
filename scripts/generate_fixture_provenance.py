@@ -133,6 +133,15 @@ GENERATED_REPORTS: list[dict[str, Any]] = [
             "or intentionally synthetic."
         ),
     },
+    {
+        "path": "real-data-coverage-diff.json",
+        "reportSchema": "edgp.real_data.coverage_diff.v1",
+        "derivedFrom": ["tests/fixtures/real-data-coverage.json"],
+        "notes": (
+            "No-regression baseline for comparing public evidence coverage "
+            "between two fixture snapshots."
+        ),
+    },
 ]
 
 SYNTHETIC_GROUPS: list[dict[str, Any]] = [

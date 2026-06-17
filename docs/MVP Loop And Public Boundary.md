@@ -372,6 +372,9 @@ surfaces are:
 - Gate real-data coverage with CLI policy thresholds for minimum public
   evidence percentage and replacement-plan priority, preserving report bundle
   artifacts before returning a failing CI status.
+- Compare real-data coverage reports between snapshots so public evidence
+  regressions, added evidence, removed evidence, and replacement-plan changes
+  can be reviewed as JSON, static HTML, and triage-aware report bundles.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

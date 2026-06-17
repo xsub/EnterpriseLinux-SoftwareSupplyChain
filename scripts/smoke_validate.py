@@ -147,6 +147,10 @@ REPORT_JSON_SCHEMA_CONTRACTS = {
     / "docs"
     / "schemas"
     / "edgp.real_data.coverage.v1.schema.json",
+    "edgp.real_data.coverage_diff.v1": REPO_ROOT
+    / "docs"
+    / "schemas"
+    / "edgp.real_data.coverage_diff.v1.schema.json",
     "edgp.query.report.v1": REPO_ROOT
     / "docs"
     / "schemas"
@@ -268,6 +272,10 @@ REPORT_JSON_SCHEMA_FIXTURES = {
     / "tests"
     / "fixtures"
     / "real-data-coverage.json",
+    "edgp.real_data.coverage_diff.v1": REPO_ROOT
+    / "tests"
+    / "fixtures"
+    / "real-data-coverage-diff.json",
     "edgp.query.report.v1": REPO_ROOT / "tests" / "fixtures" / "query-report.json",
     "edgp.rpm.albs_provenance.v1": REPO_ROOT
     / "tests"
@@ -736,6 +744,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "public-advisory-feed",
         "query-report",
         "real-data-coverage",
+        "real-data-coverage-diff",
         "rpm-albs-provenance",
         "rpm-installed",
         "rpm-repository",
@@ -3217,7 +3226,7 @@ def _assert_public_vertical_reports() -> None:
     )
     assert fixture_provenance["schema"] == "edgp.fixture.provenance.v1"
     assert fixture_provenance["summary"]["publicDerivedSources"] == 2
-    assert fixture_provenance["summary"]["generatedPublicReports"] == 10
+    assert fixture_provenance["summary"]["generatedPublicReports"] == 11
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "fixture-provenance-bundle"
@@ -3260,7 +3269,7 @@ def _assert_public_vertical_reports() -> None:
     )
     assert real_data_coverage["schema"] == "edgp.real_data.coverage.v1"
     assert real_data_coverage["summary"]["directPublicSources"] == 2
-    assert real_data_coverage["summary"]["generatedPublicReports"] == 10
+    assert real_data_coverage["summary"]["generatedPublicReports"] == 11
     assert real_data_coverage["summary"]["replacementCandidateGroups"] >= 4
     policy_completed = subprocess.run(
         [
@@ -3283,6 +3292,111 @@ def _assert_public_vertical_reports() -> None:
     policy_report = json.loads(policy_completed.stdout)
     assert policy_report["policy"]["status"] == "fail"
     assert policy_report["policy"]["matchedReplacementGroups"] == 1
+
+    real_data_coverage_diff = _run_cli(
+        [
+            "real-data-coverage-diff",
+            "--left",
+            "tests/fixtures/real-data-coverage.json",
+            "--right",
+            "tests/fixtures/real-data-coverage.json",
+            "--left-label",
+            "baseline",
+            "--right-label",
+            "current",
+        ]
+    )
+    assert real_data_coverage_diff["schema"] == "edgp.real_data.coverage_diff.v1"
+    assert real_data_coverage_diff["left"]["label"] == "baseline"
+    assert real_data_coverage_diff["right"]["label"] == "current"
+    assert real_data_coverage_diff["summary"]["publicEvidenceFilesDelta"] == 0
+    assert real_data_coverage_diff["summary"]["regressions"] == 0
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        regressed_path = Path(temp_dir) / "real-data-coverage-regressed.json"
+        regressed_report = json.loads(json.dumps(real_data_coverage))
+        removed = regressed_report["publicEvidence"].pop()
+        regressed_summary = regressed_report["summary"]
+        regressed_summary["publicEvidenceFiles"] = len(
+            regressed_report["publicEvidence"]
+        )
+        regressed_summary["publicEvidenceCoveragePercent"] = round(
+            regressed_summary["publicEvidenceFiles"]
+            / regressed_summary["catalogedFiles"]
+            * 100,
+            2,
+        )
+        if removed.get("kind") == "generated-public-report":
+            regressed_summary["generatedPublicReports"] -= 1
+        regressed_path.write_text(json.dumps(regressed_report), encoding="utf-8")
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "real-data-coverage-diff",
+                "--left",
+                "tests/fixtures/real-data-coverage.json",
+                "--right",
+                str(regressed_path),
+                "--fail-on-regression",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        diff_policy_report = json.loads(completed.stdout)
+        assert diff_policy_report["policy"]["status"] == "fail"
+        assert diff_policy_report["summary"]["removedPublicEvidence"] == 1
+
+        output_dir = Path(temp_dir) / "real-data-coverage-diff-policy-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "real-data-coverage-diff-bundle",
+                "--left",
+                "tests/fixtures/real-data-coverage.json",
+                "--right",
+                str(regressed_path),
+                "--output-dir",
+                str(output_dir),
+                "--fail-on-regression",
+                "--fail-on-status",
+                "fail",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        assert manifest["bundle"]["sourceKind"] == "real-data-coverage-diff"
+        assert manifest["reports"][0]["href"] == "001-real-data-coverage-diff.html"
+        assert manifest["reports"][0]["schema"] == "edgp.real_data.coverage_diff.v1"
+        assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        diff_bundle_report = json.loads(
+            (output_dir / "real-data-coverage-diff.json").read_text(encoding="utf-8")
+        )
+        triage = json.loads(
+            (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
+        assert diff_bundle_report["policy"]["status"] == "fail"
+        assert triage["status"] == "fail"
+        assert triage["summary"]["realDataCoverageDiffPolicyFailures"] == 1
+        assert 'data-testid="real-data-coverage-diff-sides-panel"' in (
+            output_dir / "001-real-data-coverage-diff.html"
+        ).read_text(encoding="utf-8")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "real-data-coverage-bundle"

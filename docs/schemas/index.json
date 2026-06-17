@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 38,
+  "schemaCount": 39,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -202,6 +202,14 @@
       "id": "urn:edgp:schema:real-data-coverage:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Real-Data Coverage v1"
+    },
+    {
+      "contract": "edgp.real_data.coverage_diff.v1",
+      "description": "Diff report for comparing two EDGP real-data coverage reports and detecting public-evidence regressions.",
+      "file": "edgp.real_data.coverage_diff.v1.schema.json",
+      "id": "urn:edgp:schema:real-data-coverage-diff:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Real-Data Coverage Diff v1"
     },
     {
       "contract": "edgp.report.bundle.archive.v1",

@@ -109,6 +109,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.real_data.coverage.v1.schema.json"),
         Path("tests/fixtures/real-data-coverage.json"),
     ),
+    "edgp.real_data.coverage_diff.v1": (
+        Path("docs/schemas/edgp.real_data.coverage_diff.v1.schema.json"),
+        Path("tests/fixtures/real-data-coverage-diff.json"),
+    ),
     "edgp.query.report.v1": (
         Path("docs/schemas/edgp.query.report.v1.schema.json"),
         Path("tests/fixtures/query-report.json"),

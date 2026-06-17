@@ -46,6 +46,7 @@ SOURCE_KINDS = {
     "public-advisory-feed",
     "query-report",
     "real-data-coverage",
+    "real-data-coverage-diff",
     "rpm-albs-provenance",
     "rpm-installed",
     "rpm-repository",
