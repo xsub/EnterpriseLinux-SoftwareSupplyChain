@@ -3262,6 +3262,27 @@ def _assert_public_vertical_reports() -> None:
     assert real_data_coverage["summary"]["directPublicSources"] == 2
     assert real_data_coverage["summary"]["generatedPublicReports"] == 10
     assert real_data_coverage["summary"]["replacementCandidateGroups"] >= 4
+    policy_completed = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "real-data-coverage",
+            "--fixture-dir",
+            "tests/fixtures",
+            "--fail-on-priority",
+            "high",
+        ],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert policy_completed.returncode == 2
+    policy_report = json.loads(policy_completed.stdout)
+    assert policy_report["policy"]["status"] == "fail"
+    assert policy_report["policy"]["matchedReplacementGroups"] == 1
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "real-data-coverage-bundle"
@@ -3298,6 +3319,41 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="real-data-coverage-plan-panel"' in (
             output_dir / "001-real-data-coverage.html"
         ).read_text(encoding="utf-8")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "real-data-coverage-policy-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "real-data-coverage-bundle",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--output-dir",
+                str(output_dir),
+                "--fail-on-priority",
+                "high",
+                "--fail-on-status",
+                "fail",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        policy_bundle_report = json.loads(
+            (output_dir / "real-data-coverage.json").read_text(encoding="utf-8")
+        )
+        triage = json.loads(
+            (output_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
+        assert policy_bundle_report["policy"]["status"] == "fail"
+        assert triage["status"] == "fail"
+        assert triage["summary"]["realDataCoveragePolicyFailures"] == 1
 
     performance = _run_cli(
         ["performance-report", "--scenario", "16:2", "--scenario", "32:3"]

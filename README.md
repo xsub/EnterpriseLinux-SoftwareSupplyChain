@@ -159,7 +159,9 @@ edgp public-advisory-feed-bundle --path osv.json --ecosystem rpm --output-dir re
 edgp fixture-provenance --fixture-dir tests/fixtures
 edgp fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir reports/fixture-provenance --triage-summary
 edgp real-data-coverage --fixture-dir tests/fixtures
+edgp real-data-coverage --fixture-dir tests/fixtures --fail-on-priority high
 edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --triage-summary
+edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --fail-on-priority high --fail-on-status fail
 ```
 
 ### Query And Analyze
@@ -735,7 +737,10 @@ public URL and local file inputs:
   coverage report: direct public sources, deterministic public variants,
   generated public reports, remaining synthetic fixture groups, and a concrete
   replacement-priority plan. `edgp real-data-coverage-bundle` renders the same
-  assessment as a verifiable static bundle.
+  assessment as a verifiable static bundle. Add
+  `--min-public-evidence-percent` or `--fail-on-priority high|medium|low` to
+  turn the assessment into a CI gate; the bundle form preserves artifacts before
+  returning status `2` on policy failure.
 - `edgp libsolv-bridge` reports local libsolv command availability and parses
   transaction transcripts so EDGP can explain solved RPM actions while leaving
   SAT solving to libsolv. Parsed actions are normalized into RPM package

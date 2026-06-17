@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any
+from typing import Any, Sequence
 
 REAL_DATA_COVERAGE_SCHEMA = "edgp.real_data.coverage.v1"
 FIXTURE_PROVENANCE_SCHEMA = "edgp.fixture.provenance.v1"
@@ -14,6 +14,7 @@ PUBLIC_EVIDENCE_KINDS = {
     "local-pointer-fixture",
     "generated-public-report",
 }
+PRIORITY_RANKS = {"low": 1, "medium": 2, "high": 3}
 
 REPLACEMENT_DECISIONS: dict[str, dict[str, str]] = {
     "npm lockfiles and registry mock": {
@@ -87,6 +88,9 @@ REPLACEMENT_DECISIONS: dict[str, dict[str, str]] = {
 
 def build_real_data_coverage_report(
     provenance: dict[str, Any],
+    *,
+    min_public_evidence_percent: float | None = None,
+    fail_on_priority: str | None = None,
 ) -> dict[str, Any]:
     """Build a deterministic report that separates public evidence from fixtures."""
 
@@ -121,7 +125,7 @@ def build_real_data_coverage_report(
         1 for item in replacement_plan if item["priority"] in {"high", "medium"}
     )
 
-    return {
+    report = {
         "schema": REAL_DATA_COVERAGE_SCHEMA,
         "sourceSchema": FIXTURE_PROVENANCE_SCHEMA,
         "generatedBy": "src.real_data_coverage.build_real_data_coverage_report",
@@ -166,6 +170,17 @@ def build_real_data_coverage_report(
         "replacementPlan": replacement_plan,
         "qualityGates": _quality_gates(provenance),
     }
+    policy = _policy(
+        report["summary"],
+        replacement_plan,
+        min_public_evidence_percent=min_public_evidence_percent,
+        fail_on_priority=fail_on_priority,
+    )
+    if policy is not None:
+        report["policy"] = policy
+        if policy["status"] == "fail":
+            report["status"] = "fail"
+    return report
 
 
 def _public_evidence_entry(entry: dict[str, Any]) -> dict[str, Any]:
@@ -243,6 +258,78 @@ def _quality_gates(provenance: dict[str, Any]) -> list[dict[str, str]]:
                 "--output-dir reports/real-data-coverage --triage-summary"
             ),
         },
+    ]
+
+
+def _policy(
+    summary: dict[str, Any],
+    replacement_plan: Sequence[dict[str, Any]],
+    *,
+    min_public_evidence_percent: float | None,
+    fail_on_priority: str | None,
+) -> dict[str, Any] | None:
+    if min_public_evidence_percent is None and fail_on_priority is None:
+        return None
+
+    failures: list[dict[str, Any]] = []
+    coverage = float(summary.get("publicEvidenceCoveragePercent", 0.0) or 0.0)
+    if (
+        min_public_evidence_percent is not None
+        and coverage < min_public_evidence_percent
+    ):
+        failures.append(
+            {
+                "code": "publicEvidenceCoverageBelowThreshold",
+                "message": (
+                    "Public evidence coverage is below the configured threshold."
+                ),
+                "actual": coverage,
+                "expected": min_public_evidence_percent,
+            }
+        )
+
+    matched_priorities = _replacement_priority_matches(
+        replacement_plan,
+        fail_on_priority=fail_on_priority,
+    )
+    if matched_priorities:
+        failures.append(
+            {
+                "code": "replacementPriorityMatched",
+                "message": (
+                    "Replacement-plan groups matched the configured priority gate."
+                ),
+                "failOnPriority": fail_on_priority,
+                "groups": matched_priorities,
+            }
+        )
+
+    return {
+        "minPublicEvidenceCoveragePercent": min_public_evidence_percent,
+        "failOnPriority": fail_on_priority,
+        "matchedReplacementGroups": len(matched_priorities),
+        "status": "fail" if failures else "pass",
+        "exitCode": 2 if failures else 0,
+        "failures": failures,
+    }
+
+
+def _replacement_priority_matches(
+    replacement_plan: Sequence[dict[str, Any]],
+    *,
+    fail_on_priority: str | None,
+) -> list[dict[str, Any]]:
+    if fail_on_priority is None:
+        return []
+    threshold = PRIORITY_RANKS[fail_on_priority]
+    return [
+        {
+            "group": str(item.get("group", "")),
+            "priority": str(item.get("priority", "")),
+            "decision": str(item.get("decision", "")),
+        }
+        for item in replacement_plan
+        if PRIORITY_RANKS.get(str(item.get("priority", "")), 0) >= threshold
     ]
 
 

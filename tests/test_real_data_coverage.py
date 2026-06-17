@@ -34,6 +34,7 @@ def test_real_data_coverage_documents_public_and_synthetic_evidence() -> None:
     assert summary["publicEvidenceCoveragePercent"] > 0
     assert plans["Advisory and OSV-shaped samples"]["priority"] == "high"
     assert plans["Validation failure examples"]["decision"] == "keep-synthetic"
+    assert "policy" not in report
 
 
 def test_real_data_coverage_validates_against_schema() -> None:
@@ -53,12 +54,73 @@ def test_real_data_coverage_renders_static_html() -> None:
     assert "Fixture data quality coverage" in html
 
 
+def test_real_data_coverage_policy_can_fail_on_threshold(tmp_path) -> None:
+    report = build_real_data_coverage_report(
+        build_fixture_provenance(),
+        min_public_evidence_percent=99.0,
+    )
+    report_path = tmp_path / "real-data-policy.json"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    assert report["status"] == "fail"
+    assert report["policy"]["status"] == "fail"
+    assert report["policy"]["exitCode"] == 2
+    assert report["policy"]["failures"][0]["code"] == (
+        "publicEvidenceCoverageBelowThreshold"
+    )
+    validation = validate_target(report_path)
+    assert validation["ok"] is True
+    assert validation["reportStatus"] == "fail"
+
+
+def test_real_data_coverage_policy_can_fail_on_priority() -> None:
+    report = build_real_data_coverage_report(
+        build_fixture_provenance(),
+        fail_on_priority="high",
+    )
+
+    assert report["status"] == "fail"
+    assert report["policy"]["matchedReplacementGroups"] == 1
+    assert report["policy"]["failures"][0]["code"] == "replacementPriorityMatched"
+
+
+def test_real_data_coverage_policy_renders_static_html() -> None:
+    report = build_real_data_coverage_report(
+        build_fixture_provenance(),
+        fail_on_priority="high",
+    )
+
+    html = render_report(report)
+
+    assert 'data-testid="real-data-coverage-policy-panel"' in html
+    assert "replacementPriorityMatched" in html
+
+
 def test_cli_real_data_coverage_outputs_current_report(capsys) -> None:
     assert cli_main(["real-data-coverage", "--fixture-dir", "tests/fixtures"]) == 0
 
     payload = json.loads(capsys.readouterr().out)
     assert payload == build_real_data_coverage_report(build_fixture_provenance())
     assert payload["schema"] == "edgp.real_data.coverage.v1"
+
+
+def test_cli_real_data_coverage_returns_two_when_policy_fails(capsys) -> None:
+    assert (
+        cli_main(
+            [
+                "real-data-coverage",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--fail-on-priority",
+                "high",
+            ]
+        )
+        == 2
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "fail"
+    assert payload["policy"]["status"] == "fail"
 
 
 def test_cli_real_data_coverage_bundle_writes_verifiable_bundle(
@@ -98,3 +160,36 @@ def test_cli_real_data_coverage_bundle_writes_verifiable_bundle(
         == 0
     )
     assert capsys.readouterr().out.startswith("OK ")
+
+
+def test_cli_real_data_coverage_bundle_policy_failure_keeps_artifacts(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "real-data-coverage-policy-bundle"
+
+    assert (
+        cli_main(
+            [
+                "real-data-coverage-bundle",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--output-dir",
+                str(output_dir),
+                "--fail-on-priority",
+                "high",
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    report = json.loads((output_dir / "real-data-coverage.json").read_text())
+    triage = json.loads((output_dir / "triage-summary.json").read_text())
+    assert report["policy"]["status"] == "fail"
+    assert triage["status"] == "fail"
+    assert triage["summary"]["realDataCoveragePolicyFailures"] == 1
+    assert triage["checks"][0]["kind"] == "real-data-coverage-policy"
+    assert (output_dir / "001-real-data-coverage.html").exists()

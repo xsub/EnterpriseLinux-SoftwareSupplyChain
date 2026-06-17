@@ -69,7 +69,9 @@ python -B -m src.cli fixture-provenance --fixture-dir tests/fixtures
 python -B -m src.cli fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-fixture-provenance-bundle
 python -B -m src.cli report --input tests/fixtures/fixture-provenance.json --output /tmp/edgp-fixture-provenance.html
 python -B -m src.cli real-data-coverage --fixture-dir tests/fixtures
+python -B -m src.cli real-data-coverage --fixture-dir tests/fixtures --fail-on-priority high
 python -B -m src.cli real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-coverage-bundle
+python -B -m src.cli real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-coverage-bundle --fail-on-priority high --fail-on-status fail
 python -B -m src.cli report --input tests/fixtures/real-data-coverage.json --output /tmp/edgp-real-data-coverage.html
 ```
 

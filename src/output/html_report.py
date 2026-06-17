@@ -1065,6 +1065,19 @@ def render_real_data_coverage_report(report: dict[str, Any]) -> str:
                 test_id="real-data-coverage-plan-panel",
             ),
             _rows_panel(
+                "Policy Gate",
+                _real_data_coverage_policy_rows(report.get("policy")),
+                [
+                    "status",
+                    "minPublicEvidenceCoveragePercent",
+                    "failOnPriority",
+                    "matchedReplacementGroups",
+                    "exitCode",
+                    "failures",
+                ],
+                test_id="real-data-coverage-policy-panel",
+            ),
+            _rows_panel(
                 "Quality Gates",
                 report.get("qualityGates", []),
                 ["name", "command"],
@@ -1073,6 +1086,32 @@ def render_real_data_coverage_report(report: dict[str, Any]) -> str:
         ],
         scripts=[_table_sort_script()],
     )
+
+
+def _real_data_coverage_policy_rows(value: object) -> list[dict[str, Any]]:
+    if not isinstance(value, dict):
+        return []
+    failures = value.get("failures", [])
+    if isinstance(failures, list):
+        failure_codes = [
+            str(item.get("code", "unknown"))
+            for item in failures
+            if isinstance(item, dict)
+        ]
+    else:
+        failure_codes = []
+    return [
+        {
+            "status": value.get("status"),
+            "minPublicEvidenceCoveragePercent": value.get(
+                "minPublicEvidenceCoveragePercent"
+            ),
+            "failOnPriority": value.get("failOnPriority"),
+            "matchedReplacementGroups": value.get("matchedReplacementGroups"),
+            "exitCode": value.get("exitCode"),
+            "failures": failure_codes,
+        }
+    ]
 
 
 def render_performance_report(report: dict[str, Any]) -> str:

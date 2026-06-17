@@ -369,6 +369,9 @@ surfaces are:
 - Expose real-data coverage as a CLI report and static verifiable report bundle
   so public-derived evidence, generated public reports, and intentionally
   synthetic fixture groups can be reviewed together.
+- Gate real-data coverage with CLI policy thresholds for minimum public
+  evidence percentage and replacement-plan priority, preserving report bundle
+  artifacts before returning a failing CI status.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

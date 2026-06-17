@@ -25,6 +25,47 @@
       },
       "type": "array"
     },
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "exitCode": {"enum": [0, 2], "type": "integer"},
+        "failOnPriority": {
+          "anyOf": [
+            {"enum": ["high", "medium", "low"], "type": "string"},
+            {"type": "null"}
+          ]
+        },
+        "failures": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "code": {"type": "string"},
+              "message": {"type": "string"}
+            },
+            "required": ["code", "message"],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "matchedReplacementGroups": {"type": "integer"},
+        "minPublicEvidenceCoveragePercent": {
+          "anyOf": [
+            {"type": "number"},
+            {"type": "null"}
+          ]
+        },
+        "status": {"enum": ["pass", "fail"], "type": "string"}
+      },
+      "required": [
+        "minPublicEvidenceCoveragePercent",
+        "failOnPriority",
+        "matchedReplacementGroups",
+        "status",
+        "exitCode",
+        "failures"
+      ],
+      "type": "object"
+    },
     "qualityGates": {
       "items": {
         "additionalProperties": false,
@@ -76,7 +117,7 @@
       },
       "type": "array"
     },
-    "status": {"enum": ["pass", "warn"], "type": "string"},
+    "status": {"enum": ["pass", "warn", "fail"], "type": "string"},
     "summary": {
       "additionalProperties": false,
       "properties": {

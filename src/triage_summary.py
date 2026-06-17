@@ -26,6 +26,7 @@ def build_triage_summary_report(
     bundle_catalog_findings = []
     diff_policy_findings = []
     diff_tree_policy_findings = []
+    real_data_coverage_findings = []
 
     for report in reports:
         schema = str(report.get("schema", ""))
@@ -58,11 +59,28 @@ def build_triage_summary_report(
             if policy_check is not None:
                 checks.append(policy_check)
                 diff_tree_policy_findings.extend(_diff_tree_policy_findings(report))
+        elif schema == "edgp.real_data.coverage.v1":
+            policy_check = _real_data_coverage_policy_check(report)
+            if policy_check is not None:
+                checks.append(policy_check)
+                real_data_coverage_findings.extend(
+                    _real_data_coverage_policy_findings(report)
+                )
         elif schema == "edgp.bundle.catalog.v1":
             checks.append(_bundle_catalog_check(summary))
             bundle_catalog_findings.extend(_bundle_catalog_findings(report))
 
     status = _status(rollup)
+    top_findings = {
+        "advisories": advisory_findings[:10],
+        "licenses": license_findings[:10],
+        "npm": npm_findings[:10],
+        "bundleCatalog": bundle_catalog_findings[:10],
+        "graphDiffPolicies": diff_policy_findings[:10],
+        "diffTreePolicies": diff_tree_policy_findings[:10],
+    }
+    if real_data_coverage_findings:
+        top_findings["realDataCoverage"] = real_data_coverage_findings[:10]
     return {
         "schema": TRIAGE_SUMMARY_SCHEMA,
         "source": source or {"kind": "report-list"},
@@ -73,14 +91,7 @@ def build_triage_summary_report(
             "failedChecks": sum(1 for check in checks if check["status"] == "fail"),
         },
         "checks": checks,
-        "topFindings": {
-            "advisories": advisory_findings[:10],
-            "licenses": license_findings[:10],
-            "npm": npm_findings[:10],
-            "bundleCatalog": bundle_catalog_findings[:10],
-            "graphDiffPolicies": diff_policy_findings[:10],
-            "diffTreePolicies": diff_tree_policy_findings[:10],
-        },
+        "topFindings": top_findings,
         "reports": report_entries,
     }
 
@@ -305,6 +316,10 @@ def _summary(report: dict[str, Any]) -> dict[str, Any]:
             payload_summary["policyFailures"] = _diff_policy_failure_count(report)
         if report.get("schema") == "edgp.graph.diff_tree.v1":
             payload_summary["policyFailures"] = _diff_tree_policy_failure_count(report)
+        if report.get("schema") == "edgp.real_data.coverage.v1":
+            payload_summary["policyFailures"] = (
+                _real_data_coverage_policy_failure_count(report)
+            )
         return payload_summary
     stats = report.get("stats")
     if isinstance(stats, dict):
@@ -378,6 +393,14 @@ def _accumulate_summary(
         rollup["diffTreeReports"] += 1
         rollup["diffTreePolicyFailures"] += int(
             summary.get("policyFailures", 0)
+        )
+    elif schema == "edgp.real_data.coverage.v1":
+        rollup["realDataCoverageReports"] = (
+            rollup.get("realDataCoverageReports", 0) + 1
+        )
+        rollup["realDataCoveragePolicyFailures"] = (
+            rollup.get("realDataCoveragePolicyFailures", 0)
+            + int(summary.get("policyFailures", 0))
         )
     elif schema == "edgp.bundle.catalog.v1":
         rollup["bundleCatalogReports"] += 1
@@ -460,6 +483,25 @@ def _diff_tree_policy_check(report: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def _real_data_coverage_policy_check(report: dict[str, Any]) -> dict[str, Any] | None:
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        return None
+    status = str(policy.get("status") or "pass")
+    return {
+        "kind": "real-data-coverage-policy",
+        "status": "fail" if status == "fail" else "pass",
+        "minPublicEvidenceCoveragePercent": policy.get(
+            "minPublicEvidenceCoveragePercent"
+        ),
+        "failOnPriority": policy.get("failOnPriority"),
+        "matchedReplacementGroups": int(
+            policy.get("matchedReplacementGroups", 0) or 0
+        ),
+        "exitCode": int(policy.get("exitCode", 0) or 0),
+    }
+
+
 def _diff_policy_failure_count(report: dict[str, Any]) -> int:
     policy = report.get("policy")
     if not isinstance(policy, dict):
@@ -474,12 +516,20 @@ def _diff_tree_policy_failure_count(report: dict[str, Any]) -> int:
     return 1 if policy.get("status") == "fail" else 0
 
 
+def _real_data_coverage_policy_failure_count(report: dict[str, Any]) -> int:
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        return 0
+    return 1 if policy.get("status") == "fail" else 0
+
+
 def _status(rollup: dict[str, int]) -> str:
     if (
         rollup["advisoryFindings"]
         or rollup["deniedLicenseFindings"]
         or rollup["graphDiffPolicyFailures"]
         or rollup["diffTreePolicyFailures"]
+        or rollup.get("realDataCoveragePolicyFailures", 0)
         or rollup["catalogFailedBundles"]
         or rollup["catalogFailures"]
         or rollup["catalogTriageFail"]
@@ -524,6 +574,29 @@ def _diff_tree_policy_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
             "depth": report.get("depth"),
             "failOnKind": _string_list(policy.get("failOnKind")),
             "matchedKinds": _string_list(policy.get("matchedKinds")),
+            "exitCode": int(policy.get("exitCode", 0) or 0),
+        }
+    ]
+
+
+def _real_data_coverage_policy_findings(
+    report: dict[str, Any],
+) -> list[dict[str, Any]]:
+    policy = report.get("policy")
+    if not isinstance(policy, dict) or policy.get("status") != "fail":
+        return []
+    failures = policy.get("failures", [])
+    if not isinstance(failures, list):
+        failures = []
+    return [
+        {
+            "fixtureRoot": report.get("fixtureRoot"),
+            "minPublicEvidenceCoveragePercent": policy.get(
+                "minPublicEvidenceCoveragePercent"
+            ),
+            "failOnPriority": policy.get("failOnPriority"),
+            "matchedReplacementGroups": policy.get("matchedReplacementGroups", 0),
+            "failures": failures,
             "exitCode": int(policy.get("exitCode", 0) or 0),
         }
     ]

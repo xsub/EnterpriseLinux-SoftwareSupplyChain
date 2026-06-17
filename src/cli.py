@@ -1326,6 +1326,12 @@ def _load_optional_json(path: Path) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _real_data_coverage_policy_should_fail(output_dir: Path) -> bool:
+    report = _load_optional_json(output_dir / "real-data-coverage.json")
+    policy = report.get("policy")
+    return isinstance(policy, dict) and policy.get("status") == "fail"
+
+
 def _bundle_triage_summary_should_fail(
     output_dir: Path,
     *,
@@ -1782,13 +1788,21 @@ def _write_real_data_coverage_bundle(
     output_dir: Path,
     *,
     fixture_dir: Path,
+    min_public_evidence_percent: float | None = None,
+    fail_on_priority: str | None = None,
     command: str | None = None,
     include_triage_summary: bool = False,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / "real-data-coverage.json"
     report_path.write_text(
-        _json(build_real_data_coverage_report(build_fixture_provenance(fixture_dir))),
+        _json(
+            build_real_data_coverage_report(
+                build_fixture_provenance(fixture_dir),
+                min_public_evidence_percent=min_public_evidence_percent,
+                fail_on_priority=fail_on_priority,
+            )
+        ),
         encoding="utf-8",
     )
     return write_report_bundle(
@@ -3364,6 +3378,19 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("tests/fixtures"),
         help="fixture directory to assess",
     )
+    real_data_coverage.add_argument(
+        "--min-public-evidence-percent",
+        type=float,
+        help="return status 2 when public evidence coverage is below this threshold",
+    )
+    real_data_coverage.add_argument(
+        "--fail-on-priority",
+        choices=["high", "medium", "low"],
+        help=(
+            "return status 2 when replacement-plan items exist at this priority "
+            "or higher"
+        ),
+    )
 
     real_data_coverage_bundle = subparsers.add_parser(
         "real-data-coverage-bundle",
@@ -3374,6 +3401,19 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("tests/fixtures"),
         help="fixture directory to assess",
+    )
+    real_data_coverage_bundle.add_argument(
+        "--min-public-evidence-percent",
+        type=float,
+        help="mark the bundle triage as failed below this public evidence threshold",
+    )
+    real_data_coverage_bundle.add_argument(
+        "--fail-on-priority",
+        choices=["high", "medium", "low"],
+        help=(
+            "mark the bundle triage as failed when replacement-plan items exist "
+            "at this priority or higher"
+        ),
     )
     real_data_coverage_bundle.add_argument("--output-dir", type=Path, required=True)
     _add_triage_bundle_option(real_data_coverage_bundle)
@@ -4639,21 +4679,31 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "real-data-coverage":
         report = build_real_data_coverage_report(
-            build_fixture_provenance(args.fixture_dir)
+            build_fixture_provenance(args.fixture_dir),
+            min_public_evidence_percent=args.min_public_evidence_percent,
+            fail_on_priority=args.fail_on_priority,
         )
         print(_json(report))
+        policy = report.get("policy")
+        if isinstance(policy, dict) and policy.get("status") == "fail":
+            return 2
         return 0
 
     if args.command == "real-data-coverage-bundle":
-        return _print_bundle_result(
-            _write_real_data_coverage_bundle(
-                args.output_dir,
-                fixture_dir=args.fixture_dir,
-                command=command,
-                include_triage_summary=_include_triage_summary(args),
-            ),
-            fail_on_status=args.fail_on_status,
+        index_path = _write_real_data_coverage_bundle(
+            args.output_dir,
+            fixture_dir=args.fixture_dir,
+            min_public_evidence_percent=args.min_public_evidence_percent,
+            fail_on_priority=args.fail_on_priority,
+            command=command,
+            include_triage_summary=_include_triage_summary(args),
         )
+        result = _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        if result:
+            return result
+        if _real_data_coverage_policy_should_fail(index_path.parent):
+            return 2
+        return 0
 
     if args.command == "diff":
         report = json.loads(diff_snapshot_files(args.left, args.right))
