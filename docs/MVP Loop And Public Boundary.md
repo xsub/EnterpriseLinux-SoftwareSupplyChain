@@ -347,6 +347,8 @@ surfaces are:
   into aggregate triage-summary findings.
 - Preserve report and bundle triage top findings in validation reports and
   validation HTML for persisted CI/workbench evidence.
+- Emit global graph-diff top package-change findings in JSON and HTML so broad
+  snapshot-drift evidence can be consumed without re-parsing every diff table.
 - Emit focused graph diff-tree top package-change findings in JSON and HTML so
   snapshot-drift evidence can be consumed without re-parsing every diff table.
 - Write deterministic archive output directly from generated bundle catalogs

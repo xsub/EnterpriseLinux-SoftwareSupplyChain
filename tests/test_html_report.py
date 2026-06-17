@@ -177,12 +177,26 @@ def test_render_report_supports_graph_diff_json() -> None:
         "matchedChanges": ["added-node"],
         "status": "fail",
     }
+    report["topFindings"] = {
+        "packageChanges": [
+            {
+                "kind": "upgrade",
+                "name": "lib",
+                "leftNode": "lib==1.0.0",
+                "rightNode": "lib==2.0.0",
+                "leftVersion": "1.0.0",
+                "rightVersion": "2.0.0",
+            }
+        ]
+    }
 
     html = render_report(report)
 
     assert "EDGP Graph Diff" in html
     assert 'data-testid="graph-diff-policy-panel"' in html
+    assert 'data-testid="graph-diff-top-findings-panel"' in html
     assert "Graph Diff Policy" in html
+    assert "Top Package Changes" in html
     assert 'data-testid="graph-diff-classification-panel"' in html
     assert 'data-testid="graph-diff-added-nodes-panel"' in html
     assert 'data-testid="graph-diff-added-edges-panel"' in html

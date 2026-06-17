@@ -191,10 +191,11 @@ or semantic package gates with
 The command still prints or writes the full report first, then returns status
 `2` when a selected change or package kind is present. Gated graph-diff reports
 include a `policy` block with requested changes or kinds, matched values,
-pass/fail status, and expected exit code. Use `--format text` when CI logs
-should show one compact line instead of the full JSON report, or one compact
-bundle line with the generated `index.html` and optional `--archive-output`
-paths.
+pass/fail status, and expected exit code. They also include
+`topFindings.packageChanges`, a bounded risk-ranked list of semantic package
+changes. Use `--format text` when CI logs should show one compact line instead
+of the full JSON report, or one compact bundle line with the generated
+`index.html` and optional `--archive-output` paths.
 
 Focused diff-tree commands classify changes as additions, removals, metadata changes,
 replacements, upgrades, or downgrades. Use `--fail-on-kind` to keep the JSON or
@@ -786,6 +787,9 @@ HTML with a verifiable manifest, which makes before/after graph changes
 shareable without rebuilding the original input adapters. Passing
 `--fail-on-change` gates on coarse graph element drift; passing `--fail-on-kind`
 gates on semantic package changes such as downgrades or replacements.
+Global diff reports also expose top package changes directly in JSON and HTML,
+so broad snapshot-drift reviews can start with the highest-signal package
+movement before drilling into every node and edge table.
 
 `edgp diff-tree` compares the dependency or dependent cone around one selected
 node in two snapshots. It resolves `--node` by exact node ID or unambiguous

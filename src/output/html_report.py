@@ -140,6 +140,7 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
     nodes = report.get("nodes", {})
     edges = report.get("edges", {})
     classifications = report.get("classifications", [])
+    top_findings = report.get("topFindings", {})
     policy = report.get("policy")
     if not isinstance(nodes, dict):
         nodes = {}
@@ -147,6 +148,8 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
         edges = {}
     if not isinstance(classifications, list):
         classifications = []
+    if not isinstance(top_findings, dict):
+        top_findings = {}
     if not isinstance(policy, dict):
         policy = {}
     heading = f"{report.get('leftRoot') or 'left'} -> {report.get('rightRoot') or 'right'}"
@@ -172,6 +175,7 @@ def render_graph_diff_report(report: dict[str, Any]) -> str:
                 ],
             ),
             _graph_diff_policy_panel(policy),
+            _graph_diff_top_findings_panel(top_findings),
             _graph_diff_classification_panel(classifications),
             _package_list_panel(
                 "Added Nodes",
@@ -238,6 +242,13 @@ def _graph_diff_classification_panel(classifications: list[object]) -> str:
             "changedKeys",
         ],
         test_id="graph-diff-classification-panel",
+    )
+
+
+def _graph_diff_top_findings_panel(top_findings: dict[str, Any]) -> str:
+    return _package_change_top_findings_panel(
+        top_findings,
+        test_id="graph-diff-top-findings-panel",
     )
 
 
@@ -2956,6 +2967,17 @@ def _graph_diff_tree_classification_panel(classifications: list[object]) -> str:
 
 
 def _graph_diff_tree_top_findings_panel(top_findings: dict[str, Any]) -> str:
+    return _package_change_top_findings_panel(
+        top_findings,
+        test_id="graph-diff-tree-top-findings-panel",
+    )
+
+
+def _package_change_top_findings_panel(
+    top_findings: dict[str, Any],
+    *,
+    test_id: str,
+) -> str:
     package_changes = top_findings.get("packageChanges", [])
     rows = [item for item in package_changes if isinstance(item, dict)]
     return _rows_panel(
@@ -2972,7 +2994,7 @@ def _graph_diff_tree_top_findings_panel(top_findings: dict[str, Any]) -> str:
             "rightDistance",
             "changedKeys",
         ],
-        test_id="graph-diff-tree-top-findings-panel",
+        test_id=test_id,
     )
 
 

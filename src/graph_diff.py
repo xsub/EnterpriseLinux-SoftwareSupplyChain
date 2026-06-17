@@ -97,6 +97,7 @@ def diff_snapshots(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any
             "metadataChanged": metadata_changed,
         },
         "classifications": classifications,
+        "topFindings": _package_change_top_findings(classifications),
         "edges": {
             "added": [_edge_payload(edge) for edge in sorted(right_edges - left_edges)],
             "removed": [_edge_payload(edge) for edge in sorted(left_edges - right_edges)],
@@ -222,7 +223,7 @@ def diff_tree_snapshots(
             "unchanged": unchanged_nodes,
         },
         "classifications": classifications,
-        "topFindings": _diff_tree_top_findings(classifications),
+        "topFindings": _package_change_top_findings(classifications),
         "edges": {
             "added": [_edge_payload(edge) for edge in added_edges],
             "removed": [_edge_payload(edge) for edge in removed_edges],
@@ -418,7 +419,7 @@ def _classification_counts(classifications: list[dict[str, Any]]) -> dict[str, i
     return counts
 
 
-def _diff_tree_top_findings(
+def _package_change_top_findings(
     classifications: list[dict[str, Any]],
     *,
     limit: int = 10,

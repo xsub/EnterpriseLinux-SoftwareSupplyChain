@@ -49,6 +49,9 @@ def test_diff_snapshot_files_reports_added_and_removed_graph_elements() -> None:
             "rightVersion": "2.0.0",
         },
     ]
+    assert payload["topFindings"]["packageChanges"][0]["kind"] == "upgrade"
+    assert payload["topFindings"]["packageChanges"][0]["name"] == "lib"
+    assert payload["topFindings"]["packageChanges"][1]["kind"] == "added"
 
 
 def test_cli_diff_can_fail_on_selected_change_kind(capsys) -> None:
@@ -130,6 +133,7 @@ def test_cli_diff_can_fail_on_classified_package_change_kind(capsys) -> None:
         "status": "fail",
     }
     assert payload["summary"]["upgradeChanges"] == 1
+    assert payload["topFindings"]["packageChanges"][0]["rightNode"] == "lib==2.0.0"
 
 
 def test_cli_diff_text_can_fail_on_classified_package_change_kind(capsys) -> None:
