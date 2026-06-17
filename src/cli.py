@@ -1840,11 +1840,23 @@ def _load_real_data_coverage_report(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _real_data_coverage_input_report(
+    *,
+    report_path: Path | None,
+    fixture_dir: Path | None,
+) -> dict[str, Any]:
+    if fixture_dir is not None:
+        return build_real_data_coverage_report(build_fixture_provenance(fixture_dir))
+    if report_path is None:
+        raise ValueError("real-data coverage diff requires a report or fixture dir")
+    return _load_real_data_coverage_report(report_path)
+
+
 def _write_real_data_coverage_diff_bundle(
-    left_path: Path,
-    right_path: Path,
     output_dir: Path,
     *,
+    left_report: dict[str, Any],
+    right_report: dict[str, Any],
     left_label: str = "left",
     right_label: str = "right",
     fail_on_regression: bool = False,
@@ -1856,8 +1868,8 @@ def _write_real_data_coverage_diff_bundle(
     report_path.write_text(
         _json(
             build_real_data_coverage_diff_report(
-                _load_real_data_coverage_report(left_path),
-                _load_real_data_coverage_report(right_path),
+                left_report,
+                right_report,
                 left_label=left_label,
                 right_label=right_label,
                 fail_on_regression=fail_on_regression,
@@ -3480,10 +3492,34 @@ def build_parser() -> argparse.ArgumentParser:
 
     real_data_coverage_diff = subparsers.add_parser(
         "real-data-coverage-diff",
-        help="Compare two real-data coverage reports",
+        help="Compare two real-data coverage reports or fixture directories",
     )
-    real_data_coverage_diff.add_argument("--left", type=Path, required=True)
-    real_data_coverage_diff.add_argument("--right", type=Path, required=True)
+    real_data_coverage_diff_left = real_data_coverage_diff.add_mutually_exclusive_group(
+        required=True
+    )
+    real_data_coverage_diff_left.add_argument(
+        "--left",
+        type=Path,
+        help="left edgp.real_data.coverage.v1 JSON report",
+    )
+    real_data_coverage_diff_left.add_argument(
+        "--left-fixture-dir",
+        type=Path,
+        help="build the left coverage report from this fixture directory",
+    )
+    real_data_coverage_diff_right = real_data_coverage_diff.add_mutually_exclusive_group(
+        required=True
+    )
+    real_data_coverage_diff_right.add_argument(
+        "--right",
+        type=Path,
+        help="right edgp.real_data.coverage.v1 JSON report",
+    )
+    real_data_coverage_diff_right.add_argument(
+        "--right-fixture-dir",
+        type=Path,
+        help="build the right coverage report from this fixture directory",
+    )
     real_data_coverage_diff.add_argument("--left-label", default="left")
     real_data_coverage_diff.add_argument("--right-label", default="right")
     real_data_coverage_diff.add_argument(
@@ -3496,8 +3532,32 @@ def build_parser() -> argparse.ArgumentParser:
         "real-data-coverage-diff-bundle",
         help="Render a real-data coverage diff as a static bundle",
     )
-    real_data_coverage_diff_bundle.add_argument("--left", type=Path, required=True)
-    real_data_coverage_diff_bundle.add_argument("--right", type=Path, required=True)
+    real_data_coverage_diff_bundle_left = (
+        real_data_coverage_diff_bundle.add_mutually_exclusive_group(required=True)
+    )
+    real_data_coverage_diff_bundle_left.add_argument(
+        "--left",
+        type=Path,
+        help="left edgp.real_data.coverage.v1 JSON report",
+    )
+    real_data_coverage_diff_bundle_left.add_argument(
+        "--left-fixture-dir",
+        type=Path,
+        help="build the left coverage report from this fixture directory",
+    )
+    real_data_coverage_diff_bundle_right = (
+        real_data_coverage_diff_bundle.add_mutually_exclusive_group(required=True)
+    )
+    real_data_coverage_diff_bundle_right.add_argument(
+        "--right",
+        type=Path,
+        help="right edgp.real_data.coverage.v1 JSON report",
+    )
+    real_data_coverage_diff_bundle_right.add_argument(
+        "--right-fixture-dir",
+        type=Path,
+        help="build the right coverage report from this fixture directory",
+    )
     real_data_coverage_diff_bundle.add_argument("--left-label", default="left")
     real_data_coverage_diff_bundle.add_argument("--right-label", default="right")
     real_data_coverage_diff_bundle.add_argument(
@@ -4801,8 +4861,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "real-data-coverage-diff":
         report = build_real_data_coverage_diff_report(
-            _load_real_data_coverage_report(args.left),
-            _load_real_data_coverage_report(args.right),
+            _real_data_coverage_input_report(
+                report_path=args.left,
+                fixture_dir=args.left_fixture_dir,
+            ),
+            _real_data_coverage_input_report(
+                report_path=args.right,
+                fixture_dir=args.right_fixture_dir,
+            ),
             left_label=args.left_label,
             right_label=args.right_label,
             fail_on_regression=args.fail_on_regression,
@@ -4815,9 +4881,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "real-data-coverage-diff-bundle":
         index_path = _write_real_data_coverage_diff_bundle(
-            args.left,
-            args.right,
             args.output_dir,
+            left_report=_real_data_coverage_input_report(
+                report_path=args.left,
+                fixture_dir=args.left_fixture_dir,
+            ),
+            right_report=_real_data_coverage_input_report(
+                report_path=args.right,
+                fixture_dir=args.right_fixture_dir,
+            ),
             left_label=args.left_label,
             right_label=args.right_label,
             fail_on_regression=args.fail_on_regression,

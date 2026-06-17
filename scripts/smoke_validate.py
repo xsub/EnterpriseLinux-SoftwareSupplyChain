@@ -3311,6 +3311,54 @@ def _assert_public_vertical_reports() -> None:
     assert real_data_coverage_diff["right"]["label"] == "current"
     assert real_data_coverage_diff["summary"]["publicEvidenceFilesDelta"] == 0
     assert real_data_coverage_diff["summary"]["regressions"] == 0
+    fixture_dir_diff = _run_cli(
+        [
+            "real-data-coverage-diff",
+            "--left-fixture-dir",
+            "tests/fixtures",
+            "--right-fixture-dir",
+            "tests/fixtures",
+            "--left-label",
+            "baseline",
+            "--right-label",
+            "current",
+        ]
+    )
+    assert fixture_dir_diff == real_data_coverage_diff
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "real-data-coverage-diff-fixture-dir-bundle"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "real-data-coverage-diff-bundle",
+                "--left-fixture-dir",
+                "tests/fixtures",
+                "--right-fixture-dir",
+                "tests/fixtures",
+                "--left-label",
+                "baseline",
+                "--right-label",
+                "current",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_dir / "index.html")
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, output_dir)
+        _assert_verify_bundle_command(output_dir)
+        report = json.loads(
+            (output_dir / "real-data-coverage-diff.json").read_text(encoding="utf-8")
+        )
+        assert report == real_data_coverage_diff
 
     with tempfile.TemporaryDirectory() as temp_dir:
         regressed_path = Path(temp_dir) / "real-data-coverage-regressed.json"

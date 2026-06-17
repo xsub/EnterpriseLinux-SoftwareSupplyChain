@@ -164,7 +164,9 @@ edgp real-data-coverage --fixture-dir tests/fixtures --fail-on-priority high
 edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --triage-summary
 edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --fail-on-priority high --fail-on-status fail
 edgp real-data-coverage-diff --left coverage-baseline.json --right coverage-current.json --fail-on-regression
+edgp real-data-coverage-diff --left-fixture-dir old-fixtures --right-fixture-dir tests/fixtures --fail-on-regression
 edgp real-data-coverage-diff-bundle --left coverage-baseline.json --right coverage-current.json --output-dir reports/real-data-coverage-diff --fail-on-regression --fail-on-status fail
+edgp real-data-coverage-diff-bundle --left-fixture-dir old-fixtures --right-fixture-dir tests/fixtures --output-dir reports/real-data-coverage-diff --triage-summary
 ```
 
 ### Query And Analyze
@@ -748,8 +750,11 @@ public URL and local file inputs:
   returning status `2` on policy failure.
 - `edgp real-data-coverage-diff` compares two coverage reports, highlights
   added or removed public evidence, changed replacement-plan groups, and
-  optional regression policy failures. `edgp real-data-coverage-diff-bundle`
-  renders the same comparison as a static bundle with triage rollup.
+  optional regression policy failures. It can compare prebuilt coverage JSON
+  reports with `--left/--right` or build both sides from fixture directories
+  with `--left-fixture-dir/--right-fixture-dir`. `edgp
+  real-data-coverage-diff-bundle` renders the same comparison as a static
+  bundle with triage rollup.
 - `edgp libsolv-bridge` reports local libsolv command availability and parses
   transaction transcripts so EDGP can explain solved RPM actions while leaving
   SAT solving to libsolv. Parsed actions are normalized into RPM package

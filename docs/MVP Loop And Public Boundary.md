@@ -375,6 +375,8 @@ surfaces are:
 - Compare real-data coverage reports between snapshots so public evidence
   regressions, added evidence, removed evidence, and replacement-plan changes
   can be reviewed as JSON, static HTML, and triage-aware report bundles.
+- Compare real-data coverage directly from fixture directory snapshots without
+  requiring callers to pre-generate intermediate coverage JSON files.
 - Roll real-data coverage and coverage-diff policy failures up through bundle
   catalogs so batch evidence directories expose those gates beside graph-diff
   and diff-tree policy failures.

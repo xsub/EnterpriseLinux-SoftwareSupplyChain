@@ -120,6 +120,30 @@ def test_cli_real_data_coverage_diff_outputs_current_baseline(capsys) -> None:
     assert payload["schema"] == "edgp.real_data.coverage_diff.v1"
 
 
+def test_cli_real_data_coverage_diff_can_compare_fixture_dirs(capsys) -> None:
+    assert (
+        cli_main(
+            [
+                "real-data-coverage-diff",
+                "--left-fixture-dir",
+                "tests/fixtures",
+                "--right-fixture-dir",
+                "tests/fixtures",
+                "--left-label",
+                "baseline",
+                "--right-label",
+                "current",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload == _diff_fixture()
+    assert payload["left"]["fixtureRoot"] == "tests/fixtures"
+    assert payload["right"]["fixtureRoot"] == "tests/fixtures"
+
+
 def test_cli_real_data_coverage_diff_returns_two_on_regression(
     tmp_path,
     capsys,
@@ -190,3 +214,37 @@ def test_cli_real_data_coverage_diff_bundle_policy_failure_keeps_artifacts(
         == 0
     )
     assert capsys.readouterr().out.startswith("OK ")
+
+
+def test_cli_real_data_coverage_diff_bundle_can_compare_fixture_dirs(
+    tmp_path,
+    capsys,
+) -> None:
+    output_dir = tmp_path / "real-data-coverage-diff-fixture-dir-bundle"
+
+    assert (
+        cli_main(
+            [
+                "real-data-coverage-diff-bundle",
+                "--left-fixture-dir",
+                "tests/fixtures",
+                "--right-fixture-dir",
+                "tests/fixtures",
+                "--left-label",
+                "baseline",
+                "--right-label",
+                "current",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+            ]
+        )
+        == 0
+    )
+
+    assert capsys.readouterr().out.strip() == str(output_dir / "index.html")
+    report = json.loads((output_dir / "real-data-coverage-diff.json").read_text())
+    triage = json.loads((output_dir / "triage-summary.json").read_text())
+    assert report == _diff_fixture()
+    assert triage["status"] == "pass"
+    assert (output_dir / "001-real-data-coverage-diff.html").exists()
