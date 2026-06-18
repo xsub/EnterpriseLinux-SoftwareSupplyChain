@@ -104,6 +104,28 @@ def test_cli_real_data_coverage_outputs_current_report(capsys) -> None:
     assert payload["schema"] == "edgp.real_data.coverage.v1"
 
 
+def test_cli_real_data_coverage_outputs_text_summary(capsys) -> None:
+    assert (
+        cli_main(
+            [
+                "real-data-coverage",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("WARN schema=edgp.real_data.coverage.v1 ")
+    assert "directPublicSources=3" in output
+    assert "generatedPublicReports=14" in output
+    assert "topCandidate=" in output
+    assert "Advisory and OSV-shaped samples" in output
+
+
 def test_cli_real_data_coverage_returns_two_when_policy_fails(capsys) -> None:
     assert (
         cli_main(
@@ -121,6 +143,28 @@ def test_cli_real_data_coverage_returns_two_when_policy_fails(capsys) -> None:
     payload = json.loads(capsys.readouterr().out)
     assert payload["status"] == "fail"
     assert payload["policy"]["status"] == "fail"
+
+
+def test_cli_real_data_coverage_text_keeps_policy_exit_code(capsys) -> None:
+    assert (
+        cli_main(
+            [
+                "real-data-coverage",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--fail-on-priority",
+                "high",
+                "--format",
+                "text",
+            ]
+        )
+        == 2
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("FAIL schema=edgp.real_data.coverage.v1 ")
+    assert "policyStatus=fail" in output
+    assert "matchedReplacementGroups=1" in output
 
 
 def test_cli_real_data_coverage_bundle_writes_verifiable_bundle(

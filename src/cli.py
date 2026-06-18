@@ -535,6 +535,12 @@ def _string_list(value: object) -> list[str]:
     return [str(item) for item in value if isinstance(item, str)]
 
 
+def _dict_list(value: object) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
 def _command_string(argv: list[str]) -> str:
     return shlex.join(["edgp", *argv])
 
@@ -1300,6 +1306,128 @@ def _policy_list_text_parts(
 
 def _text_value(value: object) -> str:
     return shlex.quote(str(value))
+
+
+def _format_real_data_coverage_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    parts = [
+        str(report.get("status", "unknown")).upper(),
+        "schema=edgp.real_data.coverage.v1",
+        f"publicEvidenceFiles={int(summary.get('publicEvidenceFiles', 0) or 0)}",
+        f"catalogedFiles={int(summary.get('catalogedFiles', 0) or 0)}",
+        (
+            "publicEvidenceCoveragePercent="
+            f"{float(summary.get('publicEvidenceCoveragePercent', 0.0) or 0.0):.2f}"
+        ),
+        f"directPublicSources={int(summary.get('directPublicSources', 0) or 0)}",
+        f"generatedPublicReports={int(summary.get('generatedPublicReports', 0) or 0)}",
+        f"syntheticFiles={int(summary.get('syntheticFiles', 0) or 0)}",
+        (
+            "replacementCandidateGroups="
+            f"{int(summary.get('replacementCandidateGroups', 0) or 0)}"
+        ),
+    ]
+    top_candidate = _top_real_data_plan_entry(report.get("replacementPlan"))
+    if top_candidate:
+        parts.append(f"topCandidate={_text_value(top_candidate)}")
+    parts.extend(_real_data_policy_text_parts(report.get("policy")))
+    return " ".join(parts)
+
+
+def _format_real_data_replacement_plan_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    coverage = report.get("coverageSummary")
+    if not isinstance(coverage, dict):
+        coverage = {}
+    parts = [
+        str(report.get("status", "unknown")).upper(),
+        "schema=edgp.real_data.replacement_plan.v1",
+        f"replacementCandidates={int(summary.get('replacementCandidates', 0) or 0)}",
+        f"candidateFiles={int(summary.get('candidateFiles', 0) or 0)}",
+        f"deferredGroups={int(summary.get('deferredGroups', 0) or 0)}",
+        f"highPriorityGroups={int(summary.get('highPriorityGroups', 0) or 0)}",
+        f"mediumPriorityGroups={int(summary.get('mediumPriorityGroups', 0) or 0)}",
+        f"publicEvidenceFiles={int(summary.get('publicEvidenceFiles', 0) or 0)}",
+        (
+            "publicEvidenceCoveragePercent="
+            f"{float(summary.get('publicEvidenceCoveragePercent', 0.0) or 0.0):.2f}"
+        ),
+    ]
+    coverage_status = coverage.get("coverageStatus")
+    if isinstance(coverage_status, str) and coverage_status:
+        parts.append(f"coverageStatus={coverage_status}")
+    top_candidate = _top_replacement_candidate(report.get("replacementCandidates"))
+    if top_candidate:
+        parts.append(f"topCandidate={_text_value(top_candidate)}")
+    parts.extend(_real_data_policy_text_parts(report.get("policy")))
+    return " ".join(parts)
+
+
+def _top_real_data_plan_entry(value: object) -> str:
+    candidates = [
+        entry
+        for entry in _dict_list(value)
+        if str(entry.get("priority", "")) in {"high", "medium"}
+    ]
+    if not candidates:
+        return ""
+    candidates.sort(
+        key=lambda entry: (
+            {"high": 3, "medium": 2, "low": 1}.get(str(entry.get("priority", "")), 0),
+            int(entry.get("fileCount", 0) or 0),
+            str(entry.get("group", "")),
+        ),
+        reverse=True,
+    )
+    return _real_data_candidate_label(candidates[0])
+
+
+def _top_replacement_candidate(value: object) -> str:
+    candidates = _dict_list(value)
+    if not candidates:
+        return ""
+    candidates.sort(key=lambda entry: int(entry.get("rank", 999999) or 999999))
+    return _real_data_candidate_label(candidates[0], include_rank=True)
+
+
+def _real_data_candidate_label(
+    entry: dict[str, Any],
+    *,
+    include_rank: bool = False,
+) -> str:
+    parts = []
+    if include_rank:
+        parts.append(f"rank:{int(entry.get('rank', 0) or 0)}")
+    parts.extend(
+        [
+            f"group:{entry.get('group', '')}",
+            f"priority:{entry.get('priority', '')}",
+            f"files:{int(entry.get('fileCount', 0) or 0)}",
+            f"decision:{entry.get('decision', '')}",
+        ]
+    )
+    return " ".join(str(part) for part in parts)
+
+
+def _real_data_policy_text_parts(value: object) -> list[str]:
+    if not isinstance(value, dict):
+        return []
+    parts = []
+    status = value.get("status")
+    if isinstance(status, str) and status:
+        parts.append(f"policyStatus={status}")
+    if "matchedReplacementGroups" in value:
+        parts.append(
+            "matchedReplacementGroups="
+            f"{int(value.get('matchedReplacementGroups', 0) or 0)}"
+        )
+    if "exitCode" in value:
+        parts.append(f"policyExitCode={int(value.get('exitCode', 0) or 0)}")
+    return parts
 
 
 def _print_graph_diff_bundle_result(
@@ -3604,6 +3732,7 @@ def build_parser() -> argparse.ArgumentParser:
             "or higher"
         ),
     )
+    real_data_coverage.add_argument("--format", choices=["json", "text"], default="json")
 
     real_data_coverage_bundle = subparsers.add_parser(
         "real-data-coverage-bundle",
@@ -3655,6 +3784,11 @@ def build_parser() -> argparse.ArgumentParser:
             "return status 2 when replacement candidates exist at this priority "
             "or higher"
         ),
+    )
+    real_data_replacement_plan.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
     )
 
     real_data_replacement_plan_bundle = subparsers.add_parser(
@@ -5142,7 +5276,10 @@ def main(argv: list[str] | None = None) -> int:
             min_public_evidence_percent=args.min_public_evidence_percent,
             fail_on_priority=args.fail_on_priority,
         )
-        print(_json(report))
+        if args.format == "text":
+            print(_format_real_data_coverage_result(report))
+        else:
+            print(_json(report))
         policy = report.get("policy")
         if isinstance(policy, dict) and policy.get("status") == "fail":
             return 2
@@ -5170,7 +5307,10 @@ def main(argv: list[str] | None = None) -> int:
             fixture_dir=args.fixture_dir,
             fail_on_priority=args.fail_on_priority,
         )
-        print(_json(report))
+        if args.format == "text":
+            print(_format_real_data_replacement_plan_result(report))
+        else:
+            print(_json(report))
         policy = report.get("policy")
         if isinstance(policy, dict) and policy.get("status") == "fail":
             return 2

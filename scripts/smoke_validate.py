@@ -3289,6 +3289,25 @@ def _assert_public_vertical_reports() -> None:
     assert real_data_coverage["summary"]["directPublicSources"] == 3
     assert real_data_coverage["summary"]["generatedPublicReports"] == 14
     assert real_data_coverage["summary"]["replacementCandidateGroups"] >= 4
+    real_data_coverage_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "real-data-coverage",
+            "--fixture-dir",
+            "tests/fixtures",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert real_data_coverage_text.startswith("WARN schema=edgp.real_data.coverage.v1")
+    assert "directPublicSources=3" in real_data_coverage_text
     policy_completed = subprocess.run(
         [
             sys.executable,
@@ -3319,6 +3338,27 @@ def _assert_public_vertical_reports() -> None:
     )
     assert real_data_replacement_plan["summary"]["replacementCandidates"] >= 1
     assert real_data_replacement_plan["replacementCandidates"][0]["priority"] == "high"
+    real_data_replacement_plan_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "real-data-replacement-plan",
+            "--fixture-dir",
+            "tests/fixtures",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert real_data_replacement_plan_text.startswith(
+        "WARN schema=edgp.real_data.replacement_plan.v1"
+    )
+    assert "replacementCandidates=" in real_data_replacement_plan_text
     coverage_plan = _run_cli(
         [
             "real-data-replacement-plan",

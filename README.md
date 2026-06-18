@@ -163,10 +163,12 @@ edgp public-advisory-feed-bundle --path osv.json --ecosystem rpm --output-dir re
 edgp fixture-provenance --fixture-dir tests/fixtures
 edgp fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir reports/fixture-provenance --triage-summary
 edgp real-data-coverage --fixture-dir tests/fixtures
+edgp real-data-coverage --fixture-dir tests/fixtures --format text
 edgp real-data-coverage --fixture-dir tests/fixtures --fail-on-priority high
 edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --triage-summary
 edgp real-data-coverage-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-coverage --fail-on-priority high --fail-on-status fail
 edgp real-data-replacement-plan --fixture-dir tests/fixtures
+edgp real-data-replacement-plan --fixture-dir tests/fixtures --format text
 edgp real-data-replacement-plan --coverage tests/fixtures/real-data-coverage.json --fail-on-priority high
 edgp real-data-replacement-plan-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-replacement-plan --triage-summary
 edgp real-data-replacement-plan-diff --left-fixture-dir old-fixtures --right-fixture-dir tests/fixtures --fail-on-regression
