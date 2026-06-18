@@ -887,7 +887,9 @@ drift, and build provenance changes can be reviewed without re-parsing every
 diff section. The focused diff-tree classification table also has shareable
 workbench filters backed by `graphDiffTreeQuery` and `graphDiffTreeKind` URL
 parameters, which helps reviewers jump straight to a selected package or change
-kind inside a larger dependency cone.
+kind inside a larger dependency cone. `scripts/browser_smoke_graph_diff_tree_filters.py`
+generates a self-checking static page for those focused graph filter deep
+links, URL updates, and reset behavior.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
 optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`
