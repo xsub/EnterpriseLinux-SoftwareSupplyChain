@@ -265,8 +265,20 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     html = render_report(report)
 
     assert "EDGP Bundle Catalog" in html
+    assert 'data-testid="bundle-catalog-filter-panel"' in html
     assert 'data-testid="bundle-catalog-bundles-panel"' in html
     assert 'data-testid="bundle-catalog-source-kinds-panel"' in html
+    assert 'data-bundle-catalog-search' in html
+    assert 'data-bundle-catalog-source' in html
+    assert 'data-bundle-catalog-status' in html
+    assert 'data-bundle-catalog-problems' in html
+    assert 'data-bundle-catalog-reset' in html
+    assert 'data-bundle-catalog-row="true"' in html
+    assert 'data-source-kind="edgp-json"' in html
+    assert 'data-source-kind="npm-diagnostics"' in html
+    assert 'data-triage-status="warn"' in html
+    assert 'data-bundle-problem="true"' in html
+    assert 'data-bundle-problem="false"' in html
     assert "Status" in html
     assert "fail" in html
     assert "Diff Tree Policies" in html

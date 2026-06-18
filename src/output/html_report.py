@@ -7,7 +7,7 @@ import math
 import re
 from html import escape
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 EDGE_EXPLORER_PAGE_SIZE = 250
 
@@ -1564,6 +1564,8 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
         raise ValueError("HTML bundle catalog input must be an EDGP report")
 
     summary = report.get("summary", {})
+    bundles = report.get("bundles", [])
+    source_kinds = report.get("sourceKinds", [])
     return _document(
         "EDGP Bundle Catalog",
         [
@@ -1605,9 +1607,10 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                     ),
                 ],
             ),
+            _bundle_catalog_filter_panel(bundles),
             _rows_panel(
                 "Bundle Verification",
-                report.get("bundles", []),
+                bundles,
                 [
                     "path",
                     "inputType",
@@ -1634,10 +1637,11 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                     "bundleSha256",
                 ],
                 test_id="bundle-catalog-bundles-panel",
+                row_attrs=_bundle_catalog_bundle_row_attrs,
             ),
             _rows_panel(
                 "Source Kinds",
-                report.get("sourceKinds", []),
+                source_kinds,
                 [
                     "sourceKind",
                     "bundles",
@@ -1662,8 +1666,95 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                 test_id="bundle-catalog-source-kinds-panel",
             ),
         ],
-        scripts=[_table_sort_script()],
+        scripts=[_bundle_catalog_filter_script(), _table_sort_script()],
     )
+
+
+def _bundle_catalog_filter_panel(rows: object) -> str:
+    bundles = (
+        [row for row in rows if isinstance(row, dict)]
+        if isinstance(rows, list)
+        else []
+    )
+    source_kinds = sorted(
+        {
+            str(row.get("sourceKind"))
+            for row in bundles
+            if isinstance(row.get("sourceKind"), str) and row.get("sourceKind")
+        }
+    )
+    triage_statuses = sorted(
+        {
+            str(row.get("triageStatus"))
+            for row in bundles
+            if isinstance(row.get("triageStatus"), str) and row.get("triageStatus")
+        }
+    )
+    source_options = "".join(
+        f'<option value="{escape(source_kind)}">{escape(source_kind)}</option>'
+        for source_kind in source_kinds
+    )
+    status_options = "".join(
+        f'<option value="{escape(status)}">{escape(status)}</option>'
+        for status in triage_statuses
+    )
+    return f"""
+<section class="panel" data-testid="bundle-catalog-filter-panel" data-bundle-catalog-filter-panel>
+  <div class="section-head">
+    <h2>Catalog Filters</h2>
+    <span data-bundle-catalog-filter-count>{len(bundles)} rows</span>
+  </div>
+  <div class="bundle-catalog-filter-controls">
+    <label>Search
+      <input type="search" data-bundle-catalog-search aria-label="Filter bundle rows by text" placeholder="Path, code, schema">
+    </label>
+    <label>Source Kind
+      <select data-bundle-catalog-source aria-label="Filter bundle rows by source kind">
+        <option value="">All</option>{source_options}
+      </select>
+    </label>
+    <label>Triage Status
+      <select data-bundle-catalog-status aria-label="Filter bundle rows by triage status">
+        <option value="">All</option>{status_options}
+      </select>
+    </label>
+    <label class="checkbox-control">
+      <input type="checkbox" data-bundle-catalog-problems>
+      <span>Problem bundles only</span>
+    </label>
+    <div class="bundle-catalog-filter-actions">
+      <button type="button" data-bundle-catalog-reset>Reset</button>
+    </div>
+  </div>
+</section>""".strip()
+
+
+def _bundle_catalog_bundle_row_attrs(row: dict[str, Any]) -> Mapping[str, object]:
+    policy_failures = sum(
+        int(row.get(key, 0) or 0)
+        for key in (
+            "graphDiffPolicyFailures",
+            "diffTreePolicyFailures",
+            "realDataCoveragePolicyFailures",
+            "realDataCoverageDiffPolicyFailures",
+            "realDataReplacementPlanPolicyFailures",
+            "realDataReplacementPlanDiffPolicyFailures",
+        )
+    )
+    failure_count = int(row.get("failureCount", 0) or 0)
+    triage_status = str(row.get("triageStatus") or "")
+    problem = (
+        row.get("ok") is not True
+        or failure_count > 0
+        or policy_failures > 0
+        or triage_status in {"warn", "fail"}
+    )
+    return {
+        "data-bundle-catalog-row": "true",
+        "data-source-kind": row.get("sourceKind") or "",
+        "data-triage-status": triage_status,
+        "data-bundle-problem": str(problem).lower(),
+    }
 
 
 def render_license_report(report: dict[str, Any]) -> str:
@@ -3021,14 +3112,16 @@ def _rows_panel(
     columns: list[str],
     *,
     test_id: str,
+    row_attrs: Callable[[dict[str, Any]], Mapping[str, object]] | None = None,
 ) -> str:
     rendered_rows = []
     if isinstance(rows, list):
         for row in rows:
             if not isinstance(row, dict):
                 continue
+            attrs = _html_attrs(row_attrs(row)) if row_attrs is not None else ""
             rendered_rows.append(
-                "<tr>"
+                f"<tr{attrs}>"
                 + "".join(f"<td>{escape(_cell(row.get(column)))}</td>" for column in columns)
                 + "</tr>"
             )
@@ -3052,6 +3145,15 @@ def _rows_panel(
     </table>
   </div>
 </section>""".strip()
+
+
+def _html_attrs(attrs: Mapping[str, object]) -> str:
+    rendered = []
+    for key, value in attrs.items():
+        if value is None:
+            continue
+        rendered.append(f' {escape(str(key))}="{escape(str(value))}"')
+    return "".join(rendered)
 
 
 def _cell(value: object) -> str:
@@ -4047,6 +4149,54 @@ def _edge_filter_script() -> str:
 """.strip()
 
 
+def _bundle_catalog_filter_script() -> str:
+    return """
+(() => {
+  const panel = document.querySelector("[data-bundle-catalog-filter-panel]");
+  const bundlePanel = document.querySelector('[data-testid="bundle-catalog-bundles-panel"]');
+  if (!panel || !bundlePanel) return;
+  const search = panel.querySelector("[data-bundle-catalog-search]");
+  const source = panel.querySelector("[data-bundle-catalog-source]");
+  const status = panel.querySelector("[data-bundle-catalog-status]");
+  const problems = panel.querySelector("[data-bundle-catalog-problems]");
+  const reset = panel.querySelector("[data-bundle-catalog-reset]");
+  const count = panel.querySelector("[data-bundle-catalog-filter-count]");
+  const rows = () => Array.from(bundlePanel.querySelectorAll("[data-bundle-catalog-row]"));
+  const apply = () => {
+    const query = (search.value || "").trim().toLowerCase();
+    const sourceKind = source.value;
+    const triageStatus = status.value;
+    let shown = 0;
+    const allRows = rows();
+    for (const row of allRows) {
+      const textMatches = !query || (row.textContent || "").toLowerCase().includes(query);
+      const sourceMatches = !sourceKind || row.dataset.sourceKind === sourceKind;
+      const statusMatches = !triageStatus || row.dataset.triageStatus === triageStatus;
+      const problemMatches = !problems.checked || row.dataset.bundleProblem === "true";
+      const visible = textMatches && sourceMatches && statusMatches && problemMatches;
+      row.hidden = !visible;
+      if (visible) shown += 1;
+    }
+    count.textContent = `${shown} of ${allRows.length} rows`;
+  };
+  search.addEventListener("input", apply);
+  source.addEventListener("change", apply);
+  status.addEventListener("change", apply);
+  problems.addEventListener("change", apply);
+  reset.addEventListener("click", () => {
+    search.value = "";
+    source.value = "";
+    status.value = "";
+    problems.checked = false;
+    apply();
+    search.focus();
+  });
+  bundlePanel.addEventListener("edgp:table-sorted", apply);
+  apply();
+})();
+""".strip()
+
+
 def _table_sort_script() -> str:
     return """
 (() => {
@@ -4418,6 +4568,55 @@ text {
   color: var(--ink);
 }
 .edge-filter-actions button[hidden] { display: none; }
+.bundle-catalog-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 220px) minmax(150px, 200px) minmax(150px, auto) auto;
+  gap: 12px;
+  align-items: end;
+}
+.bundle-catalog-filter-controls label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.bundle-catalog-filter-controls input[type="search"],
+.bundle-catalog-filter-controls select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+}
+.bundle-catalog-filter-controls .checkbox-control {
+  align-self: stretch;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.bundle-catalog-filter-controls .checkbox-control input {
+  width: 16px;
+  height: 16px;
+}
+.bundle-catalog-filter-actions button {
+  min-height: 42px;
+  padding: 9px 14px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
 .edge-table td:nth-child(3) { white-space: nowrap; }
 tr[hidden] { display: none; }
 .ranking {
@@ -4496,6 +4695,7 @@ tr:last-child td { border-bottom: 0; }
   .hero { grid-template-columns: 1fr; padding: 18px; }
   .metrics { grid-template-columns: 1fr; }
   .edge-filter-controls { grid-template-columns: 1fr; }
+  .bundle-catalog-filter-controls { grid-template-columns: 1fr; }
   .edge-types ul { grid-template-columns: 1fr; }
   h1 { font-size: 24px; }
 }

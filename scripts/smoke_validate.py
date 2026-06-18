@@ -4959,9 +4959,12 @@ def _assert_bundle_catalog() -> None:
         assert triage["schema"] == "edgp.triage.summary.v1"
         assert triage["status"] == "warn"
         assert triage["summary"]["catalogTriageWarn"] == 1
-        assert 'data-testid="bundle-catalog-bundles-panel"' in (
-            catalog_dir / "001-bundle-catalog.html"
-        ).read_text(encoding="utf-8")
+        catalog_html = (catalog_dir / "001-bundle-catalog.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="bundle-catalog-filter-panel"' in catalog_html
+        assert 'data-bundle-catalog-search' in catalog_html
+        assert 'data-testid="bundle-catalog-bundles-panel"' in catalog_html
         archive_report = _run_cli(["verify-bundle-archive", "--path", str(catalog_archive)])
         assert archive_report["schema"] == "edgp.report.bundle.archive.v1"
         assert archive_report["ok"] is True

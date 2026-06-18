@@ -1189,6 +1189,9 @@ rendered as a static, verifiable bundle, and `--archive-output` writes that
 generated catalog bundle as a deterministic `.tar.gz` in the same pass. This
 gives CI systems and future workbench/RAG ingestion one compact index, plus one
 portable handoff archive, over a batch of public-input evidence bundles.
+The rendered bundle-catalog HTML also includes local workbench filters for
+text/failure-code search, source kind, triage status, and problem-only rows, so
+batch evidence can be inspected directly from the static artifact.
 Use `--format text` when the CI log should show the catalog's bundle counts,
 `catalogStatus`, triage status, and snapshot-diff or real-data policy failure
 counts directly beside the generated index path.
