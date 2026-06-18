@@ -4419,6 +4419,12 @@ def _assert_browser_smoke_report_bundle_navigation() -> None:
         html = index_path.read_text(encoding="utf-8")
         assert 'data-testid="browser-smoke-panel"' in html
         assert 'data-testid="browser-smoke-frame"' in html
+        assert "smokeBundleReady" in html
+        assert "bundleQuery" in html
+        assert "bundleSchema" in html
+        assert "initial filtered count" in html
+        assert "updated filtered count" in html
+        assert "reset filtered count" in html
         assert "bundle link order" in html
         assert "003-impact-report.html" in html
         assert "dataset.browserSmokeStatus = 'pass'" in html
@@ -4614,6 +4620,12 @@ def _assert_report_bundle() -> None:
         index_html = index_path.read_text(encoding="utf-8")
         assert 'data-testid="report-bundle-index"' in index_html
         assert 'data-testid="report-bundle-verification"' in index_html
+        assert 'data-testid="report-bundle-filter-panel"' in index_html
+        assert 'data-report-bundle-search' in index_html
+        assert 'data-report-bundle-schema' in index_html
+        assert 'data-report-bundle-card="true"' in index_html
+        assert "bundleQuery" in index_html
+        assert "bundleSchema" in index_html
         assert 'data-testid="report-bundle-triage-summary"' in index_html
         assert "002-npm-diagnostics-report.html" in index_html
         assert "triage-summary.html" in index_html

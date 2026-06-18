@@ -103,6 +103,14 @@ def _browser_smoke_script() -> str:
   const result = document.querySelector('[data-testid="browser-smoke-result"]');
   const status = document.querySelector('[data-testid="browser-smoke-status"]');
   const frame = document.querySelector('[data-testid="browser-smoke-frame"]');
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('smokeBundleReady') !== '1') {
+    params.set('smokeBundleReady', '1');
+    params.set('bundleQuery', 'conflict');
+    params.set('bundleSchema', 'edgp.npm.diagnostics.v1');
+    window.location.search = params.toString();
+    return;
+  }
   const expectedHrefs = [
     '001-snapshot-right.html',
     '002-npm-diagnostics-report.html',
@@ -119,6 +127,51 @@ def _browser_smoke_script() -> str:
     if (actualText !== expectedText) {
       throw new Error(`${label}: expected ${expectedText}, got ${actualText}`);
     }
+  };
+  const readBundleParams = () => {
+    const current = new URLSearchParams(window.location.search);
+    return {
+      query: current.get('bundleQuery') || '',
+      schema: current.get('bundleSchema') || '',
+    };
+  };
+  const applySearch = (search, value) => {
+    search.value = value;
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const assertFilters = () => {
+    const panel = document.querySelector('[data-report-bundle-filter-panel]');
+    const search = panel?.querySelector('[data-report-bundle-search]');
+    const schema = panel?.querySelector('[data-report-bundle-schema]');
+    const reset = panel?.querySelector('[data-report-bundle-reset]');
+    const count = panel?.querySelector('[data-report-bundle-filter-count]');
+    const cards = () => Array.from(document.querySelectorAll('[data-report-bundle-card]'));
+    const visibleCards = () => cards().filter((card) => !card.hidden);
+    if (!panel || !search || !schema || !reset || !count) {
+      throw new Error('Missing report bundle filter controls');
+    }
+    expect('initial filter query', search.value, 'conflict');
+    expect('initial filter schema', schema.value, 'edgp.npm.diagnostics.v1');
+    expect('initial filtered count', count.textContent, '1 of 3 reports');
+    expect('initial visible cards', visibleCards().length, 1);
+    expectList(
+      'initial visible card schema',
+      visibleCards().map((card) => card.dataset.reportSchema),
+      ['edgp.npm.diagnostics.v1'],
+    );
+    expect('initial URL query', readBundleParams().query, 'conflict');
+    expect('initial URL schema', readBundleParams().schema, 'edgp.npm.diagnostics.v1');
+    applySearch(search, 'snapshot');
+    expect('updated filter query', search.value, 'snapshot');
+    expect('updated URL query', readBundleParams().query, 'snapshot');
+    expect('updated filtered count', count.textContent, '0 of 3 reports');
+    reset.click();
+    expect('reset filter query', search.value, '');
+    expect('reset filter schema', schema.value, '');
+    expect('reset filtered count', count.textContent, '3 of 3 reports');
+    expect('reset visible cards', visibleCards().length, 3);
+    expect('reset URL query', readBundleParams().query, '');
+    expect('reset URL schema', readBundleParams().schema, '');
   };
   const loadFrame = (href) => new Promise((resolve, reject) => {
     frame.onload = () => {
@@ -141,6 +194,7 @@ def _browser_smoke_script() -> str:
   });
   const run = async () => {
     try {
+      assertFilters();
       const cards = Array.from(
         document.querySelectorAll('[data-testid="report-bundle-entry"]'),
       );
@@ -164,7 +218,7 @@ def _browser_smoke_script() -> str:
       }
       const payload = {
         ok: true,
-        checks: 4 + loaded.length,
+        checks: 18 + loaded.length,
         hrefs: expectedHrefs,
         titles: loaded.map((entry) => entry.title),
       };

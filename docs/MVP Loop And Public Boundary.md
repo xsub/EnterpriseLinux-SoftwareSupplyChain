@@ -98,6 +98,8 @@ surfaces are:
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
 - Render graph traversal query reports as static, verifiable report bundles.
+- Render filterable report bundle indexes with shareable URL state for title,
+  source text, and schema searches inside static HTML evidence bundles.
 - Label Maven optional, omitted, and excluded relationship types in graph
   snapshot HTML reports.
 - Render filterable, windowed, and sortable graph snapshot edge explorer
@@ -107,7 +109,7 @@ surfaces are:
 - Generate a self-checking browser smoke HTML page for static graph report
   sorting behavior.
 - Generate a self-checking browser smoke report bundle for static index
-  navigation behavior.
+  navigation and filter behavior.
 - Generate a self-checking browser smoke HTML page for static bundle-catalog
   filter deep links, URL updates, and reset behavior.
 - Generate a self-checking browser smoke HTML page for static graph-diff

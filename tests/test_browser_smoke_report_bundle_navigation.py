@@ -19,6 +19,12 @@ def test_bundle_navigation_smoke_writes_index_members_and_browser_checks(
     assert 'data-testid="browser-smoke-panel"' in html
     assert 'data-testid="browser-smoke-frame"' in html
     assert 'data-testid="browser-smoke-result"' in html
+    assert "smokeBundleReady" in html
+    assert "bundleQuery" in html
+    assert "bundleSchema" in html
+    assert "initial filtered count" in html
+    assert "updated filtered count" in html
+    assert "reset filtered count" in html
     assert "bundle link order" in html
     assert "001-snapshot-right.html" in html
     assert "002-npm-diagnostics-report.html" in html

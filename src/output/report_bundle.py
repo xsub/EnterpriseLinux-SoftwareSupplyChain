@@ -1254,6 +1254,7 @@ def render_bundle_index(
     triage_summary: BundleEntry | None = None,
 ) -> str:
     cards = "\n".join(_entry_card(entry) for entry in entries)
+    filters = _bundle_filter_panel(entries)
     verification = _verification_summary(manifest)
     triage = _triage_summary_card(triage_summary)
     return "\n".join(
@@ -1277,14 +1278,43 @@ def render_bundle_index(
             "</section>",
             verification,
             triage,
+            filters,
             '<section class="reports">',
             cards,
             "</section>",
             "</main>",
+            f"<script>{_bundle_filter_script()}</script>",
             "</body>",
             "</html>",
         ]
     )
+
+
+def _bundle_filter_panel(entries: Sequence[BundleEntry]) -> str:
+    schema_options = "".join(
+        f'<option value="{escape(schema)}">{escape(schema)}</option>'
+        for schema in sorted({entry.schema for entry in entries})
+    )
+    return f"""
+<section class="bundle-filters" data-testid="report-bundle-filter-panel" data-report-bundle-filter-panel>
+  <div class="filter-head">
+    <h2>Report Filters</h2>
+    <span data-report-bundle-filter-count>{len(entries)} reports</span>
+  </div>
+  <div class="bundle-filter-controls">
+    <label>Search
+      <input type="search" data-report-bundle-search aria-label="Filter reports by title, schema, source, or summary text" placeholder="Title, schema, source">
+    </label>
+    <label>Schema
+      <select data-report-bundle-schema aria-label="Filter reports by schema">
+        <option value="">All</option>{schema_options}
+      </select>
+    </label>
+    <div class="bundle-filter-actions">
+      <button type="button" data-report-bundle-reset>Reset</button>
+    </div>
+  </div>
+</section>""".strip()
 
 
 def _triage_summary_card(entry: BundleEntry | None) -> str:
@@ -1449,7 +1479,7 @@ def _entry_card(entry: BundleEntry) -> str:
     metrics = metrics or "<li><span>Summary</span><strong>n/a</strong></li>"
     href = escape(entry.output_path.name)
     return f"""
-<article class="report-card" data-testid="report-bundle-entry">
+<article class="report-card" data-testid="report-bundle-entry" data-report-bundle-card="true" data-report-schema="{escape(entry.schema)}">
   <div>
     <p class="schema">{escape(entry.schema)}</p>
     <h2><a href="{href}">{escape(entry.title)}</a></h2>
@@ -1462,6 +1492,67 @@ def _entry_card(entry: BundleEntry) -> str:
 def _humanize_key(key: str) -> str:
     words = re.sub(r"(?<!^)([A-Z])", r" \1", key).replace("_", " ")
     return words.title()
+
+
+def _bundle_filter_script() -> str:
+    return """
+(() => {
+  const queryParam = "bundleQuery";
+  const schemaParam = "bundleSchema";
+  const panel = document.querySelector("[data-report-bundle-filter-panel]");
+  if (!panel) return;
+  const search = panel.querySelector("[data-report-bundle-search]");
+  const schema = panel.querySelector("[data-report-bundle-schema]");
+  const reset = panel.querySelector("[data-report-bundle-reset]");
+  const count = panel.querySelector("[data-report-bundle-filter-count]");
+  const cards = () => Array.from(document.querySelectorAll("[data-report-bundle-card]"));
+  const setSelectValue = (element, value) => {
+    if (!value) return;
+    const values = Array.from(element.options).map((option) => option.value);
+    if (values.includes(value)) element.value = value;
+  };
+  const readUrlState = () => {
+    const params = new URLSearchParams(window.location.search);
+    search.value = params.get(queryParam) || "";
+    setSelectValue(schema, params.get(schemaParam));
+  };
+  const updateUrlState = () => {
+    const url = new URL(window.location.href);
+    const query = (search.value || "").trim();
+    if (query) url.searchParams.set(queryParam, query);
+    else url.searchParams.delete(queryParam);
+    if (schema.value) url.searchParams.set(schemaParam, schema.value);
+    else url.searchParams.delete(schemaParam);
+    window.history.replaceState({}, "", url);
+  };
+  const apply = (options = {}) => {
+    const syncUrl = options.syncUrl !== false;
+    const query = (search.value || "").trim().toLowerCase();
+    const selectedSchema = schema.value;
+    let shown = 0;
+    const allCards = cards();
+    for (const card of allCards) {
+      const textMatches = !query || (card.textContent || "").toLowerCase().includes(query);
+      const schemaMatches = !selectedSchema || card.dataset.reportSchema === selectedSchema;
+      const visible = textMatches && schemaMatches;
+      card.hidden = !visible;
+      if (visible) shown += 1;
+    }
+    count.textContent = `${shown} of ${allCards.length} reports`;
+    if (syncUrl) updateUrlState();
+  };
+  search.addEventListener("input", () => apply());
+  schema.addEventListener("change", () => apply());
+  reset.addEventListener("click", () => {
+    search.value = "";
+    schema.value = "";
+    apply();
+    search.focus();
+  });
+  readUrlState();
+  apply({ syncUrl: false });
+})();
+""".strip()
 
 
 def _styles() -> str:
@@ -1488,7 +1579,7 @@ body {
   margin: 0 auto;
   padding: 28px 0 40px;
 }
-.hero, .verification, .triage-summary, .report-card {
+.hero, .verification, .triage-summary, .bundle-filters, .report-card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1536,6 +1627,61 @@ a { color: var(--blue); text-decoration-thickness: 2px; text-underline-offset: 3
   margin-top: 3px;
   overflow-wrap: anywhere;
 }
+.bundle-filters {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 18px;
+}
+.filter-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.filter-head h2 { margin: 0; }
+.filter-head span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.bundle-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 280px) auto;
+  gap: 12px;
+  align-items: end;
+}
+.bundle-filter-controls label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.bundle-filter-controls input[type="search"],
+.bundle-filter-controls select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+}
+.bundle-filter-actions button {
+  min-height: 42px;
+  padding: 9px 14px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
 .reports { display: grid; gap: 14px; margin-top: 18px; }
 .triage-summary, .report-card {
   display: grid;
@@ -1567,6 +1713,8 @@ li strong { display: block; margin-top: 2px; font-size: 18px; overflow-wrap: any
   .verification { grid-template-columns: 1fr; }
   .verification div { border-left: 0; border-top: 1px solid var(--line); }
   .verification div:first-child { border-top: 0; }
+  .filter-head { align-items: flex-start; flex-direction: column; }
+  .bundle-filter-controls { grid-template-columns: 1fr; }
   ul { grid-template-columns: 1fr; }
 }
 """.strip()

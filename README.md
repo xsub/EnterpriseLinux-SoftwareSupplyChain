@@ -1110,7 +1110,10 @@ static HTML catalog of the supported report contracts.
 the top-level bundle fingerprint still match the generated directory. It emits
 JSON by default using the documented
 `edgp.report.bundle.verification.v1` contract and supports `--format text` for
-concise terminal checks. The verification report contract is documented in
+concise terminal checks. The bundle index also includes local filters for
+report title, source text, and schema, with shareable URL state in
+`bundleQuery` and `bundleSchema`, so static evidence bundles can be narrowed
+directly in a browser. The verification report contract is documented in
 [`docs/Report Bundle Verification Schema.md`](docs/Report%20Bundle%20Verification%20Schema.md),
 with the machine-readable JSON Schema at
 [`docs/schemas/edgp.report.bundle.verification.v1.schema.json`](docs/schemas/edgp.report.bundle.verification.v1.schema.json).

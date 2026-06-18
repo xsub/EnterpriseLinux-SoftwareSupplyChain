@@ -32,6 +32,15 @@ def test_write_report_bundle_renders_index_and_member_reports(tmp_path) -> None:
     assert index_html.startswith("<!doctype html>")
     assert 'data-testid="report-bundle-index"' in index_html
     assert 'data-testid="report-bundle-verification"' in index_html
+    assert 'data-testid="report-bundle-filter-panel"' in index_html
+    assert 'data-report-bundle-search' in index_html
+    assert 'data-report-bundle-schema' in index_html
+    assert 'data-report-bundle-reset' in index_html
+    assert 'data-report-bundle-card="true"' in index_html
+    assert 'data-report-schema="edgp.npm.diagnostics.v1"' in index_html
+    assert "bundleQuery" in index_html
+    assert "bundleSchema" in index_html
+    assert "window.history.replaceState" in index_html
     assert "001-snapshot-right.html" in index_html
     assert "004-npm-diagnostics-report.html" in index_html
     assert "edgp.npm.diagnostics.v1" in index_html
