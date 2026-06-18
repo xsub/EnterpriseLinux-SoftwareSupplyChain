@@ -277,6 +277,7 @@ edgp triage-summary --bundle reports.tar.gz --format text --fail-on-status fail
 edgp validate --path graph.json
 edgp validate --path reports --format text
 edgp validate --path reports.tar.gz --format text
+edgp validate --path artifacts/csr --format text
 edgp validate --path reports.tar.gz > validation.json
 edgp validate --path validation.json
 edgp report --input validation.json --output validation.html
@@ -993,7 +994,9 @@ machine-readable Draft 2020-12 schemas in [`docs/schemas`](docs/schemas).
 schema subset, including `anyOf` fields such as nullable bundle fingerprints,
 `oneOf` nullable fields such as report roots, typed `additionalProperties`
 maps such as bundle metadata, or validates a report bundle directory with the
-bundle verifier. Deterministic report bundle archives are validated through the
+bundle verifier. Memory-mappable CSR artifact directories are validated through
+the CSR loader, including array digests and `storageProfile` byte totals.
+Deterministic report bundle archives are validated through the
 same read-only entrypoint and appear as `targetType=report-bundle-archive`.
 For bundles that already contain `manifest.triageSummary`, `validate
 --fail-on-status warn|fail` also gates on the generated triage status while

@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+from src.core_graph.artifacts import write_frozen_csr_artifact
+from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.output.report_bundle import write_report_bundle, write_report_bundle_archive
 from src.schema_validation import validate_target
 
@@ -24,6 +26,42 @@ def test_validate_target_accepts_bundle_catalog_nullable_fingerprint() -> None:
     assert report["ok"] is True
     assert report["targetType"] == "json-file"
     assert report["contract"] == "edgp.bundle.catalog.v1"
+
+
+def test_validate_target_accepts_csr_artifact_directory(tmp_path) -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    write_frozen_csr_artifact(graph.freeze(), tmp_path)
+
+    report = validate_target(tmp_path)
+
+    assert report["ok"] is True
+    assert report["targetType"] == "csr-artifact"
+    assert report["contract"] == "edgp.csr.artifact.v1"
+    assert report["summary"] == {"failures": 0}
+    assert report["failures"] == []
+    assert report["csrArtifact"]["nodes"] == 2
+    assert report["csrArtifact"]["edges"] == 1
+    assert report["csrArtifact"]["storageProfile"]["memoryMapped"] is True
+
+
+def test_validate_target_rejects_tampered_csr_artifact_directory(tmp_path) -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    write_frozen_csr_artifact(graph.freeze(), tmp_path)
+    manifest_path = tmp_path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["storageProfile"]["totalBytes"] += 4
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    report = validate_target(tmp_path)
+
+    assert report["ok"] is False
+    assert report["targetType"] == "csr-artifact"
+    assert report["contract"] == "edgp.csr.artifact.v1"
+    assert report["summary"] == {"failures": 1}
+    assert report["failures"][0]["code"] == "csrArtifact.verificationFailed"
+    assert "storageProfile mismatch: totalBytes" in report["failures"][0]["message"]
 
 
 def test_validate_target_preserves_report_top_findings() -> None:

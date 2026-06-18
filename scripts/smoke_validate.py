@@ -5666,10 +5666,23 @@ def _assert_csr_artifact() -> None:
             "lib==2.0.0",
             "core==1.0.0",
         ]
+        validation = _run_cli(["validate", "--path", str(output_dir)])
+        assert validation["ok"] is True
+        assert validation["targetType"] == "csr-artifact"
+        assert validation["contract"] == "edgp.csr.artifact.v1"
+        assert validation["csrArtifact"]["nodes"] == 3
+        assert validation["csrArtifact"]["storageProfile"]["memoryMapped"] is True
         manifest_path = output_dir / "manifest.json"
         tampered_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         tampered_manifest["storageProfile"]["totalBytes"] += 4
         manifest_path.write_text(json.dumps(tampered_manifest), encoding="utf-8")
+        validation_failure = _run_cli_allow_failure(["validate", "--path", str(output_dir)])
+        assert validation_failure["ok"] is False
+        assert validation_failure["targetType"] == "csr-artifact"
+        assert (
+            validation_failure["failures"][0]["code"]
+            == "csrArtifact.verificationFailed"
+        )
         try:
             load_frozen_csr_artifact(output_dir)
         except ValueError as exc:

@@ -325,7 +325,7 @@
     },
     {
       "contract": "edgp.validation.report.v1",
-      "description": "Validation report emitted by edgp validate for JSON reports, report bundles, bundle archives, and export batches.",
+      "description": "Validation report emitted by edgp validate for JSON reports, report bundles, bundle archives, export batches, and CSR artifact directories.",
       "file": "edgp.validation.report.v1.schema.json",
       "id": "urn:edgp:schema:validation-report:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",

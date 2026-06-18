@@ -2,7 +2,7 @@
   "$id": "urn:edgp:schema:validation-report:v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Validation report emitted by edgp validate for JSON reports, report bundles, bundle archives, and export batches.",
+  "description": "Validation report emitted by edgp validate for JSON reports, report bundles, bundle archives, export batches, and CSR artifact directories.",
   "properties": {
     "bundleArchiveVerification": {
       "description": "Nested deterministic report-bundle archive verification payload when validating a report-bundle archive.",
@@ -15,6 +15,10 @@
     "contract": {
       "description": "Documented contract used to validate the target.",
       "type": "string"
+    },
+    "csrArtifact": {
+      "description": "Nested CSR artifact summary when validating a memory-mappable CSR artifact directory.",
+      "type": "object"
     },
     "exportBatchArchiveVerification": {
       "description": "Nested deterministic export-batch archive verification payload when validating an export-batch archive.",
@@ -99,6 +103,7 @@
       "enum": [
         "export-batch",
         "export-batch-archive",
+        "csr-artifact",
         "json-file",
         "report-bundle",
         "report-bundle-archive"

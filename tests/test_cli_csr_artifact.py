@@ -43,3 +43,8 @@ def test_cli_csr_artifact_writes_verified_runtime_artifact(tmp_path, capsys) -> 
         "core==1.0.0",
     ]
     assert loaded.storage_profile()["memoryMapped"] is True
+
+    assert main(["validate", "--path", str(output_dir), "--format", "text"]) == 0
+    assert capsys.readouterr().out.strip() == (
+        "OK targetType=csr-artifact failures=0 contract=edgp.csr.artifact.v1"
+    )

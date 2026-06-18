@@ -67,12 +67,15 @@ def write_frozen_csr_artifact(
 
 
 def load_frozen_csr_artifact(
-    input_dir: str | Path, *, mmap_mode: str | None = "r"
+    input_dir: str | Path,
+    *,
+    manifest_name: str = "manifest.json",
+    mmap_mode: str | None = "r",
 ) -> FrozenCSRGraph:
     """Load and verify a frozen CSR graph artifact directory."""
 
     source = Path(input_dir)
-    manifest = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads((source / manifest_name).read_text(encoding="utf-8"))
     if manifest.get("schema") != CSR_ARTIFACT_SCHEMA:
         raise ValueError("CSR artifact manifest has an unsupported schema")
     if manifest.get("layout") != CSR_ARTIFACT_LAYOUT:

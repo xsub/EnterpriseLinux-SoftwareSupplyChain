@@ -8,6 +8,7 @@ import tarfile
 from pathlib import Path
 from typing import Any, Mapping
 
+from src.core_graph.artifacts import CSR_ARTIFACT_SCHEMA, load_frozen_csr_artifact
 from src.export_batch import (
     EXPORT_BATCH_SCHEMA,
     verify_graph_export_batch,
@@ -27,6 +28,8 @@ def validate_target(path: Path, *, manifest_name: str = "manifest.json") -> dict
     if path.is_dir():
         if _is_export_batch_dir(path, manifest_name=manifest_name):
             return _validate_export_batch(path, manifest_name=manifest_name)
+        if _is_csr_artifact_dir(path, manifest_name=manifest_name):
+            return _validate_csr_artifact(path, manifest_name=manifest_name)
         return _validate_bundle(path, manifest_name=manifest_name)
     if _is_report_bundle_archive(path):
         if _archive_manifest_schema(path, manifest_name=manifest_name) == EXPORT_BATCH_SCHEMA:
@@ -46,6 +49,46 @@ def _is_export_batch_dir(path: Path, *, manifest_name: str) -> bool:
     except (FileNotFoundError, json.JSONDecodeError):
         return False
     return isinstance(payload, dict) and payload.get("schema") == EXPORT_BATCH_SCHEMA
+
+
+def _is_csr_artifact_dir(path: Path, *, manifest_name: str) -> bool:
+    try:
+        payload = json.loads((path / manifest_name).read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return False
+    return isinstance(payload, dict) and payload.get("schema") == CSR_ARTIFACT_SCHEMA
+
+
+def _validate_csr_artifact(path: Path, *, manifest_name: str) -> dict[str, Any]:
+    failures: list[dict[str, str]] = []
+    try:
+        graph = load_frozen_csr_artifact(path, manifest_name=manifest_name)
+    except (FileNotFoundError, OSError, KeyError, TypeError, ValueError) as exc:
+        failures.append(
+            {
+                "code": "csrArtifact.verificationFailed",
+                "message": str(exc),
+                "path": str(path),
+            }
+        )
+        graph = None
+
+    report: dict[str, Any] = {
+        "schema": VALIDATION_SCHEMA,
+        "target": str(path.resolve()),
+        "targetType": "csr-artifact",
+        "contract": CSR_ARTIFACT_SCHEMA,
+        "ok": not failures,
+        "summary": {"failures": len(failures)},
+        "failures": failures,
+    }
+    if graph is not None:
+        report["csrArtifact"] = {
+            "nodes": len(graph),
+            "edges": int(len(graph.column_indices)),
+            "storageProfile": graph.storage_profile(),
+        }
+    return report
 
 
 def _validate_export_batch(path: Path, *, manifest_name: str) -> dict[str, Any]:
