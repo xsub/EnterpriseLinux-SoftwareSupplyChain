@@ -158,6 +158,16 @@
     },
     {
       "derivedFrom": [
+        "tests/fixtures/real-data-replacement-plan.json"
+      ],
+      "generator": "scripts/generate_public_fixture_reports.py",
+      "kind": "generated-public-report",
+      "notes": "No-regression baseline for comparing public-data replacement backlog movement between two fixture snapshots.",
+      "path": "tests/fixtures/real-data-replacement-plan-diff.json",
+      "reportSchema": "edgp.real_data.replacement_plan_diff.v1"
+    },
+    {
+      "derivedFrom": [
         "tests/fixtures/real-data-coverage.json"
       ],
       "generator": "scripts/generate_public_fixture_reports.py",
@@ -265,15 +275,15 @@
   ],
   "status": "warn",
   "summary": {
-    "catalogedFiles": 86,
+    "catalogedFiles": 87,
     "deterministicPublicDerivedVariants": 2,
-    "directPublicSourceCoveragePercent": 2.33,
+    "directPublicSourceCoveragePercent": 2.3,
     "directPublicSources": 2,
-    "generatedPublicReports": 12,
+    "generatedPublicReports": 13,
     "intentionallySyntheticGroups": 4,
     "localPointerFixtures": 1,
-    "publicEvidenceCoveragePercent": 19.77,
-    "publicEvidenceFiles": 17,
+    "publicEvidenceCoveragePercent": 20.69,
+    "publicEvidenceFiles": 18,
     "replacementCandidateGroups": 4,
     "sourceUrls": 2,
     "syntheticFiles": 69,

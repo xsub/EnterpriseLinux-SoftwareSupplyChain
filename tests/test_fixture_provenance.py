@@ -36,7 +36,7 @@ def test_fixture_provenance_documents_public_and_generated_sources() -> None:
     entries = {entry["path"]: entry for entry in payload["entries"]}
 
     assert payload["summary"]["publicDerivedSources"] == 2
-    assert payload["summary"]["generatedPublicReports"] == 12
+    assert payload["summary"]["generatedPublicReports"] == 13
     assert entries["tests/fixtures/rpm-primary.xml"]["sourceUrl"].startswith(
         "https://repo.almalinux.org/"
     )

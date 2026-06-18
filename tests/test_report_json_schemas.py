@@ -113,6 +113,10 @@ SCHEMA_FIXTURES = {
         Path("docs/schemas/edgp.real_data.replacement_plan.v1.schema.json"),
         Path("tests/fixtures/real-data-replacement-plan.json"),
     ),
+    "edgp.real_data.replacement_plan_diff.v1": (
+        Path("docs/schemas/edgp.real_data.replacement_plan_diff.v1.schema.json"),
+        Path("tests/fixtures/real-data-replacement-plan-diff.json"),
+    ),
     "edgp.real_data.coverage_diff.v1": (
         Path("docs/schemas/edgp.real_data.coverage_diff.v1.schema.json"),
         Path("tests/fixtures/real-data-coverage-diff.json"),

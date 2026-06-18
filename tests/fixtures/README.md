@@ -44,6 +44,7 @@ in sync with their source fixtures and generator functions:
 - `libsolv-bridge.json`
 - `real-data-coverage.json`
 - `real-data-replacement-plan.json`
+- `real-data-replacement-plan-diff.json`
 - `real-data-coverage-diff.json`
 
 The provenance catalog is generated from the current fixture tree and committed
@@ -77,12 +78,16 @@ python -B -m src.cli real-data-coverage-bundle --fixture-dir tests/fixtures --ou
 python -B -m src.cli real-data-replacement-plan --fixture-dir tests/fixtures
 python -B -m src.cli real-data-replacement-plan --coverage tests/fixtures/real-data-coverage.json --fail-on-priority high
 python -B -m src.cli real-data-replacement-plan-bundle --fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-replacement-plan-bundle
+python -B -m src.cli real-data-replacement-plan-diff --left tests/fixtures/real-data-replacement-plan.json --right tests/fixtures/real-data-replacement-plan.json
+python -B -m src.cli real-data-replacement-plan-diff --left-fixture-dir tests/fixtures --right-fixture-dir tests/fixtures
+python -B -m src.cli real-data-replacement-plan-diff-bundle --left tests/fixtures/real-data-replacement-plan.json --right tests/fixtures/real-data-replacement-plan.json --output-dir /tmp/edgp-real-data-replacement-plan-diff-bundle
 python -B -m src.cli real-data-coverage-diff --left tests/fixtures/real-data-coverage.json --right tests/fixtures/real-data-coverage.json
 python -B -m src.cli real-data-coverage-diff --left-fixture-dir tests/fixtures --right-fixture-dir tests/fixtures
 python -B -m src.cli real-data-coverage-diff-bundle --left tests/fixtures/real-data-coverage.json --right tests/fixtures/real-data-coverage.json --output-dir /tmp/edgp-real-data-coverage-diff-bundle
 python -B -m src.cli real-data-coverage-diff-bundle --left-fixture-dir tests/fixtures --right-fixture-dir tests/fixtures --output-dir /tmp/edgp-real-data-coverage-diff-fixture-dir-bundle
 python -B -m src.cli report --input tests/fixtures/real-data-coverage.json --output /tmp/edgp-real-data-coverage.html
 python -B -m src.cli report --input tests/fixtures/real-data-replacement-plan.json --output /tmp/edgp-real-data-replacement-plan.html
+python -B -m src.cli report --input tests/fixtures/real-data-replacement-plan-diff.json --output /tmp/edgp-real-data-replacement-plan-diff.html
 ```
 
 ## Synthetic Fixtures

@@ -54,6 +54,10 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
   ranks fixture groups that should move toward public-derived evidence, keeps
   intentionally deferred synthetic groups visible, and carries optional
   priority policy failures for CI.
+- `edgp.real_data.replacement_plan_diff.v1`:
+  [`edgp.real_data.replacement_plan_diff.v1.schema.json`](schemas/edgp.real_data.replacement_plan_diff.v1.schema.json)
+  compares two real-data replacement plans, including candidate backlog deltas,
+  changed candidate groups, and optional regression policy failures for CI.
 - `edgp.real_data.coverage_diff.v1`:
   [`edgp.real_data.coverage_diff.v1.schema.json`](schemas/edgp.real_data.coverage_diff.v1.schema.json)
   compares two real-data coverage reports, including public-evidence deltas,

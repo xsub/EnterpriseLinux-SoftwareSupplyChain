@@ -2,8 +2,8 @@
   "left": {
     "fixtureRoot": "tests/fixtures",
     "label": "baseline",
-    "publicEvidenceCoveragePercent": 19.77,
-    "publicEvidenceFiles": 17,
+    "publicEvidenceCoveragePercent": 20.69,
+    "publicEvidenceFiles": 18,
     "replacementCandidateGroups": 4,
     "status": "warn",
     "syntheticFiles": 69
@@ -21,8 +21,8 @@
   "right": {
     "fixtureRoot": "tests/fixtures",
     "label": "current",
-    "publicEvidenceCoveragePercent": 19.77,
-    "publicEvidenceFiles": 17,
+    "publicEvidenceCoveragePercent": 20.69,
+    "publicEvidenceFiles": 18,
     "replacementCandidateGroups": 4,
     "status": "warn",
     "syntheticFiles": 69

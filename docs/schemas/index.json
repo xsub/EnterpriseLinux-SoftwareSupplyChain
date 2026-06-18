@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/generate_schema_index.py",
   "schema": "edgp.schema.index.v1",
-  "schemaCount": 40,
+  "schemaCount": 41,
   "schemas": [
     {
       "contract": "edgp.advisory.report.v1",
@@ -218,6 +218,14 @@
       "id": "urn:edgp:schema:real-data-replacement-plan:v1",
       "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
       "title": "EDGP Real-Data Replacement Plan v1"
+    },
+    {
+      "contract": "edgp.real_data.replacement_plan_diff.v1",
+      "description": "Diff report for comparing two EDGP real-data replacement plans and detecting backlog regressions.",
+      "file": "edgp.real_data.replacement_plan_diff.v1.schema.json",
+      "id": "urn:edgp:schema:real-data-replacement-plan-diff:v1",
+      "jsonSchema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "EDGP Real-Data Replacement Plan Diff v1"
     },
     {
       "contract": "edgp.report.bundle.archive.v1",

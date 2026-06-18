@@ -1,11 +1,11 @@
 {
   "coverageSummary": {
-    "catalogedFiles": 86,
+    "catalogedFiles": 87,
     "coverageStatus": "warn",
     "directPublicSources": 2,
-    "generatedPublicReports": 12,
-    "publicEvidenceCoveragePercent": 19.77,
-    "publicEvidenceFiles": 17,
+    "generatedPublicReports": 13,
+    "publicEvidenceCoveragePercent": 20.69,
+    "publicEvidenceFiles": 18,
     "syntheticFiles": 69
   },
   "deferredGroups": [
@@ -204,8 +204,8 @@
     "highPriorityGroups": 1,
     "lowPriorityGroups": 4,
     "mediumPriorityGroups": 3,
-    "publicEvidenceCoveragePercent": 19.77,
-    "publicEvidenceFiles": 17,
+    "publicEvidenceCoveragePercent": 20.69,
+    "publicEvidenceFiles": 18,
     "replacementCandidates": 4,
     "syntheticFiles": 69,
     "totalGroups": 8

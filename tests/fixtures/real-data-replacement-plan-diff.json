@@ -1,0 +1,51 @@
+{
+  "deferredGroups": {
+    "added": [],
+    "changed": [],
+    "removed": []
+  },
+  "left": {
+    "candidateFiles": 18,
+    "deferredGroups": 4,
+    "fixtureRoot": "tests/fixtures",
+    "highPriorityGroups": 1,
+    "label": "baseline",
+    "mediumPriorityGroups": 3,
+    "publicEvidenceCoveragePercent": 20.69,
+    "replacementCandidates": 4,
+    "status": "warn"
+  },
+  "regressions": [],
+  "replacementCandidates": {
+    "added": [],
+    "changed": [],
+    "removed": []
+  },
+  "right": {
+    "candidateFiles": 18,
+    "deferredGroups": 4,
+    "fixtureRoot": "tests/fixtures",
+    "highPriorityGroups": 1,
+    "label": "current",
+    "mediumPriorityGroups": 3,
+    "publicEvidenceCoveragePercent": 20.69,
+    "replacementCandidates": 4,
+    "status": "warn"
+  },
+  "schema": "edgp.real_data.replacement_plan_diff.v1",
+  "status": "pass",
+  "summary": {
+    "addedCandidates": 0,
+    "addedDeferredGroups": 0,
+    "candidateFilesDelta": 0,
+    "changedCandidates": 0,
+    "changedDeferredGroups": 0,
+    "deferredGroupsDelta": 0,
+    "highPriorityGroupsDelta": 0,
+    "mediumPriorityGroupsDelta": 0,
+    "regressions": 0,
+    "removedCandidates": 0,
+    "removedDeferredGroups": 0,
+    "replacementCandidatesDelta": 0
+  }
+}

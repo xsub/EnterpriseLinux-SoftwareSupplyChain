@@ -1,0 +1,126 @@
+{
+  "$id": "urn:edgp:schema:real-data-replacement-plan-diff:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Diff report for comparing two EDGP real-data replacement plans and detecting backlog regressions.",
+  "properties": {
+    "deferredGroups": {"$ref": "#/$defs/group_diff"},
+    "left": {"$ref": "#/$defs/side"},
+    "policy": {"$ref": "#/$defs/policy"},
+    "regressions": {
+      "items": {"$ref": "#/$defs/regression"},
+      "type": "array"
+    },
+    "replacementCandidates": {"$ref": "#/$defs/group_diff"},
+    "right": {"$ref": "#/$defs/side"},
+    "schema": {"const": "edgp.real_data.replacement_plan_diff.v1"},
+    "status": {"enum": ["pass", "fail"], "type": "string"},
+    "summary": {
+      "additionalProperties": false,
+      "properties": {
+        "addedCandidates": {"type": "integer"},
+        "addedDeferredGroups": {"type": "integer"},
+        "candidateFilesDelta": {"type": "integer"},
+        "changedCandidates": {"type": "integer"},
+        "changedDeferredGroups": {"type": "integer"},
+        "deferredGroupsDelta": {"type": "integer"},
+        "highPriorityGroupsDelta": {"type": "integer"},
+        "mediumPriorityGroupsDelta": {"type": "integer"},
+        "regressions": {"type": "integer"},
+        "removedCandidates": {"type": "integer"},
+        "removedDeferredGroups": {"type": "integer"},
+        "replacementCandidatesDelta": {"type": "integer"}
+      },
+      "required": [
+        "replacementCandidatesDelta",
+        "candidateFilesDelta",
+        "highPriorityGroupsDelta",
+        "mediumPriorityGroupsDelta",
+        "deferredGroupsDelta",
+        "addedCandidates",
+        "removedCandidates",
+        "changedCandidates",
+        "addedDeferredGroups",
+        "removedDeferredGroups",
+        "changedDeferredGroups",
+        "regressions"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "left",
+    "right",
+    "status",
+    "summary",
+    "replacementCandidates",
+    "deferredGroups",
+    "regressions"
+  ],
+  "title": "EDGP Real-Data Replacement Plan Diff v1",
+  "type": "object",
+  "$defs": {
+    "group_diff": {
+      "additionalProperties": false,
+      "properties": {
+        "added": {"items": {"type": "object"}, "type": "array"},
+        "changed": {"items": {"type": "object"}, "type": "array"},
+        "removed": {"items": {"type": "object"}, "type": "array"}
+      },
+      "required": ["added", "removed", "changed"],
+      "type": "object"
+    },
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "exitCode": {"enum": [0, 2], "type": "integer"},
+        "failOnRegression": {"type": "boolean"},
+        "failures": {
+          "items": {"$ref": "#/$defs/regression"},
+          "type": "array"
+        },
+        "status": {"enum": ["pass", "fail"], "type": "string"}
+      },
+      "required": ["failOnRegression", "status", "exitCode", "failures"],
+      "type": "object"
+    },
+    "regression": {
+      "additionalProperties": true,
+      "properties": {
+        "code": {"type": "string"},
+        "delta": {"type": "number"},
+        "message": {"type": "string"},
+        "metric": {"type": "string"}
+      },
+      "required": ["code", "metric", "delta", "message"],
+      "type": "object"
+    },
+    "side": {
+      "additionalProperties": false,
+      "properties": {
+        "candidateFiles": {"type": "integer"},
+        "deferredGroups": {"type": "integer"},
+        "fixtureRoot": {"type": "string"},
+        "highPriorityGroups": {"type": "integer"},
+        "label": {"type": "string"},
+        "mediumPriorityGroups": {"type": "integer"},
+        "publicEvidenceCoveragePercent": {"type": "number"},
+        "replacementCandidates": {"type": "integer"},
+        "status": {"type": "string"}
+      },
+      "required": [
+        "label",
+        "fixtureRoot",
+        "status",
+        "replacementCandidates",
+        "candidateFiles",
+        "highPriorityGroups",
+        "mediumPriorityGroups",
+        "deferredGroups",
+        "publicEvidenceCoveragePercent"
+      ],
+      "type": "object"
+    }
+  }
+}

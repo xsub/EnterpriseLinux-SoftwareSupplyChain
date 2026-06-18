@@ -143,6 +143,15 @@ GENERATED_REPORTS: list[dict[str, Any]] = [
         ),
     },
     {
+        "path": "real-data-replacement-plan-diff.json",
+        "reportSchema": "edgp.real_data.replacement_plan_diff.v1",
+        "derivedFrom": ["tests/fixtures/real-data-replacement-plan.json"],
+        "notes": (
+            "No-regression baseline for comparing public-data replacement "
+            "backlog movement between two fixture snapshots."
+        ),
+    },
+    {
         "path": "real-data-coverage-diff.json",
         "reportSchema": "edgp.real_data.coverage_diff.v1",
         "derivedFrom": ["tests/fixtures/real-data-coverage.json"],

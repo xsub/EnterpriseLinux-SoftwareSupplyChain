@@ -60,6 +60,7 @@ The public source-kind values are:
 - `real-data-coverage`
 - `real-data-coverage-diff`
 - `real-data-replacement-plan`
+- `real-data-replacement-plan-diff`
 - `edgp-json`
 
 ## Example

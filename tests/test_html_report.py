@@ -469,6 +469,10 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
             "real-data-replacement-plan-candidates-panel",
         ),
         (
+            "tests/fixtures/real-data-replacement-plan-diff.json",
+            "real-data-replacement-plan-diff-sides-panel",
+        ),
+        (
             "tests/fixtures/real-data-coverage-diff.json",
             "real-data-coverage-diff-sides-panel",
         ),

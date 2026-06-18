@@ -163,7 +163,7 @@
       "sha256": "3746a15364ce8776767158f0a24e525e3166a707a9340cdc0a97ba80e1a6a35a"
     },
     {
-      "bytes": 16798,
+      "bytes": 17265,
       "derivedFrom": [
         "tests/fixtures/fixture-provenance.json"
       ],
@@ -172,7 +172,7 @@
       "notes": "Summarizes which committed fixtures are public-derived, generated, or intentionally synthetic.",
       "path": "tests/fixtures/real-data-coverage.json",
       "reportSchema": "edgp.real_data.coverage.v1",
-      "sha256": "7605868d8a480ef7c78081c2ac2fb20d422658b66e3417f6e783ad4614804ff5"
+      "sha256": "a9607bf4b3b0e22afba6ff0a3befc57861c55d015f0466418a1f8045f65a9661"
     },
     {
       "bytes": 8886,
@@ -184,7 +184,19 @@
       "notes": "Ranks synthetic fixture groups that should move toward public evidence where doing so improves data fidelity.",
       "path": "tests/fixtures/real-data-replacement-plan.json",
       "reportSchema": "edgp.real_data.replacement_plan.v1",
-      "sha256": "989a789730ae06695fbbdd11f7a735c7018f40cedbd286e45db470cc43951059"
+      "sha256": "8be9d208a6d8cef3f514ee75e9b780d6a0e8c94fcd71a2247211aedc954fd30d"
+    },
+    {
+      "bytes": 1226,
+      "derivedFrom": [
+        "tests/fixtures/real-data-replacement-plan.json"
+      ],
+      "generator": "scripts/generate_public_fixture_reports.py",
+      "kind": "generated-public-report",
+      "notes": "No-regression baseline for comparing public-data replacement backlog movement between two fixture snapshots.",
+      "path": "tests/fixtures/real-data-replacement-plan-diff.json",
+      "reportSchema": "edgp.real_data.replacement_plan_diff.v1",
+      "sha256": "4e4e4aa5280c5542d1e658c9e75a5e64765e55644aa4cb8d71c24e01a3aef349"
     },
     {
       "bytes": 1242,
@@ -196,7 +208,7 @@
       "notes": "No-regression baseline for comparing public evidence coverage between two fixture snapshots.",
       "path": "tests/fixtures/real-data-coverage-diff.json",
       "reportSchema": "edgp.real_data.coverage_diff.v1",
-      "sha256": "a785b7f130a8678182b897aa0eb3342a78534d0a66b2fdfc05589699f68c33b0"
+      "sha256": "0fae563193be4a6b39278676af6e30b8951abf072fb729d06d92b481c569a469"
     }
   ],
   "fixtureRoot": "tests/fixtures",
@@ -231,9 +243,9 @@
     }
   ],
   "summary": {
-    "catalogedFiles": 86,
+    "catalogedFiles": 87,
     "deterministicPublicDerivedVariants": 2,
-    "generatedPublicReports": 12,
+    "generatedPublicReports": 13,
     "publicDerivedSources": 2,
     "sourceUrls": 2,
     "syntheticGroups": 8

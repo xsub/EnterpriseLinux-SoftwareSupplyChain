@@ -48,6 +48,7 @@ SOURCE_KINDS = {
     "real-data-coverage",
     "real-data-coverage-diff",
     "real-data-replacement-plan",
+    "real-data-replacement-plan-diff",
     "rpm-albs-provenance",
     "rpm-installed",
     "rpm-repository",
@@ -1406,6 +1407,8 @@ def _report_title(payload: dict[str, Any]) -> str:
         return "Public Advisory Feed"
     if schema == "edgp.real_data.replacement_plan.v1":
         return "Real-Data Replacement Plan"
+    if schema == "edgp.real_data.replacement_plan_diff.v1":
+        return "Real-Data Replacement Plan Diff"
     if schema == "edgp.query.report.v1":
         return f"Query Report - {payload.get('operation') or 'query'}"
     if schema == "edgp.bundle.catalog.v1":

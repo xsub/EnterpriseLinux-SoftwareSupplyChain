@@ -375,6 +375,9 @@ surfaces are:
 - Expose ranked real-data replacement plans as CLI reports and static
   verifiable report bundles so high-value public fixture replacement work is
   visible without private infrastructure.
+- Compare ranked real-data replacement plans between snapshots so candidate
+  backlog regressions and progress can be reviewed as JSON, static HTML, and
+  triage-aware report bundles.
 - Compare real-data coverage reports between snapshots so public evidence
   regressions, added evidence, removed evidence, and replacement-plan changes
   can be reviewed as JSON, static HTML, and triage-aware report bundles.

@@ -62,6 +62,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_real_data_coverage_report(payload)
     if schema == "edgp.real_data.replacement_plan.v1":
         return render_real_data_replacement_plan_report(payload)
+    if schema == "edgp.real_data.replacement_plan_diff.v1":
+        return render_real_data_replacement_plan_diff_report(payload)
     if schema == "edgp.real_data.coverage_diff.v1":
         return render_real_data_coverage_diff_report(payload)
     if schema == "edgp.performance.report.v1":
@@ -1235,6 +1237,115 @@ def _real_data_replacement_plan_policy_rows(value: object) -> list[dict[str, Any
             "status": value.get("status"),
             "failOnPriority": value.get("failOnPriority"),
             "matchedReplacementGroups": value.get("matchedReplacementGroups"),
+            "exitCode": value.get("exitCode"),
+            "failures": failure_codes,
+        }
+    ]
+
+
+def render_real_data_replacement_plan_diff_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.real_data.replacement_plan_diff.v1":
+        raise ValueError(
+            "HTML real-data replacement plan diff input must be an EDGP report"
+        )
+
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    return _document(
+        "EDGP Real-Data Replacement Plan Diff",
+        [
+            _generic_hero(
+                eyebrow=str(report.get("status", "diff")),
+                heading="Replacement backlog trend",
+                schema=str(report.get("schema")),
+                metrics=[
+                    (
+                        "Candidate Delta",
+                        summary.get("replacementCandidatesDelta", 0),
+                    ),
+                    ("File Delta", summary.get("candidateFilesDelta", 0)),
+                    ("High Delta", summary.get("highPriorityGroupsDelta", 0)),
+                    ("Medium Delta", summary.get("mediumPriorityGroupsDelta", 0)),
+                    ("Deferred Delta", summary.get("deferredGroupsDelta", 0)),
+                    ("Regressions", summary.get("regressions", 0)),
+                ],
+            ),
+            _rows_panel(
+                "Compared Plans",
+                [report.get("left", {}), report.get("right", {})],
+                [
+                    "label",
+                    "fixtureRoot",
+                    "status",
+                    "replacementCandidates",
+                    "candidateFiles",
+                    "highPriorityGroups",
+                    "mediumPriorityGroups",
+                    "deferredGroups",
+                    "publicEvidenceCoveragePercent",
+                ],
+                test_id="real-data-replacement-plan-diff-sides-panel",
+            ),
+            _rows_panel(
+                "Regressions",
+                report.get("regressions", []),
+                ["code", "metric", "delta", "message"],
+                test_id="real-data-replacement-plan-diff-regressions-panel",
+            ),
+            _rows_panel(
+                "Added Candidates",
+                _nested_rows(report, "replacementCandidates", "added"),
+                ["rank", "group", "priority", "decision", "fileCount", "nextStep"],
+                test_id="real-data-replacement-plan-diff-added-candidates-panel",
+            ),
+            _rows_panel(
+                "Removed Candidates",
+                _nested_rows(report, "replacementCandidates", "removed"),
+                ["rank", "group", "priority", "decision", "fileCount", "nextStep"],
+                test_id="real-data-replacement-plan-diff-removed-candidates-panel",
+            ),
+            _rows_panel(
+                "Changed Candidates",
+                _nested_rows(report, "replacementCandidates", "changed"),
+                ["group", "changedKeys", "left", "right"],
+                test_id="real-data-replacement-plan-diff-changed-candidates-panel",
+            ),
+            _rows_panel(
+                "Changed Deferred Groups",
+                _nested_rows(report, "deferredGroups", "changed"),
+                ["group", "changedKeys", "left", "right"],
+                test_id="real-data-replacement-plan-diff-deferred-panel",
+            ),
+            _rows_panel(
+                "Policy Gate",
+                _real_data_replacement_plan_diff_policy_rows(report.get("policy")),
+                ["status", "failOnRegression", "exitCode", "failures"],
+                test_id="real-data-replacement-plan-diff-policy-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def _real_data_replacement_plan_diff_policy_rows(
+    value: object,
+) -> list[dict[str, Any]]:
+    if not isinstance(value, dict):
+        return []
+    failures = value.get("failures", [])
+    if isinstance(failures, list):
+        failure_codes = [
+            str(item.get("code", "unknown"))
+            for item in failures
+            if isinstance(item, dict)
+        ]
+    else:
+        failure_codes = []
+    return [
+        {
+            "status": value.get("status"),
+            "failOnRegression": value.get("failOnRegression"),
             "exitCode": value.get("exitCode"),
             "failures": failure_codes,
         }
