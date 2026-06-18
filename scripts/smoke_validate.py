@@ -4415,6 +4415,33 @@ def _assert_browser_smoke_bundle_catalog_filters() -> None:
         assert "dataset.browserSmokeStatus = 'pass'" in html
 
 
+def _assert_browser_smoke_graph_diff_filters() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "graph-diff-filters-smoke.html"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "scripts/browser_smoke_graph_diff_filters.py",
+                "--output",
+                str(output_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_path)
+        html = output_path.read_text(encoding="utf-8")
+        assert 'data-testid="graph-diff-filter-panel"' in html
+        assert 'data-testid="browser-smoke-panel"' in html
+        assert 'data-testid="browser-smoke-result"' in html
+        assert "initial filtered count" in html
+        assert "updated URL query" in html
+        assert "reset filtered count" in html
+        assert "dataset.browserSmokeStatus = 'pass'" in html
+
+
 def _assert_impact_html_report() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_path = Path(temp_dir) / "impact-report.html"
@@ -5825,6 +5852,10 @@ def main(argv: list[str] | None = None) -> int:
         (
             "browser smoke bundle catalog filters",
             _assert_browser_smoke_bundle_catalog_filters,
+        ),
+        (
+            "browser smoke graph diff filters",
+            _assert_browser_smoke_graph_diff_filters,
         ),
         ("impact html report", _assert_impact_html_report),
         ("advisory html report", _assert_advisory_html_report),

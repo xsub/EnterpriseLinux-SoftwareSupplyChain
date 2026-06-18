@@ -869,6 +869,8 @@ movement before drilling into every node and edge table. The static graph-diff
 HTML also includes workbench filters for classification text and change kind;
 filter state is reflected in `graphDiffQuery` and `graphDiffKind` URL
 parameters so a narrowed package-change review can be shared as a plain link.
+`scripts/browser_smoke_graph_diff_filters.py` generates a self-checking static
+page for those graph-diff filter deep links, URL updates, and reset behavior.
 
 `edgp diff-tree` compares the dependency or dependent cone around one selected
 node in two snapshots. It resolves `--node` by exact node ID or unambiguous
