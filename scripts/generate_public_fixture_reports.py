@@ -21,6 +21,7 @@ from src.albs_log_intelligence import build_albs_log_intelligence_report
 from src.albs_release_completeness import build_albs_release_completeness_report
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.libsolv_bridge import build_libsolv_bridge_report
+from src.public_advisory_feed import build_public_advisory_feed_report
 from src.real_data_coverage import build_real_data_coverage_report
 from src.real_data_coverage_diff import build_real_data_coverage_diff_report
 from src.real_data_replacement_plan import build_real_data_replacement_plan_report
@@ -92,6 +93,12 @@ def build_public_fixture_reports(
         ),
         fixture_dir / "libsolv-bridge.json": build_libsolv_bridge_report(
             fixture_dir / "libsolv-transaction.txt"
+        ),
+        fixture_dir / "public-advisory-feed.json": (
+            build_public_advisory_feed_report(
+                _json_fixture(fixture_dir / "public-osv-npm-lodash.json"),
+                ecosystem="npm",
+            )
         ),
         fixture_dir / "real-data-coverage.json": real_data_coverage,
         fixture_dir / "real-data-replacement-plan.json": real_data_replacement_plan,

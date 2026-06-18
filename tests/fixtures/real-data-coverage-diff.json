@@ -2,11 +2,11 @@
   "left": {
     "fixtureRoot": "tests/fixtures",
     "label": "baseline",
-    "publicEvidenceCoveragePercent": 20.69,
-    "publicEvidenceFiles": 18,
+    "publicEvidenceCoveragePercent": 22.73,
+    "publicEvidenceFiles": 20,
     "replacementCandidateGroups": 4,
     "status": "warn",
-    "syntheticFiles": 69
+    "syntheticFiles": 68
   },
   "publicEvidence": {
     "added": [],
@@ -21,11 +21,11 @@
   "right": {
     "fixtureRoot": "tests/fixtures",
     "label": "current",
-    "publicEvidenceCoveragePercent": 20.69,
-    "publicEvidenceFiles": 18,
+    "publicEvidenceCoveragePercent": 22.73,
+    "publicEvidenceFiles": 20,
     "replacementCandidateGroups": 4,
     "status": "warn",
-    "syntheticFiles": 69
+    "syntheticFiles": 68
   },
   "schema": "edgp.real_data.coverage_diff.v1",
   "status": "pass",

@@ -25,6 +25,10 @@ The same provenance is also available as the machine-readable EDGP report
 - `albs-build-updated.json` is a deterministic companion snapshot that models a
   later ALBS build state for diff, timing-delta, log-signal, and release
   completeness tests.
+- `public-osv-npm-lodash.json` is a compact OSV/GHSA excerpt from
+  `https://api.osv.dev/v1/vulns/GHSA-35jh-r3h4-6jhm`. It preserves the real
+  advisory ID, `npm` package URL, severity, SEMVER range, and advisory
+  references for `lodash`.
 
 ## Derived Report Fixtures
 
@@ -42,6 +46,7 @@ in sync with their source fixtures and generator functions:
 - `albs-release-completeness.json`
 - `rpm-albs-provenance.json`
 - `libsolv-bridge.json`
+- `public-advisory-feed.json`
 - `real-data-coverage.json`
 - `real-data-replacement-plan.json`
 - `real-data-replacement-plan-diff.json`

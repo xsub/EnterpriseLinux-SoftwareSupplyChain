@@ -52,6 +52,14 @@
       "sourceUrl": "https://build.almalinux.org/api/v1/builds/17812/"
     },
     {
+      "kind": "public-derived-source",
+      "notes": "Curated public OSV excerpt preserving the real GHSA id, npm package URL, severity, SEMVER range, and advisory references.",
+      "path": "tests/fixtures/public-osv-npm-lodash.json",
+      "refreshedAt": "2026-06-18",
+      "source": "OSV GHSA-35jh-r3h4-6jhm npm lodash vulnerability excerpt",
+      "sourceUrl": "https://api.osv.dev/v1/vulns/GHSA-35jh-r3h4-6jhm"
+    },
+    {
       "derivedFrom": [
         "tests/fixtures/rpm-primary.xml"
       ],
@@ -135,6 +143,16 @@
       "kind": "generated-public-report",
       "path": "tests/fixtures/libsolv-bridge.json",
       "reportSchema": "edgp.libsolv.bridge.v1"
+    },
+    {
+      "derivedFrom": [
+        "tests/fixtures/public-osv-npm-lodash.json"
+      ],
+      "generator": "scripts/generate_public_fixture_reports.py",
+      "kind": "generated-public-report",
+      "notes": "Normalizes the public OSV npm lodash excerpt into EDGP overlay records.",
+      "path": "tests/fixtures/public-advisory-feed.json",
+      "reportSchema": "edgp.public.advisory_feed.v1"
     },
     {
       "derivedFrom": [
@@ -226,7 +244,7 @@
     },
     {
       "decision": "replace-where-practical",
-      "fileCount": 9,
+      "fileCount": 8,
       "group": "Advisory and OSV-shaped samples",
       "kind": "synthetic-public-shape",
       "nextStep": "Replace public advisory feed samples with curated OSV/GHSA/RHSA records where licensing and stability allow; keep severity edge cases synthetic.",
@@ -271,22 +289,28 @@
       "label": "AlmaLinux Build System build 17812 API",
       "refreshedAt": "2026-06-17",
       "url": "https://build.almalinux.org/api/v1/builds/17812/"
+    },
+    {
+      "access": "public",
+      "label": "OSV GHSA-35jh-r3h4-6jhm npm lodash advisory",
+      "refreshedAt": "2026-06-18",
+      "url": "https://api.osv.dev/v1/vulns/GHSA-35jh-r3h4-6jhm"
     }
   ],
   "status": "warn",
   "summary": {
-    "catalogedFiles": 87,
+    "catalogedFiles": 88,
     "deterministicPublicDerivedVariants": 2,
-    "directPublicSourceCoveragePercent": 2.3,
-    "directPublicSources": 2,
-    "generatedPublicReports": 13,
+    "directPublicSourceCoveragePercent": 3.41,
+    "directPublicSources": 3,
+    "generatedPublicReports": 14,
     "intentionallySyntheticGroups": 4,
     "localPointerFixtures": 1,
-    "publicEvidenceCoveragePercent": 20.69,
-    "publicEvidenceFiles": 18,
+    "publicEvidenceCoveragePercent": 22.73,
+    "publicEvidenceFiles": 20,
     "replacementCandidateGroups": 4,
-    "sourceUrls": 2,
-    "syntheticFiles": 69,
+    "sourceUrls": 3,
+    "syntheticFiles": 68,
     "syntheticGroups": 8
   },
   "syntheticGroups": [
@@ -340,7 +364,7 @@
       "reason": "Tiny graphs keep traversal, diff, and export assertions readable."
     },
     {
-      "fileCount": 9,
+      "fileCount": 8,
       "files": [
         "tests/fixtures/advisories.json",
         "tests/fixtures/advisory-report.json",
@@ -349,8 +373,7 @@
         "tests/fixtures/public-osv.json",
         "tests/fixtures/public-osv-ranges.json",
         "tests/fixtures/public-osv-purl.json",
-        "tests/fixtures/public-osv-cvss-score.json",
-        "tests/fixtures/public-advisory-feed.json"
+        "tests/fixtures/public-osv-cvss-score.json"
       ],
       "group": "Advisory and OSV-shaped samples",
       "kind": "synthetic-public-shape",

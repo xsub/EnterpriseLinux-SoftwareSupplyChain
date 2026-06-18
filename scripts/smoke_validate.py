@@ -3243,8 +3243,8 @@ def _assert_public_vertical_reports() -> None:
         ["fixture-provenance", "--fixture-dir", "tests/fixtures"]
     )
     assert fixture_provenance["schema"] == "edgp.fixture.provenance.v1"
-    assert fixture_provenance["summary"]["publicDerivedSources"] == 2
-    assert fixture_provenance["summary"]["generatedPublicReports"] == 13
+    assert fixture_provenance["summary"]["publicDerivedSources"] == 3
+    assert fixture_provenance["summary"]["generatedPublicReports"] == 14
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "fixture-provenance-bundle"
@@ -3286,8 +3286,8 @@ def _assert_public_vertical_reports() -> None:
         ["real-data-coverage", "--fixture-dir", "tests/fixtures"]
     )
     assert real_data_coverage["schema"] == "edgp.real_data.coverage.v1"
-    assert real_data_coverage["summary"]["directPublicSources"] == 2
-    assert real_data_coverage["summary"]["generatedPublicReports"] == 13
+    assert real_data_coverage["summary"]["directPublicSources"] == 3
+    assert real_data_coverage["summary"]["generatedPublicReports"] == 14
     assert real_data_coverage["summary"]["replacementCandidateGroups"] >= 4
     policy_completed = subprocess.run(
         [

@@ -1,12 +1,12 @@
 {
   "coverageSummary": {
-    "catalogedFiles": 87,
+    "catalogedFiles": 88,
     "coverageStatus": "warn",
-    "directPublicSources": 2,
-    "generatedPublicReports": 13,
-    "publicEvidenceCoveragePercent": 20.69,
-    "publicEvidenceFiles": 18,
-    "syntheticFiles": 69
+    "directPublicSources": 3,
+    "generatedPublicReports": 14,
+    "publicEvidenceCoveragePercent": 22.73,
+    "publicEvidenceFiles": 20,
+    "syntheticFiles": 68
   },
   "deferredGroups": [
     {
@@ -120,7 +120,7 @@
   "replacementCandidates": [
     {
       "decision": "replace-where-practical",
-      "fileCount": 9,
+      "fileCount": 8,
       "files": [
         "tests/fixtures/advisories.json",
         "tests/fixtures/advisory-report.json",
@@ -129,8 +129,7 @@
         "tests/fixtures/public-osv.json",
         "tests/fixtures/public-osv-ranges.json",
         "tests/fixtures/public-osv-purl.json",
-        "tests/fixtures/public-osv-cvss-score.json",
-        "tests/fixtures/public-advisory-feed.json"
+        "tests/fixtures/public-osv-cvss-score.json"
       ],
       "group": "Advisory and OSV-shaped samples",
       "kind": "synthetic-public-shape",
@@ -195,19 +194,25 @@
       "label": "AlmaLinux Build System build 17812 API",
       "refreshedAt": "2026-06-17",
       "url": "https://build.almalinux.org/api/v1/builds/17812/"
+    },
+    {
+      "access": "public",
+      "label": "OSV GHSA-35jh-r3h4-6jhm npm lodash advisory",
+      "refreshedAt": "2026-06-18",
+      "url": "https://api.osv.dev/v1/vulns/GHSA-35jh-r3h4-6jhm"
     }
   ],
   "status": "warn",
   "summary": {
-    "candidateFiles": 18,
+    "candidateFiles": 17,
     "deferredGroups": 4,
     "highPriorityGroups": 1,
     "lowPriorityGroups": 4,
     "mediumPriorityGroups": 3,
-    "publicEvidenceCoveragePercent": 20.69,
-    "publicEvidenceFiles": 18,
+    "publicEvidenceCoveragePercent": 22.73,
+    "publicEvidenceFiles": 20,
     "replacementCandidates": 4,
-    "syntheticFiles": 69,
+    "syntheticFiles": 68,
     "totalGroups": 8
   }
 }

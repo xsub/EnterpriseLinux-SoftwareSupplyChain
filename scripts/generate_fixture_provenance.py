@@ -15,6 +15,7 @@ SCHEMA = "edgp.fixture.provenance.v1"
 
 ALMALINUX_REPO_URL = "https://repo.almalinux.org/almalinux/9/AppStream/x86_64/os/"
 ALBS_BUILD_URL = "https://build.almalinux.org/api/v1/builds/17812/"
+OSV_LODASH_URL = "https://api.osv.dev/v1/vulns/GHSA-35jh-r3h4-6jhm"
 
 PUBLIC_INPUTS: list[dict[str, Any]] = [
     {
@@ -65,6 +66,17 @@ PUBLIC_INPUTS: list[dict[str, Any]] = [
         "derivedFrom": ["tests/fixtures/albs-build.json"],
         "refreshedAt": "2026-06-17",
         "notes": "Companion snapshot used for build diff and release coverage tests.",
+    },
+    {
+        "path": "public-osv-npm-lodash.json",
+        "kind": "public-derived-source",
+        "source": "OSV GHSA-35jh-r3h4-6jhm npm lodash vulnerability excerpt",
+        "sourceUrl": OSV_LODASH_URL,
+        "refreshedAt": "2026-06-18",
+        "notes": (
+            "Curated public OSV excerpt preserving the real GHSA id, npm "
+            "package URL, severity, SEMVER range, and advisory references."
+        ),
     },
 ]
 
@@ -123,6 +135,12 @@ GENERATED_REPORTS: list[dict[str, Any]] = [
         "path": "libsolv-bridge.json",
         "reportSchema": "edgp.libsolv.bridge.v1",
         "derivedFrom": ["tests/fixtures/libsolv-transaction.txt"],
+    },
+    {
+        "path": "public-advisory-feed.json",
+        "reportSchema": "edgp.public.advisory_feed.v1",
+        "derivedFrom": ["tests/fixtures/public-osv-npm-lodash.json"],
+        "notes": "Normalizes the public OSV npm lodash excerpt into EDGP overlay records.",
     },
     {
         "path": "real-data-coverage.json",
@@ -213,7 +231,6 @@ SYNTHETIC_GROUPS: list[dict[str, Any]] = [
             "public-osv-ranges.json",
             "public-osv-purl.json",
             "public-osv-cvss-score.json",
-            "public-advisory-feed.json",
         ],
         "reason": "Shape-compatible advisory samples exercise severity and matching logic without live feeds.",
     },
@@ -304,6 +321,12 @@ def build_fixture_provenance(fixture_dir: Path = FIXTURE_DIR) -> dict[str, Any]:
             "url": ALBS_BUILD_URL,
             "access": "public",
             "refreshedAt": "2026-06-17",
+        },
+        {
+            "label": "OSV GHSA-35jh-r3h4-6jhm npm lodash advisory",
+            "url": OSV_LODASH_URL,
+            "access": "public",
+            "refreshedAt": "2026-06-18",
         },
     ]
     cataloged_files = {

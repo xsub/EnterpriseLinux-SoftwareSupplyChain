@@ -1,9 +1,62 @@
 {
+  "advisories": [
+    {
+      "ecosystem": "npm",
+      "id": "GHSA-35jh-r3h4-6jhm",
+      "package": "lodash",
+      "purl": "pkg:npm/lodash",
+      "ranges": [
+        {
+          "fixed": "4.17.21",
+          "introduced": "0",
+          "type": "SEMVER"
+        }
+      ],
+      "references": [
+        "https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
+        "https://nvd.nist.gov/vuln/detail/CVE-2021-23337"
+      ],
+      "severity": "HIGH",
+      "summary": "Command Injection in lodash",
+      "versions": []
+    }
+  ],
+  "ecosystem": "npm",
+  "overlay": {
+    "advisories": [
+      {
+        "ecosystem": "npm",
+        "id": "GHSA-35jh-r3h4-6jhm",
+        "package": "lodash",
+        "purl": "pkg:npm/lodash",
+        "ranges": [
+          {
+            "fixed": "4.17.21",
+            "introduced": "0",
+            "type": "SEMVER"
+          }
+        ],
+        "references": [
+          "https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
+          "https://nvd.nist.gov/vuln/detail/CVE-2021-23337"
+        ],
+        "severity": "HIGH",
+        "summary": "Command Injection in lodash",
+        "versions": []
+      }
+    ],
+    "schema": "edgp.advisory.overlay.v1"
+  },
+  "packages": [
+    "lodash"
+  ],
   "schema": "edgp.public.advisory_feed.v1",
-  "ecosystem": "rpm",
-  "summary": {"advisories": 1, "packages": 1, "severities": 1},
-  "packages": ["nginx"],
-  "severities": ["HIGH"],
-  "advisories": [],
-  "overlay": {"schema": "edgp.advisory.overlay.v1", "advisories": []}
+  "severities": [
+    "HIGH"
+  ],
+  "summary": {
+    "advisories": 1,
+    "packages": 1,
+    "severities": 1
+  }
 }

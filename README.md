@@ -64,10 +64,11 @@ Fixture provenance is tracked in
 [`tests/fixtures/README.md`](tests/fixtures/README.md) and as the
 machine-readable catalog
 [`tests/fixtures/fixture-provenance.json`](tests/fixtures/fixture-provenance.json).
-The RPM repository fixtures include curated AlmaLinux 9 AppStream
-`primary.xml` excerpts, while small synthetic fixtures remain where they make
-parser and validation edge cases easier to audit. Public-derived report
-fixtures can be refreshed with
+The public-derived fixtures include curated AlmaLinux 9 AppStream
+`primary.xml` excerpts, public ALBS build metadata, and a compact OSV/GHSA npm
+advisory excerpt, while small synthetic fixtures remain where they make parser
+and validation edge cases easier to audit. Public-derived report fixtures can be
+refreshed with
 `python -B scripts/generate_public_fixture_reports.py`; the provenance catalog
 can be refreshed with `python -B scripts/generate_fixture_provenance.py`.
 Both generators support `--check` for CI. The same catalog is available through

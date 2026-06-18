@@ -60,6 +60,16 @@
       "sourceUrl": "https://build.almalinux.org/api/v1/builds/17812/"
     },
     {
+      "bytes": 947,
+      "kind": "public-derived-source",
+      "notes": "Curated public OSV excerpt preserving the real GHSA id, npm package URL, severity, SEMVER range, and advisory references.",
+      "path": "tests/fixtures/public-osv-npm-lodash.json",
+      "refreshedAt": "2026-06-18",
+      "sha256": "b320aaf2d802f14573b1ca5d23747470d6da45933dba246ad794bffeb83fdc72",
+      "source": "OSV GHSA-35jh-r3h4-6jhm npm lodash vulnerability excerpt",
+      "sourceUrl": "https://api.osv.dev/v1/vulns/GHSA-35jh-r3h4-6jhm"
+    },
+    {
       "bytes": 2610,
       "derivedFrom": [
         "tests/fixtures/rpm-primary.xml"
@@ -163,7 +173,19 @@
       "sha256": "3746a15364ce8776767158f0a24e525e3166a707a9340cdc0a97ba80e1a6a35a"
     },
     {
-      "bytes": 17265,
+      "bytes": 1388,
+      "derivedFrom": [
+        "tests/fixtures/public-osv-npm-lodash.json"
+      ],
+      "generator": "scripts/generate_public_fixture_reports.py",
+      "kind": "generated-public-report",
+      "notes": "Normalizes the public OSV npm lodash excerpt into EDGP overlay records.",
+      "path": "tests/fixtures/public-advisory-feed.json",
+      "reportSchema": "edgp.public.advisory_feed.v1",
+      "sha256": "e57663701fd0fcf6bfc03225a57a52defdeb14f7457a387269ca3689ac9aedc3"
+    },
+    {
+      "bytes": 18250,
       "derivedFrom": [
         "tests/fixtures/fixture-provenance.json"
       ],
@@ -172,10 +194,10 @@
       "notes": "Summarizes which committed fixtures are public-derived, generated, or intentionally synthetic.",
       "path": "tests/fixtures/real-data-coverage.json",
       "reportSchema": "edgp.real_data.coverage.v1",
-      "sha256": "a9607bf4b3b0e22afba6ff0a3befc57861c55d015f0466418a1f8045f65a9661"
+      "sha256": "743c691d9fc6bc5cdb70862224ac83eaa745d49684d27e0d62e2af2e9fa6577d"
     },
     {
-      "bytes": 8886,
+      "bytes": 9034,
       "derivedFrom": [
         "tests/fixtures/real-data-coverage.json"
       ],
@@ -184,7 +206,7 @@
       "notes": "Ranks synthetic fixture groups that should move toward public evidence where doing so improves data fidelity.",
       "path": "tests/fixtures/real-data-replacement-plan.json",
       "reportSchema": "edgp.real_data.replacement_plan.v1",
-      "sha256": "8be9d208a6d8cef3f514ee75e9b780d6a0e8c94fcd71a2247211aedc954fd30d"
+      "sha256": "bc8016df164c795661017c29e7a7ba7c619613bba85116e01268d47f266ef680"
     },
     {
       "bytes": 1226,
@@ -196,7 +218,7 @@
       "notes": "No-regression baseline for comparing public-data replacement backlog movement between two fixture snapshots.",
       "path": "tests/fixtures/real-data-replacement-plan-diff.json",
       "reportSchema": "edgp.real_data.replacement_plan_diff.v1",
-      "sha256": "4e4e4aa5280c5542d1e658c9e75a5e64765e55644aa4cb8d71c24e01a3aef349"
+      "sha256": "c8d1d0ea6968314c7eade0ff17acfc5c0c688feb05d134b5b393f9771c0cc38f"
     },
     {
       "bytes": 1242,
@@ -208,7 +230,7 @@
       "notes": "No-regression baseline for comparing public evidence coverage between two fixture snapshots.",
       "path": "tests/fixtures/real-data-coverage-diff.json",
       "reportSchema": "edgp.real_data.coverage_diff.v1",
-      "sha256": "0fae563193be4a6b39278676af6e30b8951abf072fb729d06d92b481c569a469"
+      "sha256": "e237c6fb02a616f1ed93acb83b090a9c7b61003267055e75c53d3aafdf723aad"
     }
   ],
   "fixtureRoot": "tests/fixtures",
@@ -240,14 +262,20 @@
       "label": "AlmaLinux Build System build 17812 API",
       "refreshedAt": "2026-06-17",
       "url": "https://build.almalinux.org/api/v1/builds/17812/"
+    },
+    {
+      "access": "public",
+      "label": "OSV GHSA-35jh-r3h4-6jhm npm lodash advisory",
+      "refreshedAt": "2026-06-18",
+      "url": "https://api.osv.dev/v1/vulns/GHSA-35jh-r3h4-6jhm"
     }
   ],
   "summary": {
-    "catalogedFiles": 87,
+    "catalogedFiles": 88,
     "deterministicPublicDerivedVariants": 2,
-    "generatedPublicReports": 13,
-    "publicDerivedSources": 2,
-    "sourceUrls": 2,
+    "generatedPublicReports": 14,
+    "publicDerivedSources": 3,
+    "sourceUrls": 3,
     "syntheticGroups": 8
   },
   "syntheticGroups": [
@@ -305,7 +333,7 @@
       "sha256": "81806a22d050a403369d29508d737f3d663436af4955d9223b80b4ab00b2d415"
     },
     {
-      "fileCount": 9,
+      "fileCount": 8,
       "files": [
         "tests/fixtures/advisories.json",
         "tests/fixtures/advisory-report.json",
@@ -314,13 +342,12 @@
         "tests/fixtures/public-osv.json",
         "tests/fixtures/public-osv-ranges.json",
         "tests/fixtures/public-osv-purl.json",
-        "tests/fixtures/public-osv-cvss-score.json",
-        "tests/fixtures/public-advisory-feed.json"
+        "tests/fixtures/public-osv-cvss-score.json"
       ],
       "group": "Advisory and OSV-shaped samples",
       "kind": "synthetic-public-shape",
       "reason": "Shape-compatible advisory samples exercise severity and matching logic without live feeds.",
-      "sha256": "86c417a37a5e0bfdb7e18548e114ad03c5f040b89166971e988034d4b7b26292"
+      "sha256": "381fa0bf7591123da6598dcbf6435e92688266a09a2e3fdd383701fbc60fdd7c"
     },
     {
       "fileCount": 10,

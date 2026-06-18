@@ -28,8 +28,8 @@ def test_real_data_coverage_documents_public_and_synthetic_evidence() -> None:
     summary = report["summary"]
     plans = {entry["group"]: entry for entry in report["replacementPlan"]}
 
-    assert summary["directPublicSources"] == 2
-    assert summary["generatedPublicReports"] >= 10
+    assert summary["directPublicSources"] == 3
+    assert summary["generatedPublicReports"] >= 14
     assert summary["replacementCandidateGroups"] >= 4
     assert summary["publicEvidenceCoveragePercent"] > 0
     assert plans["Advisory and OSV-shaped samples"]["priority"] == "high"
@@ -151,7 +151,7 @@ def test_cli_real_data_coverage_bundle_writes_verifiable_bundle(
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
 
     report = json.loads((output_dir / "real-data-coverage.json").read_text())
-    assert report["summary"]["directPublicSources"] == 2
+    assert report["summary"]["directPublicSources"] == 3
     html = (output_dir / "001-real-data-coverage.html").read_text(encoding="utf-8")
     assert 'data-testid="real-data-coverage-plan-panel"' in html
 

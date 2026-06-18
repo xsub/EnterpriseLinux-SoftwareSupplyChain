@@ -35,13 +35,16 @@ def test_fixture_provenance_documents_public_and_generated_sources() -> None:
     payload = _fixture()
     entries = {entry["path"]: entry for entry in payload["entries"]}
 
-    assert payload["summary"]["publicDerivedSources"] == 2
-    assert payload["summary"]["generatedPublicReports"] == 13
+    assert payload["summary"]["publicDerivedSources"] == 3
+    assert payload["summary"]["generatedPublicReports"] == 14
     assert entries["tests/fixtures/rpm-primary.xml"]["sourceUrl"].startswith(
         "https://repo.almalinux.org/"
     )
     assert entries["tests/fixtures/albs-build.json"]["sourceUrl"].startswith(
         "https://build.almalinux.org/"
+    )
+    assert entries["tests/fixtures/public-osv-npm-lodash.json"]["sourceUrl"].startswith(
+        "https://api.osv.dev/"
     )
     assert entries["tests/fixtures/rpm-repository-summary.json"]["generator"] == (
         "scripts/generate_public_fixture_reports.py"
@@ -93,7 +96,7 @@ def test_cli_fixture_provenance_bundle_writes_verifiable_bundle(
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
 
     report = json.loads((output_dir / "fixture-provenance.json").read_text())
-    assert report["summary"]["publicDerivedSources"] == 2
+    assert report["summary"]["publicDerivedSources"] == 3
     html = (output_dir / "001-fixture-provenance.html").read_text(encoding="utf-8")
     assert 'data-testid="fixture-provenance-entries-panel"' in html
 

@@ -5,13 +5,13 @@
     "removed": []
   },
   "left": {
-    "candidateFiles": 18,
+    "candidateFiles": 17,
     "deferredGroups": 4,
     "fixtureRoot": "tests/fixtures",
     "highPriorityGroups": 1,
     "label": "baseline",
     "mediumPriorityGroups": 3,
-    "publicEvidenceCoveragePercent": 20.69,
+    "publicEvidenceCoveragePercent": 22.73,
     "replacementCandidates": 4,
     "status": "warn"
   },
@@ -22,13 +22,13 @@
     "removed": []
   },
   "right": {
-    "candidateFiles": 18,
+    "candidateFiles": 17,
     "deferredGroups": 4,
     "fixtureRoot": "tests/fixtures",
     "highPriorityGroups": 1,
     "label": "current",
     "mediumPriorityGroups": 3,
-    "publicEvidenceCoveragePercent": 20.69,
+    "publicEvidenceCoveragePercent": 22.73,
     "replacementCandidates": 4,
     "status": "warn"
   },
