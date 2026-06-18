@@ -104,6 +104,8 @@ surfaces are:
   sorting behavior.
 - Generate a self-checking browser smoke report bundle for static index
   navigation behavior.
+- Generate a self-checking browser smoke HTML page for static bundle-catalog
+  filter deep links, URL updates, and reset behavior.
 - Render deterministic static HTML report bundles with an index for multiple
   EDGP JSON reports.
 - Emit a machine-readable `manifest.json` for report bundles so future

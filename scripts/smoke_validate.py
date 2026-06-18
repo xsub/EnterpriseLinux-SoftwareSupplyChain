@@ -4383,6 +4383,33 @@ def _assert_browser_smoke_report_bundle_navigation() -> None:
         assert (output_dir / "003-impact-report.html").exists()
 
 
+def _assert_browser_smoke_bundle_catalog_filters() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "bundle-catalog-filters-smoke.html"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "scripts/browser_smoke_bundle_catalog_filters.py",
+                "--output",
+                str(output_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.stdout.strip() == str(output_path)
+        html = output_path.read_text(encoding="utf-8")
+        assert 'data-testid="bundle-catalog-filter-panel"' in html
+        assert 'data-testid="browser-smoke-panel"' in html
+        assert 'data-testid="browser-smoke-result"' in html
+        assert "initial filtered count" in html
+        assert "updated URL query" in html
+        assert "reset filtered count" in html
+        assert "dataset.browserSmokeStatus = 'pass'" in html
+
+
 def _assert_impact_html_report() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         output_path = Path(temp_dir) / "impact-report.html"
@@ -5789,6 +5816,10 @@ def main(argv: list[str] | None = None) -> int:
         (
             "browser smoke report bundle navigation",
             _assert_browser_smoke_report_bundle_navigation,
+        ),
+        (
+            "browser smoke bundle catalog filters",
+            _assert_browser_smoke_bundle_catalog_filters,
         ),
         ("impact html report", _assert_impact_html_report),
         ("advisory html report", _assert_advisory_html_report),

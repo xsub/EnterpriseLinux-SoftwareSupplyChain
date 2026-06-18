@@ -1194,7 +1194,9 @@ text/failure-code search, source kind, triage status, and problem-only rows, so
 batch evidence can be inspected directly from the static artifact. The filter
 state is reflected in URL parameters (`catalogQuery`, `catalogSource`,
 `catalogStatus`, and `catalogProblems`) so a narrowed catalog review can be
-shared as a plain static HTML link.
+shared as a plain static HTML link. `scripts/browser_smoke_bundle_catalog_filters.py`
+generates a self-checking static page that exercises those deep links, URL
+updates, and reset behavior in a browser.
 Use `--format text` when the CI log should show the catalog's bundle counts,
 `catalogStatus`, triage status, and snapshot-diff or real-data policy failure
 counts directly beside the generated index path.
