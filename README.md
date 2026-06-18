@@ -884,7 +884,10 @@ change classifications such as upgrade, downgrade, replacement, added, removed,
 or metadata-only change. The report also exposes top package changes directly
 in JSON and HTML, so release-to-release package impact, repository snapshot
 drift, and build provenance changes can be reviewed without re-parsing every
-diff section.
+diff section. The focused diff-tree classification table also has shareable
+workbench filters backed by `graphDiffTreeQuery` and `graphDiffTreeKind` URL
+parameters, which helps reviewers jump straight to a selected package or change
+kind inside a larger dependency cone.
 
 `edgp advisory` accepts either a small local JSON overlay with `id`, `package`,
 optional `versions`, `ranges`, `severity`, `summary`, `references`, and `purl`

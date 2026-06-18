@@ -4210,6 +4210,45 @@ def _assert_snapshot_diff() -> None:
         assert "graphDiffKind" in graph_diff_html
         assert 'data-testid="graph-diff-added-nodes-panel"' in graph_diff_html
 
+        diff_tree_dir = Path(temp_dir) / "graph-diff-tree-bundle"
+        completed_tree = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "diff-tree-bundle",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--output-dir",
+                str(diff_tree_dir),
+                "--triage-summary",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_tree.stdout.strip() == str(diff_tree_dir / "index.html")
+        diff_tree = json.loads(
+            (diff_tree_dir / "graph-diff-tree.json").read_text(encoding="utf-8")
+        )
+        assert diff_tree["schema"] == "edgp.graph.diff_tree.v1"
+        assert diff_tree["summary"]["classifiedChanges"] == 2
+        diff_tree_html = (diff_tree_dir / "001-graph-diff-tree.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="graph-diff-tree-filter-panel"' in diff_tree_html
+        assert 'data-graph-diff-tree-search' in diff_tree_html
+        assert "graphDiffTreeQuery" in diff_tree_html
+        assert "graphDiffTreeKind" in diff_tree_html
+
 
 def _assert_impact_report() -> None:
     payload = _run_cli(

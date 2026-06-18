@@ -241,7 +241,16 @@ def test_render_report_supports_graph_diff_tree_json() -> None:
     assert "Diff Tree Policy" in html
     assert 'data-testid="graph-diff-tree-visual-panel"' in html
     assert 'data-testid="graph-diff-tree-top-findings-panel"' in html
+    assert 'data-testid="graph-diff-tree-filter-panel"' in html
     assert 'data-testid="graph-diff-tree-classification-panel"' in html
+    assert 'data-graph-diff-tree-search' in html
+    assert 'data-graph-diff-tree-kind' in html
+    assert 'data-graph-diff-tree-reset' in html
+    assert 'data-graph-diff-tree-row="true"' in html
+    assert 'data-change-kind="upgrade"' in html
+    assert "graphDiffTreeQuery" in html
+    assert "graphDiffTreeKind" in html
+    assert "window.history.replaceState" in html
     assert 'data-testid="graph-diff-tree-paths-panel"' in html
     assert "Top Package Changes" in html
     assert 'class="diff-edge diff-edge-added"' in html

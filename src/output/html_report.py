@@ -352,6 +352,7 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
             _graph_diff_tree_policy_panel(policy),
             _graph_diff_tree_visual_panel(report),
             _graph_diff_tree_top_findings_panel(top_findings),
+            _graph_diff_tree_classification_filter_panel(classifications),
             _graph_diff_tree_classification_panel(classifications),
             _graph_diff_tree_paths_panel(nodes),
             _rows_panel(
@@ -385,7 +386,7 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
                 test_id="graph-diff-tree-removed-edges-panel",
             ),
         ],
-        scripts=[_table_sort_script()],
+        scripts=[_graph_diff_tree_filter_script(), _table_sort_script()],
     )
 
 
@@ -3832,7 +3833,51 @@ def _graph_diff_tree_classification_panel(classifications: list[object]) -> str:
             "changedKeys",
         ],
         test_id="graph-diff-tree-classification-panel",
+        row_attrs=_graph_diff_tree_classification_row_attrs,
     )
+
+
+def _graph_diff_tree_classification_filter_panel(classifications: list[object]) -> str:
+    rows = [item for item in classifications if isinstance(item, dict)]
+    kinds = sorted(
+        {
+            str(row.get("kind"))
+            for row in rows
+            if isinstance(row.get("kind"), str) and row.get("kind")
+        }
+    )
+    kind_options = "".join(
+        f'<option value="{escape(kind)}">{escape(kind)}</option>' for kind in kinds
+    )
+    return f"""
+<section class="panel" data-testid="graph-diff-tree-filter-panel" data-graph-diff-tree-filter-panel>
+  <div class="section-head">
+    <h2>Diff Tree Filters</h2>
+    <span data-graph-diff-tree-filter-count>{len(rows)} rows</span>
+  </div>
+  <div class="workbench-filter-controls graph-diff-filter-controls">
+    <label>Search
+      <input type="search" data-graph-diff-tree-search aria-label="Filter graph diff-tree rows by text" placeholder="Package, node, path">
+    </label>
+    <label>Change Kind
+      <select data-graph-diff-tree-kind aria-label="Filter graph diff-tree rows by change kind">
+        <option value="">All</option>{kind_options}
+      </select>
+    </label>
+    <div class="workbench-filter-actions graph-diff-filter-actions">
+      <button type="button" data-graph-diff-tree-reset>Reset</button>
+    </div>
+  </div>
+</section>""".strip()
+
+
+def _graph_diff_tree_classification_row_attrs(
+    row: dict[str, Any],
+) -> Mapping[str, object]:
+    return {
+        "data-graph-diff-tree-row": "true",
+        "data-change-kind": row.get("kind") or "",
+    }
 
 
 def _graph_diff_tree_top_findings_panel(top_findings: dict[str, Any]) -> str:
@@ -4205,6 +4250,69 @@ def _graph_diff_filter_script() -> str:
   const reset = panel.querySelector("[data-graph-diff-reset]");
   const count = panel.querySelector("[data-graph-diff-filter-count]");
   const rows = () => Array.from(diffPanel.querySelectorAll("[data-graph-diff-row]"));
+  const setSelectValue = (element, value) => {
+    if (!value) return;
+    const values = Array.from(element.options).map((option) => option.value);
+    if (values.includes(value)) element.value = value;
+  };
+  const readUrlState = () => {
+    const params = new URLSearchParams(window.location.search);
+    search.value = params.get(queryParam) || "";
+    setSelectValue(kind, params.get(kindParam));
+  };
+  const updateUrlState = () => {
+    const url = new URL(window.location.href);
+    const query = (search.value || "").trim();
+    if (query) url.searchParams.set(queryParam, query);
+    else url.searchParams.delete(queryParam);
+    if (kind.value) url.searchParams.set(kindParam, kind.value);
+    else url.searchParams.delete(kindParam);
+    window.history.replaceState({}, "", url);
+  };
+  const apply = (options = {}) => {
+    const syncUrl = options.syncUrl !== false;
+    const query = (search.value || "").trim().toLowerCase();
+    const changeKind = kind.value;
+    let shown = 0;
+    const allRows = rows();
+    for (const row of allRows) {
+      const textMatches = !query || (row.textContent || "").toLowerCase().includes(query);
+      const kindMatches = !changeKind || row.dataset.changeKind === changeKind;
+      const visible = textMatches && kindMatches;
+      row.hidden = !visible;
+      if (visible) shown += 1;
+    }
+    count.textContent = `${shown} of ${allRows.length} rows`;
+    if (syncUrl) updateUrlState();
+  };
+  search.addEventListener("input", () => apply());
+  kind.addEventListener("change", () => apply());
+  reset.addEventListener("click", () => {
+    search.value = "";
+    kind.value = "";
+    apply();
+    search.focus();
+  });
+  diffPanel.addEventListener("edgp:table-sorted", () => apply());
+  readUrlState();
+  apply({ syncUrl: false });
+})();
+""".strip()
+
+
+def _graph_diff_tree_filter_script() -> str:
+    return """
+(() => {
+  const queryParam = "graphDiffTreeQuery";
+  const kindParam = "graphDiffTreeKind";
+  const panel = document.querySelector("[data-graph-diff-tree-filter-panel]");
+  const diffPanel = document.querySelector('[data-testid="graph-diff-tree-classification-panel"]');
+  if (!panel || !diffPanel) return;
+  const search = panel.querySelector("[data-graph-diff-tree-search]");
+  const kind = panel.querySelector("[data-graph-diff-tree-kind]");
+  const reset = panel.querySelector("[data-graph-diff-tree-reset]");
+  const count = panel.querySelector("[data-graph-diff-tree-filter-count]");
+  const rows = () => Array.from(diffPanel.querySelectorAll("[data-graph-diff-tree-row]"));
   const setSelectValue = (element, value) => {
     if (!value) return;
     const values = Array.from(element.options).map((option) => option.value);
