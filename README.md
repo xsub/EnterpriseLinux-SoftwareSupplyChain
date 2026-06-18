@@ -1176,6 +1176,9 @@ Source-kind rows include triage pass/warn/fail counts plus
 `realDataReplacementPlanPolicyFailures`, and
 `realDataReplacementPlanDiffPolicyFailures`, so large evidence batches can show
 which input family contributed failed snapshot-drift or real-data policy gates.
+They also roll up verifier and real-data failure-code lists per source kind, so
+the catalog can point to the dominant failure class without opening every
+bundle row.
 Per-bundle rows also preserve matched graph-diff changes and package kinds,
 plus matched diff-tree package kinds and real-data failure codes, from embedded
 triage summaries.

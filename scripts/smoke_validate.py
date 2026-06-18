@@ -3456,6 +3456,9 @@ def _assert_public_vertical_reports() -> None:
         assert catalog["bundles"][0]["realDataReplacementPlanFailureCodes"] == [
             "replacementPlanPriorityMatched"
         ]
+        assert catalog["sourceKinds"][0]["realDataReplacementPlanFailureCodes"] == [
+            "replacementPlanPriorityMatched"
+        ]
 
     real_data_replacement_plan_diff = _run_cli(
         [
@@ -3654,6 +3657,13 @@ def _assert_public_vertical_reports() -> None:
             "candidateFilesIncreased",
             "highPriorityGroupsIncreased",
         ]
+        assert catalog["sourceKinds"][0][
+            "realDataReplacementPlanDiffFailureCodes"
+        ] == [
+            "replacementCandidatesIncreased",
+            "candidateFilesIncreased",
+            "highPriorityGroupsIncreased",
+        ]
 
     real_data_coverage_diff = _run_cli(
         [
@@ -3841,6 +3851,10 @@ def _assert_public_vertical_reports() -> None:
             "publicEvidenceCoverageDecreased",
             "publicEvidenceFilesDecreased",
         ]
+        assert catalog["sourceKinds"][0]["realDataCoverageDiffFailureCodes"] == [
+            "publicEvidenceCoverageDecreased",
+            "publicEvidenceFilesDecreased",
+        ]
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "real-data-coverage-bundle"
@@ -3943,6 +3957,9 @@ def _assert_public_vertical_reports() -> None:
         assert catalog["summary"]["realDataCoveragePolicyFailures"] == 1
         assert catalog["bundles"][0]["realDataCoveragePolicyFailures"] == 1
         assert catalog["bundles"][0]["realDataCoverageFailureCodes"] == [
+            "replacementPriorityMatched"
+        ]
+        assert catalog["sourceKinds"][0]["realDataCoverageFailureCodes"] == [
             "replacementPriorityMatched"
         ]
 

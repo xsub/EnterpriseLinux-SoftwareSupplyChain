@@ -390,6 +390,9 @@ surfaces are:
 - Preserve real-data coverage, coverage-diff, replacement-plan, and
   replacement-plan-diff failure-code lists inside bundle-catalog entries and
   aggregate triage findings for batch-level review.
+- Roll verifier and real-data failure-code lists up into bundle-catalog
+  source-kind rows so batch review can identify which input family carries a
+  repeated failure class.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

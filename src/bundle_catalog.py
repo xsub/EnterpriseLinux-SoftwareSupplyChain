@@ -476,6 +476,11 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "realDataCoverageDiffPolicyFailures": 0,
                 "realDataReplacementPlanPolicyFailures": 0,
                 "realDataReplacementPlanDiffPolicyFailures": 0,
+                "failureCodes": [],
+                "realDataCoverageFailureCodes": [],
+                "realDataCoverageDiffFailureCodes": [],
+                "realDataReplacementPlanFailureCodes": [],
+                "realDataReplacementPlanDiffFailureCodes": [],
             },
         )
         row["bundles"] += 1
@@ -508,4 +513,27 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         row["realDataReplacementPlanDiffPolicyFailures"] += int(
             entry.get("realDataReplacementPlanDiffPolicyFailures", 0) or 0
         )
+        _extend_unique_strings(row["failureCodes"], entry.get("failureCodes"))
+        _extend_unique_strings(
+            row["realDataCoverageFailureCodes"],
+            entry.get("realDataCoverageFailureCodes"),
+        )
+        _extend_unique_strings(
+            row["realDataCoverageDiffFailureCodes"],
+            entry.get("realDataCoverageDiffFailureCodes"),
+        )
+        _extend_unique_strings(
+            row["realDataReplacementPlanFailureCodes"],
+            entry.get("realDataReplacementPlanFailureCodes"),
+        )
+        _extend_unique_strings(
+            row["realDataReplacementPlanDiffFailureCodes"],
+            entry.get("realDataReplacementPlanDiffFailureCodes"),
+        )
     return [grouped[key] for key in sorted(grouped)]
+
+
+def _extend_unique_strings(target: list[str], value: object) -> None:
+    for item in _string_list(value):
+        if item not in target:
+            target.append(item)

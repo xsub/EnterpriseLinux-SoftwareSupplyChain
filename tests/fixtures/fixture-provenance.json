@@ -339,7 +339,7 @@
       "group": "Report and export bundle fixtures",
       "kind": "synthetic-validation-case",
       "reason": "Committed outputs document portable bundle, archive, and submission-plan contracts.",
-      "sha256": "2bd1e9d6a96cbce8ddd927501ce38390ce0adbd53acc6d00439d334a9bbb7a9a"
+      "sha256": "884cf8515b504463995fc51f7d9b362c1700f7007a613e292a2bc2465ebe68f3"
     },
     {
       "fileCount": 28,

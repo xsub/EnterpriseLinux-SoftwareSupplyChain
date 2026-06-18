@@ -221,6 +221,36 @@
             "minimum": 0,
             "type": "integer"
           },
+          "failureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "realDataCoverageFailureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "realDataCoverageDiffFailureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "realDataReplacementPlanFailureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "realDataReplacementPlanDiffFailureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "failures": {
             "minimum": 0,
             "type": "integer"
@@ -261,6 +291,11 @@
           "realDataCoverageDiffPolicyFailures",
           "realDataReplacementPlanPolicyFailures",
           "realDataReplacementPlanDiffPolicyFailures",
+          "failureCodes",
+          "realDataCoverageFailureCodes",
+          "realDataCoverageDiffFailureCodes",
+          "realDataReplacementPlanFailureCodes",
+          "realDataReplacementPlanDiffFailureCodes",
           "triagePass",
           "triageWarn",
           "triageFail",

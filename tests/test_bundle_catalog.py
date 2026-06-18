@@ -63,6 +63,11 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
             "realDataReplacementPlanDiffPolicyFailures": 0,
+            "failureCodes": [],
+            "realDataCoverageFailureCodes": [],
+            "realDataCoverageDiffFailureCodes": [],
+            "realDataReplacementPlanFailureCodes": [],
+            "realDataReplacementPlanDiffFailureCodes": [],
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 0,
@@ -79,6 +84,11 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
             "realDataReplacementPlanDiffPolicyFailures": 0,
+            "failureCodes": [],
+            "realDataCoverageFailureCodes": [],
+            "realDataCoverageDiffFailureCodes": [],
+            "realDataReplacementPlanFailureCodes": [],
+            "realDataReplacementPlanDiffFailureCodes": [],
             "triagePass": 0,
             "triageWarn": 1,
             "triageFail": 0,
@@ -218,6 +228,7 @@ def test_build_bundle_catalog_report_captures_tampered_bundle(tmp_path) -> None:
     assert report["bundles"][0]["ok"] is False
     assert report["bundles"][0]["failureCodes"] == ["htmlDigestMismatch"]
     assert report["bundles"][0]["bundleSha256"]
+    assert report["sourceKinds"][0]["failureCodes"] == ["htmlDigestMismatch"]
 
 
 def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) -> None:
@@ -261,6 +272,11 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
             "realDataReplacementPlanDiffPolicyFailures": 0,
+            "failureCodes": [],
+            "realDataCoverageFailureCodes": [],
+            "realDataCoverageDiffFailureCodes": [],
+            "realDataReplacementPlanFailureCodes": [],
+            "realDataReplacementPlanDiffFailureCodes": [],
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 1,
@@ -321,6 +337,11 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
             "realDataReplacementPlanDiffPolicyFailures": 0,
+            "failureCodes": [],
+            "realDataCoverageFailureCodes": [],
+            "realDataCoverageDiffFailureCodes": [],
+            "realDataReplacementPlanFailureCodes": [],
+            "realDataReplacementPlanDiffFailureCodes": [],
             "triagePass": 0,
             "triageWarn": 0,
             "triageFail": 1,
@@ -457,6 +478,12 @@ def test_build_bundle_catalog_groups_real_data_policy_failures_by_source_kind(
     assert report["bundles"][0]["realDataReplacementPlanDiffFailureCodes"] == []
     assert report["sourceKinds"][0]["sourceKind"] == "real-data-coverage"
     assert report["sourceKinds"][0]["realDataCoveragePolicyFailures"] == 1
+    assert report["sourceKinds"][0]["realDataCoverageFailureCodes"] == [
+        "replacementPriorityMatched"
+    ]
+    assert report["sourceKinds"][0]["realDataCoverageDiffFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataReplacementPlanFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataReplacementPlanDiffFailureCodes"] == []
 
 
 def test_build_bundle_catalog_groups_real_data_diff_policy_failures_by_source_kind(
@@ -517,6 +544,13 @@ def test_build_bundle_catalog_groups_real_data_diff_policy_failures_by_source_ki
     assert report["bundles"][0]["realDataReplacementPlanDiffFailureCodes"] == []
     assert report["sourceKinds"][0]["sourceKind"] == "real-data-coverage-diff"
     assert report["sourceKinds"][0]["realDataCoverageDiffPolicyFailures"] == 1
+    assert report["sourceKinds"][0]["realDataCoverageFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataCoverageDiffFailureCodes"] == [
+        "publicEvidenceCoverageDecreased",
+        "publicEvidenceFilesDecreased",
+    ]
+    assert report["sourceKinds"][0]["realDataReplacementPlanFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataReplacementPlanDiffFailureCodes"] == []
 
 
 def test_build_bundle_catalog_groups_replacement_plan_policy_failures_by_source_kind(
@@ -570,6 +604,12 @@ def test_build_bundle_catalog_groups_replacement_plan_policy_failures_by_source_
     assert report["sourceKinds"][0]["sourceKind"] == "real-data-replacement-plan"
     assert report["sourceKinds"][0]["realDataReplacementPlanPolicyFailures"] == 1
     assert report["sourceKinds"][0]["realDataReplacementPlanDiffPolicyFailures"] == 0
+    assert report["sourceKinds"][0]["realDataCoverageFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataCoverageDiffFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataReplacementPlanFailureCodes"] == [
+        "replacementPlanPriorityMatched"
+    ]
+    assert report["sourceKinds"][0]["realDataReplacementPlanDiffFailureCodes"] == []
 
 
 def test_build_bundle_catalog_groups_replacement_plan_diff_policy_failures_by_source_kind(
@@ -627,3 +667,10 @@ def test_build_bundle_catalog_groups_replacement_plan_diff_policy_failures_by_so
     assert report["sourceKinds"][0]["sourceKind"] == "real-data-replacement-plan-diff"
     assert report["sourceKinds"][0]["realDataReplacementPlanPolicyFailures"] == 0
     assert report["sourceKinds"][0]["realDataReplacementPlanDiffPolicyFailures"] == 1
+    assert report["sourceKinds"][0]["realDataCoverageFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataCoverageDiffFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataReplacementPlanFailureCodes"] == []
+    assert report["sourceKinds"][0]["realDataReplacementPlanDiffFailureCodes"] == [
+        "replacementCandidatesIncreased",
+        "candidateFilesIncreased",
+    ]
