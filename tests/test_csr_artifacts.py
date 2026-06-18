@@ -69,6 +69,57 @@ def test_frozen_csr_artifact_rejects_tampered_array(tmp_path) -> None:
         load_frozen_csr_artifact(tmp_path)
 
 
+def test_frozen_csr_artifact_rejects_tampered_storage_profile_bytes(
+    tmp_path,
+) -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    write_frozen_csr_artifact(graph.freeze(), tmp_path)
+
+    manifest_path = tmp_path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["storageProfile"]["totalBytes"] += 4
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="storageProfile mismatch: totalBytes"):
+        load_frozen_csr_artifact(tmp_path)
+
+
+def test_frozen_csr_artifact_accepts_reordered_storage_profile_digest_coverage(
+    tmp_path,
+) -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    write_frozen_csr_artifact(graph.freeze(), tmp_path)
+
+    manifest_path = tmp_path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["storageProfile"]["digestCoverage"] = list(
+        reversed(manifest["storageProfile"]["digestCoverage"])
+    )
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    loaded = load_frozen_csr_artifact(tmp_path)
+
+    assert loaded.reachable_dependencies("app==1.0.0") == ["lib==1.0.0"]
+
+
+def test_frozen_csr_artifact_rejects_tampered_storage_profile_digest_coverage(
+    tmp_path,
+) -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    write_frozen_csr_artifact(graph.freeze(), tmp_path)
+
+    manifest_path = tmp_path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["storageProfile"]["digestCoverage"] = ["values"]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="digest coverage mismatch"):
+        load_frozen_csr_artifact(tmp_path)
+
+
 def test_frozen_csr_artifact_rejects_wrong_schema(tmp_path) -> None:
     graph = CSRDependencyGraph()
     graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")

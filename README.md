@@ -966,9 +966,10 @@ memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
 `manifest.json` containing layout version, package IDs, metadata, array shapes,
 SHA-256 digests, and a `storageProfile` that records the `numpy.int32`
 C-contiguous layout, read-only frozen runtime, memory-mappable load mode, digest
-coverage, and byte totals. `load_frozen_csr_artifact()` verifies the manifest
-and loads the arrays with `mmap_mode="r"` by default, so large graphs can be
-queried without rebuilding from XML or JSON on every process start.
+coverage, and byte totals. `load_frozen_csr_artifact()` verifies the manifest,
+array digests, and storage profile against the loaded arrays, then loads the
+arrays with `mmap_mode="r"` by default, so large graphs can be queried without
+rebuilding from XML or JSON on every process start.
 
 ### JSON Snapshot
 

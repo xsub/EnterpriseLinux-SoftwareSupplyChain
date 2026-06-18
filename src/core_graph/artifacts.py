@@ -82,6 +82,7 @@ def load_frozen_csr_artifact(
         name: _load_manifest_array(source, manifest, name, mmap_mode=mmap_mode)
         for name in _ARRAY_NAMES
     }
+    _validate_storage_profile(manifest, arrays)
     package_ids = tuple(str(package_id) for package_id in manifest["packageIds"])
     vertex_map = {package_id: index for index, package_id in enumerate(package_ids)}
     vertex_metadata = {
@@ -121,6 +122,62 @@ def _load_manifest_array(
     if list(array.shape) != list(descriptor["shape"]):
         raise ValueError(f"CSR artifact array shape mismatch: {name}")
     return array
+
+
+def _validate_storage_profile(
+    manifest: dict[str, Any], arrays: dict[str, np.ndarray]
+) -> None:
+    profile = manifest.get("storageProfile")
+    if not isinstance(profile, dict):
+        raise ValueError("CSR artifact manifest is missing storageProfile")
+
+    coverage = profile.get("digestCoverage")
+    if (
+        not isinstance(coverage, list)
+        or len(coverage) != len(_ARRAY_NAMES)
+        or set(coverage) != set(_ARRAY_NAMES)
+    ):
+        raise ValueError("CSR artifact storageProfile digest coverage mismatch")
+
+    expected = {
+        "arrayCount": len(_ARRAY_NAMES),
+        "cContiguous": True,
+        "digestAlgorithm": "sha256",
+        "dtype": "int32",
+        "layout": "numpy.int32.c_contiguous",
+        "memoryMappable": True,
+        "mmapMode": "r",
+        "readOnly": True,
+        "runtime": "frozen",
+        "valuesBytes": int(arrays["values"].nbytes),
+        "columnIndicesBytes": int(arrays["column_indices"].nbytes),
+        "rowPointersBytes": int(arrays["row_pointers"].nbytes),
+        "reverseValuesBytes": int(arrays["reverse_values"].nbytes),
+        "reverseColumnIndicesBytes": int(
+            arrays["reverse_column_indices"].nbytes
+        ),
+        "reverseRowPointersBytes": int(arrays["reverse_row_pointers"].nbytes),
+    }
+    expected["forwardBytes"] = int(
+        expected["valuesBytes"]
+        + expected["columnIndicesBytes"]
+        + expected["rowPointersBytes"]
+    )
+    expected["reverseBytes"] = int(
+        expected["reverseValuesBytes"]
+        + expected["reverseColumnIndicesBytes"]
+        + expected["reverseRowPointersBytes"]
+    )
+    expected["totalBytes"] = int(
+        expected["forwardBytes"] + expected["reverseBytes"]
+    )
+
+    for key, value in expected.items():
+        if profile.get(key) != value:
+            raise ValueError(f"CSR artifact storageProfile mismatch: {key}")
+
+    if not all(array.flags.c_contiguous for array in arrays.values()):
+        raise ValueError("CSR artifact storageProfile c-contiguous mismatch")
 
 
 def _artifact_storage_profile(graph: FrozenCSRGraph) -> dict[str, object]:

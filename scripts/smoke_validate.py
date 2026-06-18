@@ -5666,6 +5666,16 @@ def _assert_csr_artifact() -> None:
             "lib==2.0.0",
             "core==1.0.0",
         ]
+        manifest_path = output_dir / "manifest.json"
+        tampered_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        tampered_manifest["storageProfile"]["totalBytes"] += 4
+        manifest_path.write_text(json.dumps(tampered_manifest), encoding="utf-8")
+        try:
+            load_frozen_csr_artifact(output_dir)
+        except ValueError as exc:
+            assert "storageProfile mismatch: totalBytes" in str(exc)
+        else:
+            raise AssertionError("tampered CSR storageProfile was accepted")
 
 
 def _assert_accelerator_status() -> None:
