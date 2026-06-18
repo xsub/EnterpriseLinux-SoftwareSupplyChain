@@ -91,6 +91,8 @@ surfaces are:
   persisted validation evidence can validate itself.
 - Compare two EDGP graph snapshots and render the generic diff as a static,
   verifiable report bundle.
+- Render filterable graph-diff classification tables with shareable URL state
+  for package-change kind and text searches.
 - Render local HTML reports from EDGP graph snapshot, impact, advisory, and npm
   diagnostics JSON.
 - Render graph traversal query reports as static, verifiable report bundles.

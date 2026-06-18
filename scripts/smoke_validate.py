@@ -4201,9 +4201,14 @@ def _assert_snapshot_diff() -> None:
             (output_dir / "graph-diff.json").read_text(encoding="utf-8")
         )
         assert bundled_diff["summary"]["addedNodes"] == 2
-        assert 'data-testid="graph-diff-added-nodes-panel"' in (
-            output_dir / "001-graph-diff.html"
-        ).read_text(encoding="utf-8")
+        graph_diff_html = (output_dir / "001-graph-diff.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="graph-diff-filter-panel"' in graph_diff_html
+        assert 'data-graph-diff-search' in graph_diff_html
+        assert "graphDiffQuery" in graph_diff_html
+        assert "graphDiffKind" in graph_diff_html
+        assert 'data-testid="graph-diff-added-nodes-panel"' in graph_diff_html
 
 
 def _assert_impact_report() -> None:

@@ -195,9 +195,18 @@ def test_render_report_supports_graph_diff_json() -> None:
     assert "EDGP Graph Diff" in html
     assert 'data-testid="graph-diff-policy-panel"' in html
     assert 'data-testid="graph-diff-top-findings-panel"' in html
+    assert 'data-testid="graph-diff-filter-panel"' in html
     assert "Graph Diff Policy" in html
     assert "Top Package Changes" in html
     assert 'data-testid="graph-diff-classification-panel"' in html
+    assert 'data-graph-diff-search' in html
+    assert 'data-graph-diff-kind' in html
+    assert 'data-graph-diff-reset' in html
+    assert 'data-graph-diff-row="true"' in html
+    assert 'data-change-kind="upgrade"' in html
+    assert "graphDiffQuery" in html
+    assert "graphDiffKind" in html
+    assert "window.history.replaceState" in html
     assert 'data-testid="graph-diff-added-nodes-panel"' in html
     assert 'data-testid="graph-diff-added-edges-panel"' in html
     assert "upgrade" in html

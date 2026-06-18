@@ -865,7 +865,10 @@ shareable without rebuilding the original input adapters. Passing
 gates on semantic package changes such as downgrades or replacements.
 Global diff reports also expose top package changes directly in JSON and HTML,
 so broad snapshot-drift reviews can start with the highest-signal package
-movement before drilling into every node and edge table.
+movement before drilling into every node and edge table. The static graph-diff
+HTML also includes workbench filters for classification text and change kind;
+filter state is reflected in `graphDiffQuery` and `graphDiffKind` URL
+parameters so a narrowed package-change review can be shared as a plain link.
 
 `edgp diff-tree` compares the dependency or dependent cone around one selected
 node in two snapshots. It resolves `--node` by exact node ID or unambiguous
