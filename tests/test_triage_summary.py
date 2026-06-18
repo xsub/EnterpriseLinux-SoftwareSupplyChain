@@ -512,6 +512,8 @@ def test_triage_summary_includes_bundle_catalog_failures() -> None:
             "diffTreePolicyFailures": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
+            "realDataReplacementPlanPolicyFailures": 0,
+            "realDataReplacementPlanDiffPolicyFailures": 0,
             "triageWarn": 1,
             "triageFail": 0,
         }
@@ -549,6 +551,8 @@ def test_triage_summary_rolls_up_catalog_diff_tree_policy_failures(tmp_path) -> 
             "diffTreePolicyFailures": 1,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
+            "realDataReplacementPlanPolicyFailures": 0,
+            "realDataReplacementPlanDiffPolicyFailures": 0,
             "triageWarn": 0,
             "triageFail": 1,
         }
@@ -595,6 +599,8 @@ def test_triage_summary_rolls_up_catalog_real_data_policy_failures(tmp_path) -> 
             "diffTreePolicyFailures": 0,
             "realDataCoveragePolicyFailures": 1,
             "realDataCoverageDiffPolicyFailures": 1,
+            "realDataReplacementPlanPolicyFailures": 0,
+            "realDataReplacementPlanDiffPolicyFailures": 0,
             "triageWarn": 0,
             "triageFail": 1,
         }
@@ -605,6 +611,64 @@ def test_triage_summary_rolls_up_catalog_real_data_policy_failures(tmp_path) -> 
     assert finding["realDataCoverageFailureCodes"] == ["replacementPriorityMatched"]
     assert finding["realDataCoverageDiffFailureCodes"] == [
         "publicEvidenceCoverageDecreased"
+    ]
+
+
+def test_triage_summary_rolls_up_catalog_replacement_plan_policy_failures(
+    tmp_path,
+) -> None:
+    catalog = json.loads(Path("tests/fixtures/bundle-catalog.json").read_text())
+    catalog["summary"]["failedBundles"] = 0
+    catalog["summary"]["failures"] = 0
+    catalog["summary"]["triageWarn"] = 0
+    catalog["summary"]["triageFail"] = 1
+    catalog["summary"]["realDataReplacementPlanPolicyFailures"] = 1
+    catalog["summary"]["realDataReplacementPlanDiffPolicyFailures"] = 1
+    catalog["bundles"][0]["triageStatus"] = "fail"
+    catalog["bundles"][0]["realDataReplacementPlanPolicyFailures"] = 1
+    catalog["bundles"][0]["realDataReplacementPlanDiffPolicyFailures"] = 1
+    catalog["bundles"][0]["realDataReplacementPlanFailureCodes"] = [
+        "replacementPlanPriorityMatched"
+    ]
+    catalog["bundles"][0]["realDataReplacementPlanDiffFailureCodes"] = [
+        "replacementCandidatesIncreased"
+    ]
+    catalog["sourceKinds"][0]["triageFail"] = 1
+    catalog["sourceKinds"][0]["realDataReplacementPlanPolicyFailures"] = 1
+    catalog["sourceKinds"][0]["realDataReplacementPlanDiffPolicyFailures"] = 1
+    path = tmp_path / "bundle-catalog.json"
+    path.write_text(json.dumps(catalog), encoding="utf-8")
+
+    report = build_triage_summary_from_paths([path])
+
+    assert report["status"] == "fail"
+    assert report["summary"]["realDataReplacementPlanPolicyFailures"] == 1
+    assert report["summary"]["realDataReplacementPlanDiffPolicyFailures"] == 1
+    assert report["summary"]["catalogTriageFail"] == 1
+    assert report["checks"] == [
+        {
+            "kind": "bundle-catalog",
+            "status": "fail",
+            "failedBundles": 0,
+            "failures": 0,
+            "graphDiffPolicyFailures": 0,
+            "diffTreePolicyFailures": 0,
+            "realDataCoveragePolicyFailures": 0,
+            "realDataCoverageDiffPolicyFailures": 0,
+            "realDataReplacementPlanPolicyFailures": 1,
+            "realDataReplacementPlanDiffPolicyFailures": 1,
+            "triageWarn": 0,
+            "triageFail": 1,
+        }
+    ]
+    finding = report["topFindings"]["bundleCatalog"][0]
+    assert finding["realDataReplacementPlanPolicyFailures"] == 1
+    assert finding["realDataReplacementPlanDiffPolicyFailures"] == 1
+    assert finding["realDataReplacementPlanFailureCodes"] == [
+        "replacementPlanPriorityMatched"
+    ]
+    assert finding["realDataReplacementPlanDiffFailureCodes"] == [
+        "replacementCandidatesIncreased"
     ]
 
 

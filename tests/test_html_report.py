@@ -274,6 +274,9 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "Real-Data Policies" in html
     assert "Real Data Coverage Policy Failures" in html
     assert "Real Data Coverage Diff Policy Failures" in html
+    assert "Replacement Plan Policies" in html
+    assert "Real Data Replacement Plan Policy Failures" in html
+    assert "Real Data Replacement Plan Diff Policy Failures" in html
     assert "htmlDigestMismatch" in html
     assert "upgrade" in html
     assert "added-node" in html
@@ -350,9 +353,17 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
             "diffTreePolicyFailures": 1,
             "realDataCoveragePolicyFailures": 1,
             "realDataCoverageDiffPolicyFailures": 1,
+            "realDataReplacementPlanPolicyFailures": 1,
+            "realDataReplacementPlanDiffPolicyFailures": 1,
             "realDataCoverageFailureCodes": ["replacementPriorityMatched"],
             "realDataCoverageDiffFailureCodes": [
                 "publicEvidenceCoverageDecreased"
+            ],
+            "realDataReplacementPlanFailureCodes": [
+                "replacementPlanPriorityMatched"
+            ],
+            "realDataReplacementPlanDiffFailureCodes": [
+                "replacementCandidatesIncreased"
             ],
             "graphDiffMatchedChanges": ["added-node"],
             "graphDiffMatchedKinds": ["upgrade"],
@@ -369,8 +380,12 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     assert "replacement" in html
     assert "Real Data Coverage Policy Failures" in html
     assert "Real Data Coverage Diff Policy Failures" in html
+    assert "Real Data Replacement Plan Policy Failures" in html
+    assert "Real Data Replacement Plan Diff Policy Failures" in html
     assert "replacementPriorityMatched" in html
     assert "publicEvidenceCoverageDecreased" in html
+    assert "replacementPlanPriorityMatched" in html
+    assert "replacementCandidatesIncreased" in html
 
 
 def test_render_report_supports_validation_triage_policy_metrics() -> None:

@@ -1303,6 +1303,14 @@ def _triage_summary_card(entry: BundleEntry | None) -> str:
             "Real-Data Diff Policies",
             summary.get("realDataCoverageDiffPolicyFailures", 0),
         ),
+        (
+            "Replacement Plan Policies",
+            summary.get("realDataReplacementPlanPolicyFailures", 0),
+        ),
+        (
+            "Replacement Plan Diff Policies",
+            summary.get("realDataReplacementPlanDiffPolicyFailures", 0),
+        ),
         ("npm Signals", _npm_signal_count(summary)),
     ]
     metric_items = "".join(

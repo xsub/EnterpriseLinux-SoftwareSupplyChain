@@ -383,11 +383,13 @@ surfaces are:
   can be reviewed as JSON, static HTML, and triage-aware report bundles.
 - Compare real-data coverage directly from fixture directory snapshots without
   requiring callers to pre-generate intermediate coverage JSON files.
-- Roll real-data coverage and coverage-diff policy failures up through bundle
-  catalogs so batch evidence directories expose those gates beside graph-diff
-  and diff-tree policy failures.
-- Preserve real-data coverage and coverage-diff failure-code lists inside
-  bundle-catalog entries and aggregate triage findings for batch-level review.
+- Roll real-data coverage, coverage-diff, replacement-plan, and
+  replacement-plan-diff policy failures up through bundle catalogs so batch
+  evidence directories expose those gates beside graph-diff and diff-tree
+  policy failures.
+- Preserve real-data coverage, coverage-diff, replacement-plan, and
+  replacement-plan-diff failure-code lists inside bundle-catalog entries and
+  aggregate triage findings for batch-level review.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

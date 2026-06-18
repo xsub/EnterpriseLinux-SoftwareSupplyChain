@@ -3423,6 +3423,39 @@ def _assert_public_vertical_reports() -> None:
         assert policy_bundle_report["policy"]["status"] == "fail"
         assert triage["status"] == "fail"
         assert triage["summary"]["realDataReplacementPlanPolicyFailures"] == 1
+        catalog_dir = Path(temp_dir) / "real-data-replacement-plan-catalog"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "bundle-catalog",
+                "--bundle",
+                str(output_dir),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        assert "realDataReplacementPlanPolicyFailures=1" in completed.stdout
+        catalog = json.loads(
+            (catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8")
+        )
+        assert catalog["status"] == "fail"
+        assert catalog["summary"]["realDataReplacementPlanPolicyFailures"] == 1
+        assert catalog["bundles"][0]["realDataReplacementPlanPolicyFailures"] == 1
+        assert catalog["bundles"][0]["realDataReplacementPlanFailureCodes"] == [
+            "replacementPlanPriorityMatched"
+        ]
 
     real_data_replacement_plan_diff = _run_cli(
         [
@@ -3584,6 +3617,43 @@ def _assert_public_vertical_reports() -> None:
         assert diff_bundle_report["policy"]["status"] == "fail"
         assert triage["status"] == "fail"
         assert triage["summary"]["realDataReplacementPlanDiffPolicyFailures"] == 1
+        catalog_dir = Path(temp_dir) / "real-data-replacement-plan-diff-catalog"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "bundle-catalog",
+                "--bundle",
+                str(output_dir),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        assert "realDataReplacementPlanDiffPolicyFailures=1" in completed.stdout
+        catalog = json.loads(
+            (catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8")
+        )
+        assert catalog["status"] == "fail"
+        assert catalog["summary"]["realDataReplacementPlanDiffPolicyFailures"] == 1
+        assert catalog["bundles"][0][
+            "realDataReplacementPlanDiffPolicyFailures"
+        ] == 1
+        assert catalog["bundles"][0]["realDataReplacementPlanDiffFailureCodes"] == [
+            "replacementCandidatesIncreased",
+            "candidateFilesIncreased",
+            "highPriorityGroupsIncreased",
+        ]
 
     real_data_coverage_diff = _run_cli(
         [

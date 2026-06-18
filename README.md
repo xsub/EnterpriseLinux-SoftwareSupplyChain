@@ -286,8 +286,10 @@ For deterministic bundle archives, validation text preserves the same triage
 gate fields as directory bundles, including `triageStatus=...` and
 `graphDiffPolicyFailures=...`, `diffTreePolicyFailures=...`,
 `realDataCoveragePolicyFailures=...`, or
-`realDataCoverageDiffPolicyFailures=...` for snapshot-diff and real-data
-evidence policy failures.
+`realDataCoverageDiffPolicyFailures=...`,
+`realDataReplacementPlanPolicyFailures=...`, or
+`realDataReplacementPlanDiffPolicyFailures=...` for snapshot-diff and
+real-data evidence policy failures.
 
 ### Benchmark
 
@@ -988,7 +990,8 @@ directories and deterministic bundle archives that embed that summary, which
 keeps CI logs readable even when the JSON report is archived.
 For standalone EDGP JSON reports with top-level `status` and `summary`, such as
 `edgp.bundle.catalog.v1`, validation also preserves `reportStatus=...` and
-snapshot-diff policy failure counters in text output, and it copies
+snapshot-diff, real-data coverage, and replacement-plan policy failure counters
+in text output, and it copies
 `topFindings` into `reportTopFindings` for persisted validation evidence.
 `--fail-on-status warn|fail` gates on that copied report status.
 Validation reports also render through `edgp report`, so CI gate output can be
@@ -1163,13 +1166,16 @@ to `report-bundle`.
 deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
 with bundle paths, input type, source kinds, report schemas, triage status,
 graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
-failure counts, real-data failure codes, verifier failure codes, and bundle
+failure counts, replacement-plan and replacement-plan-diff policy failure
+counts, real-data failure codes, verifier failure codes, and bundle
 fingerprints.
 Source-kind rows include triage pass/warn/fail counts plus
 `graphDiffPolicyFailures`, `diffTreePolicyFailures`,
 `realDataCoveragePolicyFailures`, and
-`realDataCoverageDiffPolicyFailures`, so large evidence batches can show which
-input family contributed failed snapshot-drift or real-data policy gates.
+`realDataCoverageDiffPolicyFailures`,
+`realDataReplacementPlanPolicyFailures`, and
+`realDataReplacementPlanDiffPolicyFailures`, so large evidence batches can show
+which input family contributed failed snapshot-drift or real-data policy gates.
 Per-bundle rows also preserve matched graph-diff changes and package kinds,
 plus matched diff-tree package kinds and real-data failure codes, from embedded
 triage summaries.
@@ -1181,16 +1187,17 @@ generated catalog bundle as a deterministic `.tar.gz` in the same pass. This
 gives CI systems and future workbench/RAG ingestion one compact index, plus one
 portable handoff archive, over a batch of public-input evidence bundles.
 Use `--format text` when the CI log should show the catalog's bundle counts,
-`catalogStatus`, triage status, and snapshot-diff policy failure counts
-directly beside the generated index path.
+`catalogStatus`, triage status, and snapshot-diff or real-data policy failure
+counts directly beside the generated index path.
 
 `edgp triage-summary` turns a report bundle directory, a deterministic report
 bundle archive, or a list of EDGP JSON reports into one
 `edgp.triage.summary.v1` JSON rollup. It reports pass/warn/fail status, graph
 size, advisory findings, denied license findings, npm diagnostic signals,
 graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
-gate failures, bundle-catalog integrity and underlying triage status, and the
-source report list so CI systems and
+gate failures, replacement-plan and replacement-plan-diff policy gate failures,
+bundle-catalog integrity and underlying triage status, and the source report
+list so CI systems and
 workbench/RAG contexts can read one compact artifact instead of stitching
 together every report manually. Rendered triage-summary HTML includes dedicated
 graph-diff and diff-tree policy findings panels when graph-drift gates fail;
@@ -1202,7 +1209,8 @@ visible without parsing the full JSON rollup. `--fail-on-status warn|fail` still
 prints the selected format and returns status `2` when the computed status
 reaches the selected threshold. When a bundle catalog is one of the inputs,
 triage top findings preserve the catalog's matched graph-diff and diff-tree
-policy details plus real-data failure codes for batch-level review.
+policy details plus real-data and replacement-plan failure codes for
+batch-level review.
 
 ## Roadmap
 

@@ -1354,6 +1354,8 @@ def test_cli_validate_json_text_surfaces_report_status_and_summary(
     payload["summary"]["diffTreePolicyFailures"] = 1
     payload["summary"]["realDataCoveragePolicyFailures"] = 1
     payload["summary"]["realDataCoverageDiffPolicyFailures"] = 1
+    payload["summary"]["realDataReplacementPlanPolicyFailures"] = 1
+    payload["summary"]["realDataReplacementPlanDiffPolicyFailures"] = 1
     path = tmp_path / "bundle-catalog.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -1363,6 +1365,8 @@ def test_cli_validate_json_text_surfaces_report_status_and_summary(
     assert report["reportSummary"]["diffTreePolicyFailures"] == 1
     assert report["reportSummary"]["realDataCoveragePolicyFailures"] == 1
     assert report["reportSummary"]["realDataCoverageDiffPolicyFailures"] == 1
+    assert report["reportSummary"]["realDataReplacementPlanPolicyFailures"] == 1
+    assert report["reportSummary"]["realDataReplacementPlanDiffPolicyFailures"] == 1
 
     assert main(["validate", "--path", str(path), "--format", "text"]) == 0
     text = capsys.readouterr().out.strip()
@@ -1370,7 +1374,9 @@ def test_cli_validate_json_text_surfaces_report_status_and_summary(
         "OK targetType=json-file failures=0 "
         "contract=edgp.bundle.catalog.v1 reportStatus=fail "
         "diffTreePolicyFailures=1 realDataCoveragePolicyFailures=1 "
-        "realDataCoverageDiffPolicyFailures=1"
+        "realDataCoverageDiffPolicyFailures=1 "
+        "realDataReplacementPlanPolicyFailures=1 "
+        "realDataReplacementPlanDiffPolicyFailures=1"
     )
 
     assert (
@@ -1392,7 +1398,9 @@ def test_cli_validate_json_text_surfaces_report_status_and_summary(
         "OK targetType=json-file failures=0 "
         "contract=edgp.bundle.catalog.v1 reportStatus=fail "
         "diffTreePolicyFailures=1 realDataCoveragePolicyFailures=1 "
-        "realDataCoverageDiffPolicyFailures=1"
+        "realDataCoverageDiffPolicyFailures=1 "
+        "realDataReplacementPlanPolicyFailures=1 "
+        "realDataReplacementPlanDiffPolicyFailures=1"
     )
 
 

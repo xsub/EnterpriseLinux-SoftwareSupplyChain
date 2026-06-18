@@ -74,6 +74,14 @@
             "minimum": 0,
             "type": "integer"
           },
+          "realDataReplacementPlanPolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "realDataReplacementPlanDiffPolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "realDataCoverageFailureCodes": {
             "items": {
               "type": "string"
@@ -81,6 +89,18 @@
             "type": "array"
           },
           "realDataCoverageDiffFailureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "realDataReplacementPlanFailureCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "realDataReplacementPlanDiffFailureCodes": {
             "items": {
               "type": "string"
             },
@@ -147,8 +167,12 @@
           "diffTreePolicyFailures",
           "realDataCoveragePolicyFailures",
           "realDataCoverageDiffPolicyFailures",
+          "realDataReplacementPlanPolicyFailures",
+          "realDataReplacementPlanDiffPolicyFailures",
           "realDataCoverageFailureCodes",
           "realDataCoverageDiffFailureCodes",
+          "realDataReplacementPlanFailureCodes",
+          "realDataReplacementPlanDiffFailureCodes",
           "failureCodes",
           "reportSchemas",
           "triageStatus"
@@ -186,6 +210,14 @@
             "type": "integer"
           },
           "realDataCoverageDiffPolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "realDataReplacementPlanPolicyFailures": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "realDataReplacementPlanDiffPolicyFailures": {
             "minimum": 0,
             "type": "integer"
           },
@@ -227,6 +259,8 @@
           "diffTreePolicyFailures",
           "realDataCoveragePolicyFailures",
           "realDataCoverageDiffPolicyFailures",
+          "realDataReplacementPlanPolicyFailures",
+          "realDataReplacementPlanDiffPolicyFailures",
           "triagePass",
           "triageWarn",
           "triageFail",
@@ -272,6 +306,14 @@
           "minimum": 0,
           "type": "integer"
         },
+        "realDataReplacementPlanPolicyFailures": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "realDataReplacementPlanDiffPolicyFailures": {
+          "minimum": 0,
+          "type": "integer"
+        },
         "failures": {
           "minimum": 0,
           "type": "integer"
@@ -311,6 +353,8 @@
         "diffTreePolicyFailures",
         "realDataCoveragePolicyFailures",
         "realDataCoverageDiffPolicyFailures",
+        "realDataReplacementPlanPolicyFailures",
+        "realDataReplacementPlanDiffPolicyFailures",
         "triagePass",
         "triageWarn",
         "triageFail",

@@ -141,11 +141,23 @@ def _catalog_entry(
         "realDataCoverageDiffPolicyFailures": int(
             triage_summary.get("realDataCoverageDiffPolicyFailures", 0) or 0
         ),
+        "realDataReplacementPlanPolicyFailures": int(
+            triage_summary.get("realDataReplacementPlanPolicyFailures", 0) or 0
+        ),
+        "realDataReplacementPlanDiffPolicyFailures": int(
+            triage_summary.get("realDataReplacementPlanDiffPolicyFailures", 0) or 0
+        ),
         "realDataCoverageFailureCodes": _string_list(
             triage_summary.get("realDataCoverageFailureCodes")
         ),
         "realDataCoverageDiffFailureCodes": _string_list(
             triage_summary.get("realDataCoverageDiffFailureCodes")
+        ),
+        "realDataReplacementPlanFailureCodes": _string_list(
+            triage_summary.get("realDataReplacementPlanFailureCodes")
+        ),
+        "realDataReplacementPlanDiffFailureCodes": _string_list(
+            triage_summary.get("realDataReplacementPlanDiffFailureCodes")
         ),
         "graphDiffFailOnChanges": _string_list(
             triage_summary.get("graphDiffFailOnChanges")
@@ -230,8 +242,12 @@ def _triage_summary(
             "diffTreePolicyFailures": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
+            "realDataReplacementPlanPolicyFailures": 0,
+            "realDataReplacementPlanDiffPolicyFailures": 0,
             "realDataCoverageFailureCodes": [],
             "realDataCoverageDiffFailureCodes": [],
+            "realDataReplacementPlanFailureCodes": [],
+            "realDataReplacementPlanDiffFailureCodes": [],
             "graphDiffFailOnChanges": [],
             "graphDiffMatchedChanges": [],
             "graphDiffFailOnKinds": [],
@@ -247,8 +263,12 @@ def _triage_summary(
             "diffTreePolicyFailures": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
+            "realDataReplacementPlanPolicyFailures": 0,
+            "realDataReplacementPlanDiffPolicyFailures": 0,
             "realDataCoverageFailureCodes": [],
             "realDataCoverageDiffFailureCodes": [],
+            "realDataReplacementPlanFailureCodes": [],
+            "realDataReplacementPlanDiffFailureCodes": [],
             "graphDiffFailOnChanges": [],
             "graphDiffMatchedChanges": [],
             "graphDiffFailOnKinds": [],
@@ -268,6 +288,12 @@ def _triage_summary(
     real_data_coverage_diff = _object_list(
         top_findings.get("realDataCoverageDiff")
     )
+    real_data_replacement_plan = _object_list(
+        top_findings.get("realDataReplacementPlan")
+    )
+    real_data_replacement_plan_diff = _object_list(
+        top_findings.get("realDataReplacementPlanDiff")
+    )
     return {
         "status": str(payload.get("status") or "unknown"),
         "graphDiffPolicyFailures": int(
@@ -282,9 +308,21 @@ def _triage_summary(
         "realDataCoverageDiffPolicyFailures": int(
             summary.get("realDataCoverageDiffPolicyFailures", 0) or 0
         ),
+        "realDataReplacementPlanPolicyFailures": int(
+            summary.get("realDataReplacementPlanPolicyFailures", 0) or 0
+        ),
+        "realDataReplacementPlanDiffPolicyFailures": int(
+            summary.get("realDataReplacementPlanDiffPolicyFailures", 0) or 0
+        ),
         "realDataCoverageFailureCodes": _collect_failure_codes(real_data_coverage),
         "realDataCoverageDiffFailureCodes": _collect_failure_codes(
             real_data_coverage_diff
+        ),
+        "realDataReplacementPlanFailureCodes": _collect_failure_codes(
+            real_data_replacement_plan
+        ),
+        "realDataReplacementPlanDiffFailureCodes": _collect_failure_codes(
+            real_data_replacement_plan_diff
         ),
         "graphDiffFailOnChanges": _collect_policy_values(
             graph_diff_policies,
@@ -388,6 +426,14 @@ def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
             int(entry.get("realDataCoverageDiffPolicyFailures", 0) or 0)
             for entry in entries
         ),
+        "realDataReplacementPlanPolicyFailures": sum(
+            int(entry.get("realDataReplacementPlanPolicyFailures", 0) or 0)
+            for entry in entries
+        ),
+        "realDataReplacementPlanDiffPolicyFailures": sum(
+            int(entry.get("realDataReplacementPlanDiffPolicyFailures", 0) or 0)
+            for entry in entries
+        ),
     }
 
 
@@ -400,6 +446,8 @@ def _status(summary: dict[str, Any]) -> str:
         or int(summary.get("diffTreePolicyFailures", 0) or 0)
         or int(summary.get("realDataCoveragePolicyFailures", 0) or 0)
         or int(summary.get("realDataCoverageDiffPolicyFailures", 0) or 0)
+        or int(summary.get("realDataReplacementPlanPolicyFailures", 0) or 0)
+        or int(summary.get("realDataReplacementPlanDiffPolicyFailures", 0) or 0)
     ):
         return "fail"
     if int(summary.get("triageWarn", 0) or 0):
@@ -426,6 +474,8 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "diffTreePolicyFailures": 0,
                 "realDataCoveragePolicyFailures": 0,
                 "realDataCoverageDiffPolicyFailures": 0,
+                "realDataReplacementPlanPolicyFailures": 0,
+                "realDataReplacementPlanDiffPolicyFailures": 0,
             },
         )
         row["bundles"] += 1
@@ -451,5 +501,11 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         )
         row["realDataCoverageDiffPolicyFailures"] += int(
             entry.get("realDataCoverageDiffPolicyFailures", 0) or 0
+        )
+        row["realDataReplacementPlanPolicyFailures"] += int(
+            entry.get("realDataReplacementPlanPolicyFailures", 0) or 0
+        )
+        row["realDataReplacementPlanDiffPolicyFailures"] += int(
+            entry.get("realDataReplacementPlanDiffPolicyFailures", 0) or 0
         )
     return [grouped[key] for key in sorted(grouped)]
