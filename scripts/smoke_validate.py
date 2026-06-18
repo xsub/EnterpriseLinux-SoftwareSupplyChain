@@ -5647,6 +5647,18 @@ def _assert_csr_artifact() -> None:
         assert manifest["schema"] == "edgp.csr.artifact.v1"
         assert manifest["nodes"] == 3
         assert manifest["edges"] == 2
+        assert manifest["storageProfile"]["layout"] == "numpy.int32.c_contiguous"
+        assert manifest["storageProfile"]["readOnly"] is True
+        assert manifest["storageProfile"]["memoryMappable"] is True
+        assert manifest["storageProfile"]["digestAlgorithm"] == "sha256"
+        assert manifest["storageProfile"]["digestCoverage"] == [
+            "values",
+            "column_indices",
+            "row_pointers",
+            "reverse_values",
+            "reverse_column_indices",
+            "reverse_row_pointers",
+        ]
         assert (output_dir / "manifest.json").exists()
         assert (output_dir / "column_indices.npy").exists()
         assert loaded.storage_profile()["memoryMapped"] is True

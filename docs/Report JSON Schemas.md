@@ -39,7 +39,7 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
 - `edgp.csr.artifact.v1`:
   [`edgp.csr.artifact.v1.schema.json`](schemas/edgp.csr.artifact.v1.schema.json)
   documents memory-mappable frozen CSR artifact manifests, array paths, shapes,
-  and SHA-256 digests.
+  SHA-256 digests, and storage profiles for contiguous read-only runtime arrays.
 - `edgp.fixture.provenance.v1`:
   [`edgp.fixture.provenance.v1.schema.json`](schemas/edgp.fixture.provenance.v1.schema.json)
   documents public-derived fixture sources, generated report fixtures, synthetic

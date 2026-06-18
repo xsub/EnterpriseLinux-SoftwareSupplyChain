@@ -964,9 +964,11 @@ reports worker count plus selected traversal backend.
 `edgp csr-artifact` persists an existing `edgp.graph.snapshot.v1` as a
 memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
 `manifest.json` containing layout version, package IDs, metadata, array shapes,
-and SHA-256 digests. `load_frozen_csr_artifact()` verifies the manifest and
-loads the arrays with `mmap_mode="r"` by default, so large graphs can be queried
-without rebuilding from XML or JSON on every process start.
+SHA-256 digests, and a `storageProfile` that records the `numpy.int32`
+C-contiguous layout, read-only frozen runtime, memory-mappable load mode, digest
+coverage, and byte totals. `load_frozen_csr_artifact()` verifies the manifest
+and loads the arrays with `mmap_mode="r"` by default, so large graphs can be
+queried without rebuilding from XML or JSON on every process start.
 
 ### JSON Snapshot
 

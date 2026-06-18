@@ -52,6 +52,7 @@ def write_frozen_csr_artifact(
         "nodes": len(graph),
         "edges": int(len(graph.column_indices)),
         "arrays": arrays,
+        "storageProfile": _artifact_storage_profile(graph),
         "packageIds": list(graph.package_ids),
         "vertexMetadata": {
             package_id: dict(metadata)
@@ -120,6 +121,25 @@ def _load_manifest_array(
     if list(array.shape) != list(descriptor["shape"]):
         raise ValueError(f"CSR artifact array shape mismatch: {name}")
     return array
+
+
+def _artifact_storage_profile(graph: FrozenCSRGraph) -> dict[str, object]:
+    profile = dict(graph.storage_profile())
+    profile.pop("memoryMapped", None)
+    profile["arrayCount"] = len(_ARRAY_NAMES)
+    profile["digestAlgorithm"] = "sha256"
+    profile["digestCoverage"] = list(_ARRAY_NAMES)
+    profile["forwardBytes"] = int(
+        graph.values.nbytes + graph.column_indices.nbytes + graph.row_pointers.nbytes
+    )
+    profile["memoryMappable"] = True
+    profile["mmapMode"] = "r"
+    profile["reverseBytes"] = int(
+        graph.reverse_values.nbytes
+        + graph.reverse_column_indices.nbytes
+        + graph.reverse_row_pointers.nbytes
+    )
+    return profile
 
 
 def _sha256(path: Path) -> str:

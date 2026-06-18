@@ -24,6 +24,25 @@ def test_frozen_csr_artifact_round_trips_with_memmap(tmp_path) -> None:
 
     assert manifest["schema"] == CSR_ARTIFACT_SCHEMA
     assert manifest["layoutVersion"] == 1
+    assert manifest["storageProfile"]["runtime"] == "frozen"
+    assert manifest["storageProfile"]["dtype"] == "int32"
+    assert manifest["storageProfile"]["cContiguous"] is True
+    assert manifest["storageProfile"]["readOnly"] is True
+    assert manifest["storageProfile"]["memoryMappable"] is True
+    assert manifest["storageProfile"]["mmapMode"] == "r"
+    assert manifest["storageProfile"]["arrayCount"] == 6
+    assert manifest["storageProfile"]["digestAlgorithm"] == "sha256"
+    assert manifest["storageProfile"]["digestCoverage"] == [
+        "values",
+        "column_indices",
+        "row_pointers",
+        "reverse_values",
+        "reverse_column_indices",
+        "reverse_row_pointers",
+    ]
+    assert manifest["storageProfile"]["forwardBytes"] == 32
+    assert manifest["storageProfile"]["reverseBytes"] == 32
+    assert manifest["storageProfile"]["totalBytes"] == 64
     assert (tmp_path / "manifest.json").exists()
     assert (tmp_path / "column_indices.npy").exists()
     assert isinstance(loaded.column_indices, np.memmap)

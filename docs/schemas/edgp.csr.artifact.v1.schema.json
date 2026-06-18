@@ -25,6 +25,68 @@
     "nodes": {"minimum": 0, "type": "integer"},
     "packageIds": {"items": {"type": "string"}, "type": "array"},
     "schema": {"const": "edgp.csr.artifact.v1"},
+    "storageProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "arrayCount": {"const": 6},
+        "cContiguous": {"const": true},
+        "columnIndicesBytes": {"minimum": 0, "type": "integer"},
+        "digestAlgorithm": {"const": "sha256"},
+        "digestCoverage": {
+          "items": {
+            "enum": [
+              "values",
+              "column_indices",
+              "row_pointers",
+              "reverse_values",
+              "reverse_column_indices",
+              "reverse_row_pointers"
+            ],
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 6,
+          "uniqueItems": true,
+          "type": "array"
+        },
+        "dtype": {"const": "int32"},
+        "forwardBytes": {"minimum": 0, "type": "integer"},
+        "layout": {"const": "numpy.int32.c_contiguous"},
+        "memoryMappable": {"const": true},
+        "mmapMode": {"const": "r"},
+        "readOnly": {"const": true},
+        "reverseBytes": {"minimum": 0, "type": "integer"},
+        "reverseColumnIndicesBytes": {"minimum": 0, "type": "integer"},
+        "reverseRowPointersBytes": {"minimum": 0, "type": "integer"},
+        "reverseValuesBytes": {"minimum": 0, "type": "integer"},
+        "rowPointersBytes": {"minimum": 0, "type": "integer"},
+        "runtime": {"const": "frozen"},
+        "totalBytes": {"minimum": 0, "type": "integer"},
+        "valuesBytes": {"minimum": 0, "type": "integer"}
+      },
+      "required": [
+        "layout",
+        "dtype",
+        "valuesBytes",
+        "columnIndicesBytes",
+        "rowPointersBytes",
+        "reverseValuesBytes",
+        "reverseColumnIndicesBytes",
+        "reverseRowPointersBytes",
+        "totalBytes",
+        "cContiguous",
+        "runtime",
+        "readOnly",
+        "arrayCount",
+        "digestAlgorithm",
+        "digestCoverage",
+        "forwardBytes",
+        "memoryMappable",
+        "mmapMode",
+        "reverseBytes"
+      ],
+      "type": "object"
+    },
     "vertexMetadata": {
       "additionalProperties": {
         "additionalProperties": {"type": "string"},
@@ -41,6 +103,7 @@
     "nodes",
     "edges",
     "arrays",
+    "storageProfile",
     "packageIds",
     "vertexMetadata"
   ],
