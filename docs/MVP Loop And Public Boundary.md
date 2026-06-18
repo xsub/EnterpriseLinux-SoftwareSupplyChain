@@ -395,6 +395,8 @@ surfaces are:
   repeated failure class.
 - Add static bundle-catalog workbench filters for source kind, triage status,
   text/failure-code search, and problem-only batch review.
+- Preserve bundle-catalog workbench filter state in static URL parameters so
+  narrowed CI/workbench evidence reviews can be shared without a backend.
 - Write deterministic archive output directly from generated bundle catalogs
   for one-step CI/workbench batch evidence handoff.
 - Match RPM advisory versions against full node versions, `version-release`

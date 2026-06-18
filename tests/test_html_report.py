@@ -274,6 +274,11 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert 'data-bundle-catalog-problems' in html
     assert 'data-bundle-catalog-reset' in html
     assert 'data-bundle-catalog-row="true"' in html
+    assert "catalogQuery" in html
+    assert "catalogSource" in html
+    assert "catalogStatus" in html
+    assert "catalogProblems" in html
+    assert "window.history.replaceState" in html
     assert 'data-source-kind="edgp-json"' in html
     assert 'data-source-kind="npm-diagnostics"' in html
     assert 'data-triage-status="warn"' in html

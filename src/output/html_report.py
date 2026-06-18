@@ -4152,6 +4152,10 @@ def _edge_filter_script() -> str:
 def _bundle_catalog_filter_script() -> str:
     return """
 (() => {
+  const queryParam = "catalogQuery";
+  const sourceParam = "catalogSource";
+  const statusParam = "catalogStatus";
+  const problemsParam = "catalogProblems";
   const panel = document.querySelector("[data-bundle-catalog-filter-panel]");
   const bundlePanel = document.querySelector('[data-testid="bundle-catalog-bundles-panel"]');
   if (!panel || !bundlePanel) return;
@@ -4162,7 +4166,35 @@ def _bundle_catalog_filter_script() -> str:
   const reset = panel.querySelector("[data-bundle-catalog-reset]");
   const count = panel.querySelector("[data-bundle-catalog-filter-count]");
   const rows = () => Array.from(bundlePanel.querySelectorAll("[data-bundle-catalog-row]"));
-  const apply = () => {
+  const setSelectValue = (element, value) => {
+    if (!value) return;
+    const values = Array.from(element.options).map((option) => option.value);
+    if (values.includes(value)) element.value = value;
+  };
+  const readUrlState = () => {
+    const params = new URLSearchParams(window.location.search);
+    search.value = params.get(queryParam) || "";
+    setSelectValue(source, params.get(sourceParam));
+    setSelectValue(status, params.get(statusParam));
+    problems.checked = ["1", "true"].includes(
+      (params.get(problemsParam) || "").toLowerCase(),
+    );
+  };
+  const updateUrlState = () => {
+    const url = new URL(window.location.href);
+    const query = (search.value || "").trim();
+    if (query) url.searchParams.set(queryParam, query);
+    else url.searchParams.delete(queryParam);
+    if (source.value) url.searchParams.set(sourceParam, source.value);
+    else url.searchParams.delete(sourceParam);
+    if (status.value) url.searchParams.set(statusParam, status.value);
+    else url.searchParams.delete(statusParam);
+    if (problems.checked) url.searchParams.set(problemsParam, "1");
+    else url.searchParams.delete(problemsParam);
+    window.history.replaceState({}, "", url);
+  };
+  const apply = (options = {}) => {
+    const syncUrl = options.syncUrl !== false;
     const query = (search.value || "").trim().toLowerCase();
     const sourceKind = source.value;
     const triageStatus = status.value;
@@ -4178,11 +4210,12 @@ def _bundle_catalog_filter_script() -> str:
       if (visible) shown += 1;
     }
     count.textContent = `${shown} of ${allRows.length} rows`;
+    if (syncUrl) updateUrlState();
   };
-  search.addEventListener("input", apply);
-  source.addEventListener("change", apply);
-  status.addEventListener("change", apply);
-  problems.addEventListener("change", apply);
+  search.addEventListener("input", () => apply());
+  source.addEventListener("change", () => apply());
+  status.addEventListener("change", () => apply());
+  problems.addEventListener("change", () => apply());
   reset.addEventListener("click", () => {
     search.value = "";
     source.value = "";
@@ -4191,8 +4224,9 @@ def _bundle_catalog_filter_script() -> str:
     apply();
     search.focus();
   });
-  bundlePanel.addEventListener("edgp:table-sorted", apply);
-  apply();
+  bundlePanel.addEventListener("edgp:table-sorted", () => apply());
+  readUrlState();
+  apply({ syncUrl: false });
 })();
 """.strip()
 

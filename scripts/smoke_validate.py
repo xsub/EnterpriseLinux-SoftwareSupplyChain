@@ -4964,6 +4964,10 @@ def _assert_bundle_catalog() -> None:
         )
         assert 'data-testid="bundle-catalog-filter-panel"' in catalog_html
         assert 'data-bundle-catalog-search' in catalog_html
+        assert "catalogQuery" in catalog_html
+        assert "catalogSource" in catalog_html
+        assert "catalogStatus" in catalog_html
+        assert "catalogProblems" in catalog_html
         assert 'data-testid="bundle-catalog-bundles-panel"' in catalog_html
         archive_report = _run_cli(["verify-bundle-archive", "--path", str(catalog_archive)])
         assert archive_report["schema"] == "edgp.report.bundle.archive.v1"
