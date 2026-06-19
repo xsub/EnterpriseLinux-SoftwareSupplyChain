@@ -5746,6 +5746,31 @@ def _assert_benchmark() -> None:
     assert payload["stats"]["edges"] == 186
     assert payload["stats"]["reachableFromRoot"] == 63
     assert payload["accelerators"]["requestedBackend"] == "auto"
+    benchmark_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "benchmark",
+            "--nodes",
+            "64",
+            "--fanout",
+            "3",
+            "--backend",
+            "auto",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert benchmark_text.startswith("OK schema=edgp.benchmark.v1")
+    assert "nodes=64" in benchmark_text
+    assert "edges=186" in benchmark_text
+    assert "selectedBackend=" in benchmark_text
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "performance-report-bundle"
@@ -5821,6 +5846,28 @@ def _assert_csr_artifact() -> None:
         assert (output_dir / "manifest.json").exists()
         assert (output_dir / "column_indices.npy").exists()
         assert loaded.storage_profile()["memoryMapped"] is True
+        csr_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "csr-artifact",
+                "--snapshot",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir / "text-artifact"),
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        assert csr_text.startswith("OK schema=edgp.csr.artifact.v1")
+        assert "nodes=3" in csr_text
+        assert "memoryMappable=true" in csr_text
         assert loaded.reachable_dependencies("app==1.0.0") == [
             "lib==2.0.0",
             "core==1.0.0",
@@ -5857,6 +5904,26 @@ def _assert_accelerator_status() -> None:
     assert payload["numba"]["installExtra"] == ".[fast]"
     assert payload["graphblas"]["installExtra"] == ".[graphblas]"
     assert payload["graphblas"]["storageContract"] == "frozen CSR remains canonical"
+    status_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "accelerator-status",
+            "--backend",
+            "auto",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert status_text.startswith("OK command=accelerator-status")
+    assert "selectedBackend=" in status_text
+    assert "graphblasAvailable=" in status_text
 
 
 def _assert_parallel_query() -> None:
@@ -5880,6 +5947,34 @@ def _assert_parallel_query() -> None:
     assert payload["summary"]["workers"] == 2
     assert payload["results"][0]["nodes"] == ["lib==2.0.0", "core==1.0.0"]
     assert payload["results"][1]["nodes"] == ["lib==2.0.0", "app==1.0.0"]
+    query_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "parallel-query",
+            "--snapshot",
+            "tests/fixtures/snapshot-right.json",
+            "--query",
+            "dependencies:app==1.0.0",
+            "--query",
+            "dependents:core==1.0.0",
+            "--workers",
+            "2",
+            "--backend",
+            "auto",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert query_text.startswith("OK schema=edgp.parallel.query.report.v1")
+    assert "queries=2" in query_text
+    assert "totalResultNodes=4" in query_text
 
 
 def _assert_rpm_installed() -> None:

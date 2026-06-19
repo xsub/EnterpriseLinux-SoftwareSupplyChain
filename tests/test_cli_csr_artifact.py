@@ -48,3 +48,32 @@ def test_cli_csr_artifact_writes_verified_runtime_artifact(tmp_path, capsys) -> 
     assert capsys.readouterr().out.strip() == (
         "OK targetType=csr-artifact failures=0 contract=edgp.csr.artifact.v1"
     )
+
+
+def test_cli_csr_artifact_outputs_text_summary(tmp_path, capsys) -> None:
+    output_dir = tmp_path / "csr-artifact-text"
+
+    assert (
+        main(
+            [
+                "csr-artifact",
+                "--snapshot",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(output_dir),
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("OK schema=edgp.csr.artifact.v1 ")
+    assert "nodes=3" in output
+    assert "edges=2" in output
+    assert "dtype=int32" in output
+    assert "arrays=6" in output
+    assert "memoryMappable=true" in output
+    assert f"outputDir={output_dir}" in output
+    assert (output_dir / "manifest.json").exists()

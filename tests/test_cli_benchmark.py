@@ -20,6 +20,34 @@ def test_cli_benchmark_outputs_json(capsys) -> None:
     assert payload["timingsMs"]["freeze"] >= 0
 
 
+def test_cli_benchmark_outputs_text_summary(capsys) -> None:
+    assert (
+        main(
+            [
+                "benchmark",
+                "--nodes",
+                "6",
+                "--fanout",
+                "2",
+                "--backend",
+                "auto",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("OK schema=edgp.benchmark.v1 ")
+    assert "nodes=6" in output
+    assert "edges=9" in output
+    assert "backend=auto" in output
+    assert "selectedBackend=" in output
+    assert "layout=numpy.int32.c_contiguous" in output
+    assert "freezeMs=" in output
+
+
 def test_cli_performance_report_bundle_writes_verifiable_bundle(
     capsys,
     tmp_path,

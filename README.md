@@ -302,11 +302,15 @@ real-data evidence policy failures.
 
 ```bash
 edgp benchmark --nodes 1000 --fanout 3
+edgp benchmark --nodes 1000 --fanout 3 --backend auto --format text
 edgp accelerator-status --backend auto
+edgp accelerator-status --backend auto --format text
 edgp parallel-query --snapshot graph.json --query dependencies:pkg==1.0.0 --query dependents:lib==2.0.0 --workers 4 --backend auto
+edgp parallel-query --snapshot graph.json --query dependencies:pkg==1.0.0 --query dependents:lib==2.0.0 --workers 4 --backend auto --format text
 edgp performance-report --scenario 1000:3 --scenario 10000:5
 edgp performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir reports/performance --triage-summary
 edgp csr-artifact --snapshot graph.json --output-dir artifacts/csr
+edgp csr-artifact --snapshot graph.json --output-dir artifacts/csr --format text
 ```
 
 ## Architecture
@@ -967,7 +971,10 @@ keeping frozen CSR as the canonical storage contract.
 `edgp parallel-query` runs independent reachability queries concurrently
 against one frozen CSR runtime. It accepts repeated `--query` values in
 `dependencies:NODE` or `dependents:NODE` form, preserves result ordering, and
-reports worker count plus selected traversal backend.
+reports worker count plus selected traversal backend. Use `--format text` on
+`benchmark`, `accelerator-status`, `parallel-query`, or `csr-artifact` when a
+CI log should show backend choice, CSR layout, memory-mapping status, and query
+counts without parsing full JSON.
 `edgp csr-artifact` persists an existing `edgp.graph.snapshot.v1` as a
 memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
 `manifest.json` containing layout version, package IDs, metadata, array shapes,

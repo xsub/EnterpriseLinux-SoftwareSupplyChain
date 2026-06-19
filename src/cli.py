@@ -1341,6 +1341,145 @@ def _format_fixture_provenance_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_benchmark_result(report: dict[str, Any]) -> str:
+    parameters = report.get("parameters")
+    if not isinstance(parameters, dict):
+        parameters = {}
+    accelerators = report.get("accelerators")
+    if not isinstance(accelerators, dict):
+        accelerators = {}
+    stats = report.get("stats")
+    if not isinstance(stats, dict):
+        stats = {}
+    storage = report.get("storage")
+    if not isinstance(storage, dict):
+        storage = {}
+    timings = report.get("timingsMs")
+    if not isinstance(timings, dict):
+        timings = {}
+    ranking = _dict_list(report.get("mostDependedUpon"))
+    parts = [
+        "OK",
+        "schema=edgp.benchmark.v1",
+        f"nodes={int(stats.get('nodes', 0) or 0)}",
+        f"edges={int(stats.get('edges', 0) or 0)}",
+        f"fanout={int(parameters.get('fanout', 0) or 0)}",
+        f"backend={_text_value(parameters.get('backend', ''))}",
+        f"selectedBackend={_text_value(accelerators.get('selectedBackend', ''))}",
+        f"layout={_text_value(storage.get('layout', ''))}",
+        f"runtime={_text_value(storage.get('runtime', ''))}",
+        f"cContiguous={str(bool(storage.get('cContiguous'))).lower()}",
+        f"reachableFromRoot={int(stats.get('reachableFromRoot', 0) or 0)}",
+        (
+            "reverseReachableFromTail="
+            f"{int(stats.get('reverseReachableFromTail', 0) or 0)}"
+        ),
+        f"buildMs={float(timings.get('build', 0.0) or 0.0):.3f}",
+        f"freezeMs={float(timings.get('freeze', 0.0) or 0.0):.3f}",
+        f"reachableMs={float(timings.get('reachable', 0.0) or 0.0):.3f}",
+        (
+            "reverseReachableMs="
+            f"{float(timings.get('reverseReachable', 0.0) or 0.0):.3f}"
+        ),
+        (
+            "mostDependedUponMs="
+            f"{float(timings.get('mostDependedUpon', 0.0) or 0.0):.3f}"
+        ),
+    ]
+    if ranking:
+        top = ranking[0]
+        parts.append(f"topPackage={_text_value(top.get('package', ''))}")
+        parts.append(f"topDependents={int(top.get('dependents', 0) or 0)}")
+    return " ".join(parts)
+
+
+def _format_accelerator_status_result(report: dict[str, Any]) -> str:
+    numba = report.get("numba")
+    if not isinstance(numba, dict):
+        numba = {}
+    graphblas = report.get("graphblas")
+    if not isinstance(graphblas, dict):
+        graphblas = {}
+    graphblas_kernels = [
+        str(kernel)
+        for kernel in graphblas.get("candidateKernels", [])
+        if str(kernel)
+    ]
+    parts = [
+        "OK",
+        "command=accelerator-status",
+        f"requestedBackend={_text_value(report.get('requestedBackend', ''))}",
+        f"selectedBackend={_text_value(report.get('selectedBackend', ''))}",
+        f"numbaAvailable={str(bool(numba.get('available'))).lower()}",
+        f"numbaExtra={_text_value(numba.get('installExtra', ''))}",
+        f"graphblasAvailable={str(bool(graphblas.get('available'))).lower()}",
+        f"graphblasExtra={_text_value(graphblas.get('installExtra', ''))}",
+        (
+            "graphblasStorageContract="
+            f"{_text_value(graphblas.get('storageContract', ''))}"
+        ),
+    ]
+    if graphblas_kernels:
+        parts.append(f"graphblasKernels={_text_value(','.join(graphblas_kernels))}")
+    return " ".join(parts)
+
+
+def _format_csr_artifact_manifest(
+    manifest: dict[str, Any],
+    *,
+    output_dir: Path,
+) -> str:
+    profile = manifest.get("storageProfile")
+    if not isinstance(profile, dict):
+        profile = {}
+    arrays = manifest.get("arrays")
+    array_count = len(arrays) if isinstance(arrays, dict) else 0
+    parts = [
+        "OK",
+        f"schema={_text_value(manifest.get('schema', ''))}",
+        f"layout={_text_value(manifest.get('layout', ''))}",
+        f"layoutVersion={int(manifest.get('layoutVersion', 0) or 0)}",
+        f"nodes={int(manifest.get('nodes', 0) or 0)}",
+        f"edges={int(manifest.get('edges', 0) or 0)}",
+        f"dtype={_text_value(manifest.get('dtype', ''))}",
+        f"arrays={array_count}",
+        f"totalBytes={int(profile.get('totalBytes', 0) or 0)}",
+        f"memoryMappable={str(bool(profile.get('memoryMappable'))).lower()}",
+        f"readOnly={str(bool(profile.get('readOnly'))).lower()}",
+        f"outputDir={_text_value(output_dir)}",
+    ]
+    return " ".join(parts)
+
+
+def _format_parallel_query_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    results = _dict_list(report.get("results"))
+    total_nodes = sum(int(result.get("count", 0) or 0) for result in results)
+    max_nodes = max(
+        (int(result.get("count", 0) or 0) for result in results),
+        default=0,
+    )
+    parts = [
+        "OK",
+        "schema=edgp.parallel.query.report.v1",
+        f"queries={int(summary.get('queries', 0) or 0)}",
+        f"workers={int(summary.get('workers', 0) or 0)}",
+        f"backend={_text_value(summary.get('backend', ''))}",
+        f"selectedBackend={_text_value(summary.get('selectedBackend', ''))}",
+        f"durationMs={float(summary.get('durationMs', 0.0) or 0.0):.3f}",
+        f"totalResultNodes={total_nodes}",
+        f"maxResultNodes={max_nodes}",
+    ]
+    if results:
+        first = results[0]
+        parts.append(f"firstQuery={_text_value(first.get('direction', ''))}")
+        parts.append(f"firstNode={_text_value(first.get('node', ''))}")
+        parts.append(f"firstCount={int(first.get('count', 0) or 0)}")
+    return " ".join(parts)
+
+
 def _format_real_data_coverage_result(report: dict[str, Any]) -> str:
     summary = report.get("summary")
     if not isinstance(summary, dict):
@@ -4687,6 +4826,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="python",
         help="traversal backend for benchmark reachability queries",
     )
+    benchmark.add_argument("--format", choices=["json", "text"], default="json")
 
     accelerator_status = subparsers.add_parser(
         "accelerator-status",
@@ -4698,6 +4838,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="backend request used to resolve the selected traversal backend",
     )
+    accelerator_status.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     csr_artifact = subparsers.add_parser(
         "csr-artifact",
@@ -4705,6 +4850,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     csr_artifact.add_argument("--snapshot", type=Path, required=True)
     csr_artifact.add_argument("--output-dir", type=Path, required=True)
+    csr_artifact.add_argument("--format", choices=["json", "text"], default="json")
 
     parallel_query = subparsers.add_parser(
         "parallel-query",
@@ -4724,6 +4870,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="python",
         help="traversal backend for reachability queries",
     )
+    parallel_query.add_argument("--format", choices=["json", "text"], default="json")
 
     performance_report = subparsers.add_parser(
         "performance-report",
@@ -6034,26 +6181,38 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "benchmark":
-        print(
-            _json(
-                run_synthetic_benchmark(
-                    nodes=args.nodes,
-                    fanout=args.fanout,
-                    backend=args.backend,
-                )
-            )
+        report = run_synthetic_benchmark(
+            nodes=args.nodes,
+            fanout=args.fanout,
+            backend=args.backend,
         )
+        if args.format == "text":
+            print(_format_benchmark_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "accelerator-status":
-        print(_json(accelerator_profile(requested_backend=args.backend)))
+        report = accelerator_profile(requested_backend=args.backend)
+        if args.format == "text":
+            print(_format_accelerator_status_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "csr-artifact":
         snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
         graph = graph_from_snapshot(snapshot)
         manifest = write_frozen_csr_artifact(graph.freeze(), args.output_dir)
-        print(_json(manifest))
+        if args.format == "text":
+            print(
+                _format_csr_artifact_manifest(
+                    manifest,
+                    output_dir=args.output_dir,
+                )
+            )
+        else:
+            print(_json(manifest))
         return 0
 
     if args.command == "parallel-query":
@@ -6065,7 +6224,10 @@ def main(argv: list[str] | None = None) -> int:
             max_workers=args.workers,
             backend=args.backend,
         )
-        print(_json(report))
+        if args.format == "text":
+            print(_format_parallel_query_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "performance-report":
