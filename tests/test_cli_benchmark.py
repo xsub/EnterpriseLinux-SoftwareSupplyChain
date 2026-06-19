@@ -48,6 +48,36 @@ def test_cli_benchmark_outputs_text_summary(capsys) -> None:
     assert "freezeMs=" in output
 
 
+def test_cli_performance_report_outputs_text_summary(capsys) -> None:
+    assert (
+        main(
+            [
+                "performance-report",
+                "--scenario",
+                "8:2",
+                "--scenario",
+                "16:3",
+                "--backend",
+                "auto",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("OK schema=edgp.performance.report.v1 ")
+    assert "scenarios=2" in output
+    assert "maxNodes=16" in output
+    assert "allContiguous=true" in output
+    assert "layout=numpy.int32.c_contiguous" in output
+    assert "backend=auto" in output
+    assert "selectedBackends=" in output
+    assert "worstReachableMs=" in output
+    assert "largestScenario=16" in output
+
+
 def test_cli_performance_report_bundle_writes_verifiable_bundle(
     capsys,
     tmp_path,
@@ -97,3 +127,39 @@ def test_cli_performance_report_bundle_writes_verifiable_bundle(
 
     assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
     assert capsys.readouterr().out.startswith("OK ")
+
+
+def test_cli_performance_report_bundle_outputs_text_summary(
+    capsys,
+    tmp_path,
+) -> None:
+    output_dir = tmp_path / "performance-bundle-text"
+
+    assert (
+        main(
+            [
+                "performance-report-bundle",
+                "--scenario",
+                "8:2",
+                "--scenario",
+                "16:3",
+                "--backend",
+                "auto",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("BUNDLE index=")
+    assert "performance-bundle-text/index.html" in output
+    assert "sourceKind=performance-report" in output
+    assert "reports=1" in output
+    assert "triageStatus=pass" in output
+    assert (output_dir / "performance-report.json").exists()
+    assert (output_dir / "manifest.json").exists()

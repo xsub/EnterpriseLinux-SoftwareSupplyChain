@@ -1393,6 +1393,45 @@ def _format_benchmark_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_performance_report_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    results = _dict_list(report.get("results"))
+    selected_backends = _string_list(summary.get("selectedBackends"))
+    worst_reachable = max(
+        (float(result.get("reachableMs", 0.0) or 0.0) for result in results),
+        default=0.0,
+    )
+    worst_reverse = max(
+        (float(result.get("reverseReachableMs", 0.0) or 0.0) for result in results),
+        default=0.0,
+    )
+    worst_ranking = max(
+        (float(result.get("mostDependedUponMs", 0.0) or 0.0) for result in results),
+        default=0.0,
+    )
+    parts = [
+        "OK",
+        "schema=edgp.performance.report.v1",
+        f"scenarios={int(summary.get('scenarios', 0) or 0)}",
+        f"maxNodes={int(summary.get('maxNodes', 0) or 0)}",
+        f"maxEdges={int(summary.get('maxEdges', 0) or 0)}",
+        f"allContiguous={str(bool(summary.get('allContiguous'))).lower()}",
+        f"layout={_text_value(summary.get('layout', ''))}",
+        f"backend={_text_value(summary.get('backend', ''))}",
+        f"selectedBackends={_text_value(','.join(selected_backends))}",
+        f"worstReachableMs={worst_reachable:.3f}",
+        f"worstReverseReachableMs={worst_reverse:.3f}",
+        f"worstMostDependedUponMs={worst_ranking:.3f}",
+    ]
+    if results:
+        largest = max(results, key=lambda result: int(result.get("nodes", 0) or 0))
+        parts.append(f"largestScenario={int(largest.get('nodes', 0) or 0)}")
+        parts.append(f"largestFanout={int(largest.get('fanout', 0) or 0)}")
+    return " ".join(parts)
+
+
 def _format_accelerator_status_result(report: dict[str, Any]) -> str:
     numba = report.get("numba")
     if not isinstance(numba, dict):
@@ -4890,6 +4929,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="benchmark scenario as NODES:FANOUT; may be repeated",
     )
+    performance_report.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
     performance_report_bundle = subparsers.add_parser(
         "performance-report-bundle",
         help="Render deterministic CSR benchmark scenarios as a static bundle",
@@ -4909,6 +4953,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="benchmark scenario as NODES:FANOUT; may be repeated",
     )
     performance_report_bundle.add_argument("--output-dir", type=Path, required=True)
+    performance_report_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(performance_report_bundle)
 
     query = subparsers.add_parser("query", help="Query a resolved graph")
@@ -6231,18 +6280,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "performance-report":
-        print(
-            _json(
-                build_performance_report(
-                    _performance_scenarios(
-                        args.scenario,
-                        nodes=args.nodes,
-                        fanout=args.fanout,
-                    ),
-                    backend=args.backend,
-                )
-            )
+        report = build_performance_report(
+            _performance_scenarios(
+                args.scenario,
+                nodes=args.nodes,
+                fanout=args.fanout,
+            ),
+            backend=args.backend,
         )
+        if args.format == "text":
+            print(_format_performance_report_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "performance-report-bundle":
@@ -6261,6 +6310,7 @@ def main(argv: list[str] | None = None) -> int:
                 ),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "query":

@@ -4127,6 +4127,28 @@ def _assert_public_vertical_reports() -> None:
     )
     assert performance["schema"] == "edgp.performance.report.v1"
     assert performance["summary"]["allContiguous"] is True
+    performance_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "performance-report",
+            "--scenario",
+            "16:2",
+            "--scenario",
+            "32:3",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert performance_text.startswith("OK schema=edgp.performance.report.v1")
+    assert "scenarios=2" in performance_text
+    assert "allContiguous=true" in performance_text
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "rpm-repo-bundle"
@@ -5811,6 +5833,32 @@ def _assert_benchmark() -> None:
         assert 'data-testid="performance-results-panel"' in (
             output_dir / "001-performance-report.html"
         ).read_text(encoding="utf-8")
+        text_output_dir = Path(temp_dir) / "performance-report-bundle-text"
+        text_completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "performance-report-bundle",
+                "--scenario",
+                "16:2",
+                "--scenario",
+                "32:3",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert text_completed.stdout.startswith("BUNDLE index=")
+        assert "performance-report-bundle-text/index.html" in text_completed.stdout
+        assert "sourceKind=performance-report" in text_completed.stdout
 
 
 def _assert_csr_artifact() -> None:
