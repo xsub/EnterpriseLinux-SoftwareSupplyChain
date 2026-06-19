@@ -165,8 +165,10 @@ edgp libsolv-bridge --transaction solver-transaction.txt
 edgp libsolv-bridge --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
 edgp public-advisory-feed --path osv.json --ecosystem rpm
+edgp public-advisory-feed --path osv.json --ecosystem rpm --format text
 edgp public-advisory-feed --url https://example.com/osv.json --ecosystem rpm
 edgp public-advisory-feed-bundle --path osv.json --ecosystem rpm --output-dir reports/public-advisory-feed --triage-summary
+edgp public-advisory-feed-bundle --path osv.json --ecosystem rpm --output-dir reports/public-advisory-feed --triage-summary --format text
 edgp fixture-provenance --fixture-dir tests/fixtures
 edgp fixture-provenance --fixture-dir tests/fixtures --format text
 edgp fixture-provenance-bundle --fixture-dir tests/fixtures --output-dir reports/fixture-provenance --triage-summary

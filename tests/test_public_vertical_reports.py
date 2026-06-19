@@ -737,6 +737,25 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     assert public_feed["schema"] == "edgp.public.advisory_feed.v1"
     assert public_feed["summary"]["advisories"] == 1
 
+    assert main(
+        [
+            "public-advisory-feed",
+            "--path",
+            "tests/fixtures/public-osv.json",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    public_feed_text = capsys.readouterr().out.strip()
+    assert public_feed_text.startswith("OK schema=edgp.public.advisory_feed.v1")
+    assert "ecosystem=rpm" in public_feed_text
+    assert "advisories=1" in public_feed_text
+    assert "packages=1" in public_feed_text
+    assert "severities=1" in public_feed_text
+    assert "firstAdvisory=OSV-2026-0001" in public_feed_text
+    assert "firstPackage=nginx" in public_feed_text
+    assert "firstSeverity=HIGH" in public_feed_text
+
 
 def test_cli_public_advisory_feed_bundle_writes_report_bundle(
     tmp_path,
@@ -778,6 +797,31 @@ def test_cli_public_advisory_feed_bundle_writes_report_bundle(
 
     assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
     assert capsys.readouterr().out.startswith("OK ")
+
+    text_output_dir = tmp_path / "public-advisory-feed-bundle-text"
+    assert (
+        main(
+            [
+                "public-advisory-feed-bundle",
+                "--path",
+                "tests/fixtures/public-osv.json",
+                "--ecosystem",
+                "rpm",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={text_output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=public-advisory-feed" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
 
 
 def test_cli_rpm_repo_bundle_writes_graph_and_summary(tmp_path, capsys) -> None:

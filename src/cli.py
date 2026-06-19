@@ -1293,6 +1293,40 @@ def _format_albs_build_timing_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_public_advisory_feed_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    packages = _string_list(report.get("packages"))
+    severities = _string_list(report.get("severities"))
+    advisories = _dict_list(report.get("advisories"))
+    parts = [
+        "OK",
+        "schema=edgp.public.advisory_feed.v1",
+        f"ecosystem={_text_value(report.get('ecosystem', ''))}",
+        f"advisories={int(summary.get('advisories', 0) or 0)}",
+        f"packages={int(summary.get('packages', 0) or 0)}",
+        f"severities={int(summary.get('severities', 0) or 0)}",
+    ]
+    if packages:
+        parts.append(f"samplePackages={_text_value(','.join(packages[:5]))}")
+    if severities:
+        parts.append(f"severityLabels={_text_value(','.join(severities))}")
+    if advisories:
+        first = advisories[0]
+        parts.append(f"firstAdvisory={_text_value(first.get('id', ''))}")
+        parts.append(f"firstPackage={_text_value(first.get('package', ''))}")
+        if first.get("severity"):
+            parts.append(f"firstSeverity={_text_value(first.get('severity', ''))}")
+        versions = _string_list(first.get("versions"))
+        if versions:
+            parts.append(f"firstVersions={_text_value(','.join(versions[:5]))}")
+        ranges = _dict_list(first.get("ranges"))
+        if ranges:
+            parts.append(f"firstRanges={len(ranges)}")
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -4157,7 +4191,7 @@ def build_parser() -> argparse.ArgumentParser:
     public_advisory_feed.add_argument("--url")
     public_advisory_feed.add_argument("--ecosystem", default="rpm")
     public_advisory_feed.add_argument(
-        "--format", choices=["report", "overlay"], default="report"
+        "--format", choices=["report", "overlay", "text"], default="report"
     )
     public_advisory_feed_bundle = subparsers.add_parser(
         "public-advisory-feed-bundle",
@@ -4167,6 +4201,11 @@ def build_parser() -> argparse.ArgumentParser:
     public_advisory_feed_bundle.add_argument("--url")
     public_advisory_feed_bundle.add_argument("--ecosystem", default="rpm")
     public_advisory_feed_bundle.add_argument("--output-dir", type=Path, required=True)
+    public_advisory_feed_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(public_advisory_feed_bundle)
 
     fixture_provenance = subparsers.add_parser(
@@ -5763,6 +5802,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.format == "overlay":
             print(_json(report["overlay"]))
+        elif args.format == "text":
+            print(_format_public_advisory_feed_result(report))
         else:
             print(_json(report))
         return 0
@@ -5778,6 +5819,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "fixture-provenance":

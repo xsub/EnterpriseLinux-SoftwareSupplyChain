@@ -3363,6 +3363,26 @@ def _assert_public_vertical_reports() -> None:
     assert advisory_range["advisories"][0]["ranges"][0]["fixed"] == (
         "1.20.1-28.el9_8.2.alma.2"
     )
+    advisory_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "public-advisory-feed",
+            "--path",
+            "tests/fixtures/public-osv.json",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert advisory_text.startswith("OK schema=edgp.public.advisory_feed.v1")
+    assert "advisories=1" in advisory_text
+    assert "firstAdvisory=OSV-2026-0001" in advisory_text
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "public-advisory-feed-bundle"
@@ -3402,6 +3422,35 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="public-advisory-feed-panel"' in (
             output_dir / "001-public-advisory-feed.html"
         ).read_text(encoding="utf-8")
+
+        text_output_dir = Path(temp_dir) / "public-advisory-feed-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "public-advisory-feed-bundle",
+                "--path",
+                "tests/fixtures/public-osv.json",
+                "--ecosystem",
+                "rpm",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        advisory_bundle_text = completed_text.stdout.strip()
+        assert advisory_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=public-advisory-feed" in advisory_bundle_text
+        assert "reports=1" in advisory_bundle_text
+        assert "triageStatus=pass" in advisory_bundle_text
 
     fixture_provenance = _run_cli(
         ["fixture-provenance", "--fixture-dir", "tests/fixtures"]
