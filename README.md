@@ -172,9 +172,11 @@ edgp real-data-replacement-plan --fixture-dir tests/fixtures --format text
 edgp real-data-replacement-plan --coverage tests/fixtures/real-data-coverage.json --fail-on-priority high
 edgp real-data-replacement-plan-bundle --fixture-dir tests/fixtures --output-dir reports/real-data-replacement-plan --triage-summary
 edgp real-data-replacement-plan-diff --left-fixture-dir old-fixtures --right-fixture-dir tests/fixtures --fail-on-regression
+edgp real-data-replacement-plan-diff --left tests/fixtures/real-data-replacement-plan.json --right tests/fixtures/real-data-replacement-plan.json --format text
 edgp real-data-replacement-plan-diff-bundle --left tests/fixtures/real-data-replacement-plan.json --right tests/fixtures/real-data-replacement-plan.json --output-dir reports/real-data-replacement-plan-diff --triage-summary
 edgp real-data-coverage-diff --left coverage-baseline.json --right coverage-current.json --fail-on-regression
 edgp real-data-coverage-diff --left-fixture-dir old-fixtures --right-fixture-dir tests/fixtures --fail-on-regression
+edgp real-data-coverage-diff --left tests/fixtures/real-data-coverage.json --right tests/fixtures/real-data-coverage.json --format text
 edgp real-data-coverage-diff-bundle --left coverage-baseline.json --right coverage-current.json --output-dir reports/real-data-coverage-diff --fail-on-regression --fail-on-status fail
 edgp real-data-coverage-diff-bundle --left-fixture-dir old-fixtures --right-fixture-dir tests/fixtures --output-dir reports/real-data-coverage-diff --triage-summary
 ```

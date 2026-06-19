@@ -120,6 +120,34 @@ def test_cli_real_data_coverage_diff_outputs_current_baseline(capsys) -> None:
     assert payload["schema"] == "edgp.real_data.coverage_diff.v1"
 
 
+def test_cli_real_data_coverage_diff_outputs_text_summary(capsys) -> None:
+    assert (
+        cli_main(
+            [
+                "real-data-coverage-diff",
+                "--left",
+                str(COVERAGE_FIXTURE_PATH),
+                "--right",
+                str(COVERAGE_FIXTURE_PATH),
+                "--left-label",
+                "baseline",
+                "--right-label",
+                "current",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("PASS schema=edgp.real_data.coverage_diff.v1 ")
+    assert "left=baseline" in output
+    assert "right=current" in output
+    assert "publicEvidenceCoveragePercentDelta=0.00" in output
+    assert "regressions=0" in output
+
+
 def test_cli_real_data_coverage_diff_can_compare_fixture_dirs(capsys) -> None:
     assert (
         cli_main(
@@ -169,6 +197,36 @@ def test_cli_real_data_coverage_diff_returns_two_on_regression(
     assert payload["status"] == "fail"
     assert payload["policy"]["status"] == "fail"
     assert payload["summary"]["removedPublicEvidence"] == 1
+
+
+def test_cli_real_data_coverage_diff_text_keeps_policy_exit_code(
+    tmp_path,
+    capsys,
+) -> None:
+    right_path = tmp_path / "real-data-coverage-regressed.json"
+    right_path.write_text(json.dumps(_regressed_coverage_fixture()), encoding="utf-8")
+
+    assert (
+        cli_main(
+            [
+                "real-data-coverage-diff",
+                "--left",
+                str(COVERAGE_FIXTURE_PATH),
+                "--right",
+                str(right_path),
+                "--fail-on-regression",
+                "--format",
+                "text",
+            ]
+        )
+        == 2
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("FAIL schema=edgp.real_data.coverage_diff.v1 ")
+    assert "removedPublicEvidence=1" in output
+    assert "policyStatus=fail" in output
+    assert "policyFailures=" in output
 
 
 def test_cli_real_data_coverage_diff_bundle_policy_failure_keeps_artifacts(

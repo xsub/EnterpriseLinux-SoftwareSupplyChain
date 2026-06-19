@@ -114,6 +114,36 @@ def test_cli_real_data_replacement_plan_diff_outputs_current_baseline(
     assert payload == _fixture()
 
 
+def test_cli_real_data_replacement_plan_diff_outputs_text_summary(
+    capsys,
+) -> None:
+    assert (
+        cli_main(
+            [
+                "real-data-replacement-plan-diff",
+                "--left",
+                str(PLAN_FIXTURE_PATH),
+                "--right",
+                str(PLAN_FIXTURE_PATH),
+                "--left-label",
+                "baseline",
+                "--right-label",
+                "current",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("PASS schema=edgp.real_data.replacement_plan_diff.v1 ")
+    assert "left=baseline" in output
+    assert "right=current" in output
+    assert "replacementCandidatesDelta=0" in output
+    assert "regressions=0" in output
+
+
 def test_cli_real_data_replacement_plan_diff_can_compare_fixture_dirs(
     capsys,
 ) -> None:
@@ -187,6 +217,36 @@ def test_cli_real_data_replacement_plan_diff_returns_two_on_regression(
     assert payload["status"] == "fail"
     assert payload["policy"]["status"] == "fail"
     assert payload["summary"]["addedCandidates"] == 1
+
+
+def test_cli_real_data_replacement_plan_diff_text_keeps_policy_exit_code(
+    tmp_path,
+    capsys,
+) -> None:
+    right_path = tmp_path / "real-data-replacement-plan-regressed.json"
+    right_path.write_text(json.dumps(_regressed_plan(_plan_fixture())), encoding="utf-8")
+
+    assert (
+        cli_main(
+            [
+                "real-data-replacement-plan-diff",
+                "--left",
+                str(PLAN_FIXTURE_PATH),
+                "--right",
+                str(right_path),
+                "--fail-on-regression",
+                "--format",
+                "text",
+            ]
+        )
+        == 2
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("FAIL schema=edgp.real_data.replacement_plan_diff.v1 ")
+    assert "addedCandidates=1" in output
+    assert "policyStatus=fail" in output
+    assert "policyFailures=" in output
 
 
 def test_cli_real_data_replacement_plan_diff_bundle_writes_verifiable_bundle(

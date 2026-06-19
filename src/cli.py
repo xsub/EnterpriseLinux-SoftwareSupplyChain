@@ -1425,9 +1425,80 @@ def _real_data_policy_text_parts(value: object) -> list[str]:
             "matchedReplacementGroups="
             f"{int(value.get('matchedReplacementGroups', 0) or 0)}"
         )
+    if "failOnRegression" in value:
+        fail_on_regression = str(bool(value.get("failOnRegression"))).lower()
+        parts.append(f"failOnRegression={fail_on_regression}")
+    failures = value.get("failures")
+    if isinstance(failures, list):
+        parts.append(f"policyFailures={len(failures)}")
     if "exitCode" in value:
         parts.append(f"policyExitCode={int(value.get('exitCode', 0) or 0)}")
     return parts
+
+
+def _format_real_data_coverage_diff_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    left = report.get("left")
+    if not isinstance(left, dict):
+        left = {}
+    right = report.get("right")
+    if not isinstance(right, dict):
+        right = {}
+    parts = [
+        str(report.get("status", "unknown")).upper(),
+        "schema=edgp.real_data.coverage_diff.v1",
+        f"left={_text_value(left.get('label', 'left'))}",
+        f"right={_text_value(right.get('label', 'right'))}",
+        (
+            "publicEvidenceCoveragePercentDelta="
+            f"{float(summary.get('publicEvidenceCoveragePercentDelta', 0.0) or 0.0):.2f}"
+        ),
+        f"publicEvidenceFilesDelta={int(summary.get('publicEvidenceFilesDelta', 0) or 0)}",
+        f"directPublicSourcesDelta={int(summary.get('directPublicSourcesDelta', 0) or 0)}",
+        (
+            "generatedPublicReportsDelta="
+            f"{int(summary.get('generatedPublicReportsDelta', 0) or 0)}"
+        ),
+        f"syntheticFilesDelta={int(summary.get('syntheticFilesDelta', 0) or 0)}",
+        f"addedPublicEvidence={int(summary.get('addedPublicEvidence', 0) or 0)}",
+        f"removedPublicEvidence={int(summary.get('removedPublicEvidence', 0) or 0)}",
+        f"regressions={int(summary.get('regressions', 0) or 0)}",
+    ]
+    parts.extend(_real_data_policy_text_parts(report.get("policy")))
+    return " ".join(parts)
+
+
+def _format_real_data_replacement_plan_diff_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    left = report.get("left")
+    if not isinstance(left, dict):
+        left = {}
+    right = report.get("right")
+    if not isinstance(right, dict):
+        right = {}
+    parts = [
+        str(report.get("status", "unknown")).upper(),
+        "schema=edgp.real_data.replacement_plan_diff.v1",
+        f"left={_text_value(left.get('label', 'left'))}",
+        f"right={_text_value(right.get('label', 'right'))}",
+        (
+            "replacementCandidatesDelta="
+            f"{int(summary.get('replacementCandidatesDelta', 0) or 0)}"
+        ),
+        f"candidateFilesDelta={int(summary.get('candidateFilesDelta', 0) or 0)}",
+        f"highPriorityGroupsDelta={int(summary.get('highPriorityGroupsDelta', 0) or 0)}",
+        f"mediumPriorityGroupsDelta={int(summary.get('mediumPriorityGroupsDelta', 0) or 0)}",
+        f"addedCandidates={int(summary.get('addedCandidates', 0) or 0)}",
+        f"removedCandidates={int(summary.get('removedCandidates', 0) or 0)}",
+        f"changedCandidates={int(summary.get('changedCandidates', 0) or 0)}",
+        f"regressions={int(summary.get('regressions', 0) or 0)}",
+    ]
+    parts.extend(_real_data_policy_text_parts(report.get("policy")))
+    return " ".join(parts)
 
 
 def _print_graph_diff_bundle_result(
@@ -3870,6 +3941,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="return status 2 when replacement backlog metrics regress",
     )
+    real_data_replacement_plan_diff.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     real_data_replacement_plan_diff_bundle = subparsers.add_parser(
         "real-data-replacement-plan-diff-bundle",
@@ -3965,6 +4041,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-on-regression",
         action="store_true",
         help="return status 2 when public evidence coverage regresses",
+    )
+    real_data_coverage_diff.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
     )
 
     real_data_coverage_diff_bundle = subparsers.add_parser(
@@ -5348,7 +5429,10 @@ def main(argv: list[str] | None = None) -> int:
             right_label=args.right_label,
             fail_on_regression=args.fail_on_regression,
         )
-        print(_json(report))
+        if args.format == "text":
+            print(_format_real_data_replacement_plan_diff_result(report))
+        else:
+            print(_json(report))
         policy = report.get("policy")
         if isinstance(policy, dict) and policy.get("status") == "fail":
             return 2
@@ -5394,7 +5478,10 @@ def main(argv: list[str] | None = None) -> int:
             right_label=args.right_label,
             fail_on_regression=args.fail_on_regression,
         )
-        print(_json(report))
+        if args.format == "text":
+            print(_format_real_data_coverage_diff_result(report))
+        else:
+            print(_json(report))
         policy = report.get("policy")
         if isinstance(policy, dict) and policy.get("status") == "fail":
             return 2

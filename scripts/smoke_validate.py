@@ -3518,6 +3518,33 @@ def _assert_public_vertical_reports() -> None:
     )
     assert real_data_replacement_plan_diff["summary"]["candidateFilesDelta"] == 0
     assert real_data_replacement_plan_diff["summary"]["regressions"] == 0
+    replacement_plan_diff_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "real-data-replacement-plan-diff",
+            "--left",
+            "tests/fixtures/real-data-replacement-plan.json",
+            "--right",
+            "tests/fixtures/real-data-replacement-plan.json",
+            "--left-label",
+            "baseline",
+            "--right-label",
+            "current",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert replacement_plan_diff_text.startswith(
+        "PASS schema=edgp.real_data.replacement_plan_diff.v1"
+    )
+    assert "replacementCandidatesDelta=0" in replacement_plan_diff_text
     fixture_dir_plan_diff = _run_cli(
         [
             "real-data-replacement-plan-diff",
@@ -3624,6 +3651,29 @@ def _assert_public_vertical_reports() -> None:
         diff_policy_report = json.loads(completed.stdout)
         assert diff_policy_report["policy"]["status"] == "fail"
         assert diff_policy_report["summary"]["addedCandidates"] == 1
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "real-data-replacement-plan-diff",
+                "--left",
+                "tests/fixtures/real-data-replacement-plan.json",
+                "--right",
+                str(regressed_path),
+                "--fail-on-regression",
+                "--format",
+                "text",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        assert "policyStatus=fail" in completed.stdout
+        assert "addedCandidates=1" in completed.stdout
 
         output_dir = Path(temp_dir) / "real-data-replacement-plan-diff-policy-bundle"
         completed = subprocess.run(
@@ -3723,6 +3773,31 @@ def _assert_public_vertical_reports() -> None:
     assert real_data_coverage_diff["right"]["label"] == "current"
     assert real_data_coverage_diff["summary"]["publicEvidenceFilesDelta"] == 0
     assert real_data_coverage_diff["summary"]["regressions"] == 0
+    coverage_diff_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "real-data-coverage-diff",
+            "--left",
+            "tests/fixtures/real-data-coverage.json",
+            "--right",
+            "tests/fixtures/real-data-coverage.json",
+            "--left-label",
+            "baseline",
+            "--right-label",
+            "current",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert coverage_diff_text.startswith("PASS schema=edgp.real_data.coverage_diff.v1")
+    assert "publicEvidenceFilesDelta=0" in coverage_diff_text
     fixture_dir_diff = _run_cli(
         [
             "real-data-coverage-diff",
@@ -3812,6 +3887,29 @@ def _assert_public_vertical_reports() -> None:
         diff_policy_report = json.loads(completed.stdout)
         assert diff_policy_report["policy"]["status"] == "fail"
         assert diff_policy_report["summary"]["removedPublicEvidence"] == 1
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "real-data-coverage-diff",
+                "--left",
+                "tests/fixtures/real-data-coverage.json",
+                "--right",
+                str(regressed_path),
+                "--fail-on-regression",
+                "--format",
+                "text",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed.returncode == 2
+        assert "policyStatus=fail" in completed.stdout
+        assert "removedPublicEvidence=1" in completed.stdout
 
         output_dir = Path(temp_dir) / "real-data-coverage-diff-policy-bundle"
         completed = subprocess.run(
