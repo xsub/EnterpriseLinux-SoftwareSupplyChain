@@ -3245,6 +3245,27 @@ def _assert_public_vertical_reports() -> None:
     assert fixture_provenance["schema"] == "edgp.fixture.provenance.v1"
     assert fixture_provenance["summary"]["publicDerivedSources"] == 3
     assert fixture_provenance["summary"]["generatedPublicReports"] == 14
+    fixture_provenance_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "fixture-provenance",
+            "--fixture-dir",
+            "tests/fixtures",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert fixture_provenance_text.startswith("OK schema=edgp.fixture.provenance.v1")
+    assert "publicDerivedSources=3" in fixture_provenance_text
+    assert "generatedPublicReports=14" in fixture_provenance_text
+    assert "sourceUrls=3" in fixture_provenance_text
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "fixture-provenance-bundle"

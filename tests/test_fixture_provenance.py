@@ -68,6 +68,30 @@ def test_cli_fixture_provenance_outputs_current_catalog(capsys) -> None:
     assert payload["schema"] == "edgp.fixture.provenance.v1"
 
 
+def test_cli_fixture_provenance_outputs_text_summary(capsys) -> None:
+    assert (
+        cli_main(
+            [
+                "fixture-provenance",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith("OK schema=edgp.fixture.provenance.v1 ")
+    assert "publicDerivedSources=3" in output
+    assert "generatedPublicReports=14" in output
+    assert "syntheticGroups=8" in output
+    assert "sourceUrls=3" in output
+    assert "AlmaLinux" in output
+    assert "OSV" in output
+
+
 def test_cli_fixture_provenance_bundle_writes_verifiable_bundle(
     tmp_path,
     capsys,

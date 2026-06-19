@@ -1308,6 +1308,39 @@ def _text_value(value: object) -> str:
     return shlex.quote(str(value))
 
 
+def _format_fixture_provenance_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    synthetic_files = sum(
+        int(group.get("fileCount", 0) or 0)
+        for group in _dict_list(report.get("syntheticGroups"))
+    )
+    source_labels = [
+        str(source.get("label", ""))
+        for source in _dict_list(report.get("sourceUrls"))
+        if str(source.get("label", ""))
+    ]
+    parts = [
+        "OK",
+        "schema=edgp.fixture.provenance.v1",
+        f"fixtureRoot={_text_value(report.get('fixtureRoot', ''))}",
+        f"catalogedFiles={int(summary.get('catalogedFiles', 0) or 0)}",
+        f"publicDerivedSources={int(summary.get('publicDerivedSources', 0) or 0)}",
+        (
+            "deterministicPublicDerivedVariants="
+            f"{int(summary.get('deterministicPublicDerivedVariants', 0) or 0)}"
+        ),
+        f"generatedPublicReports={int(summary.get('generatedPublicReports', 0) or 0)}",
+        f"syntheticGroups={int(summary.get('syntheticGroups', 0) or 0)}",
+        f"syntheticFiles={synthetic_files}",
+        f"sourceUrls={int(summary.get('sourceUrls', 0) or 0)}",
+    ]
+    if source_labels:
+        parts.append(f"publicSources={_text_value(','.join(source_labels))}")
+    return " ".join(parts)
+
+
 def _format_real_data_coverage_result(report: dict[str, Any]) -> str:
     summary = report.get("summary")
     if not isinstance(summary, dict):
@@ -3766,6 +3799,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("tests/fixtures"),
         help="fixture directory to catalog",
     )
+    fixture_provenance.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     fixture_provenance_bundle = subparsers.add_parser(
         "fixture-provenance-bundle",
@@ -5337,7 +5375,11 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.command == "fixture-provenance":
-        print(_json(build_fixture_provenance(args.fixture_dir)))
+        report = build_fixture_provenance(args.fixture_dir)
+        if args.format == "text":
+            print(_format_fixture_provenance_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "fixture-provenance-bundle":
