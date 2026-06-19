@@ -1202,6 +1202,39 @@ def _format_rpm_repository_diff_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_albs_artifact_inventory_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    build_architectures = _string_list(report.get("buildArchitectures"))
+    packages = _string_list(report.get("packages"))
+    by_build_arch = _dict_list(report.get("byBuildArch"))
+    parts = [
+        "OK",
+        "schema=edgp.albs.artifact_inventory.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"artifacts={int(summary.get('artifacts', 0) or 0)}",
+        f"buildTasks={int(summary.get('buildTasks', 0) or 0)}",
+        f"binaryRpms={int(summary.get('binaryRpms', 0) or 0)}",
+        f"sourceRpms={int(summary.get('sourceRpms', 0) or 0)}",
+        f"debugArtifacts={int(summary.get('debugArtifacts', 0) or 0)}",
+        f"buildLogs={int(summary.get('buildLogs', 0) or 0)}",
+        f"architectures={int(summary.get('architectures', 0) or 0)}",
+        f"packages={int(summary.get('packages', 0) or 0)}",
+    ]
+    if build_architectures:
+        parts.append(f"buildArchitectures={_text_value(','.join(build_architectures))}")
+    if packages:
+        parts.append(f"samplePackages={_text_value(','.join(packages[:5]))}")
+    if by_build_arch:
+        arch_counts = [
+            f"{entry.get('buildArch', 'unknown')}:{int(entry.get('totalArtifacts', 0) or 0)}"
+            for entry in by_build_arch
+        ]
+        parts.append(f"artifactsByBuildArch={_text_value(','.join(arch_counts))}")
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -3825,6 +3858,11 @@ def build_parser() -> argparse.ArgumentParser:
     albs_artifact_inventory.add_argument("--artifact-limit", type=int, default=200)
     albs_artifact_inventory.add_argument("--test-task-limit", type=int, default=50)
     albs_artifact_inventory.add_argument("--include-logs", action="store_true")
+    albs_artifact_inventory.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     albs_artifact_inventory_bundle = subparsers.add_parser(
         "albs-artifact-inventory-bundle",
@@ -3852,6 +3890,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-dir",
         type=Path,
         required=True,
+    )
+    albs_artifact_inventory_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
     )
     _add_triage_bundle_option(albs_artifact_inventory_bundle)
 
@@ -5443,7 +5486,11 @@ def main(argv: list[str] | None = None) -> int:
             test_task_limit=args.test_task_limit,
             include_logs=args.include_logs,
         )
-        print(_json(build_albs_artifact_inventory(graph, root=root_identifier)))
+        report = build_albs_artifact_inventory(graph, root=root_identifier)
+        if args.format == "text":
+            print(_format_albs_artifact_inventory_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "albs-artifact-inventory-bundle":
@@ -5462,6 +5509,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "albs-build-timing":

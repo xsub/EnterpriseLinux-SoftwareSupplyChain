@@ -2442,6 +2442,27 @@ def _assert_albs_build_bundle() -> None:
 
 
 def _assert_public_vertical_reports() -> None:
+    inventory_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "albs-artifact-inventory",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert inventory_text.startswith("OK schema=edgp.albs.artifact_inventory.v1")
+    assert "artifacts=4" in inventory_text
+    assert "buildTasks=2" in inventory_text
+
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "albs-artifact-inventory-bundle"
         completed = subprocess.run(
@@ -2478,6 +2499,33 @@ def _assert_public_vertical_reports() -> None:
             encoding="utf-8"
         )
         assert 'data-testid="albs-artifact-table-panel"' in inventory_html
+
+        text_output_dir = Path(temp_dir) / "albs-artifact-inventory-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-artifact-inventory-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        inventory_bundle_text = completed_text.stdout.strip()
+        assert inventory_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=albs-artifact-inventory" in inventory_bundle_text
+        assert "reports=1" in inventory_bundle_text
+        assert "triageStatus=pass" in inventory_bundle_text
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "albs-build-timing-bundle"

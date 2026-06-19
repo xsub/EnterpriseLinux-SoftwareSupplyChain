@@ -146,7 +146,9 @@ edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo 
 edgp albs-build --build-id 17812 --format json
 edgp albs-build --url https://build.almalinux.org/api/v1/builds/17812/ --format json
 edgp albs-artifact-inventory --build-id 17812
+edgp albs-artifact-inventory --build-id 17812 --format text
 edgp albs-artifact-inventory-bundle --build-id 17812 --output-dir reports/albs-artifact-inventory --triage-summary
+edgp albs-artifact-inventory-bundle --build-id 17812 --output-dir reports/albs-artifact-inventory --triage-summary --format text
 edgp albs-build-timing --build-id 17812
 edgp albs-build-timing-bundle --build-id 17812 --output-dir reports/albs-build-timing --triage-summary
 edgp albs-build-diff --left-build-id 17812 --right-build-id 17813
