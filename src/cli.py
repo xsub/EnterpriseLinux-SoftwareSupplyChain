@@ -1235,6 +1235,64 @@ def _format_albs_artifact_inventory_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_albs_build_timing_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    artifact_types = report.get("artifactTypes")
+    if not isinstance(artifact_types, dict):
+        artifact_types = {}
+    sign_steps = report.get("signStepTotalsSeconds")
+    if not isinstance(sign_steps, dict):
+        sign_steps = {}
+    task_timings = _dict_list(report.get("taskTimings"))
+    parts = [
+        "OK",
+        "schema=edgp.albs.build_timing.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"buildId={_text_value(report.get('buildId', ''))}",
+        f"wallSeconds={float(report.get('wallSeconds', 0.0) or 0.0):.3f}",
+        f"buildTasks={int(summary.get('buildTasks', 0) or 0)}",
+        f"signTasks={int(summary.get('signTasks', 0) or 0)}",
+        f"artifacts={int(summary.get('artifacts', 0) or 0)}",
+        (
+            "aggregateBuildTaskWallSeconds="
+            f"{float(summary.get('aggregateBuildTaskWallSeconds', 0.0) or 0.0):.3f}"
+        ),
+        (
+            "criticalBuildTaskWallSeconds="
+            f"{float(summary.get('criticalBuildTaskWallSeconds', 0.0) or 0.0):.3f}"
+        ),
+        (
+            "aggregateSignTaskWallSeconds="
+            f"{float(summary.get('aggregateSignTaskWallSeconds', 0.0) or 0.0):.3f}"
+        ),
+    ]
+    if artifact_types:
+        artifact_labels = [
+            f"{key}:{int(value or 0)}"
+            for key, value in sorted(artifact_types.items())
+        ]
+        parts.append(f"artifactTypes={_text_value(','.join(artifact_labels))}")
+    if sign_steps:
+        sign_labels = [
+            f"{key}:{float(value or 0.0):.3f}"
+            for key, value in sorted(sign_steps.items())
+        ]
+        parts.append(f"signSteps={_text_value(','.join(sign_labels))}")
+    if task_timings:
+        slowest = max(
+            task_timings,
+            key=lambda task: float(task.get("wallSeconds", 0.0) or 0.0),
+        )
+        parts.append(f"slowestTask={_text_value(slowest.get('taskId', ''))}")
+        parts.append(f"slowestArch={_text_value(slowest.get('arch', ''))}")
+        parts.append(
+            f"slowestWallSeconds={float(slowest.get('wallSeconds', 0.0) or 0.0):.3f}"
+        )
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -3907,6 +3965,7 @@ def build_parser() -> argparse.ArgumentParser:
     albs_timing_input.add_argument("--path", type=Path)
     albs_timing_input.add_argument("--url")
     albs_build_timing.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_build_timing.add_argument("--format", choices=["json", "text"], default="json")
 
     albs_build_timing_bundle = subparsers.add_parser(
         "albs-build-timing-bundle",
@@ -3920,6 +3979,11 @@ def build_parser() -> argparse.ArgumentParser:
     albs_timing_bundle_input.add_argument("--url")
     albs_build_timing_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     albs_build_timing_bundle.add_argument("--output-dir", type=Path, required=True)
+    albs_build_timing_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(albs_build_timing_bundle)
 
     albs_build_bundle = subparsers.add_parser(
@@ -5520,14 +5584,14 @@ def main(argv: list[str] | None = None) -> int:
             base_url=args.base_url,
         )
         build_id = str(payload.get("build_id") or payload.get("id") or "unknown")
-        print(
-            _json(
-                build_albs_build_timing_report(
-                    payload,
-                    root=f"albs-build:{build_id}",
-                )
-            )
+        report = build_albs_build_timing_report(
+            payload,
+            root=f"albs-build:{build_id}",
         )
+        if args.format == "text":
+            print(_format_albs_build_timing_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "albs-build-timing-bundle":
@@ -5542,6 +5606,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "albs-build-bundle":

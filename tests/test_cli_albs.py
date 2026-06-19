@@ -226,6 +226,27 @@ def test_cli_albs_build_timing_exports_json(capsys) -> None:
         "upload_packages_time": 187.0,
     }
 
+    assert (
+        main(
+            [
+                "albs-build-timing",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    text = capsys.readouterr().out.strip()
+    assert text.startswith("OK schema=edgp.albs.build_timing.v1")
+    assert "buildId=17812" in text
+    assert "buildTasks=2" in text
+    assert "signTasks=1" in text
+    assert "artifacts=5" in text
+    assert "criticalBuildTaskWallSeconds=371.070" in text
+    assert "slowestArch=x86_64" in text
+
 
 def test_cli_albs_build_timing_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     output_dir = tmp_path / "albs-build-timing-bundle"
@@ -257,6 +278,29 @@ def test_cli_albs_build_timing_bundle_writes_report_bundle(tmp_path, capsys) -> 
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert report["summary"]["criticalBuildTaskWallSeconds"] == 371.070048
     assert 'data-testid="albs-artifact-timing-panel"' in html
+
+    text_output_dir = tmp_path / "albs-build-timing-bundle-text"
+    assert (
+        main(
+            [
+                "albs-build-timing-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={text_output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=albs-build-timing" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
 
 
 def test_cli_query_albs_build_source(capsys) -> None:
