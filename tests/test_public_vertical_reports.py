@@ -383,6 +383,23 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
         "edgp.rpm.repository_summary.v1"
     )
 
+    assert main(
+        [
+            "rpm-repo-summary",
+            "--source",
+            "tests/fixtures/repodata/repomd.xml",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    summary_text = capsys.readouterr().out.strip()
+    assert summary_text.startswith("OK schema=edgp.rpm.repository_summary.v1")
+    assert "packages=2" in summary_text
+    assert "sourceRpms=1" in summary_text
+    assert "architectures=1" in summary_text
+    assert "requirementEdges=19" in summary_text
+    assert "unresolvedRequirements=18" in summary_text
+
     output_dir = tmp_path / "rpm-repo-summary-bundle"
     assert (
         main(
@@ -413,6 +430,29 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
     assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
     assert capsys.readouterr().out.startswith("OK ")
+
+    text_output_dir = tmp_path / "rpm-repo-summary-bundle-text"
+    assert (
+        main(
+            [
+                "rpm-repo-summary-bundle",
+                "--source",
+                "tests/fixtures/repodata/repomd.xml",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={text_output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=rpm-repository-summary" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
 
     assert main(
         [

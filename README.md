@@ -137,7 +137,9 @@ edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format json
 edgp rpm-repo-summary --source repodata/repomd.xml
+edgp rpm-repo-summary --source repodata/repomd.xml --format text
 edgp rpm-repo-summary-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo-summary --triage-summary
+edgp rpm-repo-summary-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo-summary --triage-summary --format text
 edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml
 edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc --advisories advisories.json --public-advisory-feed osv.json --libsolv-transaction solver-transaction.txt --license-report --triage-summary
 edgp albs-build --build-id 17812 --format json

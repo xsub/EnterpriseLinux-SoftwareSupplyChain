@@ -1115,6 +1115,42 @@ def _format_report_bundle_result(
     return " ".join(parts)
 
 
+def _format_rpm_repository_summary_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    architectures = _dict_list(report.get("architectures"))
+    source_rpms = _dict_list(report.get("topSourceRpms"))
+    unresolved = _dict_list(report.get("unresolvedRequirements"))
+    parts = [
+        "OK",
+        "schema=edgp.rpm.repository_summary.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"packages={int(summary.get('packages', 0) or 0)}",
+        f"sourceRpms={int(summary.get('sourceRpms', 0) or 0)}",
+        f"architectures={int(summary.get('architectures', 0) or 0)}",
+        f"requirementEdges={int(summary.get('requirementEdges', 0) or 0)}",
+        (
+            "unresolvedRequirements="
+            f"{int(summary.get('unresolvedRequirements', 0) or 0)}"
+        ),
+    ]
+    if architectures:
+        arch_labels = [
+            f"{entry.get('arch', 'unknown')}:{int(entry.get('packages', 0) or 0)}"
+            for entry in architectures
+        ]
+        parts.append(f"archBreakdown={_text_value(','.join(arch_labels))}")
+    if source_rpms:
+        top_source = source_rpms[0]
+        parts.append(f"topSourceRpm={_text_value(top_source.get('sourceRpm', ''))}")
+        parts.append(f"topSourceRpmPackages={int(top_source.get('packages', 0) or 0)}")
+    if unresolved:
+        first = unresolved[0]
+        parts.append(f"firstUnresolved={_text_value(first.get('capability', ''))}")
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -3634,6 +3670,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_summary.add_argument("--repo-id", default="public-rpm-repository")
     rpm_repo_summary.add_argument("--package-limit", type=int, default=5000)
     rpm_repo_summary.add_argument("--requirement-limit", type=int, default=40)
+    rpm_repo_summary.add_argument("--format", choices=["json", "text"], default="json")
 
     rpm_repo_summary_bundle = subparsers.add_parser(
         "rpm-repo-summary-bundle",
@@ -3645,6 +3682,9 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_summary_bundle.add_argument("--package-limit", type=int, default=5000)
     rpm_repo_summary_bundle.add_argument("--requirement-limit", type=int, default=40)
     rpm_repo_summary_bundle.add_argument("--output-dir", type=Path, required=True)
+    rpm_repo_summary_bundle.add_argument(
+        "--format", choices=["path", "text"], default="path"
+    )
     _add_triage_bundle_option(rpm_repo_summary_bundle)
 
     rpm_repo_bundle = subparsers.add_parser(
@@ -5236,14 +5276,14 @@ def main(argv: list[str] | None = None) -> int:
             package_limit=args.package_limit,
             requirement_limit=args.requirement_limit,
         )
-        print(
-            _json(
-                build_rpm_repository_summary_report(
-                    resolved.graph,
-                    root=resolved.root_identifier,
-                )
-            )
+        report = build_rpm_repository_summary_report(
+            resolved.graph,
+            root=resolved.root_identifier,
         )
+        if args.format == "text":
+            print(_format_rpm_repository_summary_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "rpm-repo-summary-bundle":
@@ -5258,6 +5298,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "rpm-repo-bundle":

@@ -2740,6 +2740,26 @@ def _assert_public_vertical_reports() -> None:
     )
     assert rpm_repo_summary["schema"] == "edgp.rpm.repository_summary.v1"
     assert rpm_repo_summary["summary"]["packages"] == 2
+    rpm_repo_summary_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "rpm-repo-summary",
+            "--source",
+            "tests/fixtures/repodata/repomd.xml",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert rpm_repo_summary_text.startswith("OK schema=edgp.rpm.repository_summary.v1")
+    assert "packages=2" in rpm_repo_summary_text
+    assert "unresolvedRequirements=18" in rpm_repo_summary_text
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "rpm-repo-summary-bundle"
@@ -2777,6 +2797,33 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="rpm-repository-architectures-panel"' in (
             output_dir / "001-rpm-repository-summary.html"
         ).read_text(encoding="utf-8")
+
+        text_output_dir = Path(temp_dir) / "rpm-repo-summary-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-repo-summary-bundle",
+                "--source",
+                "tests/fixtures/repodata/repomd.xml",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        rpm_repo_summary_bundle_text = completed_text.stdout.strip()
+        assert rpm_repo_summary_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=rpm-repository-summary" in rpm_repo_summary_bundle_text
+        assert "reports=1" in rpm_repo_summary_bundle_text
+        assert "triageStatus=pass" in rpm_repo_summary_bundle_text
 
     rpm_repo_diff = _run_cli(
         [
