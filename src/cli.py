@@ -1151,6 +1151,57 @@ def _format_rpm_repository_summary_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_rpm_repository_diff_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    top_findings = report.get("topFindings")
+    if not isinstance(top_findings, dict):
+        top_findings = {}
+    changed = _dict_list(top_findings.get("changedPackages"))
+    added = _dict_list(top_findings.get("addedPackages"))
+    removed = _dict_list(top_findings.get("removedPackages"))
+    parts = [
+        "RPM_REPO_DIFF",
+        "schema=edgp.rpm.repository_diff.v1",
+        f"leftPackages={int(summary.get('leftPackages', 0) or 0)}",
+        f"rightPackages={int(summary.get('rightPackages', 0) or 0)}",
+        f"addedPackages={int(summary.get('addedPackages', 0) or 0)}",
+        f"removedPackages={int(summary.get('removedPackages', 0) or 0)}",
+        f"changedPackages={int(summary.get('changedPackages', 0) or 0)}",
+        f"unchangedPackages={int(summary.get('unchangedPackages', 0) or 0)}",
+        f"addedSourceRpms={int(summary.get('addedSourceRpms', 0) or 0)}",
+        f"removedSourceRpms={int(summary.get('removedSourceRpms', 0) or 0)}",
+    ]
+    if changed:
+        first = changed[0]
+        left = first.get("left")
+        right = first.get("right")
+        if not isinstance(left, dict):
+            left = {}
+        if not isinstance(right, dict):
+            right = {}
+        parts.append(f"firstChanged={_text_value(first.get('name', ''))}")
+        parts.append(f"changedArch={_text_value(first.get('arch', ''))}")
+        parts.append(
+            "changedFields="
+            f"{_text_value(','.join(_string_list(first.get('changedFields'))))}"
+        )
+        left_version = f"{left.get('version', '')}-{left.get('release', '')}"
+        right_version = f"{right.get('version', '')}-{right.get('release', '')}"
+        parts.append(f"from={_text_value(left_version)}")
+        parts.append(f"to={_text_value(right_version)}")
+    if added:
+        first = added[0]
+        parts.append(f"firstAdded={_text_value(first.get('name', ''))}")
+        parts.append(f"firstAddedArch={_text_value(first.get('arch', ''))}")
+    if removed:
+        first = removed[0]
+        parts.append(f"firstRemoved={_text_value(first.get('name', ''))}")
+        parts.append(f"firstRemovedArch={_text_value(first.get('arch', ''))}")
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -3722,6 +3773,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_diff.add_argument("--right-repo-id", default="right-rpm-repository")
     rpm_repo_diff.add_argument("--package-limit", type=int, default=5000)
     rpm_repo_diff.add_argument("--requirement-limit", type=int, default=40)
+    rpm_repo_diff.add_argument("--format", choices=["json", "text"], default="json")
 
     rpm_repo_diff_bundle = subparsers.add_parser(
         "rpm-repo-diff-bundle",
@@ -3736,6 +3788,9 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo_diff_bundle.add_argument("--package-limit", type=int, default=5000)
     rpm_repo_diff_bundle.add_argument("--requirement-limit", type=int, default=40)
     rpm_repo_diff_bundle.add_argument("--output-dir", type=Path, required=True)
+    rpm_repo_diff_bundle.add_argument(
+        "--format", choices=["path", "text"], default="path"
+    )
     _add_triage_bundle_option(rpm_repo_diff_bundle)
 
     albs_build = subparsers.add_parser(
@@ -5325,18 +5380,18 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.command == "rpm-repo-diff":
-        print(
-            _json(
-                _build_rpm_repo_diff_report(
-                    _rpm_repo_diff_source(args.left_primary, args.left_source, "left"),
-                    _rpm_repo_diff_source(args.right_primary, args.right_source, "right"),
-                    left_repo_id=args.left_repo_id,
-                    right_repo_id=args.right_repo_id,
-                    package_limit=args.package_limit,
-                    requirement_limit=args.requirement_limit,
-                )
-            )
+        report = _build_rpm_repo_diff_report(
+            _rpm_repo_diff_source(args.left_primary, args.left_source, "left"),
+            _rpm_repo_diff_source(args.right_primary, args.right_source, "right"),
+            left_repo_id=args.left_repo_id,
+            right_repo_id=args.right_repo_id,
+            package_limit=args.package_limit,
+            requirement_limit=args.requirement_limit,
         )
+        if args.format == "text":
+            print(_format_rpm_repository_diff_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "rpm-repo-diff-bundle":
@@ -5353,6 +5408,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "albs-build":

@@ -2836,6 +2836,28 @@ def _assert_public_vertical_reports() -> None:
     )
     assert rpm_repo_diff["schema"] == "edgp.rpm.repository_diff.v1"
     assert rpm_repo_diff["summary"]["changedPackages"] == 1
+    rpm_repo_diff_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "rpm-repo-diff",
+            "--left-primary",
+            "tests/fixtures/rpm-primary.xml",
+            "--right-primary",
+            "tests/fixtures/rpm-primary-updated.xml",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert rpm_repo_diff_text.startswith("RPM_REPO_DIFF ")
+    assert "changedPackages=1" in rpm_repo_diff_text
+    assert "firstChanged=nginx" in rpm_repo_diff_text
 
     rpm_repo_nginx_node = "nginx==1.20.1-28.el9_8.2.alma.1.x86_64"
     rpm_repo_nginx_core_node = "nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
@@ -4305,6 +4327,35 @@ def _assert_public_vertical_reports() -> None:
         )
         assert diff["schema"] == "edgp.rpm.repository_diff.v1"
         assert diff["summary"]["changedPackages"] == 1
+
+        text_output_dir = Path(temp_dir) / "rpm-repo-diff-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-repo-diff-bundle",
+                "--left-primary",
+                "tests/fixtures/rpm-primary.xml",
+                "--right-primary",
+                "tests/fixtures/rpm-primary-updated.xml",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        rpm_repo_diff_bundle_text = completed_text.stdout.strip()
+        assert rpm_repo_diff_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=rpm-repository-diff" in rpm_repo_diff_bundle_text
+        assert "reports=1" in rpm_repo_diff_bundle_text
+        assert "triageStatus=pass" in rpm_repo_diff_bundle_text
 
 
 def _assert_sbom_query() -> None:

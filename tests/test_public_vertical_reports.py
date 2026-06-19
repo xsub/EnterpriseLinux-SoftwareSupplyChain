@@ -469,6 +469,28 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
 
     assert main(
         [
+            "rpm-repo-diff",
+            "--left-primary",
+            "tests/fixtures/rpm-primary.xml",
+            "--right-primary",
+            "tests/fixtures/rpm-primary-updated.xml",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    diff_text = capsys.readouterr().out.strip()
+    assert diff_text.startswith("RPM_REPO_DIFF schema=edgp.rpm.repository_diff.v1")
+    assert "leftPackages=2" in diff_text
+    assert "rightPackages=2" in diff_text
+    assert "addedPackages=1" in diff_text
+    assert "removedPackages=1" in diff_text
+    assert "changedPackages=1" in diff_text
+    assert "firstChanged=nginx" in diff_text
+    assert "firstAdded=nginx-filesystem" in diff_text
+    assert "firstRemoved=nginx-core" in diff_text
+
+    assert main(
+        [
             "query",
             "--source",
             "rpm-repo",
@@ -873,6 +895,28 @@ def test_cli_rpm_repo_diff_bundle_writes_report_bundle(tmp_path, capsys) -> None
     html = (output_dir / "001-rpm-repository-diff.html").read_text(encoding="utf-8")
     assert 'data-testid="rpm-repository-diff-top-findings-panel"' in html
     assert 'data-testid="rpm-repository-diff-changed-panel"' in html
+
+    text_output_dir = tmp_path / "rpm-repo-diff-bundle-text"
+    assert main(
+        [
+            "rpm-repo-diff-bundle",
+            "--left-primary",
+            "tests/fixtures/rpm-primary.xml",
+            "--right-primary",
+            "tests/fixtures/rpm-primary-updated.xml",
+            "--output-dir",
+            str(text_output_dir),
+            "--triage-summary",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={text_output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=rpm-repository-diff" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
 
 
 def test_cli_albs_artifact_inventory_bundle_writes_report_bundle(
