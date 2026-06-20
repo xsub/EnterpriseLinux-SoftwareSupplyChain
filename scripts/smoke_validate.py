@@ -343,6 +343,20 @@ def _run_cli_text(args: list[str]) -> str:
     return completed.stdout.strip()
 
 
+def _assert_bundle_text_summary(
+    output: str,
+    output_dir: Path,
+    *,
+    source_kind: str,
+    triage_status: str = "pass",
+) -> None:
+    assert output.startswith("BUNDLE ")
+    assert f"index={output_dir / 'index.html'}" in output
+    assert f"sourceKind={source_kind}" in output
+    assert "reports=" in output
+    assert f"triageStatus={triage_status}" in output
+
+
 def _run_cli_allow_failure(args: list[str]) -> dict[str, Any]:
     completed = subprocess.run(
         [sys.executable, "-B", "-m", "src.cli", *args],
@@ -2204,6 +2218,34 @@ def _assert_maven_bundle() -> None:
         )
         graph_html = (output_dir / "001-maven-graph.html").read_text(encoding="utf-8")
         assert "com.example:native-lib:linux-x86_64==1.0.0" in graph_html
+        text_output_dir = Path(temp_dir) / "maven-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "maven-bundle",
+                "--path",
+                "tests/fixtures/maven-tree-classifier.txt",
+                "--impact-node",
+                "com.example:native-lib:linux-x86_64",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        _assert_bundle_text_summary(
+            completed_text.stdout.strip(),
+            text_output_dir,
+            source_kind="maven-dependency-tree",
+        )
 
 
 def _assert_dot_snapshot() -> None:
@@ -2509,6 +2551,36 @@ def _assert_dot_bundle() -> None:
             (output_dir / "impact-glibc-unknown.json").read_text(encoding="utf-8")
         )
         assert impact["node"] == "glibc==unknown"
+        text_output_dir = Path(temp_dir) / "dot-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "dot-bundle",
+                "--path",
+                "tests/fixtures/repograph.dot",
+                "--ecosystem",
+                "rpm",
+                "--impact-node",
+                "glibc",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        _assert_bundle_text_summary(
+            completed_text.stdout.strip(),
+            text_output_dir,
+            source_kind="dot",
+        )
 
 
 def _assert_albs_build_snapshot() -> None:
@@ -2607,6 +2679,34 @@ def _assert_albs_build_bundle() -> None:
         assert timing["schema"] == "edgp.albs.build_timing.v1"
         assert timing["summary"]["criticalBuildTaskWallSeconds"] == 371.070048
         assert "EDGP ALBS Build Timing" in timing_html
+        text_output_dir = Path(temp_dir) / "albs-build-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-build-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--impact-node",
+                impact_node,
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        _assert_bundle_text_summary(
+            completed_text.stdout.strip(),
+            text_output_dir,
+            source_kind="albs-build",
+        )
 
 
 def _assert_public_vertical_reports() -> None:
@@ -5013,6 +5113,43 @@ def _assert_public_vertical_reports() -> None:
         )
         assert triage["schema"] == "edgp.triage.summary.v1"
         assert triage["status"] == "fail"
+        text_output_dir = Path(temp_dir) / "rpm-repo-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-repo-bundle",
+                "--source",
+                "tests/fixtures/repodata/repomd.xml",
+                "--impact-node",
+                "nginx-core",
+                "--advisories",
+                "tests/fixtures/rpm-repo-advisories.json",
+                "--public-advisory-feed-url",
+                (
+                    REPO_ROOT / "tests" / "fixtures" / "public-osv-ranges.json"
+                ).as_uri(),
+                "--libsolv-transaction",
+                "tests/fixtures/libsolv-transaction.txt",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        _assert_bundle_text_summary(
+            completed_text.stdout.strip(),
+            text_output_dir,
+            source_kind="rpm-repository",
+            triage_status="fail",
+        )
         assert triage["summary"]["reports"] == 7
         libsolv = json.loads(
             (output_dir / "libsolv-bridge.json").read_text(encoding="utf-8")
@@ -5168,6 +5305,34 @@ def _assert_sbom_bundle() -> None:
         assert triage["schema"] == "edgp.triage.summary.v1"
         assert triage["bundle"]["sourceKind"] == "cyclonedx-sbom"
         assert triage["summary"]["deniedLicenseFindings"] == 1
+        text_output_dir = Path(temp_dir) / "sbom-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "sbom-bundle",
+                "--path",
+                "tests/fixtures/sample-bom.json",
+                "--impact-node",
+                "left-pad",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        _assert_bundle_text_summary(
+            completed_text.stdout.strip(),
+            text_output_dir,
+            source_kind="cyclonedx-sbom",
+        )
 
 
 def _assert_snapshot_diff() -> None:
@@ -6653,6 +6818,37 @@ def _assert_npm_bundle_with_impact_and_advisory() -> None:
         assert manifest["bundle"]["command"].startswith("edgp npm-bundle ")
         assert manifest["reports"][2]["href"] == "003-impact-left-pad-1.3.0.html"
         assert manifest["reports"][3]["href"] == "004-advisory-report.html"
+        text_output_dir = Path(temp_dir) / "npm-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "npm-bundle",
+                "--path",
+                "tests/fixtures/package-lock.json",
+                "--impact-node",
+                "left-pad",
+                "--advisories",
+                "tests/fixtures/advisories.json",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        _assert_bundle_text_summary(
+            completed_text.stdout.strip(),
+            text_output_dir,
+            source_kind="npm-lockfile",
+            triage_status="fail",
+        )
 
 
 def _assert_benchmark() -> None:

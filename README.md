@@ -126,6 +126,7 @@ edgp lockfile --ecosystem poetry --path poetry.lock --format json
 edgp lockfile --ecosystem cargo --path Cargo.lock --format json
 mvn dependency:tree -DoutputFile=maven-tree.txt
 edgp maven-tree --path maven-tree.txt --format json
+edgp maven-bundle --path maven-tree.txt --output-dir reports/maven --triage-summary --format text
 ```
 
 SBOM, DOT/RPM, and installed RPM sources are supported for system-oriented
@@ -136,6 +137,7 @@ public ALBS build metadata by build ID, local JSON path, or public JSON URL.
 edgp sbom --path bom.json --format json
 edgp dot --path repograph.dot --ecosystem rpm --format json
 edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
+edgp dot-bundle --path repograph.dot --ecosystem rpm --output-dir reports/dot --triage-summary --format text
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format json
 edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format text
@@ -146,9 +148,11 @@ edgp rpm-repo-summary-bundle --source repodata/repomd.xml --output-dir reports/r
 edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml
 edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --format text
 edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc --advisories advisories.json --public-advisory-feed osv.json --libsolv-transaction solver-transaction.txt --license-report --triage-summary
+edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc --triage-summary --format text
 edgp albs-build --build-id 17812 --format json
 edgp albs-build --build-id 17812 --format text
 edgp albs-build --url https://build.almalinux.org/api/v1/builds/17812/ --format json
+edgp albs-build-bundle --build-id 17812 --output-dir reports/albs-build --triage-summary --format text
 edgp albs-artifact-inventory --build-id 17812
 edgp albs-artifact-inventory --build-id 17812 --format text
 edgp albs-artifact-inventory-bundle --build-id 17812 --output-dir reports/albs-artifact-inventory --triage-summary
@@ -281,13 +285,17 @@ Generate browser-friendly reports and verifiable static bundles:
 
 ```bash
 edgp npm-bundle --path package-lock.json --impact-node left-pad --advisories advisories.json --deny-license GPL-3.0-only --output-dir reports/npm --fail-on-status fail
+edgp npm-bundle --path package-lock.json --output-dir reports/npm --triage-summary --format text
 edgp maven-bundle --path maven-tree.txt --output-dir reports/maven
 edgp dot-bundle --path repograph.dot --ecosystem rpm --impact-node glibc --output-dir reports/rpm-dot
 edgp sbom-bundle --path bom.json --impact-node left-pad --deny-license WTFPL --fail-on-denied --output-dir reports/sbom
+edgp sbom-bundle --path bom.json --output-dir reports/sbom --triage-summary --format text
 edgp rpm-installed-bundle --limit 100 --max-requirements 40 --impact-node rpm-installed==local --advisories advisories.json --public-advisory-feed osv.json --albs-build-id 17812 --libsolv-transaction solver-transaction.txt --license-report --output-dir reports/rpm-installed --triage-summary
+edgp rpm-installed-bundle --limit 100 --max-requirements 40 --output-dir reports/rpm-installed --triage-summary --format text
 edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff
 edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff --format text
 edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
+edgp albs-build-bundle --build-id 17812 --output-dir reports/albs --triage-summary --format text
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv --format text
 edgp report --snapshot graph.json --output graph-report.html

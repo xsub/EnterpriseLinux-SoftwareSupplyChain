@@ -4256,6 +4256,7 @@ def build_parser() -> argparse.ArgumentParser:
     npm_bundle.add_argument("--impact-node", action="append", default=[])
     npm_bundle.add_argument("--advisories", type=Path)
     npm_bundle.add_argument("--limit", type=int, default=20)
+    npm_bundle.add_argument("--format", choices=["path", "text"], default="path")
     _add_license_bundle_options(npm_bundle)
     _add_triage_bundle_option(npm_bundle)
 
@@ -4272,6 +4273,7 @@ def build_parser() -> argparse.ArgumentParser:
     dot_bundle.add_argument("--output-dir", type=Path, required=True)
     dot_bundle.add_argument("--impact-node", action="append", default=[])
     dot_bundle.add_argument("--limit", type=int, default=20)
+    dot_bundle.add_argument("--format", choices=["path", "text"], default="path")
     _add_triage_bundle_option(dot_bundle)
 
     sbom = subparsers.add_parser("sbom", help="Export a graph from a CycloneDX JSON SBOM")
@@ -4285,6 +4287,7 @@ def build_parser() -> argparse.ArgumentParser:
     sbom_bundle.add_argument("--output-dir", type=Path, required=True)
     sbom_bundle.add_argument("--impact-node", action="append", default=[])
     sbom_bundle.add_argument("--limit", type=int, default=20)
+    sbom_bundle.add_argument("--format", choices=["path", "text"], default="path")
     _add_license_bundle_options(sbom_bundle)
     _add_triage_bundle_option(sbom_bundle)
 
@@ -4303,6 +4306,7 @@ def build_parser() -> argparse.ArgumentParser:
     maven_bundle.add_argument("--output-dir", type=Path, required=True)
     maven_bundle.add_argument("--impact-node", action="append", default=[])
     maven_bundle.add_argument("--limit", type=int, default=20)
+    maven_bundle.add_argument("--format", choices=["path", "text"], default="path")
     _add_triage_bundle_option(maven_bundle)
 
     rpm_installed = subparsers.add_parser(
@@ -4336,6 +4340,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="saved libsolv transaction transcript to match against installed RPM graph",
     )
     rpm_installed_bundle.add_argument("--report-limit", type=int, default=20)
+    rpm_installed_bundle.add_argument(
+        "--format", choices=["path", "text"], default="path"
+    )
     _add_license_bundle_options(rpm_installed_bundle)
     _add_triage_bundle_option(rpm_installed_bundle)
 
@@ -4398,6 +4405,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="saved libsolv transaction transcript to match against the generated graph",
     )
     rpm_repo_bundle.add_argument("--report-limit", type=int, default=20)
+    rpm_repo_bundle.add_argument("--format", choices=["path", "text"], default="path")
     _add_license_bundle_options(rpm_repo_bundle)
     _add_triage_bundle_option(rpm_repo_bundle)
 
@@ -4551,6 +4559,9 @@ def build_parser() -> argparse.ArgumentParser:
     albs_build_bundle.add_argument("--test-task-limit", type=int, default=50)
     albs_build_bundle.add_argument("--include-logs", action="store_true")
     albs_build_bundle.add_argument("--report-limit", type=int, default=20)
+    albs_build_bundle.add_argument(
+        "--format", choices=["path", "text"], default="path"
+    )
     _add_triage_bundle_option(albs_build_bundle)
 
     albs_build_diff = subparsers.add_parser(
@@ -5914,6 +5925,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             fail_on_denied=args.fail_on_denied,
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "dot":
@@ -5940,6 +5952,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "sbom":
@@ -5968,6 +5981,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             fail_on_denied=args.fail_on_denied,
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "maven-tree":
@@ -5993,6 +6007,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "rpm-installed":
@@ -6033,6 +6048,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             fail_on_denied=args.fail_on_denied,
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "rpm-repo":
@@ -6105,6 +6121,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             fail_on_denied=args.fail_on_denied,
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "rpm-repo-diff":
@@ -6248,6 +6265,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "albs-build-diff":
