@@ -1642,6 +1642,42 @@ def _format_libsolv_bridge_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_impact_report_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    direct_dependencies = _string_list(report.get("directDependencies"))
+    direct_dependents = _string_list(report.get("directDependents"))
+    affected_dependents = _dict_list(report.get("affectedDependents"))
+    chains = _dict_list(report.get("dependencyChainsToNode"))
+    parts = [
+        "IMPACT_REPORT",
+        "schema=edgp.impact.report.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"node={_text_value(report.get('node', ''))}",
+        f"ecosystem={_text_value(report.get('ecosystem', ''))}",
+        f"directDependencies={int(summary.get('directDependencies', 0) or 0)}",
+        f"directDependents={int(summary.get('directDependents', 0) or 0)}",
+        f"affectedDependents={int(summary.get('affectedDependents', 0) or 0)}",
+        f"renderedChains={int(summary.get('renderedChains', 0) or 0)}",
+        f"truncatedChains={int(summary.get('truncatedChains', 0) or 0)}",
+    ]
+    if direct_dependencies:
+        parts.append(f"firstDependency={_text_value(direct_dependencies[0])}")
+    if direct_dependents:
+        parts.append(f"firstDependent={_text_value(direct_dependents[0])}")
+    if affected_dependents:
+        first = affected_dependents[0]
+        parts.append(f"firstAffected={_text_value(first.get('package', ''))}")
+        parts.append(f"firstAffectedDistance={int(first.get('distance', 0) or 0)}")
+    if chains:
+        first = chains[0]
+        path = _string_list(first.get("path"))
+        if path:
+            parts.append(f"firstChain={_text_value('>'.join(path))}")
+    return " ".join(parts)
+
+
 def _format_license_report_result(report: dict[str, Any]) -> str:
     summary = report.get("summary")
     if not isinstance(summary, dict):
@@ -5080,6 +5116,7 @@ def build_parser() -> argparse.ArgumentParser:
     impact.add_argument("--limit", type=int, default=20)
     impact.add_argument("--rpm-limit", type=int, default=100)
     impact.add_argument("--max-requirements", type=int, default=40)
+    impact.add_argument("--format", choices=["json", "text"], default="json")
     _add_rpm_repo_source_options(impact)
 
     impact_bundle = subparsers.add_parser(
@@ -5107,6 +5144,7 @@ def build_parser() -> argparse.ArgumentParser:
     impact_bundle.add_argument("--rpm-limit", type=int, default=100)
     impact_bundle.add_argument("--max-requirements", type=int, default=40)
     impact_bundle.add_argument("--output-dir", type=Path, required=True)
+    impact_bundle.add_argument("--format", choices=["path", "text"], default="path")
     _add_rpm_repo_source_options(impact_bundle)
     _add_triage_bundle_option(impact_bundle)
 
@@ -6548,17 +6586,17 @@ def main(argv: list[str] | None = None) -> int:
             requirement_limit=args.requirement_limit,
         )
         node = _resolve_node_selector(graph, args.node, role="node")
-        print(
-            _json(
-                build_impact_report(
-                    graph,
-                    node=node,
-                    root=root_identifier,
-                    ecosystem=resolved_ecosystem,
-                    max_paths=args.limit,
-                )
-            )
+        impact_report = build_impact_report(
+            graph,
+            node=node,
+            root=root_identifier,
+            ecosystem=resolved_ecosystem,
+            max_paths=args.limit,
         )
+        if args.format == "text":
+            print(_format_impact_report_result(impact_report))
+        else:
+            print(_json(impact_report))
         return 0
 
     if args.command == "impact-bundle":
@@ -6581,6 +6619,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "advisory":

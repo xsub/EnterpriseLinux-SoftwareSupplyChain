@@ -3144,6 +3144,32 @@ def _assert_public_vertical_reports() -> None:
     )
     assert rpm_repo_impact["schema"] == "edgp.impact.report.v1"
     assert rpm_repo_impact["node"] == rpm_repo_nginx_core_node
+    rpm_repo_impact_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "impact",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--node",
+            "nginx-core",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert rpm_repo_impact_text.startswith("IMPACT_REPORT ")
+    assert "schema=edgp.impact.report.v1" in rpm_repo_impact_text
+    assert f"node={rpm_repo_nginx_core_node}" in rpm_repo_impact_text
+    assert "directDependents=2" in rpm_repo_impact_text
+    assert f"firstDependent={rpm_repo_nginx_node}" in rpm_repo_impact_text
 
     rpm_repo_advisory = _run_cli(
         [
@@ -5027,6 +5053,29 @@ def _assert_impact_report() -> None:
     assert payload["node"] == "left-pad==1.3.0"
     assert payload["summary"]["directDependents"] == 2
     assert payload["summary"]["affectedDependents"] == 2
+    text_payload = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "impact",
+            "--path",
+            "tests/fixtures/package-lock.json",
+            "--node",
+            "left-pad",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert text_payload.startswith("IMPACT_REPORT ")
+    assert "schema=edgp.impact.report.v1" in text_payload
+    assert "node=left-pad==1.3.0" in text_payload
+    assert "affectedDependents=2" in text_payload
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "impact-bundle"
@@ -5065,6 +5114,35 @@ def _assert_impact_report() -> None:
         assert 'data-testid="impact-chains-panel"' in (
             output_dir / "001-impact-report.html"
         ).read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "impact-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "impact-bundle",
+                "--path",
+                "tests/fixtures/package-lock.json",
+                "--node",
+                "left-pad",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        impact_bundle_text = completed_text.stdout.strip()
+        assert impact_bundle_text.startswith("BUNDLE ")
+        assert f"index={output_dir / 'index.html'}" in impact_bundle_text
+        assert "sourceKind=impact-report" in impact_bundle_text
+        assert "triageStatus=pass" in impact_bundle_text
 
 
 def _assert_advisory_overlay() -> None:

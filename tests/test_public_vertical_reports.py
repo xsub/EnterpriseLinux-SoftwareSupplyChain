@@ -769,6 +769,26 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
 
     assert main(
         [
+            "impact",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--node",
+            "nginx-core",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    impact_text = capsys.readouterr().out.strip()
+    assert impact_text.startswith("IMPACT_REPORT ")
+    assert "schema=edgp.impact.report.v1" in impact_text
+    assert "node=nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64" in impact_text
+    assert "directDependents=2" in impact_text
+    assert "firstDependent=nginx==1.20.1-28.el9_8.2.alma.1.x86_64" in impact_text
+
+    assert main(
+        [
             "advisory",
             "--source",
             "rpm-repo",

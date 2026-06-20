@@ -221,9 +221,9 @@ Impact, advisory overlays, and npm diagnostics cover the main triage flows:
 
 ```bash
 edgp impact --path package-lock.json --node left-pad
-edgp impact --source rpm-repo --path repodata/repomd.xml --node glibc
+edgp impact --source rpm-repo --path repodata/repomd.xml --node glibc --format text
 edgp impact --source albs-build --albs-url https://build.almalinux.org/api/v1/builds/17812/ --node albs-release:7396
-edgp impact-bundle --path package-lock.json --node left-pad --output-dir reports/impact --triage-summary
+edgp impact-bundle --path package-lock.json --node left-pad --output-dir reports/impact --format text --triage-summary
 edgp advisory --path package-lock.json --advisories advisories.json
 edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisories.json --ecosystem rpm
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed-url https://example.com/osv.json --ecosystem rpm
@@ -885,8 +885,9 @@ same static directory.
 report. For a selected node it returns direct dependents, all transitive
 affected dependents, and shortest dependency chains back to the selected
 component. `edgp impact-bundle` renders the same analysis as static HTML with a
-verifiable manifest. This is the public-input stand-in for future advisory or
-curated risk feeds.
+verifiable manifest. Both commands can print compact `--format text` summaries
+for CI logs while preserving the full JSON or HTML artifacts. This is the
+public-input stand-in for future advisory or curated risk feeds.
 
 `edgp diff` compares two EDGP graph snapshots and reports added or removed
 nodes, added or removed edges, node metadata changes, and package-level change
