@@ -2881,6 +2881,32 @@ def _assert_public_vertical_reports() -> None:
     )
     assert completeness["schema"] == "edgp.albs.release_completeness.v1"
     assert completeness["summary"]["builds"] == 2
+    completed_completeness_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "albs-release-completeness",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    completeness_text = completed_completeness_text.stdout.strip()
+    assert completeness_text.startswith(
+        "ALBS_RELEASE_COMPLETENESS schema=edgp.albs.release_completeness.v1"
+    )
+    assert "builds=2" in completeness_text
+    assert "missingBuildArchitectures=6" in completeness_text
+    assert "firstMissingArchitectures=aarch64,s390x,i686" in completeness_text
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "albs-release-completeness-bundle"
         completed = subprocess.run(
@@ -2919,6 +2945,34 @@ def _assert_public_vertical_reports() -> None:
             output_dir / "001-albs-release-completeness.html"
         ).read_text(encoding="utf-8")
         assert 'data-testid="albs-release-completeness-panel"' in completeness_html
+        text_output_dir = Path(temp_dir) / "albs-release-completeness-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-release-completeness-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--path",
+                "tests/fixtures/albs-build-updated.json",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        completeness_bundle_text = completed_text.stdout.strip()
+        assert completeness_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=albs-release-completeness" in completeness_bundle_text
+        assert "reports=1" in completeness_bundle_text
+        assert "triageStatus=pass" in completeness_bundle_text
 
     rpm_repo = _run_cli(
         [

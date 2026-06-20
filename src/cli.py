@@ -1439,6 +1439,55 @@ def _format_albs_log_intelligence_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_albs_release_completeness_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    builds = _dict_list(report.get("builds"))
+    builds_missing_arches = [
+        build for build in builds if _string_list(build.get("missingBuildArchitectures"))
+    ]
+    builds_failed_tasks = [
+        build for build in builds if int(build.get("failedBuildTasks", 0) or 0)
+    ]
+    parts = [
+        "ALBS_RELEASE_COMPLETENESS",
+        "schema=edgp.albs.release_completeness.v1",
+        f"builds={int(summary.get('builds', 0) or 0)}",
+        f"releasedBuilds={int(summary.get('releasedBuilds', 0) or 0)}",
+        (
+            "buildsWithMissingArchitectures="
+            f"{int(summary.get('buildsWithMissingArchitectures', 0) or 0)}"
+        ),
+        (
+            "missingBuildArchitectures="
+            f"{int(summary.get('missingBuildArchitectures', 0) or 0)}"
+        ),
+        f"failedBuildTasks={int(summary.get('failedBuildTasks', 0) or 0)}",
+        (
+            "buildsWithoutSignTasks="
+            f"{int(summary.get('buildsWithoutSignTasks', 0) or 0)}"
+        ),
+        (
+            "buildsWithoutTestTasks="
+            f"{int(summary.get('buildsWithoutTestTasks', 0) or 0)}"
+        ),
+    ]
+    if builds_missing_arches:
+        first = builds_missing_arches[0]
+        parts.append(f"firstMissingBuild={_text_value(first.get('buildId', ''))}")
+        parts.append(f"firstMissingRelease={_text_value(first.get('releaseId', ''))}")
+        parts.append(
+            "firstMissingArchitectures="
+            f"{_text_value(','.join(_string_list(first.get('missingBuildArchitectures'))))}"
+        )
+    if builds_failed_tasks:
+        first = builds_failed_tasks[0]
+        parts.append(f"firstFailedBuild={_text_value(first.get('buildId', ''))}")
+        parts.append(f"firstFailedTasks={int(first.get('failedBuildTasks', 0) or 0)}")
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -4227,6 +4276,11 @@ def build_parser() -> argparse.ArgumentParser:
     albs_release_completeness.add_argument("--path", type=Path, action="append", default=[])
     albs_release_completeness.add_argument("--url", action="append", default=[])
     albs_release_completeness.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_release_completeness.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     albs_release_completeness_bundle = subparsers.add_parser(
         "albs-release-completeness-bundle",
@@ -4256,6 +4310,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-dir",
         type=Path,
         required=True,
+    )
+    albs_release_completeness_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
     )
     _add_triage_bundle_option(albs_release_completeness_bundle)
 
@@ -5870,7 +5929,11 @@ def main(argv: list[str] | None = None) -> int:
             urls=args.url,
             base_url=args.base_url,
         )
-        print(_json(build_albs_release_completeness_report(payloads)))
+        report = build_albs_release_completeness_report(payloads)
+        if args.format == "text":
+            print(_format_albs_release_completeness_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "albs-release-completeness-bundle":
@@ -5885,6 +5948,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "rpm-albs-provenance":

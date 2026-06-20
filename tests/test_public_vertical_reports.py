@@ -408,6 +408,45 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     assert "firstSignalLog=mock.srpm.188180.1725456234.log" in log_text
     assert "firstSignalArch=ppc64le" in log_text
 
+    assert main(
+        [
+            "albs-release-completeness",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+        ]
+    ) == 0
+    assert json.loads(capsys.readouterr().out)["schema"] == (
+        "edgp.albs.release_completeness.v1"
+    )
+
+    assert main(
+        [
+            "albs-release-completeness",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    completeness_text = capsys.readouterr().out.strip()
+    assert completeness_text.startswith(
+        "ALBS_RELEASE_COMPLETENESS schema=edgp.albs.release_completeness.v1"
+    )
+    assert "builds=2" in completeness_text
+    assert "releasedBuilds=2" in completeness_text
+    assert "buildsWithMissingArchitectures=2" in completeness_text
+    assert "missingBuildArchitectures=6" in completeness_text
+    assert "failedBuildTasks=0" in completeness_text
+    assert "buildsWithoutSignTasks=0" in completeness_text
+    assert "buildsWithoutTestTasks=0" in completeness_text
+    assert "firstMissingBuild=17812" in completeness_text
+    assert "firstMissingRelease=7396" in completeness_text
+    assert "firstMissingArchitectures=aarch64,s390x,i686" in completeness_text
+
     assert main(["rpm-repo", "--primary", "tests/fixtures/rpm-primary.xml"]) == 0
     rpm_repo_snapshot = json.loads(capsys.readouterr().out)
     assert rpm_repo_snapshot["schema"] == "edgp.graph.snapshot.v1"
@@ -1276,6 +1315,28 @@ def test_cli_albs_release_completeness_bundle_writes_report_bundle(
         encoding="utf-8"
     )
     assert 'data-testid="albs-release-completeness-panel"' in html
+
+    text_output_dir = tmp_path / "albs-release-completeness-bundle-text"
+    assert main(
+        [
+            "albs-release-completeness-bundle",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+            "--output-dir",
+            str(text_output_dir),
+            "--triage-summary",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={text_output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=albs-release-completeness" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)
