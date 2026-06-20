@@ -1532,6 +1532,79 @@ def _format_rpm_albs_provenance_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_libsolv_bridge_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    commands = _dict_list(report.get("commands"))
+    available_commands = [
+        str(command.get("command"))
+        for command in commands
+        if command.get("available") and command.get("command")
+    ]
+    architectures = _dict_list(summary.get("architectures"))
+    actions = _dict_list(report.get("transactionActions"))
+    parts = [
+        "LIBSOLV_BRIDGE",
+        "schema=edgp.libsolv.bridge.v1",
+        f"commandsAvailable={int(summary.get('commandsAvailable', 0) or 0)}",
+        f"transactionActions={int(summary.get('transactionActions', 0) or 0)}",
+        f"parsedPackages={int(summary.get('parsedPackages', 0) or 0)}",
+        f"installs={int(summary.get('installs', 0) or 0)}",
+        f"erases={int(summary.get('erases', 0) or 0)}",
+        f"upgrades={int(summary.get('upgrades', 0) or 0)}",
+    ]
+    if available_commands:
+        parts.append(f"availableCommands={_text_value(','.join(available_commands))}")
+    if architectures:
+        arch_labels = [
+            f"{entry.get('arch', 'unknown')}:{int(entry.get('actions', 0) or 0)}"
+            for entry in architectures
+        ]
+        parts.append(f"architectures={_text_value(','.join(arch_labels))}")
+    if "graphMatchedActions" in summary:
+        parts.extend(
+            [
+                f"graphMatchedActions={int(summary.get('graphMatchedActions', 0) or 0)}",
+                f"graphExactActions={int(summary.get('graphExactActions', 0) or 0)}",
+                (
+                    "graphCandidateActions="
+                    f"{int(summary.get('graphCandidateActions', 0) or 0)}"
+                ),
+                (
+                    "graphUnmatchedActions="
+                    f"{int(summary.get('graphUnmatchedActions', 0) or 0)}"
+                ),
+                (
+                    "graphAffectedDependents="
+                    f"{int(summary.get('graphAffectedDependents', 0) or 0)}"
+                ),
+                (
+                    "maxGraphAffectedDependents="
+                    f"{int(summary.get('maxGraphAffectedDependents', 0) or 0)}"
+                ),
+            ]
+        )
+    if actions:
+        first = actions[0]
+        parts.append(f"firstAction={_text_value(first.get('action', ''))}")
+        parts.append(f"firstPackage={_text_value(first.get('packageName', ''))}")
+        parts.append(f"firstArch={_text_value(first.get('packageArch', ''))}")
+        status = first.get("graphMatchStatus")
+        if isinstance(status, str) and status:
+            parts.append(f"firstGraphMatchStatus={_text_value(status)}")
+    impact = _dict_list(report.get("transactionImpact"))
+    if impact:
+        first = impact[0]
+        parts.append(f"topImpactAction={_text_value(first.get('action', ''))}")
+        parts.append(f"topImpactPackage={_text_value(first.get('packageName', ''))}")
+        parts.append(f"topImpactStatus={_text_value(first.get('matchStatus', ''))}")
+        parts.append(
+            f"topImpactAffectedDependents={int(first.get('affectedDependents', 0) or 0)}"
+        )
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -4410,6 +4483,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="EDGP graph snapshot used to match transaction packages to graph nodes",
     )
+    libsolv_bridge.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     libsolv_bundle = subparsers.add_parser(
         "libsolv-bundle",
@@ -4421,6 +4499,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--graph-snapshot",
         type=Path,
         help="EDGP graph snapshot used to match transaction packages to graph nodes",
+    )
+    libsolv_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
     )
     _add_triage_bundle_option(libsolv_bundle)
 
@@ -6041,7 +6124,11 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.command == "libsolv-bridge":
-        print(_json(build_libsolv_bridge_report(args.transaction, args.graph_snapshot)))
+        report = build_libsolv_bridge_report(args.transaction, args.graph_snapshot)
+        if args.format == "text":
+            print(_format_libsolv_bridge_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "libsolv-bundle":
@@ -6054,6 +6141,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "public-advisory-feed":

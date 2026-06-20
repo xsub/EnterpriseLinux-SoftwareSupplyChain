@@ -3443,6 +3443,30 @@ def _assert_public_vertical_reports() -> None:
     assert libsolv["transactionActions"][1]["newNodeId"] == (
         "openssl==3.0.7-2.el9.x86_64"
     )
+    completed_libsolv_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "libsolv-bridge",
+            "--transaction",
+            "tests/fixtures/libsolv-transaction.txt",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    libsolv_text = completed_libsolv_text.stdout.strip()
+    assert libsolv_text.startswith("LIBSOLV_BRIDGE schema=edgp.libsolv.bridge.v1")
+    assert "transactionActions=3" in libsolv_text
+    assert "parsedPackages=4" in libsolv_text
+    assert "installs=1" in libsolv_text
+    assert "erases=1" in libsolv_text
+    assert "upgrades=1" in libsolv_text
     rpm_repo_snapshot = _run_cli(
         ["rpm-repo", "--source", "tests/fixtures/repodata/repomd.xml", "--format", "json"]
     )
@@ -3497,6 +3521,34 @@ def _assert_public_vertical_reports() -> None:
         assert report["summary"]["graphExactActions"] == 1
         assert report["transactionImpact"][0]["affectedDependents"] == 1
         assert manifest["triageSummary"]["source"] == "triage-summary.json"
+        text_output_dir = Path(tmpdir) / "libsolv-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "libsolv-bundle",
+                "--transaction",
+                "tests/fixtures/libsolv-transaction.txt",
+                "--graph-snapshot",
+                str(graph_snapshot_path),
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        libsolv_bundle_text = completed_text.stdout.strip()
+        assert libsolv_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=libsolv-transaction" in libsolv_bundle_text
+        assert "reports=1" in libsolv_bundle_text
+        assert "triageStatus=pass" in libsolv_bundle_text
 
     advisory = _run_cli(
         ["public-advisory-feed", "--path", "tests/fixtures/public-osv.json"]

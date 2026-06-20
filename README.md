@@ -171,7 +171,9 @@ edgp rpm-albs-provenance-bundle --build-id 17812 --rpm-limit 200 --output-dir re
 edgp rpm-albs-provenance-bundle --build-id 17812 --rpm-limit 200 --output-dir reports/rpm-albs-provenance --triage-summary --format text
 edgp libsolv-bridge --transaction solver-transaction.txt
 edgp libsolv-bridge --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json
+edgp libsolv-bridge --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --format text
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
+edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv --format text
 edgp public-advisory-feed --path osv.json --ecosystem rpm
 edgp public-advisory-feed --path osv.json --ecosystem rpm --format text
 edgp public-advisory-feed --url https://example.com/osv.json --ecosystem rpm
@@ -283,6 +285,7 @@ edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source n
 edgp rpm-repo-diff-bundle --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --output-dir reports/rpm-repo-diff --format text
 edgp albs-build-bundle --build-id 17812 --impact-node albs-release:7396 --output-dir reports/albs
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv
+edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv --format text
 edgp report --snapshot graph.json --output graph-report.html
 edgp report --input docs/schemas/index.json --output schema-index.html
 edgp validate --path docs/schemas/index.json

@@ -382,6 +382,28 @@ def test_cli_libsolv_bundle_writes_report_bundle(tmp_path: Path, capsys) -> None
     assert 'data-testid="libsolv-impact-panel"' in html
     assert "exact" in html
 
+    text_output_dir = tmp_path / "libsolv-bundle-text"
+    assert main(
+        [
+            "libsolv-bundle",
+            "--transaction",
+            "tests/fixtures/libsolv-transaction.txt",
+            "--graph-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(text_output_dir),
+            "--triage-summary",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={text_output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=libsolv-transaction" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
+
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)
     assert verification["ok"] is True
@@ -557,6 +579,33 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     libsolv = json.loads(capsys.readouterr().out)
     assert libsolv["schema"] == "edgp.libsolv.bridge.v1"
     assert libsolv["summary"]["graphExactActions"] == 1
+
+    assert main(
+        [
+            "libsolv-bridge",
+            "--transaction",
+            "tests/fixtures/libsolv-transaction.txt",
+            "--graph-snapshot",
+            str(rpm_repo_snapshot_path),
+            "--format",
+            "text",
+        ]
+    ) == 0
+    libsolv_text = capsys.readouterr().out.strip()
+    assert libsolv_text.startswith("LIBSOLV_BRIDGE schema=edgp.libsolv.bridge.v1")
+    assert "transactionActions=3" in libsolv_text
+    assert "parsedPackages=4" in libsolv_text
+    assert "installs=1" in libsolv_text
+    assert "erases=1" in libsolv_text
+    assert "upgrades=1" in libsolv_text
+    assert "architectures=x86_64:3" in libsolv_text
+    assert "graphMatchedActions=1" in libsolv_text
+    assert "graphExactActions=1" in libsolv_text
+    assert "graphUnmatchedActions=2" in libsolv_text
+    assert "graphAffectedDependents=1" in libsolv_text
+    assert "firstAction=install" in libsolv_text
+    assert "firstPackage=nginx" in libsolv_text
+    assert "firstGraphMatchStatus=exact" in libsolv_text
 
     assert main(
         [
