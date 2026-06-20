@@ -81,6 +81,10 @@ def test_cli_csr_artifact_outputs_text_summary(tmp_path, capsys) -> None:
     assert "edges=2" in output
     assert "dtype=int32" in output
     assert "arrays=6" in output
+    assert "matrixViews=csc,csr" in output
+    assert "csrDirection=outgoing_dependencies" in output
+    assert "cscDirection=incoming_dependents" in output
+    assert "cscMaterialization=reverse_csr_transpose" in output
     assert "memoryMappable=true" in output
     assert f"outputDir={output_dir}" in output
     assert (output_dir / "manifest.json").exists()

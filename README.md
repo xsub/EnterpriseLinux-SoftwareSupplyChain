@@ -1023,8 +1023,8 @@ against one frozen CSR runtime. It accepts repeated `--query` values in
 `dependencies:NODE` or `dependents:NODE` form, preserves result ordering, and
 reports worker count plus selected traversal backend. Use `--format text` on
 `benchmark`, `performance-report`, `accelerator-status`, `parallel-query`, or
-`csr-artifact` when a CI log should show backend choice, CSR layout,
-memory-mapping status, and query counts without parsing full JSON.
+`csr-artifact` when a CI log should show backend choice, CSR layout, CSR/CSC
+matrix views, memory-mapping status, and query counts without parsing full JSON.
 `edgp csr-artifact` persists an existing `edgp.graph.snapshot.v1` as a
 memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
 `manifest.json` containing layout version, package IDs, metadata, array shapes,

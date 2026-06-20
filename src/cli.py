@@ -2150,6 +2150,16 @@ def _format_csr_artifact_manifest(
         profile = {}
     arrays = manifest.get("arrays")
     array_count = len(arrays) if isinstance(arrays, dict) else 0
+    matrix_views = manifest.get("matrixViews")
+    if not isinstance(matrix_views, dict):
+        matrix_views = {}
+    matrix_view_names = sorted(str(name) for name in matrix_views)
+    csr_view = matrix_views.get("csr")
+    if not isinstance(csr_view, dict):
+        csr_view = {}
+    csc_view = matrix_views.get("csc")
+    if not isinstance(csc_view, dict):
+        csc_view = {}
     parts = [
         "OK",
         f"schema={_text_value(manifest.get('schema', ''))}",
@@ -2159,6 +2169,10 @@ def _format_csr_artifact_manifest(
         f"edges={int(manifest.get('edges', 0) or 0)}",
         f"dtype={_text_value(manifest.get('dtype', ''))}",
         f"arrays={array_count}",
+        f"matrixViews={_text_value(','.join(matrix_view_names))}",
+        f"csrDirection={_text_value(csr_view.get('direction', ''))}",
+        f"cscDirection={_text_value(csc_view.get('direction', ''))}",
+        f"cscMaterialization={_text_value(csc_view.get('materialization', ''))}",
         f"totalBytes={int(profile.get('totalBytes', 0) or 0)}",
         f"memoryMappable={str(bool(profile.get('memoryMappable'))).lower()}",
         f"readOnly={str(bool(profile.get('readOnly'))).lower()}",

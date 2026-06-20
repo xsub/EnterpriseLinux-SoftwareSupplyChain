@@ -7115,6 +7115,10 @@ def _assert_csr_artifact() -> None:
         ).stdout.strip()
         assert csr_text.startswith("OK schema=edgp.csr.artifact.v1")
         assert "nodes=3" in csr_text
+        assert "matrixViews=csc,csr" in csr_text
+        assert "csrDirection=outgoing_dependencies" in csr_text
+        assert "cscDirection=incoming_dependents" in csr_text
+        assert "cscMaterialization=reverse_csr_transpose" in csr_text
         assert "memoryMappable=true" in csr_text
         assert loaded.reachable_dependencies("app==1.0.0") == [
             "lib==2.0.0",
