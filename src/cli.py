@@ -1327,6 +1327,43 @@ def _format_public_advisory_feed_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_advisory_report_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    findings = _dict_list(report.get("findings"))
+    parts = [
+        "ADVISORY_REPORT",
+        "schema=edgp.advisory.report.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"ecosystem={_text_value(report.get('ecosystem', ''))}",
+        f"advisories={int(summary.get('advisories', 0) or 0)}",
+        f"findings={int(summary.get('findings', 0) or 0)}",
+        f"matchedPackages={int(summary.get('matchedPackages', 0) or 0)}",
+        f"affectedDependents={int(summary.get('affectedDependents', 0) or 0)}",
+    ]
+    if findings:
+        first = findings[0]
+        advisory = first.get("advisory")
+        if not isinstance(advisory, dict):
+            advisory = {}
+        impact = first.get("impact")
+        if not isinstance(impact, dict):
+            impact = {}
+        impact_summary = impact.get("summary")
+        if not isinstance(impact_summary, dict):
+            impact_summary = {}
+        parts.append(f"firstPackage={_text_value(first.get('package', ''))}")
+        parts.append(f"firstAdvisory={_text_value(advisory.get('id', ''))}")
+        if advisory.get("severity"):
+            parts.append(f"firstSeverity={_text_value(advisory.get('severity', ''))}")
+        parts.append(
+            "firstAffectedDependents="
+            f"{int(impact_summary.get('affectedDependents', 0) or 0)}"
+        )
+    return " ".join(parts)
+
+
 def _format_albs_build_diff_result(report: dict[str, Any]) -> str:
     summary = report.get("summary")
     if not isinstance(summary, dict):
@@ -5102,6 +5139,7 @@ def build_parser() -> argparse.ArgumentParser:
     advisory.add_argument("--limit", type=int, default=20)
     advisory.add_argument("--rpm-limit", type=int, default=100)
     advisory.add_argument("--max-requirements", type=int, default=40)
+    advisory.add_argument("--format", choices=["json", "text"], default="json")
     _add_rpm_repo_source_options(advisory)
 
     advisory_bundle = subparsers.add_parser(
@@ -5137,6 +5175,11 @@ def build_parser() -> argparse.ArgumentParser:
     advisory_bundle.add_argument("--rpm-limit", type=int, default=100)
     advisory_bundle.add_argument("--max-requirements", type=int, default=40)
     advisory_bundle.add_argument("--output-dir", type=Path, required=True)
+    advisory_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_rpm_repo_source_options(advisory_bundle)
     _add_triage_bundle_option(advisory_bundle)
 
@@ -6565,7 +6608,10 @@ def main(argv: list[str] | None = None) -> int:
             ecosystem=resolved_ecosystem,
             max_paths=args.limit,
         )
-        print(_json(advisory_report))
+        if args.format == "text":
+            print(_format_advisory_report_result(advisory_report))
+        else:
+            print(_json(advisory_report))
         if args.fail_on_findings and _advisory_report_should_fail(
             advisory_report,
             min_severity=args.fail_min_severity,
@@ -6599,9 +6645,16 @@ def main(argv: list[str] | None = None) -> int:
             advisory_report,
             min_severity=args.fail_min_severity,
         ):
-            print(index_path)
+            if args.format == "text":
+                print(_format_report_bundle_result(index_path))
+            else:
+                print(index_path)
             return 2
-        return _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        return _print_bundle_result(
+            index_path,
+            fail_on_status=args.fail_on_status,
+            output_format=args.format,
+        )
 
     if args.command == "license-report":
         root_identifier, graph, resolved_ecosystem = _load_source_project_graph(

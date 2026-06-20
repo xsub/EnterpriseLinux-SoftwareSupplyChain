@@ -868,6 +868,36 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
     assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
     assert capsys.readouterr().out.startswith("OK ")
+    advisory_text_bundle_dir = tmp_path / "advisory-text-bundle"
+    assert (
+        main(
+            [
+                "advisory-bundle",
+                "--source",
+                "rpm-repo",
+                "--path",
+                "tests/fixtures/repodata/repomd.xml",
+                "--public-advisory-feed",
+                "tests/fixtures/public-osv-ranges.json",
+                "--ecosystem",
+                "rpm",
+                "--fail-on-findings",
+                "--fail-min-severity",
+                "high",
+                "--output-dir",
+                str(advisory_text_bundle_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        == 2
+    )
+    advisory_bundle_text = capsys.readouterr().out.strip()
+    assert advisory_bundle_text.startswith("BUNDLE ")
+    assert f"index={advisory_text_bundle_dir / 'index.html'}" in advisory_bundle_text
+    assert "sourceKind=advisory-report" in advisory_bundle_text
+    assert "triageStatus=fail" in advisory_bundle_text
 
     assert (
         main(
@@ -914,6 +944,35 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     critical_advisory = json.loads(capsys.readouterr().out)
     assert critical_advisory["schema"] == "edgp.advisory.report.v1"
     assert critical_advisory["findings"][0]["advisory"]["severity"] == "9.8"
+
+    assert (
+        main(
+            [
+                "advisory",
+                "--source",
+                "rpm-repo",
+                "--path",
+                "tests/fixtures/repodata/repomd.xml",
+                "--public-advisory-feed",
+                "tests/fixtures/public-osv-ranges.json",
+                "--ecosystem",
+                "rpm",
+                "--format",
+                "text",
+                "--fail-on-findings",
+                "--fail-min-severity",
+                "high",
+            ]
+        )
+        == 2
+    )
+    advisory_text = capsys.readouterr().out.strip()
+    assert advisory_text.startswith("ADVISORY_REPORT ")
+    assert "schema=edgp.advisory.report.v1" in advisory_text
+    assert "findings=1" in advisory_text
+    assert "firstPackage=nginx==1.20.1-28.el9_8.2.alma.1.x86_64" in advisory_text
+    assert "firstAdvisory=OSV-2026-0002" in advisory_text
+    assert "firstSeverity=HIGH" in advisory_text
 
     assert main(
         [

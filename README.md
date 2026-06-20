@@ -227,8 +227,8 @@ edgp impact-bundle --path package-lock.json --node left-pad --output-dir reports
 edgp advisory --path package-lock.json --advisories advisories.json
 edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisories.json --ecosystem rpm
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed-url https://example.com/osv.json --ecosystem rpm
-edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --fail-on-findings --fail-min-severity high
-edgp advisory-bundle --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --output-dir reports/advisory --triage-summary
+edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --format text --fail-on-findings --fail-min-severity high
+edgp advisory-bundle --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --output-dir reports/advisory --format text --triage-summary
 edgp license-report --source sbom --path bom.json --deny-license GPL-3.0-only --format text --fail-on-denied
 edgp license-report-bundle --source sbom --path bom.json --deny-license GPL-3.0-only --output-dir reports/license --format text --triage-summary
 edgp npm-diagnostics --path package-lock.json
@@ -935,13 +935,14 @@ package-name and version matching. For RPM graphs, `versions` may use the full
 node version, the RPM `version-release` EVR without architecture, or
 `epoch:version-release` when epoch is non-zero. `ranges` support simple
 OSV-style bounds for public feed impact reporting;
-`--fail-on-findings` still prints the full JSON report and exits with status `2`
-when matched findings exist. `--fail-min-severity` can raise that gate to
-`low`, `medium`, `high`, or `critical` while leaving the report unfiltered.
-Severity gates understand both those labels and numeric CVSS-style scores such
-as `9.8`. `edgp advisory-bundle` writes the same advisory analysis as static
-HTML with a verifiable manifest and preserves the bundle before returning
-status `2` for `--fail-on-findings`.
+`--fail-on-findings` prints the full JSON report, or a compact `--format text`
+summary for CI logs, and exits with status `2` when matched findings exist.
+`--fail-min-severity` can raise that gate to `low`, `medium`, `high`, or
+`critical` while leaving the report unfiltered. Severity gates understand both
+those labels and numeric CVSS-style scores such as `9.8`. `edgp
+advisory-bundle` writes the same advisory analysis as static HTML with a
+verifiable manifest, can print a one-line bundle summary with `--format text`,
+and preserves the bundle before returning status `2` for `--fail-on-findings`.
 libsolv remains the production authority for RPM SAT solving and transaction
 decisions.
 `edgp libsolv-bridge --transaction ...` normalizes saved solver output into

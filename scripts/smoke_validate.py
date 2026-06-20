@@ -3208,6 +3208,40 @@ def _assert_public_vertical_reports() -> None:
     gated_advisory = json.loads(completed_advisory_gate.stdout)
     assert gated_advisory["schema"] == "edgp.advisory.report.v1"
     assert gated_advisory["summary"]["findings"] == 1
+    completed_advisory_gate_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "advisory",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--public-advisory-feed",
+            "tests/fixtures/public-osv-ranges.json",
+            "--ecosystem",
+            "rpm",
+            "--format",
+            "text",
+            "--fail-on-findings",
+            "--fail-min-severity",
+            "high",
+        ],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed_advisory_gate_text.returncode == 2
+    advisory_gate_text = completed_advisory_gate_text.stdout.strip()
+    assert advisory_gate_text.startswith("ADVISORY_REPORT ")
+    assert "schema=edgp.advisory.report.v1" in advisory_gate_text
+    assert "findings=1" in advisory_gate_text
+    assert "firstPackage=nginx==1.20.1-28.el9_8.2.alma.1.x86_64" in advisory_gate_text
+    assert "firstAdvisory=OSV-2026-0002" in advisory_gate_text
+    assert "firstSeverity=HIGH" in advisory_gate_text
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "advisory-bundle"
         completed_advisory_bundle = subprocess.run(
@@ -3253,6 +3287,43 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="advisory-findings-panel"' in (
             output_dir / "001-advisory-report.html"
         ).read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "advisory-bundle-text"
+        completed_advisory_bundle_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "advisory-bundle",
+                "--source",
+                "rpm-repo",
+                "--path",
+                "tests/fixtures/repodata/repomd.xml",
+                "--public-advisory-feed",
+                "tests/fixtures/public-osv-ranges.json",
+                "--ecosystem",
+                "rpm",
+                "--fail-on-findings",
+                "--fail-min-severity",
+                "high",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_advisory_bundle_text.returncode == 2
+        advisory_bundle_text = completed_advisory_bundle_text.stdout.strip()
+        assert advisory_bundle_text.startswith("BUNDLE ")
+        assert f"index={output_dir / 'index.html'}" in advisory_bundle_text
+        assert "sourceKind=advisory-report" in advisory_bundle_text
+        assert "triageStatus=fail" in advisory_bundle_text
     completed_noncritical_gate = subprocess.run(
         [
             sys.executable,
