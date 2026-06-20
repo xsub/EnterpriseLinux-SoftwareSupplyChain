@@ -459,6 +459,32 @@ def _assert_npm_diagnostics() -> None:
         "nestedResolutionConflicts": 1,
         "unresolvedDependencies": 1,
     }
+    text_payload = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "npm-diagnostics",
+            "--path",
+            "tests/fixtures/package-lock-conflict.json",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert text_payload.startswith("NPM_DIAGNOSTICS ")
+    assert "schema=edgp.npm.diagnostics.v1" in text_payload
+    assert "packages=4" in text_payload
+    assert "duplicatePackageNames=1" in text_payload
+    assert "nestedResolutionConflicts=1" in text_payload
+    assert "unresolvedDependencies=1" in text_payload
+    assert "firstDuplicatePackage=shared" in text_payload
+    assert "firstConflictDependency=shared" in text_payload
+    assert "firstUnresolvedDependency=missing" in text_payload
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "npm-diagnostics-bundle"
@@ -497,6 +523,33 @@ def _assert_npm_diagnostics() -> None:
         assert 'data-testid="npm-conflicts-panel"' in (
             output_dir / "001-npm-diagnostics.html"
         ).read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "npm-diagnostics-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "npm-diagnostics-bundle",
+                "--path",
+                "tests/fixtures/package-lock-conflict.json",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        diagnostics_bundle_text = completed_text.stdout.strip()
+        assert diagnostics_bundle_text.startswith("BUNDLE ")
+        assert f"index={output_dir / 'index.html'}" in diagnostics_bundle_text
+        assert "sourceKind=npm-diagnostics" in diagnostics_bundle_text
+        assert "triageStatus=warn" in diagnostics_bundle_text
 
 
 def _assert_validate_command() -> None:

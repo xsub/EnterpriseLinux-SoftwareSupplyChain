@@ -1678,6 +1678,53 @@ def _format_impact_report_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_npm_diagnostics_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    duplicates = _dict_list(report.get("duplicatePackageNames"))
+    conflicts = _dict_list(report.get("nestedResolutionConflicts"))
+    unresolved = _dict_list(report.get("unresolvedDependencies"))
+    parts = [
+        "NPM_DIAGNOSTICS",
+        "schema=edgp.npm.diagnostics.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"ecosystem={_text_value(report.get('ecosystem', ''))}",
+        f"packages={int(summary.get('packages', 0) or 0)}",
+        f"duplicatePackageNames={int(summary.get('duplicatePackageNames', 0) or 0)}",
+        (
+            "nestedResolutionConflicts="
+            f"{int(summary.get('nestedResolutionConflicts', 0) or 0)}"
+        ),
+        f"unresolvedDependencies={int(summary.get('unresolvedDependencies', 0) or 0)}",
+    ]
+    if duplicates:
+        first = duplicates[0]
+        versions = [
+            str(version.get("version", ""))
+            for version in _dict_list(first.get("versions"))
+            if version.get("version")
+        ]
+        parts.append(f"firstDuplicatePackage={_text_value(first.get('package', ''))}")
+        if versions:
+            parts.append(f"firstDuplicateVersions={_text_value(','.join(versions))}")
+    if conflicts:
+        first = conflicts[0]
+        parts.append(
+            f"firstConflictDependency={_text_value(first.get('dependency', ''))}"
+        )
+        versions = _string_list(first.get("versions"))
+        if versions:
+            parts.append(f"firstConflictVersions={_text_value(','.join(versions))}")
+    if unresolved:
+        first = unresolved[0]
+        parts.append(
+            f"firstUnresolvedDependency={_text_value(first.get('dependency', ''))}"
+        )
+        parts.append(f"firstUnresolvedSource={_text_value(first.get('source', ''))}")
+    return " ".join(parts)
+
+
 def _format_license_report_result(report: dict[str, Any]) -> str:
     summary = report.get("summary")
     if not isinstance(summary, dict):
@@ -4159,6 +4206,7 @@ def build_parser() -> argparse.ArgumentParser:
         "npm-diagnostics", help="Diagnose npm package-lock dependency paths"
     )
     npm_diagnostics.add_argument("--path", type=Path, required=True)
+    npm_diagnostics.add_argument("--format", choices=["json", "text"], default="json")
 
     npm_diagnostics_bundle = subparsers.add_parser(
         "npm-diagnostics-bundle",
@@ -4166,6 +4214,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     npm_diagnostics_bundle.add_argument("--path", type=Path, required=True)
     npm_diagnostics_bundle.add_argument("--output-dir", type=Path, required=True)
+    npm_diagnostics_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(npm_diagnostics_bundle)
 
     npm_bundle = subparsers.add_parser(
@@ -5800,7 +5853,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "npm-diagnostics":
-        print(_json(NpmAdapter().diagnose_lockfile(args.path)))
+        report = NpmAdapter().diagnose_lockfile(args.path)
+        if args.format == "text":
+            print(_format_npm_diagnostics_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "npm-diagnostics-bundle":
@@ -5812,6 +5869,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "npm-bundle":

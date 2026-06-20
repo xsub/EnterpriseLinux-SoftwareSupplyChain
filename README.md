@@ -231,8 +231,8 @@ edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-fee
 edgp advisory-bundle --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --output-dir reports/advisory --format text --triage-summary
 edgp license-report --source sbom --path bom.json --deny-license GPL-3.0-only --format text --fail-on-denied
 edgp license-report-bundle --source sbom --path bom.json --deny-license GPL-3.0-only --output-dir reports/license --format text --triage-summary
-edgp npm-diagnostics --path package-lock.json
-edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-diagnostics --triage-summary
+edgp npm-diagnostics --path package-lock.json --format text
+edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-diagnostics --format text --triage-summary
 edgp diff --left before.json --right after.json
 edgp diff --left before.json --right after.json --format text --fail-on-change added-node --fail-on-kind downgrade
 edgp diff-bundle --left before.json --right after.json --output-dir reports/graph-diff --archive-output reports/graph-diff.tar.gz --format text --triage-summary --fail-on-kind upgrade
@@ -870,9 +870,11 @@ with `--source albs-build --path ...` or `--source albs-build --albs-url ...`.
 
 `edgp npm-diagnostics` inspects `package-lock.json` resolution paths and reports
 duplicate package names, nested version conflicts, and unresolved dependency
-declarations. `edgp npm-diagnostics-bundle` renders that diagnosis as static
-HTML with a verifiable manifest. This helps explain why npm consumers may reach
-different versions of the same package through nested `node_modules` paths.
+declarations. `--format text` prints compact package and conflict counts for CI
+logs. `edgp npm-diagnostics-bundle` renders that diagnosis as static HTML with
+a verifiable manifest and can print a one-line bundle summary with
+`--format text`. This helps explain why npm consumers may reach different
+versions of the same package through nested `node_modules` paths.
 
 `edgp npm-bundle` turns one `package-lock.json` into a local static triage
 folder containing `npm-graph.json`, `npm-diagnostics.json`, optional impact and
