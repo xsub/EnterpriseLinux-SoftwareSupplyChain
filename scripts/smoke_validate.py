@@ -2687,6 +2687,29 @@ def _assert_public_vertical_reports() -> None:
     )
     assert diff["schema"] == "edgp.albs.build_diff.v1"
     assert diff["summary"]["changedArtifacts"] == 3
+    diff_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "albs-build-diff",
+            "--left-path",
+            "tests/fixtures/albs-build.json",
+            "--right-path",
+            "tests/fixtures/albs-build-updated.json",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert diff_text.startswith("ALBS_BUILD_DIFF ")
+    assert "changedArtifacts=3" in diff_text
+    assert "wallSecondsDelta=70.000" in diff_text
+
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "albs-build-diff-bundle"
         completed = subprocess.run(
@@ -2725,6 +2748,35 @@ def _assert_public_vertical_reports() -> None:
             encoding="utf-8"
         )
         assert "EDGP ALBS Build Diff" in diff_html
+
+        text_output_dir = Path(temp_dir) / "albs-build-diff-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-build-diff-bundle",
+                "--left-path",
+                "tests/fixtures/albs-build.json",
+                "--right-path",
+                "tests/fixtures/albs-build-updated.json",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        diff_bundle_text = completed_text.stdout.strip()
+        assert diff_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=albs-build-diff" in diff_bundle_text
+        assert "reports=1" in diff_bundle_text
+        assert "triageStatus=pass" in diff_bundle_text
 
     log = _run_cli(
         ["albs-log-intelligence", "--path", "tests/fixtures/albs-build-updated.json"]

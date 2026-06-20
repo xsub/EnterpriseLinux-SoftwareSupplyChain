@@ -154,7 +154,9 @@ edgp albs-build-timing --build-id 17812 --format text
 edgp albs-build-timing-bundle --build-id 17812 --output-dir reports/albs-build-timing --triage-summary
 edgp albs-build-timing-bundle --build-id 17812 --output-dir reports/albs-build-timing --triage-summary --format text
 edgp albs-build-diff --left-build-id 17812 --right-build-id 17813
+edgp albs-build-diff --left-build-id 17812 --right-build-id 17813 --format text
 edgp albs-build-diff-bundle --left-build-id 17812 --right-build-id 17813 --output-dir reports/albs-build-diff --triage-summary
+edgp albs-build-diff-bundle --left-build-id 17812 --right-build-id 17813 --output-dir reports/albs-build-diff --triage-summary --format text
 edgp albs-release-completeness --build-id 17812 --build-id 17813
 edgp albs-log-intelligence --build-id 17813
 edgp albs-log-intelligence-bundle --build-id 17813 --output-dir reports/albs-log-intelligence --triage-summary

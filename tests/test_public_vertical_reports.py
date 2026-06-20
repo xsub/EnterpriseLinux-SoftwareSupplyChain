@@ -353,6 +353,28 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     ) == 0
     assert json.loads(capsys.readouterr().out)["schema"] == "edgp.albs.build_diff.v1"
 
+    assert main(
+        [
+            "albs-build-diff",
+            "--left-path",
+            "tests/fixtures/albs-build.json",
+            "--right-path",
+            "tests/fixtures/albs-build-updated.json",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    diff_text = capsys.readouterr().out.strip()
+    assert diff_text.startswith("ALBS_BUILD_DIFF schema=edgp.albs.build_diff.v1")
+    assert "leftBuild=17812" in diff_text
+    assert "rightBuild=17813" in diff_text
+    assert "addedArtifacts=1" in diff_text
+    assert "removedArtifacts=1" in diff_text
+    assert "changedArtifacts=3" in diff_text
+    assert "gitCommitChanged=true" in diff_text
+    assert "wallSecondsDelta=70.000" in diff_text
+    assert "criticalBuildTaskWallSecondsDelta=53.000" in diff_text
+
     assert main(["rpm-repo", "--primary", "tests/fixtures/rpm-primary.xml"]) == 0
     rpm_repo_snapshot = json.loads(capsys.readouterr().out)
     assert rpm_repo_snapshot["schema"] == "edgp.graph.snapshot.v1"
@@ -1105,6 +1127,28 @@ def test_cli_albs_build_diff_bundle_writes_report_bundle(tmp_path, capsys) -> No
     html = (output_dir / "001-albs-build-diff.html").read_text(encoding="utf-8")
     assert "EDGP ALBS Build Diff" in html
     assert 'data-testid="albs-build-diff-top-findings-panel"' in html
+
+    text_output_dir = tmp_path / "albs-build-diff-bundle-text"
+    assert main(
+        [
+            "albs-build-diff-bundle",
+            "--left-path",
+            "tests/fixtures/albs-build.json",
+            "--right-path",
+            "tests/fixtures/albs-build-updated.json",
+            "--output-dir",
+            str(text_output_dir),
+            "--triage-summary",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={text_output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=albs-build-diff" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)

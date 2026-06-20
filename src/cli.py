@@ -1327,6 +1327,71 @@ def _format_public_advisory_feed_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_albs_build_diff_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    left = report.get("left")
+    if not isinstance(left, dict):
+        left = {}
+    right = report.get("right")
+    if not isinstance(right, dict):
+        right = {}
+    timing = report.get("timingDelta")
+    if not isinstance(timing, dict):
+        timing = {}
+    top_findings = report.get("topFindings")
+    if not isinstance(top_findings, dict):
+        top_findings = {}
+    changed = _dict_list(top_findings.get("changedArtifacts"))
+    added = _dict_list(top_findings.get("addedArtifacts"))
+    removed = _dict_list(top_findings.get("removedArtifacts"))
+    parts = [
+        "ALBS_BUILD_DIFF",
+        "schema=edgp.albs.build_diff.v1",
+        f"leftBuild={_text_value(left.get('buildId', ''))}",
+        f"rightBuild={_text_value(right.get('buildId', ''))}",
+        f"package={_text_value(right.get('package') or left.get('package') or '')}",
+        f"addedArtifacts={int(summary.get('addedArtifacts', 0) or 0)}",
+        f"removedArtifacts={int(summary.get('removedArtifacts', 0) or 0)}",
+        f"changedArtifacts={int(summary.get('changedArtifacts', 0) or 0)}",
+        (
+            "leftMissingBuildArchitectures="
+            f"{int(summary.get('leftMissingBuildArchitectures', 0) or 0)}"
+        ),
+        (
+            "rightMissingBuildArchitectures="
+            f"{int(summary.get('rightMissingBuildArchitectures', 0) or 0)}"
+        ),
+        f"gitCommitChanged={str(bool(summary.get('gitCommitChanged'))).lower()}",
+        (
+            "wallSecondsDelta="
+            f"{float(timing.get('wallSecondsDelta', 0.0) or 0.0):.3f}"
+        ),
+        (
+            "criticalBuildTaskWallSecondsDelta="
+            f"{float(summary.get('criticalBuildTaskWallSecondsDelta', 0.0) or 0.0):.3f}"
+        ),
+    ]
+    if changed:
+        first = changed[0]
+        parts.append(f"firstChanged={_text_value(first.get('packageName', ''))}")
+        parts.append(f"firstChangedArch={_text_value(first.get('artifactArch', ''))}")
+        parts.append(
+            "changedFields="
+            f"{_text_value(','.join(_string_list(first.get('changedFields'))))}"
+        )
+    if added:
+        first = added[0]
+        parts.append(f"firstAdded={_text_value(first.get('packageName', ''))}")
+        parts.append(f"firstAddedArch={_text_value(first.get('artifactArch', ''))}")
+    if removed:
+        first = removed[0]
+        parts.append(f"firstRemoved={_text_value(first.get('packageName', ''))}")
+        parts.append(f"firstRemovedArch={_text_value(first.get('artifactArch', ''))}")
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -4049,6 +4114,7 @@ def build_parser() -> argparse.ArgumentParser:
     albs_build_diff.add_argument("--right-path", type=Path)
     albs_build_diff.add_argument("--right-url")
     albs_build_diff.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_build_diff.add_argument("--format", choices=["json", "text"], default="json")
 
     albs_build_diff_bundle = subparsers.add_parser(
         "albs-build-diff-bundle",
@@ -4062,6 +4128,11 @@ def build_parser() -> argparse.ArgumentParser:
     albs_build_diff_bundle.add_argument("--right-url")
     albs_build_diff_bundle.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     albs_build_diff_bundle.add_argument("--output-dir", type=Path, required=True)
+    albs_build_diff_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(albs_build_diff_bundle)
 
     albs_log_intelligence = subparsers.add_parser(
@@ -5681,7 +5752,11 @@ def main(argv: list[str] | None = None) -> int:
             url=args.right_url,
             base_url=args.base_url,
         )
-        print(_json(build_albs_build_diff_report(left, right)))
+        report = build_albs_build_diff_report(left, right)
+        if args.format == "text":
+            print(_format_albs_build_diff_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "albs-build-diff-bundle":
@@ -5699,6 +5774,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "albs-log-intelligence":
