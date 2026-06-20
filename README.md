@@ -1062,7 +1062,10 @@ schema subset, including `anyOf` fields such as nullable bundle fingerprints,
 `oneOf` nullable fields such as report roots, typed `additionalProperties`
 maps such as bundle metadata, or validates a report bundle directory with the
 bundle verifier. Memory-mappable CSR artifact directories are validated through
-the CSR loader, including array digests and `storageProfile` byte totals.
+the CSR loader, including array digests, `matrixViews`, and `storageProfile`
+byte totals. Successful CSR artifact validation reports preserve those
+`matrixViews`, and text output includes the CSR/CSC view names, traversal
+directions, and reverse-CSR CSC materialization.
 Deterministic report bundle archives are validated through the
 same read-only entrypoint and appear as `targetType=report-bundle-archive`.
 For bundles that already contain `manifest.triageSummary`, `validate

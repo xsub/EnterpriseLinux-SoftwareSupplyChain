@@ -7129,7 +7129,40 @@ def _assert_csr_artifact() -> None:
         assert validation["targetType"] == "csr-artifact"
         assert validation["contract"] == "edgp.csr.artifact.v1"
         assert validation["csrArtifact"]["nodes"] == 3
+        assert validation["csrArtifact"]["matrixViews"]["csr"]["direction"] == (
+            "outgoing_dependencies"
+        )
+        assert validation["csrArtifact"]["matrixViews"]["csc"]["direction"] == (
+            "incoming_dependents"
+        )
+        assert validation["csrArtifact"]["matrixViews"]["csc"][
+            "materialization"
+        ] == "reverse_csr_transpose"
         assert validation["csrArtifact"]["storageProfile"]["memoryMapped"] is True
+        validation_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "validate",
+                "--path",
+                str(output_dir),
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        assert validation_text.startswith(
+            "OK targetType=csr-artifact failures=0 contract=edgp.csr.artifact.v1"
+        )
+        assert "matrixViews=csc,csr" in validation_text
+        assert "csrDirection=outgoing_dependencies" in validation_text
+        assert "cscDirection=incoming_dependents" in validation_text
+        assert "cscMaterialization=reverse_csr_transpose" in validation_text
         manifest_path = output_dir / "manifest.json"
         tampered_matrix_dir = Path(temp_dir) / "csr-artifact-tampered-matrix"
         shutil.copytree(output_dir, tampered_matrix_dir)

@@ -52,9 +52,14 @@ def test_cli_csr_artifact_writes_verified_runtime_artifact(tmp_path, capsys) -> 
     assert loaded.storage_profile()["memoryMapped"] is True
 
     assert main(["validate", "--path", str(output_dir), "--format", "text"]) == 0
-    assert capsys.readouterr().out.strip() == (
+    validation_text = capsys.readouterr().out.strip()
+    assert validation_text.startswith(
         "OK targetType=csr-artifact failures=0 contract=edgp.csr.artifact.v1"
     )
+    assert "matrixViews=csc,csr" in validation_text
+    assert "csrDirection=outgoing_dependencies" in validation_text
+    assert "cscDirection=incoming_dependents" in validation_text
+    assert "cscMaterialization=reverse_csr_transpose" in validation_text
 
 
 def test_cli_csr_artifact_outputs_text_summary(tmp_path, capsys) -> None:

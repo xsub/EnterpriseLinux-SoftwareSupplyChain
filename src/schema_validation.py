@@ -61,7 +61,9 @@ def _is_csr_artifact_dir(path: Path, *, manifest_name: str) -> bool:
 
 def _validate_csr_artifact(path: Path, *, manifest_name: str) -> dict[str, Any]:
     failures: list[dict[str, str]] = []
+    manifest: dict[str, Any] = {}
     try:
+        manifest = json.loads((path / manifest_name).read_text(encoding="utf-8"))
         graph = load_frozen_csr_artifact(path, manifest_name=manifest_name)
     except (FileNotFoundError, OSError, KeyError, TypeError, ValueError) as exc:
         failures.append(
@@ -86,6 +88,7 @@ def _validate_csr_artifact(path: Path, *, manifest_name: str) -> dict[str, Any]:
         report["csrArtifact"] = {
             "nodes": len(graph),
             "edges": int(len(graph.column_indices)),
+            "matrixViews": manifest.get("matrixViews", {}),
             "storageProfile": graph.storage_profile(),
         }
     return report

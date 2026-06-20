@@ -160,8 +160,8 @@ python -B -m src.cli report --input docs/schemas/index.json --output /tmp/edgp-s
   documents validation results emitted by `edgp validate` for JSON reports,
   report bundles, bundle archives, export batches, and CSR artifact
   directories, including optional source report status, summary context, CSR
-  artifact summaries, and top findings for standalone JSON artifacts or
-  embedded bundle triage summaries.
+  artifact matrix-view mappings and summaries, and top findings for standalone
+  JSON artifacts or embedded bundle triage summaries.
 - `edgp.validation.failure.example.index.v1`:
   [`edgp.validation.failure.example.index.v1.schema.json`](schemas/edgp.validation.failure.example.index.v1.schema.json)
   documents the committed validation failure example index.

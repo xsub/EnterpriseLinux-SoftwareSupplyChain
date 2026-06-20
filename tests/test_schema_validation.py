@@ -42,6 +42,15 @@ def test_validate_target_accepts_csr_artifact_directory(tmp_path) -> None:
     assert report["failures"] == []
     assert report["csrArtifact"]["nodes"] == 2
     assert report["csrArtifact"]["edges"] == 1
+    assert report["csrArtifact"]["matrixViews"]["csr"]["direction"] == (
+        "outgoing_dependencies"
+    )
+    assert report["csrArtifact"]["matrixViews"]["csc"]["direction"] == (
+        "incoming_dependents"
+    )
+    assert report["csrArtifact"]["matrixViews"]["csc"]["materialization"] == (
+        "reverse_csr_transpose"
+    )
     assert report["csrArtifact"]["storageProfile"]["memoryMapped"] is True
 
 
