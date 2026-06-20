@@ -23,53 +23,6 @@ def _fixture(path: str) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def test_cli_graph_export_text_summarizes_lockfile_and_rpm_repo(capsys) -> None:
-    assert (
-        main(
-            [
-                "lockfile",
-                "--path",
-                "tests/fixtures/package-lock.json",
-                "--format",
-                "text",
-            ]
-        )
-        == 0
-    )
-    lockfile_text = capsys.readouterr().out.strip()
-    assert lockfile_text.startswith("GRAPH schema=edgp.graph.snapshot.v1")
-    assert "root=demo-app==1.0.0" in lockfile_text
-    assert "ecosystem=npm" in lockfile_text
-    assert "nodes=4" in lockfile_text
-    assert "edges=4" in lockfile_text
-    assert "topDependedUpon=left-pad==1.3.0" in lockfile_text
-    assert "topDependents=2" in lockfile_text
-
-    assert (
-        main(
-            [
-                "rpm-repo",
-                "--source",
-                "tests/fixtures/repodata/repomd.xml",
-                "--format",
-                "text",
-            ]
-        )
-        == 0
-    )
-    rpm_repo_text = capsys.readouterr().out.strip()
-    assert rpm_repo_text.startswith("GRAPH schema=edgp.graph.snapshot.v1")
-    assert "root=rpm-repository==public-rpm-repository" in rpm_repo_text
-    assert "ecosystem=rpm" in rpm_repo_text
-    assert "nodes=20" in rpm_repo_text
-    assert "edges=21" in rpm_repo_text
-    assert (
-        "topDependedUpon=nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
-        in rpm_repo_text
-    )
-    assert "topDependents=2" in rpm_repo_text
-
-
 def test_albs_build_diff_detects_artifact_and_commit_changes() -> None:
     report = build_albs_build_diff_report(
         _fixture("tests/fixtures/albs-build.json"),

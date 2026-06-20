@@ -332,6 +332,17 @@ def _run_cli(args: list[str]) -> dict[str, Any]:
     return json.loads(completed.stdout)
 
 
+def _run_cli_text(args: list[str]) -> str:
+    completed = subprocess.run(
+        [sys.executable, "-B", "-m", "src.cli", *args],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout.strip()
+
+
 def _run_cli_allow_failure(args: list[str]) -> dict[str, Any]:
     completed = subprocess.run(
         [sys.executable, "-B", "-m", "src.cli", *args],
@@ -2017,6 +2028,25 @@ def _assert_maven_tree_snapshot() -> None:
     assert payload["schema"] == "edgp.graph.snapshot.v1"
     assert payload["ecosystem"] == "maven"
     assert payload["stats"] == {"edges": 5, "nodes": 6}
+    text_payload = _run_cli_text(
+        [
+            "maven-tree",
+            "--path",
+            "tests/fixtures/maven-tree.txt",
+            "--format",
+            "text",
+        ]
+    )
+    assert text_payload.startswith("GRAPH schema=edgp.graph.snapshot.v1")
+    assert "root=com.example:demo-app==1.0.0" in text_payload
+    assert "ecosystem=maven" in text_payload
+    assert "nodes=6" in text_payload
+    assert "edges=5" in text_payload
+    assert (
+        "topDependedUpon=com.fasterxml.jackson.core:jackson-core==2.17.0"
+        in text_payload
+    )
+    assert "topDependents=1" in text_payload
 
 
 def _assert_maven_tree_query() -> None:
@@ -2185,6 +2215,16 @@ def _assert_dot_snapshot() -> None:
         "package": "glibc==unknown",
         "dependents": 3,
     }
+    text_payload = _run_cli_text(
+        ["dot", "--path", "tests/fixtures/repograph.dot", "--format", "text"]
+    )
+    assert text_payload.startswith("GRAPH schema=edgp.graph.snapshot.v1")
+    assert "root=nginx-core==unknown" in text_payload
+    assert "ecosystem=rpm" in text_payload
+    assert "nodes=4" in text_payload
+    assert "edges=5" in text_payload
+    assert "topDependedUpon=glibc==unknown" in text_payload
+    assert "topDependents=3" in text_payload
 
 
 def _assert_export_batch() -> None:
@@ -2490,6 +2530,22 @@ def _assert_albs_build_snapshot() -> None:
         "target": "rpm:3237086:nginx-core-1.20.1-16.el9_4.1.ppc64le.rpm",
         "relationshipType": 25,
     } in payload["edges"]
+    text_payload = _run_cli_text(
+        [
+            "albs-build",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--format",
+            "text",
+        ]
+    )
+    assert text_payload.startswith("GRAPH schema=edgp.graph.snapshot.v1")
+    assert "root=albs-build:17812" in text_payload
+    assert "ecosystem=albs" in text_payload
+    assert "nodes=15" in text_payload
+    assert "edges=20" in text_payload
+    assert "topDependedUpon=albs-release:7396" in text_payload
+    assert "topDependents=6" in text_payload
 
 
 def _assert_albs_build_bundle() -> None:
@@ -5037,6 +5093,16 @@ def _assert_public_vertical_reports() -> None:
 
 
 def _assert_sbom_query() -> None:
+    text_payload = _run_cli_text(
+        ["sbom", "--path", "tests/fixtures/sample-bom.json", "--format", "text"]
+    )
+    assert text_payload.startswith("GRAPH schema=edgp.graph.snapshot.v1")
+    assert "root=demo-app==1.0.0" in text_payload
+    assert "ecosystem=npm" in text_payload
+    assert "nodes=2" in text_payload
+    assert "edges=1" in text_payload
+    assert "topDependedUpon=left-pad==1.3.0" in text_payload
+    assert "topDependents=1" in text_payload
     payload = _run_cli(
         [
             "query",
