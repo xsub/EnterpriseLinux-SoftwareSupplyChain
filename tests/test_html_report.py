@@ -491,6 +491,54 @@ def test_render_report_supports_validation_triage_policy_metrics() -> None:
     assert "upgrade" in html
 
 
+def test_render_report_supports_csr_artifact_validation_summary() -> None:
+    report = {
+        "schema": "edgp.validation.report.v1",
+        "target": "/tmp/artifacts/csr",
+        "targetType": "csr-artifact",
+        "contract": "edgp.csr.artifact.v1",
+        "ok": True,
+        "summary": {"failures": 0},
+        "failures": [],
+        "csrArtifact": {
+            "nodes": 3,
+            "edges": 2,
+            "matrixViews": {
+                "csr": {
+                    "format": "csr",
+                    "direction": "outgoing_dependencies",
+                    "values": "values",
+                    "indices": "column_indices",
+                    "indptr": "row_pointers",
+                },
+                "csc": {
+                    "format": "csc",
+                    "direction": "incoming_dependents",
+                    "values": "reverse_values",
+                    "indices": "reverse_column_indices",
+                    "indptr": "reverse_row_pointers",
+                    "materialization": "reverse_csr_transpose",
+                },
+            },
+            "storageProfile": {
+                "layout": "numpy.int32.c_contiguous",
+                "dtype": "int32",
+                "memoryMapped": True,
+                "readOnly": True,
+                "totalBytes": 64,
+            },
+        },
+    }
+
+    html = render_report(report)
+
+    assert 'data-testid="validation-csr-artifact-panel"' in html
+    assert "outgoing_dependencies" in html
+    assert "incoming_dependents" in html
+    assert "reverse_csr_transpose" in html
+    assert "numpy.int32.c_contiguous" in html
+
+
 @pytest.mark.parametrize(
     ("fixture", "test_id"),
     [

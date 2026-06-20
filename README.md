@@ -1082,9 +1082,9 @@ in text output, and it copies
 `--fail-on-status warn|fail` gates on that copied report status.
 Validation reports also render through `edgp report`, so CI gate output can be
 reviewed as static HTML with target details, failures, nested verifier state,
-triage status, and top findings when present. The validation triage panel
-breaks out failed checks and diff-tree policy failures instead of hiding them
-inside a nested summary object.
+CSR artifact matrix views, triage status, and top findings when present. The
+validation triage panel breaks out failed checks and diff-tree policy failures
+instead of hiding them inside a nested summary object.
 Validation failure examples are documented in
 [`docs/Validation Failure Examples.md`](docs/Validation%20Failure%20Examples.md).
 Start with the guide's

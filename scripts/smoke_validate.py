@@ -7163,6 +7163,31 @@ def _assert_csr_artifact() -> None:
         assert "csrDirection=outgoing_dependencies" in validation_text
         assert "cscDirection=incoming_dependents" in validation_text
         assert "cscMaterialization=reverse_csr_transpose" in validation_text
+        validation_report_path = Path(temp_dir) / "csr-artifact-validation.json"
+        validation_report_path.write_text(json.dumps(validation), encoding="utf-8")
+        validation_html_path = Path(temp_dir) / "csr-artifact-validation.html"
+        subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "report",
+                "--input",
+                str(validation_report_path),
+                "--output",
+                str(validation_html_path),
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        validation_html = validation_html_path.read_text(encoding="utf-8")
+        assert 'data-testid="validation-csr-artifact-panel"' in validation_html
+        assert "outgoing_dependencies" in validation_html
+        assert "incoming_dependents" in validation_html
+        assert "reverse_csr_transpose" in validation_html
         manifest_path = output_dir / "manifest.json"
         tampered_matrix_dir = Path(temp_dir) / "csr-artifact-tampered-matrix"
         shutil.copytree(output_dir, tampered_matrix_dir)

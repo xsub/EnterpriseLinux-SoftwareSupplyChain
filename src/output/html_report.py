@@ -2169,6 +2169,28 @@ def render_validation_report(report: dict[str, Any]) -> str:
             test_id="validation-nested-verification-panel",
         ),
     ]
+    csr_artifact = report.get("csrArtifact")
+    if isinstance(csr_artifact, dict):
+        sections.append(
+            _rows_panel(
+                "CSR Artifact",
+                [_validation_csr_artifact_row(csr_artifact)],
+                [
+                    "nodes",
+                    "edges",
+                    "matrixViews",
+                    "csrDirection",
+                    "cscDirection",
+                    "cscMaterialization",
+                    "layout",
+                    "dtype",
+                    "totalBytes",
+                    "memoryMapped",
+                    "readOnly",
+                ],
+                test_id="validation-csr-artifact-panel",
+            )
+        )
     triage_summary = report.get("triageSummary")
     if isinstance(triage_summary, dict):
         sections.append(
@@ -2442,6 +2464,34 @@ def _validation_report_summary_row(report: dict[str, object]) -> dict[str, objec
         "triageFail": summary.get("triageFail", ""),
         "diffTreePolicyFailures": summary.get("diffTreePolicyFailures", ""),
         "summary": summary,
+    }
+
+
+def _validation_csr_artifact_row(csr_artifact: dict[str, object]) -> dict[str, object]:
+    matrix_views = csr_artifact.get("matrixViews")
+    if not isinstance(matrix_views, dict):
+        matrix_views = {}
+    csr_view = matrix_views.get("csr")
+    if not isinstance(csr_view, dict):
+        csr_view = {}
+    csc_view = matrix_views.get("csc")
+    if not isinstance(csc_view, dict):
+        csc_view = {}
+    storage_profile = csr_artifact.get("storageProfile")
+    if not isinstance(storage_profile, dict):
+        storage_profile = {}
+    return {
+        "nodes": csr_artifact.get("nodes", ""),
+        "edges": csr_artifact.get("edges", ""),
+        "matrixViews": ", ".join(sorted(str(name) for name in matrix_views)),
+        "csrDirection": csr_view.get("direction", ""),
+        "cscDirection": csc_view.get("direction", ""),
+        "cscMaterialization": csc_view.get("materialization", ""),
+        "layout": storage_profile.get("layout", ""),
+        "dtype": storage_profile.get("dtype", ""),
+        "totalBytes": storage_profile.get("totalBytes", ""),
+        "memoryMapped": storage_profile.get("memoryMapped", ""),
+        "readOnly": storage_profile.get("readOnly", ""),
     }
 
 
