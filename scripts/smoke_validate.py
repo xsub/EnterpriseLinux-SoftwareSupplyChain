@@ -4196,6 +4196,24 @@ def _assert_public_vertical_reports() -> None:
         _assert_verify_bundle_command(output_dir)
         assert manifest["bundle"]["sourceKind"] == "fixture-provenance"
         assert manifest["reports"][0]["href"] == "001-fixture-provenance.html"
+        text_output_dir = Path(temp_dir) / "fixture-provenance-bundle-text"
+        text_output = _run_cli_text(
+            [
+                "fixture-provenance-bundle",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        _assert_bundle_text_summary(
+            text_output,
+            text_output_dir,
+            source_kind="fixture-provenance",
+        )
         assert manifest["reports"][0]["schema"] == "edgp.fixture.provenance.v1"
         assert manifest["triageSummary"]["source"] == "triage-summary.json"
         report = json.loads(
@@ -4351,6 +4369,24 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="real-data-replacement-plan-candidates-panel"' in (
             output_dir / "001-real-data-replacement-plan.html"
         ).read_text(encoding="utf-8")
+        text_output_dir = Path(temp_dir) / "real-data-replacement-plan-bundle-text"
+        text_output = _run_cli_text(
+            [
+                "real-data-replacement-plan-bundle",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        _assert_bundle_text_summary(
+            text_output,
+            text_output_dir,
+            source_kind="real-data-replacement-plan",
+        )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "real-data-replacement-plan-policy-bundle"
@@ -4532,6 +4568,26 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="real-data-replacement-plan-diff-sides-panel"' in (
             output_dir / "001-real-data-replacement-plan-diff.html"
         ).read_text(encoding="utf-8")
+        text_output_dir = Path(temp_dir) / "real-data-replacement-plan-diff-bundle-text"
+        text_output = _run_cli_text(
+            [
+                "real-data-replacement-plan-diff-bundle",
+                "--left",
+                "tests/fixtures/real-data-replacement-plan.json",
+                "--right",
+                "tests/fixtures/real-data-replacement-plan.json",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        _assert_bundle_text_summary(
+            text_output,
+            text_output_dir,
+            source_kind="real-data-replacement-plan-diff",
+        )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         regressed_path = Path(temp_dir) / "real-data-replacement-plan-regressed.json"
@@ -4770,6 +4826,26 @@ def _assert_public_vertical_reports() -> None:
             (output_dir / "real-data-coverage-diff.json").read_text(encoding="utf-8")
         )
         assert report == real_data_coverage_diff
+        text_output_dir = Path(temp_dir) / "real-data-coverage-diff-bundle-text"
+        text_output = _run_cli_text(
+            [
+                "real-data-coverage-diff-bundle",
+                "--left",
+                "tests/fixtures/real-data-coverage.json",
+                "--right",
+                "tests/fixtures/real-data-coverage.json",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        _assert_bundle_text_summary(
+            text_output,
+            text_output_dir,
+            source_kind="real-data-coverage-diff",
+        )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         regressed_path = Path(temp_dir) / "real-data-coverage-regressed.json"
@@ -4953,6 +5029,24 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="real-data-coverage-plan-panel"' in (
             output_dir / "001-real-data-coverage.html"
         ).read_text(encoding="utf-8")
+        text_output_dir = Path(temp_dir) / "real-data-coverage-bundle-text"
+        text_output = _run_cli_text(
+            [
+                "real-data-coverage-bundle",
+                "--fixture-dir",
+                "tests/fixtures",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        _assert_bundle_text_summary(
+            text_output,
+            text_output_dir,
+            source_kind="real-data-coverage",
+        )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "real-data-coverage-policy-bundle"

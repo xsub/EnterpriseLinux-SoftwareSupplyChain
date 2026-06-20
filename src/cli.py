@@ -4807,6 +4807,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="fixture directory to catalog",
     )
     fixture_provenance_bundle.add_argument("--output-dir", type=Path, required=True)
+    fixture_provenance_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(fixture_provenance_bundle)
 
     real_data_coverage = subparsers.add_parser(
@@ -4858,6 +4863,11 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     real_data_coverage_bundle.add_argument("--output-dir", type=Path, required=True)
+    real_data_coverage_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(real_data_coverage_bundle)
 
     real_data_replacement_plan = subparsers.add_parser(
@@ -4920,6 +4930,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-dir",
         type=Path,
         required=True,
+    )
+    real_data_replacement_plan_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
     )
     _add_triage_bundle_option(real_data_replacement_plan_bundle)
 
@@ -5032,6 +5047,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         required=True,
     )
+    real_data_replacement_plan_diff_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(real_data_replacement_plan_diff_bundle)
 
     real_data_coverage_diff = subparsers.add_parser(
@@ -5118,6 +5138,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-dir",
         type=Path,
         required=True,
+    )
+    real_data_coverage_diff_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
     )
     _add_triage_bundle_option(real_data_coverage_diff_bundle)
 
@@ -6464,6 +6489,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "real-data-coverage":
@@ -6490,7 +6516,11 @@ def main(argv: list[str] | None = None) -> int:
             command=command,
             include_triage_summary=_include_triage_summary(args),
         )
-        result = _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        result = _print_bundle_result(
+            index_path,
+            fail_on_status=args.fail_on_status,
+            output_format=args.format,
+        )
         if result:
             return result
         if _real_data_coverage_policy_should_fail(index_path.parent):
@@ -6521,7 +6551,11 @@ def main(argv: list[str] | None = None) -> int:
             command=command,
             include_triage_summary=_include_triage_summary(args),
         )
-        result = _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        result = _print_bundle_result(
+            index_path,
+            fail_on_status=args.fail_on_status,
+            output_format=args.format,
+        )
         if result:
             return result
         if _real_data_replacement_plan_policy_should_fail(index_path.parent):
@@ -6572,7 +6606,11 @@ def main(argv: list[str] | None = None) -> int:
             command=command,
             include_triage_summary=_include_triage_summary(args),
         )
-        result = _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        result = _print_bundle_result(
+            index_path,
+            fail_on_status=args.fail_on_status,
+            output_format=args.format,
+        )
         if result:
             return result
         if _real_data_replacement_plan_diff_policy_should_fail(index_path.parent):
@@ -6619,7 +6657,11 @@ def main(argv: list[str] | None = None) -> int:
             command=command,
             include_triage_summary=_include_triage_summary(args),
         )
-        result = _print_bundle_result(index_path, fail_on_status=args.fail_on_status)
+        result = _print_bundle_result(
+            index_path,
+            fail_on_status=args.fail_on_status,
+            output_format=args.format,
+        )
         if result:
             return result
         if _real_data_coverage_diff_policy_should_fail(index_path.parent):
