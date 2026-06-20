@@ -6,6 +6,7 @@ from pathlib import Path
 from src.albs_build_diff import build_albs_build_diff_report
 from src.albs_log_intelligence import build_albs_log_intelligence_report
 from src.albs_release_completeness import build_albs_release_completeness_report
+from src.adapters.base import ResolvedProjectGraph
 from src.adapters.rpm_repository import RpmRepositoryAdapter
 from src.cli import main
 from src.core_graph.sparse_matrix import CSRDependencyGraph
@@ -95,6 +96,97 @@ def test_rpm_albs_provenance_matches_installed_package_to_build_artifact() -> No
     assert report["matches"][0]["albsArtifact"]["filename"] == (
         "nginx-core-1.20.1-16.el9_4.1.x86_64.rpm"
     )
+
+
+def test_cli_rpm_albs_provenance_text_uses_injected_rpmdb(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
+    graph = CSRDependencyGraph()
+    graph.add_vertex(
+        "rpm-installed==local",
+        metadata={"ecosystem": "rpm", "source": "rpmdb", "node_type": "root"},
+    )
+    graph.add_vertex(
+        "nginx-core==1.20.1-16.el9_4.1",
+        metadata={
+            "ecosystem": "rpm",
+            "source": "rpmdb",
+            "arch": "x86_64",
+            "source_rpm": "nginx-1.20.1-16.el9_4.1.src.rpm",
+        },
+    )
+    graph.add_vertex(
+        "bash==5.2.15-1.el9",
+        metadata={
+            "ecosystem": "rpm",
+            "source": "rpmdb",
+            "arch": "x86_64",
+            "source_rpm": "bash-5.2.15-1.el9.src.rpm",
+        },
+    )
+
+    class FakeInstalledRpmAdapter:
+        def parse_installed(
+            self, *, limit: int = 100, max_requirements: int = 40
+        ) -> ResolvedProjectGraph:
+            assert limit == 5
+            assert max_requirements == 10
+            return ResolvedProjectGraph(
+                root_identifier="rpm-installed==local",
+                graph=graph,
+                ecosystem="rpm",
+            )
+
+    monkeypatch.setattr("src.cli.InstalledRpmAdapter", FakeInstalledRpmAdapter)
+
+    assert main(
+        [
+            "rpm-albs-provenance",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--rpm-limit",
+            "5",
+            "--max-requirements",
+            "10",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    text = capsys.readouterr().out.strip()
+    assert text.startswith("RPM_ALBS_PROVENANCE schema=edgp.rpm.albs_provenance.v1")
+    assert "installedPackages=2" in text
+    assert "albsArtifacts=3" in text
+    assert "matchedPackages=1" in text
+    assert "unmatchedPackages=1" in text
+    assert "matchPercent=50.000" in text
+    assert "firstMatch=nginx-core" in text
+    assert "firstMatchArch=x86_64" in text
+    assert "firstMatchBuild=17812" in text
+    assert "firstUnmatched=bash" in text
+
+    output_dir = tmp_path / "rpm-albs-provenance-bundle-text"
+    assert main(
+        [
+            "rpm-albs-provenance-bundle",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--rpm-limit",
+            "5",
+            "--max-requirements",
+            "10",
+            "--output-dir",
+            str(output_dir),
+            "--triage-summary",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=rpm-albs-provenance" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
 
 
 def test_rpm_repository_adapter_links_requires_to_providers() -> None:

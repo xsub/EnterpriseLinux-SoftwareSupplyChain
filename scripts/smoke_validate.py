@@ -6519,6 +6519,36 @@ def _assert_rpm_installed_bundle() -> None:
 
 
 def _assert_rpm_albs_provenance_bundle() -> None:
+    completed_provenance_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "rpm-albs-provenance",
+            "--path",
+            "tests/fixtures/albs-build.json",
+            "--rpm-limit",
+            "5",
+            "--max-requirements",
+            "10",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    provenance_text = completed_provenance_text.stdout.strip()
+    assert provenance_text.startswith(
+        "RPM_ALBS_PROVENANCE schema=edgp.rpm.albs_provenance.v1"
+    )
+    assert "installedPackages=" in provenance_text
+    assert "albsArtifacts=" in provenance_text
+    assert "matchedPackages=" in provenance_text
+    assert "unmatchedPackages=" in provenance_text
+
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "rpm-albs-provenance-bundle"
         completed = subprocess.run(
@@ -6564,6 +6594,36 @@ def _assert_rpm_albs_provenance_bundle() -> None:
         )
         assert 'data-testid="rpm-albs-provenance-matches-panel"' in html
         assert 'data-testid="rpm-albs-provenance-unmatched-panel"' in html
+        text_output_dir = Path(temp_dir) / "rpm-albs-provenance-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "rpm-albs-provenance-bundle",
+                "--path",
+                "tests/fixtures/albs-build.json",
+                "--rpm-limit",
+                "5",
+                "--max-requirements",
+                "10",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        provenance_bundle_text = completed_text.stdout.strip()
+        assert provenance_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=rpm-albs-provenance" in provenance_bundle_text
+        assert "reports=1" in provenance_bundle_text
+        assert "triageStatus=pass" in provenance_bundle_text
 
 
 def build_parser() -> argparse.ArgumentParser:

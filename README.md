@@ -166,7 +166,9 @@ edgp albs-log-intelligence-bundle --build-id 17813 --output-dir reports/albs-log
 edgp albs-release-completeness-bundle --build-id 17812 --build-id 17813 --output-dir reports/albs-release-completeness --triage-summary
 edgp albs-release-completeness-bundle --build-id 17812 --build-id 17813 --output-dir reports/albs-release-completeness --triage-summary --format text
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
+edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200 --format text
 edgp rpm-albs-provenance-bundle --build-id 17812 --rpm-limit 200 --output-dir reports/rpm-albs-provenance --triage-summary
+edgp rpm-albs-provenance-bundle --build-id 17812 --rpm-limit 200 --output-dir reports/rpm-albs-provenance --triage-summary --format text
 edgp libsolv-bridge --transaction solver-transaction.txt
 edgp libsolv-bridge --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json
 edgp libsolv-bundle --transaction solver-transaction.txt --graph-snapshot rpm-repo-graph.json --output-dir reports/libsolv

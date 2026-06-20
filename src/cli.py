@@ -1488,6 +1488,50 @@ def _format_albs_release_completeness_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_rpm_albs_provenance_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    installed_packages = int(summary.get("installedPackages", 0) or 0)
+    matched_packages = int(summary.get("matchedPackages", 0) or 0)
+    match_percent = (
+        (matched_packages / installed_packages) * 100.0
+        if installed_packages
+        else 0.0
+    )
+    matches = _dict_list(report.get("matches"))
+    unmatched = _dict_list(report.get("unmatchedInstalledPackages"))
+    parts = [
+        "RPM_ALBS_PROVENANCE",
+        "schema=edgp.rpm.albs_provenance.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"installedPackages={installed_packages}",
+        f"albsArtifacts={int(summary.get('albsArtifacts', 0) or 0)}",
+        f"matchedPackages={matched_packages}",
+        f"unmatchedPackages={int(summary.get('unmatchedPackages', 0) or 0)}",
+        f"matchPercent={match_percent:.3f}",
+    ]
+    if matches:
+        first = matches[0]
+        installed = first.get("installedPackage")
+        if not isinstance(installed, dict):
+            installed = {}
+        artifact = first.get("albsArtifact")
+        if not isinstance(artifact, dict):
+            artifact = {}
+        parts.append(f"firstMatch={_text_value(installed.get('name', ''))}")
+        parts.append(f"firstMatchArch={_text_value(installed.get('arch', ''))}")
+        parts.append(f"firstMatchBuild={_text_value(first.get('buildId', ''))}")
+        parts.append(
+            f"firstMatchArtifact={_text_value(artifact.get('filename', ''))}"
+        )
+    if unmatched:
+        first = unmatched[0]
+        parts.append(f"firstUnmatched={_text_value(first.get('name', ''))}")
+        parts.append(f"firstUnmatchedArch={_text_value(first.get('arch', ''))}")
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -4329,6 +4373,11 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_albs_provenance.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
     rpm_albs_provenance.add_argument("--rpm-limit", type=int, default=100)
     rpm_albs_provenance.add_argument("--max-requirements", type=int, default=40)
+    rpm_albs_provenance.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     rpm_albs_provenance_bundle = subparsers.add_parser(
         "rpm-albs-provenance-bundle",
@@ -4344,6 +4393,11 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_albs_provenance_bundle.add_argument("--rpm-limit", type=int, default=100)
     rpm_albs_provenance_bundle.add_argument("--max-requirements", type=int, default=40)
     rpm_albs_provenance_bundle.add_argument("--output-dir", type=Path, required=True)
+    rpm_albs_provenance_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(rpm_albs_provenance_bundle)
 
     libsolv_bridge = subparsers.add_parser(
@@ -5962,7 +6016,11 @@ def main(argv: list[str] | None = None) -> int:
             limit=args.rpm_limit,
             max_requirements=args.max_requirements,
         )
-        print(_json(build_rpm_albs_provenance_report(installed.graph, albs_payload)))
+        report = build_rpm_albs_provenance_report(installed.graph, albs_payload)
+        if args.format == "text":
+            print(_format_rpm_albs_provenance_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "rpm-albs-provenance-bundle":
@@ -5979,6 +6037,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "libsolv-bridge":
