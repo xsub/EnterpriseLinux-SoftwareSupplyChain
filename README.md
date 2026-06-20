@@ -211,10 +211,10 @@ snapshots. ALBS build metadata can also enter this shared layer through
 edgp query --path package-lock.json --operation reachable --node app==1.0.0
 edgp query --path package-lock.json --operation path --node app==1.0.0 --target library==2.0.0
 edgp query --source dot --path repograph.dot --ecosystem rpm --operation dependents --node glibc
-edgp query --source rpm-repo --rpm-repo-source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --operation most-depended-upon
+edgp query --source rpm-repo --rpm-repo-source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --operation most-depended-upon --format text
 edgp query --source rpm-installed --rpm-limit 100 --max-requirements 40 --operation most-depended-upon
 edgp query --source albs-build --albs-url https://build.almalinux.org/api/v1/builds/17812/ --operation most-depended-upon
-edgp query-bundle --path package-lock.json --operation reachable --node app --output-dir reports/query --triage-summary
+edgp query-bundle --path package-lock.json --operation reachable --node app --output-dir reports/query --format text --triage-summary
 ```
 
 Impact, advisory overlays, and npm diagnostics cover the main triage flows:
@@ -859,9 +859,11 @@ CSR traversal supports immediate dependencies, immediate dependents, forward and
 reverse reachability, shortest dependency paths, and most-depended-upon ranking.
 The CLI exposes these operations as JSON through `edgp query`, which makes the
 same graph useful for terminal investigation, future UI panels, and RAG context
-generation. `edgp query-bundle` wraps the same traversal output in an
-`edgp.query.report.v1` document and renders it as static HTML with a verifiable
-manifest. Query selectors accept exact package IDs, such as
+generation. `--format text` prints compact counts and first results for CI logs
+without replacing the full JSON. `edgp query-bundle` wraps the same traversal
+output in an `edgp.query.report.v1` document and renders it as static HTML with
+a verifiable manifest; it can also print a one-line bundle summary with
+`--format text`. Query selectors accept exact package IDs, such as
 `glibc==2.39-1.el10`, or unambiguous package names, such as `glibc`. Public
 ALBS build graphs can be queried from local JSON files or public metadata URLs
 with `--source albs-build --path ...` or `--source albs-build --albs-url ...`.

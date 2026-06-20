@@ -1850,6 +1850,41 @@ def _assert_poetry_query() -> None:
         assert 'data-testid="query-result-panel"' in (
             output_dir / "001-query-report.html"
         ).read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "query-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "query-bundle",
+                "--ecosystem",
+                "poetry",
+                "--path",
+                "tests/fixtures/poetry.lock",
+                "--operation",
+                "path",
+                "--node",
+                "demo-lib",
+                "--target",
+                "urllib3",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        query_bundle_text = completed_text.stdout.strip()
+        assert query_bundle_text.startswith("BUNDLE ")
+        assert f"index={output_dir / 'index.html'}" in query_bundle_text
+        assert "sourceKind=query-report" in query_bundle_text
+        assert "triageStatus=pass" in query_bundle_text
 
 
 def _assert_cargo_lockfile_snapshot() -> None:
@@ -3130,6 +3165,35 @@ def _assert_public_vertical_reports() -> None:
     assert "rpm-capability:nginx-filesystem" in rpm_repo_query["result"]
     assert "rpm-capability:systemd" in rpm_repo_query["result"]
     assert len(rpm_repo_query["result"]) == 7
+    rpm_repo_query_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "query",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--operation",
+            "dependencies",
+            "--node",
+            "nginx",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert rpm_repo_query_text.startswith("QUERY ")
+    assert "operation=dependencies" in rpm_repo_query_text
+    assert "resultKind=nodes" in rpm_repo_query_text
+    assert "resultCount=7" in rpm_repo_query_text
+    assert f"node={rpm_repo_nginx_node}" in rpm_repo_query_text
+    assert f"firstResult={rpm_repo_nginx_core_node}" in rpm_repo_query_text
 
     rpm_repo_impact = _run_cli(
         [

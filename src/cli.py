@@ -2122,6 +2122,50 @@ def _format_parallel_query_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_query_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    operation = str(report.get("operation", "unknown"))
+    result = report.get("result")
+    rows = result if isinstance(result, list) else []
+    result_kind = str(summary.get("resultKind") or "ranking")
+    if operation == "path":
+        result_kind = "path"
+    elif operation != "most-depended-upon":
+        result_kind = str(summary.get("resultKind") or "nodes")
+    parts = [
+        "QUERY",
+        f"operation={_text_value(operation)}",
+        f"resultKind={_text_value(result_kind)}",
+        f"resultCount={int(summary.get('resultCount', len(rows)) or 0)}",
+    ]
+    schema = report.get("schema")
+    if isinstance(schema, str) and schema:
+        parts.append(f"schema={_text_value(schema)}")
+    for key in ("source", "ecosystem", "root", "direction", "node", "target"):
+        value = report.get(key)
+        if value is not None:
+            parts.append(f"{key}={_text_value(value)}")
+    for key in ("requestedNode", "requestedTarget"):
+        value = report.get(key)
+        if value is not None:
+            parts.append(f"{key}={_text_value(value)}")
+    if operation == "path":
+        path_found = bool(summary.get("pathFound", rows))
+        parts.append(f"pathFound={str(path_found).lower()}")
+        if rows:
+            parts.append(f"path={_text_value('>'.join(str(row) for row in rows))}")
+    elif operation == "most-depended-upon" and rows:
+        first = rows[0]
+        if isinstance(first, dict):
+            parts.append(f"firstPackage={_text_value(first.get('package', ''))}")
+            parts.append(f"firstDependents={int(first.get('dependents', 0) or 0)}")
+    elif rows:
+        parts.append(f"firstResult={_text_value(rows[0])}")
+    return " ".join(parts)
+
+
 def _format_real_data_coverage_result(report: dict[str, Any]) -> str:
     summary = report.get("summary")
     if not isinstance(summary, dict):
@@ -5690,6 +5734,7 @@ def build_parser() -> argparse.ArgumentParser:
     query.add_argument("--limit", type=int, default=10)
     query.add_argument("--rpm-limit", type=int, default=100)
     query.add_argument("--max-requirements", type=int, default=40)
+    query.add_argument("--format", choices=["json", "text"], default="json")
     _add_rpm_repo_source_options(query)
 
     query_bundle = subparsers.add_parser(
@@ -5734,6 +5779,7 @@ def build_parser() -> argparse.ArgumentParser:
     query_bundle.add_argument("--rpm-limit", type=int, default=100)
     query_bundle.add_argument("--max-requirements", type=int, default=40)
     query_bundle.add_argument("--output-dir", type=Path, required=True)
+    query_bundle.add_argument("--format", choices=["path", "text"], default="path")
     _add_rpm_repo_source_options(query_bundle)
     _add_triage_bundle_option(query_bundle)
 
@@ -7069,18 +7115,18 @@ def main(argv: list[str] | None = None) -> int:
             package_limit=args.package_limit,
             requirement_limit=args.requirement_limit,
         )
-        print(
-            _json(
-                _query_graph(
-                    graph,
-                    operation=args.operation,
-                    node=args.node,
-                    target=args.target,
-                    direction=args.direction,
-                    limit=args.limit,
-                )
-            )
+        query_result = _query_graph(
+            graph,
+            operation=args.operation,
+            node=args.node,
+            target=args.target,
+            direction=args.direction,
+            limit=args.limit,
         )
+        if args.format == "text":
+            print(_format_query_result(query_result))
+        else:
+            print(_json(query_result))
         return 0
 
     if args.command == "query-bundle":
@@ -7106,6 +7152,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "demo":

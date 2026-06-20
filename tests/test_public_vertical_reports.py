@@ -751,6 +751,29 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
 
     assert main(
         [
+            "query",
+            "--source",
+            "rpm-repo",
+            "--path",
+            "tests/fixtures/repodata/repomd.xml",
+            "--operation",
+            "dependencies",
+            "--node",
+            "nginx",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    query_text = capsys.readouterr().out.strip()
+    assert query_text.startswith("QUERY ")
+    assert "operation=dependencies" in query_text
+    assert "resultKind=nodes" in query_text
+    assert "resultCount=7" in query_text
+    assert "node=nginx==1.20.1-28.el9_8.2.alma.1.x86_64" in query_text
+    assert "firstResult=nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64" in query_text
+
+    assert main(
+        [
             "impact",
             "--source",
             "rpm-repo",
