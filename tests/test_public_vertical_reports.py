@@ -375,6 +375,39 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
     assert "wallSecondsDelta=70.000" in diff_text
     assert "criticalBuildTaskWallSecondsDelta=53.000" in diff_text
 
+    assert main(
+        [
+            "albs-log-intelligence",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+        ]
+    ) == 0
+    assert json.loads(capsys.readouterr().out)["schema"] == (
+        "edgp.albs.log_intelligence.v1"
+    )
+
+    assert main(
+        [
+            "albs-log-intelligence",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    log_text = capsys.readouterr().out.strip()
+    assert log_text.startswith(
+        "ALBS_LOG_INTELLIGENCE schema=edgp.albs.log_intelligence.v1"
+    )
+    assert "root=albs-build:17813" in log_text
+    assert "logArtifacts=1" in log_text
+    assert "logsWithInlineContent=1" in log_text
+    assert "signalKinds=4" in log_text
+    assert "signals=4" in log_text
+    assert "signalCounts=error:1,failed:1,missing:1,warning:1" in log_text
+    assert "firstSignalLog=mock.srpm.188180.1725456234.log" in log_text
+    assert "firstSignalArch=ppc64le" in log_text
+
     assert main(["rpm-repo", "--primary", "tests/fixtures/rpm-primary.xml"]) == 0
     rpm_repo_snapshot = json.loads(capsys.readouterr().out)
     assert rpm_repo_snapshot["schema"] == "edgp.graph.snapshot.v1"
@@ -1184,6 +1217,26 @@ def test_cli_albs_log_intelligence_bundle_writes_report_bundle(
     assert report["signalCounts"]["missing"] == 1
     html = (output_dir / "001-albs-log-intelligence.html").read_text(encoding="utf-8")
     assert 'data-testid="albs-log-intelligence-panel"' in html
+
+    text_output_dir = tmp_path / "albs-log-intelligence-bundle-text"
+    assert main(
+        [
+            "albs-log-intelligence-bundle",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+            "--output-dir",
+            str(text_output_dir),
+            "--triage-summary",
+            "--format",
+            "text",
+        ]
+    ) == 0
+    bundle_text = capsys.readouterr().out.strip()
+    assert bundle_text.startswith("BUNDLE ")
+    assert f"index={text_output_dir / 'index.html'}" in bundle_text
+    assert "sourceKind=albs-log-intelligence" in bundle_text
+    assert "reports=1" in bundle_text
+    assert "triageStatus=pass" in bundle_text
 
     assert main(["verify-bundle", "--path", str(output_dir)]) == 0
     verification = json.loads(capsys.readouterr().out)

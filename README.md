@@ -159,7 +159,9 @@ edgp albs-build-diff-bundle --left-build-id 17812 --right-build-id 17813 --outpu
 edgp albs-build-diff-bundle --left-build-id 17812 --right-build-id 17813 --output-dir reports/albs-build-diff --triage-summary --format text
 edgp albs-release-completeness --build-id 17812 --build-id 17813
 edgp albs-log-intelligence --build-id 17813
+edgp albs-log-intelligence --build-id 17813 --format text
 edgp albs-log-intelligence-bundle --build-id 17813 --output-dir reports/albs-log-intelligence --triage-summary
+edgp albs-log-intelligence-bundle --build-id 17813 --output-dir reports/albs-log-intelligence --triage-summary --format text
 edgp albs-release-completeness-bundle --build-id 17812 --build-id 17813 --output-dir reports/albs-release-completeness --triage-summary
 edgp rpm-albs-provenance --build-id 17812 --rpm-limit 200
 edgp rpm-albs-provenance-bundle --build-id 17812 --rpm-limit 200 --output-dir reports/rpm-albs-provenance --triage-summary

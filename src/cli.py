@@ -1392,6 +1392,53 @@ def _format_albs_build_diff_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_albs_log_intelligence_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    signal_counts = report.get("signalCounts")
+    if not isinstance(signal_counts, dict):
+        signal_counts = {}
+    logs = _dict_list(report.get("logs"))
+    signal_logs = [
+        log
+        for log in logs
+        if isinstance(log.get("signals"), dict) and log.get("signals")
+    ]
+    parts = [
+        "ALBS_LOG_INTELLIGENCE",
+        "schema=edgp.albs.log_intelligence.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"logArtifacts={int(summary.get('logArtifacts', 0) or 0)}",
+        (
+            "logsWithInlineContent="
+            f"{int(summary.get('logsWithInlineContent', 0) or 0)}"
+        ),
+        f"signalKinds={int(summary.get('signalKinds', 0) or 0)}",
+        f"signals={int(summary.get('signals', 0) or 0)}",
+    ]
+    if signal_counts:
+        labels = [
+            f"{key}:{int(value or 0)}"
+            for key, value in sorted(signal_counts.items())
+        ]
+        parts.append(f"signalCounts={_text_value(','.join(labels))}")
+    if signal_logs:
+        first = signal_logs[0]
+        signals = first.get("signals")
+        if not isinstance(signals, dict):
+            signals = {}
+        parts.append(f"firstSignalLog={_text_value(first.get('name', ''))}")
+        parts.append(f"firstSignalArch={_text_value(first.get('buildArch', ''))}")
+        parts.append(
+            f"firstSignalKinds={_text_value(','.join(sorted(str(key) for key in signals)))}"
+        )
+        sample = str(first.get("sample", "") or "")[:160]
+        if sample:
+            parts.append(f"firstSignalSample={_text_value(sample)}")
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -4144,6 +4191,11 @@ def build_parser() -> argparse.ArgumentParser:
     albs_log_input.add_argument("--path", type=Path)
     albs_log_input.add_argument("--url")
     albs_log_intelligence.add_argument("--base-url", default=DEFAULT_ALBS_BASE_URL)
+    albs_log_intelligence.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     albs_log_intelligence_bundle = subparsers.add_parser(
         "albs-log-intelligence-bundle",
@@ -4160,6 +4212,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_ALBS_BASE_URL,
     )
     albs_log_intelligence_bundle.add_argument("--output-dir", type=Path, required=True)
+    albs_log_intelligence_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_triage_bundle_option(albs_log_intelligence_bundle)
 
     albs_release_completeness = subparsers.add_parser(
@@ -5784,7 +5841,11 @@ def main(argv: list[str] | None = None) -> int:
             url=args.url,
             base_url=args.base_url,
         )
-        print(_json(build_albs_log_intelligence_report(payload)))
+        report = build_albs_log_intelligence_report(payload)
+        if args.format == "text":
+            print(_format_albs_log_intelligence_result(report))
+        else:
+            print(_json(report))
         return 0
 
     if args.command == "albs-log-intelligence-bundle":
@@ -5799,6 +5860,7 @@ def main(argv: list[str] | None = None) -> int:
                 include_triage_summary=_include_triage_summary(args),
             ),
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "albs-release-completeness":

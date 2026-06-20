@@ -2783,6 +2783,30 @@ def _assert_public_vertical_reports() -> None:
     )
     assert log["schema"] == "edgp.albs.log_intelligence.v1"
     assert log["signalCounts"]["missing"] == 1
+    completed_log_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "albs-log-intelligence",
+            "--path",
+            "tests/fixtures/albs-build-updated.json",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    log_text = completed_log_text.stdout.strip()
+    assert log_text.startswith(
+        "ALBS_LOG_INTELLIGENCE schema=edgp.albs.log_intelligence.v1"
+    )
+    assert "logArtifacts=1" in log_text
+    assert "signals=4" in log_text
+    assert "signalCounts=error:1,failed:1,missing:1,warning:1" in log_text
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "albs-log-intelligence-bundle"
         completed = subprocess.run(
@@ -2819,6 +2843,32 @@ def _assert_public_vertical_reports() -> None:
             encoding="utf-8"
         )
         assert 'data-testid="albs-log-intelligence-panel"' in log_html
+        text_output_dir = Path(temp_dir) / "albs-log-intelligence-bundle-text"
+        completed_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "albs-log-intelligence-bundle",
+                "--path",
+                "tests/fixtures/albs-build-updated.json",
+                "--output-dir",
+                str(text_output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        log_bundle_text = completed_text.stdout.strip()
+        assert log_bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=albs-log-intelligence" in log_bundle_text
+        assert "reports=1" in log_bundle_text
+        assert "triageStatus=pass" in log_bundle_text
 
     completeness = _run_cli(
         [
