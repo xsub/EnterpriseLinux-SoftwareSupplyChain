@@ -952,6 +952,26 @@ def test_cli_public_vertical_commands(capsys, tmp_path: Path) -> None:
 
     assert main(
         [
+            "license-report",
+            "--source",
+            "sbom",
+            "--path",
+            "tests/fixtures/sample-bom.json",
+            "--deny-license",
+            "WTFPL",
+            "--format",
+            "text",
+            "--fail-on-denied",
+        ]
+    ) == 2
+    license_report_text = capsys.readouterr().out.strip()
+    assert license_report_text.startswith("LICENSE_REPORT ")
+    assert "schema=edgp.license.report.v1" in license_report_text
+    assert "deniedFindings=1" in license_report_text
+    assert "firstDeniedPackage=left-pad==1.3.0" in license_report_text
+
+    assert main(
+        [
             "public-advisory-feed",
             "--path",
             "tests/fixtures/public-osv.json",

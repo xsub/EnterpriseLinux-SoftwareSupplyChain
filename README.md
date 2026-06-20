@@ -229,8 +229,8 @@ edgp advisory --source rpm-repo --path repodata/repomd.xml --advisories advisori
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed-url https://example.com/osv.json --ecosystem rpm
 edgp advisory --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --fail-on-findings --fail-min-severity high
 edgp advisory-bundle --source rpm-repo --path repodata/repomd.xml --public-advisory-feed osv.json --ecosystem rpm --output-dir reports/advisory --triage-summary
-edgp license-report --source sbom --path bom.json --deny-license GPL-3.0-only --fail-on-denied
-edgp license-report-bundle --source sbom --path bom.json --deny-license GPL-3.0-only --output-dir reports/license --triage-summary
+edgp license-report --source sbom --path bom.json --deny-license GPL-3.0-only --format text --fail-on-denied
+edgp license-report-bundle --source sbom --path bom.json --deny-license GPL-3.0-only --output-dir reports/license --format text --triage-summary
 edgp npm-diagnostics --path package-lock.json
 edgp npm-diagnostics-bundle --path package-lock.json --output-dir reports/npm-diagnostics --triage-summary
 edgp diff --left before.json --right after.json
@@ -962,13 +962,14 @@ in the browser or attached to a CI/workbench artifact set.
 `edgp license-report` summarizes license metadata from any supported graph
 source and optionally checks a deny-list. `--deny-license` may be repeated; EDGP
 matches exact license strings and simple SPDX-expression tokens, emits the full
-`edgp.license.report.v1` JSON report, and exits with status `2` when
-`--fail-on-denied` finds a denied license. This works with public CycloneDX
+`edgp.license.report.v1` JSON report or a compact `--format text` summary for
+CI logs, and exits with status `2` when `--fail-on-denied` finds a denied
+license. This works with public CycloneDX
 SBOMs, lockfile-derived metadata, public RPM repository metadata, and installed
 RPM metadata when licenses are visible in the source. `edgp
 license-report-bundle` writes the same license report as static HTML with a
-verifiable manifest and preserves the bundle before returning status `2` for
-`--fail-on-denied`.
+verifiable manifest, can print a one-line bundle summary with `--format text`,
+and preserves the bundle before returning status `2` for `--fail-on-denied`.
 Graph bundle commands for npm lockfiles, CycloneDX SBOMs, public RPM
 repositories, and installed RPM databases can also include the same report with
 `--license-report`; passing `--deny-license` to a bundle command includes the

@@ -3349,6 +3349,34 @@ def _assert_public_vertical_reports() -> None:
     assert license_gate["schema"] == "edgp.license.report.v1"
     assert license_gate["summary"]["deniedFindings"] == 1
     assert license_gate["findings"][0]["package"] == "left-pad==1.3.0"
+    completed_license_gate_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "license-report",
+            "--source",
+            "sbom",
+            "--path",
+            "tests/fixtures/sample-bom.json",
+            "--deny-license",
+            "WTFPL",
+            "--format",
+            "text",
+            "--fail-on-denied",
+        ],
+        check=False,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert completed_license_gate_text.returncode == 2
+    license_gate_text = completed_license_gate_text.stdout.strip()
+    assert license_gate_text.startswith("LICENSE_REPORT ")
+    assert "schema=edgp.license.report.v1" in license_gate_text
+    assert "deniedFindings=1" in license_gate_text
+    assert "firstDeniedPackage=left-pad==1.3.0" in license_gate_text
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir) / "license-report-bundle"
         completed_license_bundle = subprocess.run(
@@ -3390,6 +3418,39 @@ def _assert_public_vertical_reports() -> None:
         assert 'data-testid="license-denied-panel"' in (
             output_dir / "001-license-report.html"
         ).read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_dir = Path(temp_dir) / "license-report-bundle-text"
+        completed_license_bundle_text = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-m",
+                "src.cli",
+                "license-report-bundle",
+                "--source",
+                "sbom",
+                "--path",
+                "tests/fixtures/sample-bom.json",
+                "--deny-license",
+                "WTFPL",
+                "--fail-on-denied",
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ],
+            check=False,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert completed_license_bundle_text.returncode == 2
+        license_bundle_text = completed_license_bundle_text.stdout.strip()
+        assert license_bundle_text.startswith("BUNDLE ")
+        assert f"index={output_dir / 'index.html'}" in license_bundle_text
+        assert "sourceKind=license-report" in license_bundle_text
+        assert "triageStatus=fail" in license_bundle_text
     triage = _run_cli(
         [
             "triage-summary",

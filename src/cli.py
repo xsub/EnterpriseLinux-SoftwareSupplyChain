@@ -1605,6 +1605,46 @@ def _format_libsolv_bridge_result(report: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _format_license_report_result(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    licenses = _dict_list(report.get("licenses"))
+    findings = _dict_list(report.get("findings"))
+    missing = _dict_list(report.get("missingLicenses"))
+    policy = report.get("policy")
+    if not isinstance(policy, dict):
+        policy = {}
+    denied_licenses = _string_list(policy.get("deniedLicenses"))
+    parts = [
+        "LICENSE_REPORT",
+        "schema=edgp.license.report.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"ecosystem={_text_value(report.get('ecosystem', ''))}",
+        f"packages={int(summary.get('packages', 0) or 0)}",
+        f"licensedPackages={int(summary.get('licensedPackages', 0) or 0)}",
+        f"distinctLicenses={int(summary.get('distinctLicenses', 0) or 0)}",
+        f"missingLicenses={int(summary.get('missingLicenses', 0) or 0)}",
+        f"deniedFindings={int(summary.get('deniedFindings', 0) or 0)}",
+    ]
+    if denied_licenses:
+        parts.append(f"deniedLicenses={_text_value(','.join(denied_licenses))}")
+    if licenses:
+        first = licenses[0]
+        parts.append(f"topLicense={_text_value(first.get('license', ''))}")
+        parts.append(f"topLicensePackages={int(first.get('packages', 0) or 0)}")
+    if findings:
+        first = findings[0]
+        parts.append(f"firstDeniedPackage={_text_value(first.get('package', ''))}")
+        parts.append(f"firstDeniedLicense={_text_value(first.get('license', ''))}")
+    if missing:
+        first = missing[0]
+        parts.append(
+            f"firstMissingLicensePackage={_text_value(first.get('package', ''))}"
+        )
+    return " ".join(parts)
+
+
 def _format_triage_summary_report(report: dict[str, Any]) -> str:
     summary = report.get("summary", {})
     if not isinstance(summary, dict):
@@ -5124,6 +5164,7 @@ def build_parser() -> argparse.ArgumentParser:
     license_report.add_argument("--fail-on-denied", action="store_true")
     license_report.add_argument("--rpm-limit", type=int, default=100)
     license_report.add_argument("--max-requirements", type=int, default=40)
+    license_report.add_argument("--format", choices=["json", "text"], default="json")
     _add_rpm_repo_source_options(license_report)
 
     license_report_bundle = subparsers.add_parser(
@@ -5151,6 +5192,11 @@ def build_parser() -> argparse.ArgumentParser:
     license_report_bundle.add_argument("--rpm-limit", type=int, default=100)
     license_report_bundle.add_argument("--max-requirements", type=int, default=40)
     license_report_bundle.add_argument("--output-dir", type=Path, required=True)
+    license_report_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
     _add_rpm_repo_source_options(license_report_bundle)
     _add_triage_bundle_option(license_report_bundle)
 
@@ -6576,7 +6622,10 @@ def main(argv: list[str] | None = None) -> int:
             ecosystem=resolved_ecosystem,
             denied_licenses=args.deny_license,
         )
-        print(_json(license_report))
+        if args.format == "text":
+            print(_format_license_report_result(license_report))
+        else:
+            print(_json(license_report))
         if args.fail_on_denied and _license_report_should_fail(license_report):
             return 2
         return 0
@@ -6601,6 +6650,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             fail_on_denied=args.fail_on_denied,
             fail_on_status=args.fail_on_status,
+            output_format=args.format,
         )
 
     if args.command == "triage-summary":
