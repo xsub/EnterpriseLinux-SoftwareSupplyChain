@@ -99,6 +99,8 @@ DIFF_CHANGE_KINDS = (
     "metadata-change",
 )
 
+GRAPH_EXPORT_FORMATS = ("cypher", "cyclonedx", "json", "text")
+
 
 def _demo_registry() -> RegistryMock:
     return RegistryMock.from_mapping(
@@ -148,11 +150,36 @@ def _export(
         return CycloneDXExporter.export_to_json(graph, root=root, ecosystem=ecosystem)
     if format_name == "json":
         return GraphJsonExporter.export_to_json(graph, root=root, ecosystem=ecosystem)
+    if format_name == "text":
+        return _format_graph_export_result(graph, root=root, ecosystem=ecosystem)
     raise ValueError(f"Unsupported output format: {format_name}")
 
 
 def _json(payload: dict[str, Any]) -> str:
     return json.dumps(payload, indent=2, sort_keys=True)
+
+
+def _format_graph_export_result(
+    graph: CSRDependencyGraph,
+    *,
+    root: str | None,
+    ecosystem: str,
+) -> str:
+    edge_count = sum(1 for _ in graph.edges())
+    top_ranked = graph.most_depended_upon(1)
+    parts = [
+        "GRAPH",
+        "schema=edgp.graph.snapshot.v1",
+        f"root={_text_value(root or '')}",
+        f"ecosystem={_text_value(ecosystem)}",
+        f"nodes={len(graph)}",
+        f"edges={edge_count}",
+    ]
+    if top_ranked:
+        package_id, dependents = top_ranked[0]
+        parts.append(f"topDependedUpon={_text_value(package_id)}")
+        parts.append(f"topDependents={dependents}")
+    return " ".join(parts)
 
 
 def _format_verification_report(report: dict[str, Any]) -> str:
@@ -4189,18 +4216,18 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     demo = subparsers.add_parser("demo", help="Resolve a built-in demo registry")
-    demo.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
+    demo.add_argument("--format", choices=GRAPH_EXPORT_FORMATS, default="cypher")
 
     resolve = subparsers.add_parser("resolve", help="Resolve a JSON registry")
     resolve.add_argument("--registry", type=Path, required=True)
     resolve.add_argument("--root", required=True)
     resolve.add_argument("--version", required=True)
-    resolve.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
+    resolve.add_argument("--format", choices=GRAPH_EXPORT_FORMATS, default="cypher")
 
     lockfile = subparsers.add_parser("lockfile", help="Export a resolved lockfile graph")
     lockfile.add_argument("--path", type=Path, required=True)
     lockfile.add_argument("--ecosystem", choices=["npm", "poetry", "cargo"], default="npm")
-    lockfile.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="cypher")
+    lockfile.add_argument("--format", choices=GRAPH_EXPORT_FORMATS, default="cypher")
 
     npm_diagnostics = subparsers.add_parser(
         "npm-diagnostics", help="Diagnose npm package-lock dependency paths"
@@ -4235,7 +4262,7 @@ def build_parser() -> argparse.ArgumentParser:
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
     dot.add_argument("--path", type=Path, required=True)
     dot.add_argument("--ecosystem", default="rpm")
-    dot.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="json")
+    dot.add_argument("--format", choices=GRAPH_EXPORT_FORMATS, default="json")
 
     dot_bundle = subparsers.add_parser(
         "dot-bundle", help="Render DOT graph bundle with optional impact reports"
@@ -4249,7 +4276,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sbom = subparsers.add_parser("sbom", help="Export a graph from a CycloneDX JSON SBOM")
     sbom.add_argument("--path", type=Path, required=True)
-    sbom.add_argument("--format", choices=["cypher", "cyclonedx", "json"], default="json")
+    sbom.add_argument("--format", choices=GRAPH_EXPORT_FORMATS, default="json")
 
     sbom_bundle = subparsers.add_parser(
         "sbom-bundle", help="Render CycloneDX SBOM graph bundle"
@@ -4266,7 +4293,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     maven_tree.add_argument("--path", type=Path, required=True)
     maven_tree.add_argument(
-        "--format", choices=["cypher", "cyclonedx", "json"], default="json"
+        "--format", choices=GRAPH_EXPORT_FORMATS, default="json"
     )
 
     maven_bundle = subparsers.add_parser(
@@ -4284,7 +4311,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_installed.add_argument("--limit", type=int, default=100)
     rpm_installed.add_argument("--max-requirements", type=int, default=40)
     rpm_installed.add_argument(
-        "--format", choices=["cypher", "cyclonedx", "json"], default="json"
+        "--format", choices=GRAPH_EXPORT_FORMATS, default="json"
     )
 
     rpm_installed_bundle = subparsers.add_parser(
@@ -4322,7 +4349,7 @@ def build_parser() -> argparse.ArgumentParser:
     rpm_repo.add_argument("--package-limit", type=int, default=5000)
     rpm_repo.add_argument("--requirement-limit", type=int, default=40)
     rpm_repo.add_argument(
-        "--format", choices=["cypher", "cyclonedx", "json"], default="json"
+        "--format", choices=GRAPH_EXPORT_FORMATS, default="json"
     )
 
     rpm_repo_summary = subparsers.add_parser(
@@ -4420,7 +4447,7 @@ def build_parser() -> argparse.ArgumentParser:
     albs_build.add_argument("--test-task-limit", type=int, default=50)
     albs_build.add_argument("--include-logs", action="store_true")
     albs_build.add_argument(
-        "--format", choices=["cypher", "cyclonedx", "json"], default="json"
+        "--format", choices=GRAPH_EXPORT_FORMATS, default="json"
     )
 
     albs_artifact_inventory = subparsers.add_parser(

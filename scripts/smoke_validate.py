@@ -442,6 +442,30 @@ def _assert_lockfile_snapshot() -> None:
         "package": "left-pad==1.3.0",
         "dependents": 2,
     }
+    text_payload = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "lockfile",
+            "--path",
+            "tests/fixtures/package-lock.json",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert text_payload.startswith("GRAPH schema=edgp.graph.snapshot.v1")
+    assert "root=demo-app==1.0.0" in text_payload
+    assert "ecosystem=npm" in text_payload
+    assert "nodes=4" in text_payload
+    assert "edges=4" in text_payload
+    assert "topDependedUpon=left-pad==1.3.0" in text_payload
+    assert "topDependents=2" in text_payload
 
 
 def _assert_npm_diagnostics() -> None:
@@ -3073,6 +3097,33 @@ def _assert_public_vertical_reports() -> None:
     )
     assert rpm_repo["schema"] == "edgp.graph.snapshot.v1"
     assert rpm_repo["stats"] == {"edges": 21, "nodes": 20}
+    rpm_repo_text = subprocess.run(
+        [
+            sys.executable,
+            "-B",
+            "-m",
+            "src.cli",
+            "rpm-repo",
+            "--source",
+            "tests/fixtures/repodata/repomd.xml",
+            "--format",
+            "text",
+        ],
+        check=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert rpm_repo_text.startswith("GRAPH schema=edgp.graph.snapshot.v1")
+    assert "root=rpm-repository==public-rpm-repository" in rpm_repo_text
+    assert "ecosystem=rpm" in rpm_repo_text
+    assert "nodes=20" in rpm_repo_text
+    assert "edges=21" in rpm_repo_text
+    assert (
+        "topDependedUpon=nginx-core==1.20.1-28.el9_8.2.alma.1.x86_64"
+        in rpm_repo_text
+    )
+    assert "topDependents=2" in rpm_repo_text
 
     rpm_repo_summary = _run_cli(
         ["rpm-repo-summary", "--source", "tests/fixtures/repodata/repomd.xml"]

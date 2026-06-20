@@ -104,9 +104,11 @@ Start with the demo resolver, then ingest real resolved dependency inputs:
 ```bash
 edgp demo --format cypher
 edgp demo --format cyclonedx
+edgp demo --format text
 edgp lockfile --path package-lock.json --format cypher
 edgp lockfile --path package-lock.json --format cyclonedx
 edgp lockfile --path package-lock.json --format json
+edgp lockfile --path package-lock.json --format text
 edgp export-batch --snapshot graph.json --output-dir exports --format cypher --format cyclonedx
 edgp report --input exports/manifest.json --output export-batch.html
 edgp verify-export-batch --path exports --format text
@@ -136,6 +138,7 @@ edgp dot --path repograph.dot --ecosystem rpm --format json
 edgp dot --path repograph.dot --ecosystem rpm --format cyclonedx
 edgp rpm-installed --limit 100 --max-requirements 40 --format json
 edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format json
+edgp rpm-repo --source https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ --repo-id alma-baseos --format text
 edgp rpm-repo-summary --source repodata/repomd.xml
 edgp rpm-repo-summary --source repodata/repomd.xml --format text
 edgp rpm-repo-summary-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo-summary --triage-summary
@@ -144,6 +147,7 @@ edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repo
 edgp rpm-repo-diff --left-source old/repodata/repomd.xml --right-source new/repodata/repomd.xml --format text
 edgp rpm-repo-bundle --source repodata/repomd.xml --output-dir reports/rpm-repo --impact-node glibc --advisories advisories.json --public-advisory-feed osv.json --libsolv-transaction solver-transaction.txt --license-report --triage-summary
 edgp albs-build --build-id 17812 --format json
+edgp albs-build --build-id 17812 --format text
 edgp albs-build --url https://build.almalinux.org/api/v1/builds/17812/ --format json
 edgp albs-artifact-inventory --build-id 17812
 edgp albs-artifact-inventory --build-id 17812 --format text
@@ -836,6 +840,10 @@ metadata such as `arch`, `distro`, or non-zero `epoch` is available. Live
 `rpm-installed` ingestion also records public RPM metadata such as vendor,
 license, source RPM, install time, architecture, distribution, packager,
 upstream URL, and build host when those fields are present in the RPM database.
+Direct graph exporters also support `--format text`, which prints a compact
+`GRAPH` summary with root, ecosystem, node/edge counts, and the top depended-upon
+node for CI logs or quick terminal checks while JSON, Cypher, and CycloneDX
+remain the full artifact formats.
 `edgp export-batch` turns an existing `edgp.graph.snapshot.v1` into local
 egress artifacts such as `graph.cypher` and `graph.cyclonedx.json`, plus an
 `edgp.export.batch.v1` manifest with paths, media types, byte counts, and
