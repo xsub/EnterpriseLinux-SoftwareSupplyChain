@@ -1028,12 +1028,16 @@ memory-mapping status, and query counts without parsing full JSON.
 `edgp csr-artifact` persists an existing `edgp.graph.snapshot.v1` as a
 memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
 `manifest.json` containing layout version, package IDs, metadata, array shapes,
-SHA-256 digests, and a `storageProfile` that records the `numpy.int32`
+SHA-256 digests, `matrixViews`, and a `storageProfile`. The `matrixViews`
+section names the forward CSR view (`values`, `column_indices`, `row_pointers`)
+for outgoing dependency traversal and the CSC-equivalent incoming view
+materialized as reverse CSR (`reverse_values`, `reverse_column_indices`,
+`reverse_row_pointers`). The `storageProfile` records the `numpy.int32`
 C-contiguous layout, read-only frozen runtime, memory-mappable load mode, digest
 coverage, and byte totals. `load_frozen_csr_artifact()` verifies the manifest,
-array digests, and storage profile against the loaded arrays, then loads the
-arrays with `mmap_mode="r"` by default, so large graphs can be queried without
-rebuilding from XML or JSON on every process start.
+array digests, matrix-view mapping, and storage profile against the loaded
+arrays, then loads the arrays with `mmap_mode="r"` by default, so large graphs
+can be queried without rebuilding from XML or JSON on every process start.
 
 ### JSON Snapshot
 

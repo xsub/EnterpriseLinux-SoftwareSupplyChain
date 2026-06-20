@@ -24,6 +24,23 @@ def test_frozen_csr_artifact_round_trips_with_memmap(tmp_path) -> None:
 
     assert manifest["schema"] == CSR_ARTIFACT_SCHEMA
     assert manifest["layoutVersion"] == 1
+    assert manifest["matrixViews"] == {
+        "csr": {
+            "format": "csr",
+            "direction": "outgoing_dependencies",
+            "values": "values",
+            "indices": "column_indices",
+            "indptr": "row_pointers",
+        },
+        "csc": {
+            "format": "csc",
+            "direction": "incoming_dependents",
+            "values": "reverse_values",
+            "indices": "reverse_column_indices",
+            "indptr": "reverse_row_pointers",
+            "materialization": "reverse_csr_transpose",
+        },
+    }
     assert manifest["storageProfile"]["runtime"] == "frozen"
     assert manifest["storageProfile"]["dtype"] == "int32"
     assert manifest["storageProfile"]["cContiguous"] is True
@@ -117,6 +134,20 @@ def test_frozen_csr_artifact_rejects_tampered_storage_profile_digest_coverage(
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(ValueError, match="digest coverage mismatch"):
+        load_frozen_csr_artifact(tmp_path)
+
+
+def test_frozen_csr_artifact_rejects_tampered_matrix_views(tmp_path) -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+    write_frozen_csr_artifact(graph.freeze(), tmp_path)
+
+    manifest_path = tmp_path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["matrixViews"]["csc"]["indices"] = "column_indices"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="matrixViews mismatch"):
         load_frozen_csr_artifact(tmp_path)
 
 

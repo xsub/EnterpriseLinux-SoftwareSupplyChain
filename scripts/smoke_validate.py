@@ -7,6 +7,7 @@ import ast
 import compileall
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -7063,6 +7064,21 @@ def _assert_csr_artifact() -> None:
         assert manifest["schema"] == "edgp.csr.artifact.v1"
         assert manifest["nodes"] == 3
         assert manifest["edges"] == 2
+        assert manifest["matrixViews"]["csr"] == {
+            "format": "csr",
+            "direction": "outgoing_dependencies",
+            "values": "values",
+            "indices": "column_indices",
+            "indptr": "row_pointers",
+        }
+        assert manifest["matrixViews"]["csc"] == {
+            "format": "csc",
+            "direction": "incoming_dependents",
+            "values": "reverse_values",
+            "indices": "reverse_column_indices",
+            "indptr": "reverse_row_pointers",
+            "materialization": "reverse_csr_transpose",
+        }
         assert manifest["storageProfile"]["layout"] == "numpy.int32.c_contiguous"
         assert manifest["storageProfile"]["readOnly"] is True
         assert manifest["storageProfile"]["memoryMappable"] is True
@@ -7111,6 +7127,29 @@ def _assert_csr_artifact() -> None:
         assert validation["csrArtifact"]["nodes"] == 3
         assert validation["csrArtifact"]["storageProfile"]["memoryMapped"] is True
         manifest_path = output_dir / "manifest.json"
+        tampered_matrix_dir = Path(temp_dir) / "csr-artifact-tampered-matrix"
+        shutil.copytree(output_dir, tampered_matrix_dir)
+        tampered_matrix_path = tampered_matrix_dir / "manifest.json"
+        tampered_matrix_manifest = json.loads(
+            tampered_matrix_path.read_text(encoding="utf-8")
+        )
+        tampered_matrix_manifest["matrixViews"]["csc"]["indices"] = (
+            "column_indices"
+        )
+        tampered_matrix_path.write_text(
+            json.dumps(tampered_matrix_manifest), encoding="utf-8"
+        )
+        matrix_validation_failure = _run_cli_allow_failure(
+            ["validate", "--path", str(tampered_matrix_dir)]
+        )
+        assert matrix_validation_failure["ok"] is False
+        assert (
+            matrix_validation_failure["failures"][0]["code"]
+            == "csrArtifact.verificationFailed"
+        )
+        assert "matrixViews mismatch" in matrix_validation_failure["failures"][0][
+            "message"
+        ]
         tampered_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         tampered_manifest["storageProfile"]["totalBytes"] += 4
         manifest_path.write_text(json.dumps(tampered_manifest), encoding="utf-8")

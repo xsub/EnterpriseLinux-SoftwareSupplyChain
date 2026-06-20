@@ -22,6 +22,45 @@
     "edges": {"minimum": 0, "type": "integer"},
     "layout": {"const": "frozen_csr_numpy_npy_directory"},
     "layoutVersion": {"const": 1},
+    "matrixViews": {
+      "additionalProperties": false,
+      "properties": {
+        "csc": {
+          "additionalProperties": false,
+          "properties": {
+            "direction": {"const": "incoming_dependents"},
+            "format": {"const": "csc"},
+            "indices": {"const": "reverse_column_indices"},
+            "indptr": {"const": "reverse_row_pointers"},
+            "materialization": {"const": "reverse_csr_transpose"},
+            "values": {"const": "reverse_values"}
+          },
+          "required": [
+            "format",
+            "direction",
+            "values",
+            "indices",
+            "indptr",
+            "materialization"
+          ],
+          "type": "object"
+        },
+        "csr": {
+          "additionalProperties": false,
+          "properties": {
+            "direction": {"const": "outgoing_dependencies"},
+            "format": {"const": "csr"},
+            "indices": {"const": "column_indices"},
+            "indptr": {"const": "row_pointers"},
+            "values": {"const": "values"}
+          },
+          "required": ["format", "direction", "values", "indices", "indptr"],
+          "type": "object"
+        }
+      },
+      "required": ["csr", "csc"],
+      "type": "object"
+    },
     "nodes": {"minimum": 0, "type": "integer"},
     "packageIds": {"items": {"type": "string"}, "type": "array"},
     "schema": {"const": "edgp.csr.artifact.v1"},
@@ -103,6 +142,7 @@
     "nodes",
     "edges",
     "arrays",
+    "matrixViews",
     "storageProfile",
     "packageIds",
     "vertexMetadata"

@@ -23,6 +23,24 @@ _ARRAY_NAMES = (
     "reverse_row_pointers",
 )
 
+_MATRIX_VIEWS: dict[str, dict[str, str]] = {
+    "csr": {
+        "format": "csr",
+        "direction": "outgoing_dependencies",
+        "values": "values",
+        "indices": "column_indices",
+        "indptr": "row_pointers",
+    },
+    "csc": {
+        "format": "csc",
+        "direction": "incoming_dependents",
+        "values": "reverse_values",
+        "indices": "reverse_column_indices",
+        "indptr": "reverse_row_pointers",
+        "materialization": "reverse_csr_transpose",
+    },
+}
+
 
 def write_frozen_csr_artifact(
     graph: FrozenCSRGraph, output_dir: str | Path
@@ -52,6 +70,7 @@ def write_frozen_csr_artifact(
         "nodes": len(graph),
         "edges": int(len(graph.column_indices)),
         "arrays": arrays,
+        "matrixViews": _artifact_matrix_views(),
         "storageProfile": _artifact_storage_profile(graph),
         "packageIds": list(graph.package_ids),
         "vertexMetadata": {
@@ -85,6 +104,7 @@ def load_frozen_csr_artifact(
         name: _load_manifest_array(source, manifest, name, mmap_mode=mmap_mode)
         for name in _ARRAY_NAMES
     }
+    _validate_matrix_views(manifest)
     _validate_storage_profile(manifest, arrays)
     package_ids = tuple(str(package_id) for package_id in manifest["packageIds"])
     vertex_map = {package_id: index for index, package_id in enumerate(package_ids)}
@@ -125,6 +145,14 @@ def _load_manifest_array(
     if list(array.shape) != list(descriptor["shape"]):
         raise ValueError(f"CSR artifact array shape mismatch: {name}")
     return array
+
+
+def _validate_matrix_views(manifest: dict[str, Any]) -> None:
+    matrix_views = manifest.get("matrixViews")
+    if not isinstance(matrix_views, dict):
+        raise ValueError("CSR artifact manifest is missing matrixViews")
+    if matrix_views != _artifact_matrix_views():
+        raise ValueError("CSR artifact matrixViews mismatch")
 
 
 def _validate_storage_profile(
@@ -200,6 +228,10 @@ def _artifact_storage_profile(graph: FrozenCSRGraph) -> dict[str, object]:
         + graph.reverse_row_pointers.nbytes
     )
     return profile
+
+
+def _artifact_matrix_views() -> dict[str, dict[str, str]]:
+    return {name: dict(view) for name, view in _MATRIX_VIEWS.items()}
 
 
 def _sha256(path: Path) -> str:

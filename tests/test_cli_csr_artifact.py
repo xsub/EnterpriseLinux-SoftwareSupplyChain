@@ -28,6 +28,13 @@ def test_cli_csr_artifact_writes_verified_runtime_artifact(tmp_path, capsys) -> 
     assert manifest["schema"] == "edgp.csr.artifact.v1"
     assert manifest["nodes"] == 3
     assert manifest["edges"] == 2
+    assert manifest["matrixViews"]["csr"]["direction"] == "outgoing_dependencies"
+    assert manifest["matrixViews"]["csr"]["indices"] == "column_indices"
+    assert manifest["matrixViews"]["csc"]["direction"] == "incoming_dependents"
+    assert manifest["matrixViews"]["csc"]["indices"] == "reverse_column_indices"
+    assert manifest["matrixViews"]["csc"]["materialization"] == (
+        "reverse_csr_transpose"
+    )
     assert manifest["storageProfile"]["layout"] == "numpy.int32.c_contiguous"
     assert manifest["storageProfile"]["memoryMappable"] is True
     assert manifest["storageProfile"]["digestCoverage"] == [

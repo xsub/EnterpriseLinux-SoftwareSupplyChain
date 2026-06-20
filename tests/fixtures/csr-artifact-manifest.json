@@ -41,6 +41,23 @@
   "edges": 2,
   "layout": "frozen_csr_numpy_npy_directory",
   "layoutVersion": 1,
+  "matrixViews": {
+    "csc": {
+      "direction": "incoming_dependents",
+      "format": "csc",
+      "indices": "reverse_column_indices",
+      "indptr": "reverse_row_pointers",
+      "materialization": "reverse_csr_transpose",
+      "values": "reverse_values"
+    },
+    "csr": {
+      "direction": "outgoing_dependencies",
+      "format": "csr",
+      "indices": "column_indices",
+      "indptr": "row_pointers",
+      "values": "values"
+    }
+  },
   "nodes": 3,
   "packageIds": ["app==1.0.0", "lib==2.0.0", "core==1.0.0"],
   "schema": "edgp.csr.artifact.v1",
