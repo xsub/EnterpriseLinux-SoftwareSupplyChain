@@ -1452,6 +1452,8 @@ def _report_title(payload: dict[str, Any]) -> str:
         return f"Query Report - {payload.get('operation') or 'query'}"
     if schema == "edgp.bundle.catalog.v1":
         return "Bundle Catalog"
+    if schema == "edgp.parallel.query.report.v1":
+        return "Parallel Query Report"
     if schema == "edgp.performance.report.v1":
         return "Performance Report"
     if schema == "edgp.triage.summary.v1":

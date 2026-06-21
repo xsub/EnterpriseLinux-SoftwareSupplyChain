@@ -188,6 +188,7 @@ def test_cli_parallel_query_bundle_writes_verifiable_static_bundle(
 
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["bundle"]["sourceKind"] == "parallel-query"
+    assert manifest["reports"][0]["title"] == "Parallel Query Report"
     assert manifest["reports"][0]["href"] == "001-parallel-query-report.html"
     assert manifest["reports"][0]["schema"] == "edgp.parallel.query.report.v1"
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
@@ -205,6 +206,8 @@ def test_cli_parallel_query_bundle_writes_verifiable_static_bundle(
     assert 'data-testid="parallel-query-runtime-panel"' in html
     assert 'data-testid="parallel-query-results-panel"' in html
     assert "csr-artifact" in html
+    index_html = (output_dir / "index.html").read_text(encoding="utf-8")
+    assert "Parallel Query Report" in index_html
 
     assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
     assert capsys.readouterr().out.startswith("OK ")
