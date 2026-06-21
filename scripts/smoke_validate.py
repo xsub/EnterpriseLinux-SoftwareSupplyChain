@@ -7312,7 +7312,55 @@ def _assert_parallel_query() -> None:
     ).stdout.strip()
     assert query_text.startswith("OK schema=edgp.parallel.query.report.v1")
     assert "queries=2" in query_text
+    assert "inputType=snapshot" in query_text
+    assert "memoryMapped=false" in query_text
     assert "totalResultNodes=4" in query_text
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        artifact_dir = Path(temp_dir) / "csr-artifact"
+        _run_cli(
+            [
+                "csr-artifact",
+                "--snapshot",
+                "tests/fixtures/snapshot-right.json",
+                "--output-dir",
+                str(artifact_dir),
+            ]
+        )
+        artifact_payload = _run_cli(
+            [
+                "parallel-query",
+                "--csr-artifact",
+                str(artifact_dir),
+                "--query",
+                "dependencies:app==1.0.0",
+                "--query",
+                "dependents:core==1.0.0",
+                "--workers",
+                "2",
+                "--backend",
+                "auto",
+            ]
+        )
+        assert artifact_payload["summary"]["inputType"] == "csr-artifact"
+        assert artifact_payload["summary"]["memoryMapped"] is True
+        assert artifact_payload["results"][0]["nodes"] == [
+            "lib==2.0.0",
+            "core==1.0.0",
+        ]
+        artifact_text = _run_cli_text(
+            [
+                "parallel-query",
+                "--csr-artifact",
+                str(artifact_dir),
+                "--query",
+                "dependencies:app==1.0.0",
+                "--format",
+                "text",
+            ]
+        )
+        assert "inputType=csr-artifact" in artifact_text
+        assert "memoryMapped=true" in artifact_text
 
 
 def _assert_rpm_installed() -> None:

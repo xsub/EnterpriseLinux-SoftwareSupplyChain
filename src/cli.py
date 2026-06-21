@@ -29,7 +29,7 @@ from src.adapters.rpm_installed import InstalledRpmAdapter
 from src.benchmark import run_synthetic_benchmark
 from src.bundle_catalog import build_bundle_catalog_report
 from src.core_graph.accelerators import accelerator_profile
-from src.core_graph.artifacts import write_frozen_csr_artifact
+from src.core_graph.artifacts import load_frozen_csr_artifact, write_frozen_csr_artifact
 from src.core_graph.parallel import run_parallel_reachability_queries
 from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.export_batch import (
@@ -2265,6 +2265,8 @@ def _format_parallel_query_result(report: dict[str, Any]) -> str:
     parts = [
         "OK",
         "schema=edgp.parallel.query.report.v1",
+        f"inputType={_text_value(summary.get('inputType', ''))}",
+        f"memoryMapped={str(bool(summary.get('memoryMapped'))).lower()}",
         f"queries={int(summary.get('queries', 0) or 0)}",
         f"workers={int(summary.get('workers', 0) or 0)}",
         f"backend={_text_value(summary.get('backend', ''))}",
@@ -5832,7 +5834,17 @@ def build_parser() -> argparse.ArgumentParser:
         "parallel-query",
         help="Run independent frozen-CSR reachability queries concurrently",
     )
-    parallel_query.add_argument("--snapshot", type=Path, required=True)
+    parallel_query_input = parallel_query.add_mutually_exclusive_group(required=True)
+    parallel_query_input.add_argument(
+        "--snapshot",
+        type=Path,
+        help="EDGP graph snapshot JSON to freeze before running queries",
+    )
+    parallel_query_input.add_argument(
+        "--csr-artifact",
+        type=Path,
+        help="memory-mappable frozen CSR artifact directory to query directly",
+    )
     parallel_query.add_argument(
         "--query",
         action="append",
@@ -7284,14 +7296,26 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "parallel-query":
-        snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
-        graph = graph_from_snapshot(snapshot).freeze()
+        if args.csr_artifact is not None:
+            graph = load_frozen_csr_artifact(args.csr_artifact)
+            input_type = "csr-artifact"
+            input_path = args.csr_artifact
+        else:
+            snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
+            graph = graph_from_snapshot(snapshot).freeze()
+            input_type = "snapshot"
+            input_path = args.snapshot
         report = run_parallel_reachability_queries(
             graph,
             _parallel_query_specs(args.query),
             max_workers=args.workers,
             backend=args.backend,
         )
+        summary = report.get("summary")
+        if isinstance(summary, dict):
+            summary["inputType"] = input_type
+            summary["inputPath"] = str(input_path)
+            summary["memoryMapped"] = bool(graph.storage_profile().get("memoryMapped"))
         if args.format == "text":
             print(_format_parallel_query_result(report))
         else:

@@ -19,6 +19,8 @@
   "summary": {
     "backend": "auto",
     "durationMs": 1.23,
+    "inputType": "snapshot",
+    "memoryMapped": false,
     "queries": 2,
     "selectedBackend": "python",
     "workers": 2

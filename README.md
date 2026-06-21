@@ -353,6 +353,7 @@ edgp accelerator-status --backend auto
 edgp accelerator-status --backend auto --format text
 edgp parallel-query --snapshot graph.json --query dependencies:pkg==1.0.0 --query dependents:lib==2.0.0 --workers 4 --backend auto
 edgp parallel-query --snapshot graph.json --query dependencies:pkg==1.0.0 --query dependents:lib==2.0.0 --workers 4 --backend auto --format text
+edgp parallel-query --csr-artifact artifacts/csr --query dependencies:pkg==1.0.0 --workers 4 --backend auto --format text
 edgp performance-report --scenario 1000:3 --scenario 10000:5
 edgp performance-report --scenario 1000:3 --scenario 10000:5 --backend auto --format text
 edgp performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir reports/performance --triage-summary --format text
@@ -1027,9 +1028,12 @@ building a graph. It includes the selected traversal backend, the Numba
 `.[fast]` extra, and the experimental GraphBLAS `.[graphblas]` extra while
 keeping frozen CSR as the canonical storage contract.
 `edgp parallel-query` runs independent reachability queries concurrently
-against one frozen CSR runtime. It accepts repeated `--query` values in
-`dependencies:NODE` or `dependents:NODE` form, preserves result ordering, and
-reports worker count plus selected traversal backend. Use `--format text` on
+against one frozen CSR runtime. It accepts either `--snapshot` for one-shot JSON
+snapshot freezing or `--csr-artifact` for direct querying of a previously
+persisted, memory-mapped CSR artifact. Repeated `--query` values use
+`dependencies:NODE` or `dependents:NODE` form, preserve result ordering, and
+report worker count, selected traversal backend, input type, and whether the
+runtime arrays were memory-mapped. Use `--format text` on
 `benchmark`, `performance-report`, `accelerator-status`, `parallel-query`, or
 `csr-artifact` when a CI log should show backend choice, CSR layout, CSR/CSC
 matrix views, memory-mapping status, and query counts without parsing full JSON.

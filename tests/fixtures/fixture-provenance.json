@@ -417,7 +417,7 @@
       "group": "Performance, CSR, and license reports",
       "kind": "synthetic-report",
       "reason": "Stable report samples cover static rendering and schema contracts.",
-      "sha256": "40f8689a3c0fe7373804a1ca058b2561d38dae07fef60d832b104a50b2b7b960"
+      "sha256": "a36f642155d90d81dff535ae6d1a508ca646baeed2374352e868ffc2aa1deaac"
     }
   ]
 }

@@ -457,6 +457,9 @@ surfaces are:
   the public default install.
 - Execute independent frozen-CSR reachability queries concurrently with
   `edgp parallel-query`, preserving query order in a versioned JSON report.
+- Query verified memory-mapped CSR artifact directories directly with
+  `edgp parallel-query --csr-artifact`, avoiding repeated snapshot rebuilds in
+  build-once/query-many CI and workbench flows.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.
