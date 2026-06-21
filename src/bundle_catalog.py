@@ -11,6 +11,7 @@ from typing import Any, Callable, Sequence
 from src.output.report_bundle import verify_report_bundle, verify_report_bundle_archive
 
 BUNDLE_CATALOG_SCHEMA = "edgp.bundle.catalog.v1"
+PARALLEL_QUERY_SCHEMA = "edgp.parallel.query.report.v1"
 
 
 def build_bundle_catalog_report(
@@ -51,10 +52,8 @@ def _bundle_directory_catalog_entry(
     bundle_dir = bundle_dir.resolve()
     verification = verify_report_bundle(bundle_dir, manifest_name=manifest_name)
     manifest = _load_manifest(bundle_dir / manifest_name)
-    triage_summary = _triage_summary(
-        lambda label: _load_manifest(_bundle_member_path(bundle_dir, label)),
-        manifest,
-    )
+    load_member = lambda label: _load_manifest(_bundle_member_path(bundle_dir, label))
+    triage_summary = _triage_summary(load_member, manifest)
     return _catalog_entry(
         path=bundle_dir,
         input_type="directory",
@@ -62,6 +61,7 @@ def _bundle_directory_catalog_entry(
         verification=verification,
         manifest=manifest,
         triage_summary=triage_summary,
+        load_member=load_member,
     )
 
 
@@ -79,10 +79,8 @@ def _bundle_archive_catalog_entry(
     if not isinstance(verification, dict):
         verification = {}
     manifest = _load_archive_manifest(archive_path, manifest_name)
-    triage_summary = _triage_summary(
-        lambda label: _load_archive_json_member(archive_path, label),
-        manifest,
-    )
+    load_member = lambda label: _load_archive_json_member(archive_path, label)
+    triage_summary = _triage_summary(load_member, manifest)
     return _catalog_entry(
         path=archive_path,
         input_type="archive",
@@ -90,6 +88,7 @@ def _bundle_archive_catalog_entry(
         verification=verification,
         manifest=manifest,
         triage_summary=triage_summary,
+        load_member=load_member,
     )
 
 
@@ -101,6 +100,7 @@ def _catalog_entry(
     verification: dict[str, Any],
     manifest: dict[str, Any],
     triage_summary: dict[str, Any],
+    load_member: Callable[[str], dict[str, Any]],
 ) -> dict[str, Any]:
     bundle_metadata = manifest.get("bundle", {}) if isinstance(manifest, dict) else {}
     if not isinstance(bundle_metadata, dict):
@@ -116,6 +116,7 @@ def _catalog_entry(
     verification_summary = verification.get("summary", {})
     if not isinstance(verification_summary, dict):
         verification_summary = {}
+    parallel_query_summary = _parallel_query_summary(load_member, reports)
     return {
         "path": str(path),
         "inputType": input_type,
@@ -128,6 +129,14 @@ def _catalog_entry(
         "failureCount": int(verification_summary.get("failures", 0) or 0),
         "failureCodes": failure_codes,
         "reportSchemas": _report_schemas(reports),
+        "parallelQueryReports": parallel_query_summary["parallelQueryReports"],
+        "parallelQueryQueries": parallel_query_summary["parallelQueryQueries"],
+        "parallelQueryResultNodes": parallel_query_summary[
+            "parallelQueryResultNodes"
+        ],
+        "parallelQueryMemoryMappedReports": parallel_query_summary[
+            "parallelQueryMemoryMappedReports"
+        ],
         "triageStatus": str(triage_summary.get("status") or "unknown"),
         "graphDiffPolicyFailures": int(
             triage_summary.get("graphDiffPolicyFailures", 0) or 0
@@ -233,6 +242,45 @@ def _report_schemas(reports: list[object]) -> list[str]:
         if isinstance(report, dict) and isinstance(report.get("schema"), str):
             schemas.append(report["schema"])
     return sorted(set(schemas))
+
+
+def _parallel_query_summary(
+    load_member: Callable[[str], dict[str, Any]],
+    reports: list[object],
+) -> dict[str, int]:
+    summary = {
+        "parallelQueryReports": 0,
+        "parallelQueryQueries": 0,
+        "parallelQueryResultNodes": 0,
+        "parallelQueryMemoryMappedReports": 0,
+    }
+    for report in reports:
+        if (
+            not isinstance(report, dict)
+            or report.get("schema") != PARALLEL_QUERY_SCHEMA
+        ):
+            continue
+        source = report.get("source")
+        if not isinstance(source, str) or not source:
+            continue
+        payload = load_member(source)
+        if payload.get("schema") != PARALLEL_QUERY_SCHEMA:
+            continue
+        report_summary = payload.get("summary")
+        if not isinstance(report_summary, dict):
+            report_summary = {}
+        summary["parallelQueryReports"] += 1
+        summary["parallelQueryQueries"] += int(report_summary.get("queries", 0) or 0)
+        if bool(report_summary.get("memoryMapped")):
+            summary["parallelQueryMemoryMappedReports"] += 1
+        results = payload.get("results")
+        if isinstance(results, list):
+            summary["parallelQueryResultNodes"] += sum(
+                int(result.get("count", 0) or 0)
+                for result in results
+                if isinstance(result, dict)
+            )
+    return summary
 
 
 def _triage_summary(
@@ -450,6 +498,19 @@ def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "diffTreeNetEdgeDelta": sum(
             int(entry.get("diffTreeNetEdgeDelta", 0) or 0) for entry in entries
         ),
+        "parallelQueryReports": sum(
+            int(entry.get("parallelQueryReports", 0) or 0) for entry in entries
+        ),
+        "parallelQueryQueries": sum(
+            int(entry.get("parallelQueryQueries", 0) or 0) for entry in entries
+        ),
+        "parallelQueryResultNodes": sum(
+            int(entry.get("parallelQueryResultNodes", 0) or 0) for entry in entries
+        ),
+        "parallelQueryMemoryMappedReports": sum(
+            int(entry.get("parallelQueryMemoryMappedReports", 0) or 0)
+            for entry in entries
+        ),
         "realDataCoveragePolicyFailures": sum(
             int(entry.get("realDataCoveragePolicyFailures", 0) or 0)
             for entry in entries
@@ -508,6 +569,10 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "diffTreeEdgeChurn": 0,
                 "diffTreeNetNodeDelta": 0,
                 "diffTreeNetEdgeDelta": 0,
+                "parallelQueryReports": 0,
+                "parallelQueryQueries": 0,
+                "parallelQueryResultNodes": 0,
+                "parallelQueryMemoryMappedReports": 0,
                 "realDataCoveragePolicyFailures": 0,
                 "realDataCoverageDiffPolicyFailures": 0,
                 "realDataReplacementPlanPolicyFailures": 0,
@@ -544,6 +609,18 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         )
         row["diffTreeNetEdgeDelta"] += int(
             entry.get("diffTreeNetEdgeDelta", 0) or 0
+        )
+        row["parallelQueryReports"] += int(
+            entry.get("parallelQueryReports", 0) or 0
+        )
+        row["parallelQueryQueries"] += int(
+            entry.get("parallelQueryQueries", 0) or 0
+        )
+        row["parallelQueryResultNodes"] += int(
+            entry.get("parallelQueryResultNodes", 0) or 0
+        )
+        row["parallelQueryMemoryMappedReports"] += int(
+            entry.get("parallelQueryMemoryMappedReports", 0) or 0
         )
         row["realDataCoveragePolicyFailures"] += int(
             entry.get("realDataCoveragePolicyFailures", 0) or 0

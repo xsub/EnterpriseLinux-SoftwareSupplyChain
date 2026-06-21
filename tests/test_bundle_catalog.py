@@ -46,6 +46,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
         "diffTreeEdgeChurn": 0,
         "diffTreeNetNodeDelta": 0,
         "diffTreeNetEdgeDelta": 0,
+        "parallelQueryReports": 0,
+        "parallelQueryQueries": 0,
+        "parallelQueryResultNodes": 0,
+        "parallelQueryMemoryMappedReports": 0,
         "realDataCoveragePolicyFailures": 0,
         "realDataCoverageDiffPolicyFailures": 0,
         "realDataReplacementPlanPolicyFailures": 0,
@@ -67,6 +71,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "diffTreeEdgeChurn": 0,
             "diffTreeNetNodeDelta": 0,
             "diffTreeNetEdgeDelta": 0,
+            "parallelQueryReports": 0,
+            "parallelQueryQueries": 0,
+            "parallelQueryResultNodes": 0,
+            "parallelQueryMemoryMappedReports": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -92,6 +100,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "diffTreeEdgeChurn": 0,
             "diffTreeNetNodeDelta": 0,
             "diffTreeNetEdgeDelta": 0,
+            "parallelQueryReports": 0,
+            "parallelQueryQueries": 0,
+            "parallelQueryResultNodes": 0,
+            "parallelQueryMemoryMappedReports": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -149,6 +161,47 @@ def test_build_bundle_catalog_report_marks_clean_catalog_pass(tmp_path) -> None:
     assert report["status"] == "pass"
     assert report["summary"]["okBundles"] == 1
     assert report["summary"]["withoutTriage"] == 1
+
+
+def test_build_bundle_catalog_summarizes_parallel_query_bundles(tmp_path) -> None:
+    parallel_query_report = json.loads(
+        Path("tests/fixtures/parallel-query-report.json").read_text(encoding="utf-8")
+    )
+    parallel_query_report["summary"]["inputType"] = "csr-artifact"
+    parallel_query_report["summary"]["memoryMapped"] = True
+    parallel_query_bundle = tmp_path / "parallel-query-bundle"
+    parallel_query_bundle.mkdir()
+    parallel_query_path = parallel_query_bundle / "parallel-query-report.json"
+    parallel_query_path.write_text(
+        json.dumps(parallel_query_report),
+        encoding="utf-8",
+    )
+    write_report_bundle(
+        [parallel_query_path],
+        parallel_query_bundle,
+        bundle_metadata={
+            "sourceKind": "parallel-query",
+            "command": "edgp parallel-query-bundle --csr-artifact artifacts/csr",
+        },
+        include_triage_summary=True,
+    )
+
+    report = build_bundle_catalog_report([parallel_query_bundle])
+
+    assert report["status"] == "pass"
+    assert report["summary"]["parallelQueryReports"] == 1
+    assert report["summary"]["parallelQueryQueries"] == 2
+    assert report["summary"]["parallelQueryResultNodes"] == 4
+    assert report["summary"]["parallelQueryMemoryMappedReports"] == 1
+    assert report["bundles"][0]["parallelQueryReports"] == 1
+    assert report["bundles"][0]["parallelQueryQueries"] == 2
+    assert report["bundles"][0]["parallelQueryResultNodes"] == 4
+    assert report["bundles"][0]["parallelQueryMemoryMappedReports"] == 1
+    assert report["sourceKinds"][0]["sourceKind"] == "parallel-query"
+    assert report["sourceKinds"][0]["parallelQueryReports"] == 1
+    assert report["sourceKinds"][0]["parallelQueryQueries"] == 2
+    assert report["sourceKinds"][0]["parallelQueryResultNodes"] == 4
+    assert report["sourceKinds"][0]["parallelQueryMemoryMappedReports"] == 1
 
 
 def test_build_bundle_catalog_report_accepts_bundle_archives(tmp_path) -> None:
@@ -292,6 +345,10 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
             "diffTreeEdgeChurn": 3,
             "diffTreeNetNodeDelta": 1,
             "diffTreeNetEdgeDelta": 1,
+            "parallelQueryReports": 0,
+            "parallelQueryQueries": 0,
+            "parallelQueryResultNodes": 0,
+            "parallelQueryMemoryMappedReports": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -361,6 +418,10 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
             "diffTreeEdgeChurn": 0,
             "diffTreeNetNodeDelta": 0,
             "diffTreeNetEdgeDelta": 0,
+            "parallelQueryReports": 0,
+            "parallelQueryQueries": 0,
+            "parallelQueryResultNodes": 0,
+            "parallelQueryMemoryMappedReports": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,

@@ -306,6 +306,8 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert 'data-bundle-problem="false"' in html
     assert "Status" in html
     assert "fail" in html
+    assert "Parallel Query Reports" in html
+    assert "Parallel Query Result Nodes" in html
     assert "Diff Tree Policies" in html
     assert "Diff Tree Policy Failures" in html
     assert "Diff Tree Node Churn" in html

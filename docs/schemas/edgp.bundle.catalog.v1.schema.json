@@ -52,6 +52,22 @@
           "diffTreeNetEdgeDelta": {
             "type": "integer"
           },
+          "parallelQueryReports": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryQueries": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryResultNodes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryMemoryMappedReports": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "graphDiffPolicyFailures": {
             "minimum": 0,
             "type": "integer"
@@ -183,6 +199,10 @@
           "diffTreeEdgeChurn",
           "diffTreeNetNodeDelta",
           "diffTreeNetEdgeDelta",
+          "parallelQueryReports",
+          "parallelQueryQueries",
+          "parallelQueryResultNodes",
+          "parallelQueryMemoryMappedReports",
           "realDataCoveragePolicyFailures",
           "realDataCoverageDiffPolicyFailures",
           "realDataReplacementPlanPolicyFailures",
@@ -231,6 +251,22 @@
             "type": "integer"
           },
           "diffTreeNetEdgeDelta": {
+            "type": "integer"
+          },
+          "parallelQueryReports": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryQueries": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryResultNodes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryMemoryMappedReports": {
+            "minimum": 0,
             "type": "integer"
           },
           "graphDiffPolicyFailures": {
@@ -323,6 +359,10 @@
           "diffTreeEdgeChurn",
           "diffTreeNetNodeDelta",
           "diffTreeNetEdgeDelta",
+          "parallelQueryReports",
+          "parallelQueryQueries",
+          "parallelQueryResultNodes",
+          "parallelQueryMemoryMappedReports",
           "realDataCoveragePolicyFailures",
           "realDataCoverageDiffPolicyFailures",
           "realDataReplacementPlanPolicyFailures",
@@ -377,6 +417,22 @@
           "type": "integer"
         },
         "diffTreeNetEdgeDelta": {
+          "type": "integer"
+        },
+        "parallelQueryReports": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parallelQueryQueries": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parallelQueryResultNodes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parallelQueryMemoryMappedReports": {
+          "minimum": 0,
           "type": "integer"
         },
         "graphDiffPolicyFailures": {
@@ -440,6 +496,10 @@
         "diffTreeEdgeChurn",
         "diffTreeNetNodeDelta",
         "diffTreeNetEdgeDelta",
+        "parallelQueryReports",
+        "parallelQueryQueries",
+        "parallelQueryResultNodes",
+        "parallelQueryMemoryMappedReports",
         "realDataCoveragePolicyFailures",
         "realDataCoverageDiffPolicyFailures",
         "realDataReplacementPlanPolicyFailures",

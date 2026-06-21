@@ -467,6 +467,20 @@ def _diff_tree_rollup_text_parts(summary: dict[str, Any]) -> list[str]:
     return parts
 
 
+def _parallel_query_rollup_text_parts(summary: dict[str, Any]) -> list[str]:
+    parts = []
+    for key in (
+        "parallelQueryReports",
+        "parallelQueryQueries",
+        "parallelQueryResultNodes",
+        "parallelQueryMemoryMappedReports",
+    ):
+        value = int(summary.get(key, 0) or 0)
+        if value:
+            parts.append(f"{key}={value}")
+    return parts
+
+
 def _source_kind_rollup_text_parts(catalog: dict[str, Any]) -> list[str]:
     rendered = []
     for row in _dict_list(catalog.get("sourceKinds")):
@@ -479,6 +493,10 @@ def _source_kind_rollup_text_parts(catalog: dict[str, Any]) -> list[str]:
             "diffTreeEdgeChurn",
             "diffTreeNetNodeDelta",
             "diffTreeNetEdgeDelta",
+            "parallelQueryReports",
+            "parallelQueryQueries",
+            "parallelQueryResultNodes",
+            "parallelQueryMemoryMappedReports",
             "realDataCoveragePolicyFailures",
             "realDataCoverageDiffPolicyFailures",
             "realDataReplacementPlanPolicyFailures",
@@ -1153,6 +1171,7 @@ def _format_bundle_catalog_result(index_path: Path) -> str:
     ]
     parts.extend(_policy_failure_text_parts(summary))
     parts.extend(_diff_tree_rollup_text_parts(summary))
+    parts.extend(_parallel_query_rollup_text_parts(summary))
     parts.extend(
         _source_kind_rollup_text_parts(catalog if isinstance(catalog, dict) else {})
     )

@@ -7393,6 +7393,28 @@ def _assert_parallel_query() -> None:
             encoding="utf-8"
         )
         assert 'data-testid="parallel-query-results-panel"' in html
+        catalog_dir = Path(temp_dir) / "parallel-query-catalog"
+        catalog_text = _run_cli_text(
+            [
+                "bundle-catalog",
+                "--bundle",
+                str(bundle_dir),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+            ]
+        )
+        assert "parallelQueryReports=1" in catalog_text
+        assert "parallelQueryQueries=2" in catalog_text
+        assert "parallelQueryResultNodes=4" in catalog_text
+        assert "parallelQueryMemoryMappedReports=1" in catalog_text
+        catalog = json.loads(
+            (catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8")
+        )
+        assert catalog["summary"]["parallelQueryReports"] == 1
+        assert catalog["sourceKinds"][0]["sourceKind"] == "parallel-query"
+        assert catalog["sourceKinds"][0]["parallelQueryMemoryMappedReports"] == 1
 
 
 def _assert_rpm_installed() -> None:

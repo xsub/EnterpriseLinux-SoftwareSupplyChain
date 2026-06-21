@@ -1272,15 +1272,19 @@ deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
 with bundle paths, input type, source kinds, report schemas, triage status,
 graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
 failure counts, replacement-plan and replacement-plan-diff policy failure
-counts, real-data failure codes, verifier failure codes, and bundle
-fingerprints.
+counts, parallel-query report/query/result-node counts, memory-mapped
+parallel-query report counts, real-data failure codes, verifier failure codes,
+and bundle fingerprints.
 Source-kind rows include triage pass/warn/fail counts plus
 `graphDiffPolicyFailures`, `diffTreePolicyFailures`,
+`parallelQueryReports`, `parallelQueryQueries`,
+`parallelQueryResultNodes`, `parallelQueryMemoryMappedReports`,
 `realDataCoveragePolicyFailures`, and
 `realDataCoverageDiffPolicyFailures`,
 `realDataReplacementPlanPolicyFailures`, and
 `realDataReplacementPlanDiffPolicyFailures`, so large evidence batches can show
-which input family contributed failed snapshot-drift or real-data policy gates.
+which input family contributed failed snapshot-drift gates, real-data policy
+gates, or memory-mapped CSR query evidence.
 They also roll up verifier and real-data failure-code lists per source kind, so
 the catalog can point to the dominant failure class without opening every
 bundle row.
@@ -1294,9 +1298,10 @@ rendered as a static, verifiable bundle, and `--archive-output` writes that
 generated catalog bundle as a deterministic `.tar.gz` in the same pass. This
 gives CI systems and future workbench/RAG ingestion one compact index, plus one
 portable handoff archive, over a batch of public-input evidence bundles.
-With `--format text`, non-zero source-kind policy and diff-tree cone rollups
-are emitted as a compact `sourceKinds=...` token, so CI logs can show which
-input family carried the drift without opening JSON or HTML.
+With `--format text`, non-zero source-kind policy, diff-tree cone, and
+parallel-query rollups are emitted as a compact `sourceKinds=...` token, so CI
+logs can show which input family carried the drift or CSR query workload
+without opening JSON or HTML.
 The rendered bundle-catalog HTML also includes local workbench filters for
 text/failure-code search, source kind, triage status, and problem-only rows, so
 batch evidence can be inspected directly from the static artifact. The filter

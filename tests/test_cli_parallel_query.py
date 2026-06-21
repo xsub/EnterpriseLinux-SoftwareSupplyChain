@@ -141,6 +141,7 @@ def test_cli_parallel_query_bundle_writes_verifiable_static_bundle(
 ) -> None:
     artifact_dir = tmp_path / "csr-artifact"
     output_dir = tmp_path / "parallel-query-bundle"
+    catalog_dir = tmp_path / "parallel-query-catalog"
 
     assert (
         main(
@@ -211,3 +212,28 @@ def test_cli_parallel_query_bundle_writes_verifiable_static_bundle(
 
     assert main(["verify-bundle", "--path", str(output_dir), "--format", "text"]) == 0
     assert capsys.readouterr().out.startswith("OK ")
+
+    assert (
+        main(
+            [
+                "bundle-catalog",
+                "--bundle",
+                str(output_dir),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+    catalog_output = capsys.readouterr().out.strip()
+    assert "parallelQueryReports=1" in catalog_output
+    assert "parallelQueryQueries=2" in catalog_output
+    assert "parallelQueryResultNodes=4" in catalog_output
+    assert "parallelQueryMemoryMappedReports=1" in catalog_output
+    catalog = json.loads((catalog_dir / "bundle-catalog.json").read_text())
+    assert catalog["summary"]["parallelQueryReports"] == 1
+    assert catalog["summary"]["parallelQueryQueries"] == 2
+    assert catalog["summary"]["parallelQueryResultNodes"] == 4
+    assert catalog["summary"]["parallelQueryMemoryMappedReports"] == 1
