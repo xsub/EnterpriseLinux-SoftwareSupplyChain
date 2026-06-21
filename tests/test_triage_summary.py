@@ -417,6 +417,55 @@ def test_triage_summary_fails_on_diff_tree_policy_gate(tmp_path, capsys) -> None
     ]
 
 
+def test_cli_triage_summary_text_reports_diff_tree_cone_rollup(
+    tmp_path,
+    capsys,
+) -> None:
+    diff_tree_path = tmp_path / "graph-diff-tree-policy.json"
+
+    assert (
+        main(
+            [
+                "diff-tree",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+    diff_tree_path.write_text(capsys.readouterr().out, encoding="utf-8")
+
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                str(diff_tree_path),
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        "TRIAGE status=fail reports=1 failedChecks=1 "
+        "diffTreePolicyFailures=1 diffTreeNodeChurn=3 "
+        "diffTreeEdgeChurn=3 diffTreeNetNodeDelta=1 "
+        "diffTreeNetEdgeDelta=1"
+    )
+
+
 def test_diff_tree_bundle_triage_summary_reflects_policy_gate(tmp_path, capsys) -> None:
     output_dir = tmp_path / "diff-tree-policy-bundle"
 

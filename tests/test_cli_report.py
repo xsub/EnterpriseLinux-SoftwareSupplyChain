@@ -963,7 +963,9 @@ def test_cli_bundle_catalog_text_summarizes_diff_tree_policy_failures(
     assert text == (
         f"OK index={catalog_dir / 'index.html'} catalogStatus=fail "
         "bundles=1 okBundles=1 failedBundles=0 reports=1 failures=0 "
-        "triageWarn=0 triageFail=1 diffTreePolicyFailures=1 triageStatus=fail"
+        "triageWarn=0 triageFail=1 diffTreePolicyFailures=1 "
+        "diffTreeNodeChurn=3 diffTreeEdgeChurn=3 diffTreeNetNodeDelta=1 "
+        "diffTreeNetEdgeDelta=1 triageStatus=fail"
     )
 
 
@@ -1531,7 +1533,9 @@ def test_cli_validate_text_reports_diff_tree_policy_failures(
     assert validation_text == (
         "OK targetType=report-bundle failures=0 "
         "contract=edgp.report.bundle.v1 triageStatus=fail "
-        "diffTreePolicyFailures=1"
+        "diffTreePolicyFailures=1 diffTreeNodeChurn=3 "
+        "diffTreeEdgeChurn=3 diffTreeNetNodeDelta=1 "
+        "diffTreeNetEdgeDelta=1"
     )
 
 
@@ -1585,7 +1589,9 @@ def test_cli_validate_archive_text_reports_diff_tree_policy_failures(
     assert validation_text == (
         "OK targetType=report-bundle-archive failures=0 "
         "contract=edgp.report.bundle.archive.v1 triageStatus=fail "
-        "diffTreePolicyFailures=1"
+        "diffTreePolicyFailures=1 diffTreeNodeChurn=3 "
+        "diffTreeEdgeChurn=3 diffTreeNetNodeDelta=1 "
+        "diffTreeNetEdgeDelta=1"
     )
 
 

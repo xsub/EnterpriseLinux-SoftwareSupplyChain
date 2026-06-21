@@ -323,6 +323,7 @@ def _format_report_bundle_submission_plan(report: dict[str, Any]) -> str:
             if failed_checks:
                 parts.append(f"failedChecks={failed_checks}")
             parts.extend(_policy_failure_text_parts(summary))
+            parts.extend(_diff_tree_rollup_text_parts(summary))
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
@@ -401,6 +402,7 @@ def _format_validation_report(report: dict[str, Any]) -> str:
         summary = triage_summary.get("summary", {})
         if isinstance(summary, dict):
             parts.extend(_policy_failure_text_parts(summary))
+            parts.extend(_diff_tree_rollup_text_parts(summary))
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
@@ -448,6 +450,20 @@ def _policy_failure_text_parts(summary: dict[str, Any]) -> list[str]:
             "realDataReplacementPlanDiffPolicyFailures="
             f"{real_data_replacement_diff_policy_failures}"
         )
+    return parts
+
+
+def _diff_tree_rollup_text_parts(summary: dict[str, Any]) -> list[str]:
+    parts = []
+    for key in (
+        "diffTreeNodeChurn",
+        "diffTreeEdgeChurn",
+        "diffTreeNetNodeDelta",
+        "diffTreeNetEdgeDelta",
+    ):
+        value = int(summary.get(key, 0) or 0)
+        if value:
+            parts.append(f"{key}={value}")
     return parts
 
 
@@ -1106,6 +1122,7 @@ def _format_bundle_catalog_result(index_path: Path) -> str:
         f"triageFail={int(summary.get('triageFail', 0) or 0)}",
     ]
     parts.extend(_policy_failure_text_parts(summary))
+    parts.extend(_diff_tree_rollup_text_parts(summary))
     triage = _load_optional_json(index_path.parent / "triage-summary.json")
     if isinstance(triage, dict):
         triage_status = triage.get("status")
@@ -1826,6 +1843,7 @@ def _format_triage_summary_report(report: dict[str, Any]) -> str:
     if npm_signals:
         parts.append(f"npmSignals={npm_signals}")
     parts.extend(_policy_failure_text_parts(summary))
+    parts.extend(_diff_tree_rollup_text_parts(summary))
     for key in (
         "catalogFailedBundles",
         "catalogFailures",

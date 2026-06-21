@@ -282,7 +282,8 @@ report shows whether the selected dependency or dependent tree grew, shrank, or
 changed heavily between snapshots. Bundle triage summaries roll these into
 `diffTreeNodeChurn`, `diffTreeEdgeChurn`, `diffTreeNetNodeDelta`, and
 `diffTreeNetEdgeDelta`, and bundle catalogs preserve those values per bundle and
-in their global summary. They also include
+in their global summary. Text output includes non-zero cone rollups so CI logs
+can show drift scale without opening JSON or HTML. They also include
 `topFindings.packageChanges`, a bounded risk/proximity-ranked list of the
 highest-signal focused package changes for CI, workbench, and RAG consumers.
 `--format text` gives both direct reports and static bundles a terminal-friendly
