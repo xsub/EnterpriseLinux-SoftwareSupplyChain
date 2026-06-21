@@ -135,6 +135,14 @@ def _catalog_entry(
         "diffTreePolicyFailures": int(
             triage_summary.get("diffTreePolicyFailures", 0) or 0
         ),
+        "diffTreeNodeChurn": int(triage_summary.get("diffTreeNodeChurn", 0) or 0),
+        "diffTreeEdgeChurn": int(triage_summary.get("diffTreeEdgeChurn", 0) or 0),
+        "diffTreeNetNodeDelta": int(
+            triage_summary.get("diffTreeNetNodeDelta", 0) or 0
+        ),
+        "diffTreeNetEdgeDelta": int(
+            triage_summary.get("diffTreeNetEdgeDelta", 0) or 0
+        ),
         "realDataCoveragePolicyFailures": int(
             triage_summary.get("realDataCoveragePolicyFailures", 0) or 0
         ),
@@ -240,6 +248,10 @@ def _triage_summary(
             "status": "not-present",
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "diffTreeNodeChurn": 0,
+            "diffTreeEdgeChurn": 0,
+            "diffTreeNetNodeDelta": 0,
+            "diffTreeNetEdgeDelta": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -261,6 +273,10 @@ def _triage_summary(
             "status": "unreadable",
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "diffTreeNodeChurn": 0,
+            "diffTreeEdgeChurn": 0,
+            "diffTreeNetNodeDelta": 0,
+            "diffTreeNetEdgeDelta": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -302,6 +318,10 @@ def _triage_summary(
         "diffTreePolicyFailures": int(
             summary.get("diffTreePolicyFailures", 0) or 0
         ),
+        "diffTreeNodeChurn": int(summary.get("diffTreeNodeChurn", 0) or 0),
+        "diffTreeEdgeChurn": int(summary.get("diffTreeEdgeChurn", 0) or 0),
+        "diffTreeNetNodeDelta": int(summary.get("diffTreeNetNodeDelta", 0) or 0),
+        "diffTreeNetEdgeDelta": int(summary.get("diffTreeNetEdgeDelta", 0) or 0),
         "realDataCoveragePolicyFailures": int(
             summary.get("realDataCoveragePolicyFailures", 0) or 0
         ),
@@ -417,6 +437,18 @@ def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
         ),
         "diffTreePolicyFailures": sum(
             int(entry.get("diffTreePolicyFailures", 0) or 0) for entry in entries
+        ),
+        "diffTreeNodeChurn": sum(
+            int(entry.get("diffTreeNodeChurn", 0) or 0) for entry in entries
+        ),
+        "diffTreeEdgeChurn": sum(
+            int(entry.get("diffTreeEdgeChurn", 0) or 0) for entry in entries
+        ),
+        "diffTreeNetNodeDelta": sum(
+            int(entry.get("diffTreeNetNodeDelta", 0) or 0) for entry in entries
+        ),
+        "diffTreeNetEdgeDelta": sum(
+            int(entry.get("diffTreeNetEdgeDelta", 0) or 0) for entry in entries
         ),
         "realDataCoveragePolicyFailures": sum(
             int(entry.get("realDataCoveragePolicyFailures", 0) or 0)

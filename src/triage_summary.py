@@ -392,6 +392,10 @@ def _empty_rollup() -> dict[str, int]:
         "graphDiffPolicyFailures": 0,
         "diffTreeReports": 0,
         "diffTreePolicyFailures": 0,
+        "diffTreeNodeChurn": 0,
+        "diffTreeEdgeChurn": 0,
+        "diffTreeNetNodeDelta": 0,
+        "diffTreeNetEdgeDelta": 0,
         "bundleCatalogReports": 0,
         "catalogBundles": 0,
         "catalogFailedBundles": 0,
@@ -440,6 +444,10 @@ def _accumulate_summary(
         rollup["diffTreePolicyFailures"] += int(
             summary.get("policyFailures", 0)
         )
+        rollup["diffTreeNodeChurn"] += int(summary.get("nodeChurn", 0) or 0)
+        rollup["diffTreeEdgeChurn"] += int(summary.get("edgeChurn", 0) or 0)
+        rollup["diffTreeNetNodeDelta"] += int(summary.get("nodeDelta", 0) or 0)
+        rollup["diffTreeNetEdgeDelta"] += int(summary.get("edgeDelta", 0) or 0)
     elif schema == "edgp.real_data.coverage.v1":
         rollup["realDataCoverageReports"] = (
             rollup.get("realDataCoverageReports", 0) + 1
@@ -482,6 +490,18 @@ def _accumulate_summary(
         )
         rollup["diffTreePolicyFailures"] += int(
             summary.get("diffTreePolicyFailures", 0)
+        )
+        rollup["diffTreeNodeChurn"] += int(
+            summary.get("diffTreeNodeChurn", 0) or 0
+        )
+        rollup["diffTreeEdgeChurn"] += int(
+            summary.get("diffTreeEdgeChurn", 0) or 0
+        )
+        rollup["diffTreeNetNodeDelta"] += int(
+            summary.get("diffTreeNetNodeDelta", 0) or 0
+        )
+        rollup["diffTreeNetEdgeDelta"] += int(
+            summary.get("diffTreeNetEdgeDelta", 0) or 0
         )
         rollup["realDataCoveragePolicyFailures"] = (
             rollup.get("realDataCoveragePolicyFailures", 0)
@@ -931,6 +951,10 @@ def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "triageStatus": bundle.get("triageStatus"),
                 "graphDiffPolicyFailures": bundle.get("graphDiffPolicyFailures", 0),
                 "diffTreePolicyFailures": bundle.get("diffTreePolicyFailures", 0),
+                "diffTreeNodeChurn": bundle.get("diffTreeNodeChurn", 0),
+                "diffTreeEdgeChurn": bundle.get("diffTreeEdgeChurn", 0),
+                "diffTreeNetNodeDelta": bundle.get("diffTreeNetNodeDelta", 0),
+                "diffTreeNetEdgeDelta": bundle.get("diffTreeNetEdgeDelta", 0),
                 "realDataCoveragePolicyFailures": bundle.get(
                     "realDataCoveragePolicyFailures",
                     0,

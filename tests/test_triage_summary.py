@@ -398,6 +398,10 @@ def test_triage_summary_fails_on_diff_tree_policy_gate(tmp_path, capsys) -> None
     assert payload["status"] == "fail"
     assert payload["summary"]["diffTreeReports"] == 1
     assert payload["summary"]["diffTreePolicyFailures"] == 1
+    assert payload["summary"]["diffTreeNodeChurn"] == 3
+    assert payload["summary"]["diffTreeEdgeChurn"] == 3
+    assert payload["summary"]["diffTreeNetNodeDelta"] == 1
+    assert payload["summary"]["diffTreeNetEdgeDelta"] == 1
     assert payload["summary"]["failedChecks"] == 1
     assert payload["checks"] == [
         {
@@ -445,10 +449,15 @@ def test_diff_tree_bundle_triage_summary_reflects_policy_gate(tmp_path, capsys) 
 
     assert triage["status"] == "fail"
     assert triage["summary"]["diffTreePolicyFailures"] == 1
+    assert triage["summary"]["diffTreeNodeChurn"] == 3
+    assert triage["summary"]["diffTreeEdgeChurn"] == 3
+    assert triage["summary"]["diffTreeNetNodeDelta"] == 1
+    assert triage["summary"]["diffTreeNetEdgeDelta"] == 1
     assert triage["checks"][0]["kind"] == "diff-tree-policy"
     assert triage["checks"][0]["status"] == "fail"
     triage_html = (output_dir / "triage-summary.html").read_text(encoding="utf-8")
     assert 'data-testid="triage-diff-tree-policy-panel"' in triage_html
+    assert "Diff Tree Node Churn" in triage_html
 
 
 def test_graph_diff_bundle_triage_summary_reflects_package_kind_policy_gate(

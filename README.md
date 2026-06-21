@@ -279,7 +279,10 @@ matched kinds, pass/fail status, and expected exit code. They also include
 focused cone shape metrics (`leftNodes`, `rightNodes`, `nodeDelta`,
 `nodeChurn`, `leftEdges`, `rightEdges`, `edgeDelta`, and `edgeChurn`) so the
 report shows whether the selected dependency or dependent tree grew, shrank, or
-changed heavily between snapshots. They also include
+changed heavily between snapshots. Bundle triage summaries roll these into
+`diffTreeNodeChurn`, `diffTreeEdgeChurn`, `diffTreeNetNodeDelta`, and
+`diffTreeNetEdgeDelta`, and bundle catalogs preserve those values per bundle and
+in their global summary. They also include
 `topFindings.packageChanges`, a bounded risk/proximity-ranked list of the
 highest-signal focused package changes for CI, workbench, and RAG consumers.
 `--format text` gives both direct reports and static bundles a terminal-friendly

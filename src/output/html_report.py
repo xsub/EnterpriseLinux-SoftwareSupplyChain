@@ -1629,6 +1629,14 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                         _dict_value(summary, "diffTreePolicyFailures"),
                     ),
                     (
+                        "Diff Tree Node Churn",
+                        _dict_value(summary, "diffTreeNodeChurn"),
+                    ),
+                    (
+                        "Diff Tree Edge Churn",
+                        _dict_value(summary, "diffTreeEdgeChurn"),
+                    ),
+                    (
                         "Real-Data Policies",
                         _dict_value(summary, "realDataCoveragePolicyFailures"),
                     ),
@@ -1665,6 +1673,10 @@ def render_bundle_catalog_report(report: dict[str, Any]) -> str:
                     "triageStatus",
                     "graphDiffPolicyFailures",
                     "diffTreePolicyFailures",
+                    "diffTreeNodeChurn",
+                    "diffTreeEdgeChurn",
+                    "diffTreeNetNodeDelta",
+                    "diffTreeNetEdgeDelta",
                     "realDataCoveragePolicyFailures",
                     "realDataCoverageDiffPolicyFailures",
                     "realDataReplacementPlanPolicyFailures",
@@ -1874,6 +1886,14 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                         summary.get("diffTreePolicyFailures", 0),
                     ),
                     (
+                        "Diff Tree Node Churn",
+                        summary.get("diffTreeNodeChurn", 0),
+                    ),
+                    (
+                        "Diff Tree Edge Churn",
+                        summary.get("diffTreeEdgeChurn", 0),
+                    ),
+                    (
                         "Real-Data Policies",
                         summary.get("realDataCoveragePolicyFailures", 0),
                     ),
@@ -1946,6 +1966,10 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                     "triageStatus",
                     "graphDiffPolicyFailures",
                     "diffTreePolicyFailures",
+                    "diffTreeNodeChurn",
+                    "diffTreeEdgeChurn",
+                    "diffTreeNetNodeDelta",
+                    "diffTreeNetEdgeDelta",
                     "realDataCoveragePolicyFailures",
                     "realDataCoverageDiffPolicyFailures",
                     "realDataReplacementPlanPolicyFailures",
