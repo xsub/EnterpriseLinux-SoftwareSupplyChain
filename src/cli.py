@@ -3494,6 +3494,39 @@ def _write_performance_report_bundle(
     )
 
 
+def _write_parallel_query_bundle(
+    output_dir: Path,
+    *,
+    snapshot: Path | None,
+    csr_artifact: Path | None,
+    queries: Sequence[str],
+    workers: int | None = None,
+    backend: str = "python",
+    command: str | None = None,
+    include_triage_summary: bool = False,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "parallel-query-report.json"
+    report_path.write_text(
+        _json(
+            _build_parallel_query_report(
+                snapshot=snapshot,
+                csr_artifact=csr_artifact,
+                queries=queries,
+                workers=workers,
+                backend=backend,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return write_report_bundle(
+        [report_path],
+        output_dir,
+        bundle_metadata={"sourceKind": "parallel-query", "command": command},
+        include_triage_summary=include_triage_summary,
+    )
+
+
 def _write_query_report_bundle(
     output_dir: Path,
     *,
@@ -4010,6 +4043,40 @@ def _parallel_query_specs(values: Sequence[str]) -> list[dict[str, str]]:
             raise ValueError("--query must use dependencies:NODE or dependents:NODE")
         queries.append({"direction": direction, "node": node})
     return queries
+
+
+def _build_parallel_query_report(
+    *,
+    snapshot: Path | None,
+    csr_artifact: Path | None,
+    queries: Sequence[str],
+    workers: int | None = None,
+    backend: str = "python",
+) -> dict[str, object]:
+    if csr_artifact is not None:
+        graph = load_frozen_csr_artifact(csr_artifact)
+        input_type = "csr-artifact"
+        input_path = csr_artifact
+    elif snapshot is not None:
+        payload = json.loads(snapshot.read_text(encoding="utf-8"))
+        graph = graph_from_snapshot(payload).freeze()
+        input_type = "snapshot"
+        input_path = snapshot
+    else:
+        raise ValueError("parallel-query requires --snapshot or --csr-artifact")
+
+    report = run_parallel_reachability_queries(
+        graph,
+        _parallel_query_specs(queries),
+        max_workers=workers,
+        backend=backend,
+    )
+    summary = report.get("summary")
+    if isinstance(summary, dict):
+        summary["inputType"] = input_type
+        summary["inputPath"] = str(input_path)
+        summary["memoryMapped"] = bool(graph.storage_profile().get("memoryMapped"))
+    return report
 
 
 def _rpm_repo_source(primary: Path | None, source: str | None) -> str:
@@ -5860,6 +5927,44 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parallel_query.add_argument("--format", choices=["json", "text"], default="json")
 
+    parallel_query_bundle = subparsers.add_parser(
+        "parallel-query-bundle",
+        help="Render parallel frozen-CSR reachability queries as a static bundle",
+    )
+    parallel_query_bundle_input = parallel_query_bundle.add_mutually_exclusive_group(
+        required=True
+    )
+    parallel_query_bundle_input.add_argument(
+        "--snapshot",
+        type=Path,
+        help="EDGP graph snapshot JSON to freeze before running queries",
+    )
+    parallel_query_bundle_input.add_argument(
+        "--csr-artifact",
+        type=Path,
+        help="memory-mappable frozen CSR artifact directory to query directly",
+    )
+    parallel_query_bundle.add_argument(
+        "--query",
+        action="append",
+        default=[],
+        help="query as dependencies:NODE or dependents:NODE; may be repeated",
+    )
+    parallel_query_bundle.add_argument("--workers", type=int)
+    parallel_query_bundle.add_argument(
+        "--backend",
+        choices=["python", "auto", "numba"],
+        default="python",
+        help="traversal backend for reachability queries",
+    )
+    parallel_query_bundle.add_argument("--output-dir", type=Path, required=True)
+    parallel_query_bundle.add_argument(
+        "--format",
+        choices=["path", "text"],
+        default="path",
+    )
+    _add_triage_bundle_option(parallel_query_bundle)
+
     performance_report = subparsers.add_parser(
         "performance-report",
         help="Run deterministic CSR benchmark scenarios as an EDGP report",
@@ -7296,26 +7401,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "parallel-query":
-        if args.csr_artifact is not None:
-            graph = load_frozen_csr_artifact(args.csr_artifact)
-            input_type = "csr-artifact"
-            input_path = args.csr_artifact
-        else:
-            snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
-            graph = graph_from_snapshot(snapshot).freeze()
-            input_type = "snapshot"
-            input_path = args.snapshot
-        report = run_parallel_reachability_queries(
-            graph,
-            _parallel_query_specs(args.query),
-            max_workers=args.workers,
+        report = _build_parallel_query_report(
+            snapshot=args.snapshot,
+            csr_artifact=args.csr_artifact,
+            queries=args.query,
+            workers=args.workers,
             backend=args.backend,
         )
-        summary = report.get("summary")
-        if isinstance(summary, dict):
-            summary["inputType"] = input_type
-            summary["inputPath"] = str(input_path)
-            summary["memoryMapped"] = bool(graph.storage_profile().get("memoryMapped"))
         if args.format == "text":
             print(_format_parallel_query_result(report))
         else:
@@ -7336,6 +7428,22 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(_json(report))
         return 0
+
+    if args.command == "parallel-query-bundle":
+        return _print_bundle_result(
+            _write_parallel_query_bundle(
+                args.output_dir,
+                snapshot=args.snapshot,
+                csr_artifact=args.csr_artifact,
+                queries=args.query,
+                workers=args.workers,
+                backend=args.backend,
+                command=command,
+                include_triage_summary=_include_triage_summary(args),
+            ),
+            fail_on_status=args.fail_on_status,
+            output_format=args.format,
+        )
 
     if args.command == "performance-report-bundle":
         return _print_bundle_result(

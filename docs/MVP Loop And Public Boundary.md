@@ -460,6 +460,8 @@ surfaces are:
 - Query verified memory-mapped CSR artifact directories directly with
   `edgp parallel-query --csr-artifact`, avoiding repeated snapshot rebuilds in
   build-once/query-many CI and workbench flows.
+- Render parallel-query results as static, verifiable report bundles with
+  `edgp parallel-query-bundle`.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

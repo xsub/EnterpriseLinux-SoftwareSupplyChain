@@ -581,6 +581,7 @@ def test_render_report_supports_csr_artifact_validation_summary() -> None:
             "real-data-coverage-diff-sides-panel",
         ),
         ("tests/fixtures/performance-report.json", "performance-results-panel"),
+        ("tests/fixtures/parallel-query-report.json", "parallel-query-results-panel"),
         ("tests/fixtures/triage-summary.json", "triage-checks-panel"),
     ],
 )

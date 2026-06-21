@@ -54,6 +54,7 @@ The public source-kind values are:
 - `impact-report`
 - `license-report`
 - `libsolv-transaction`
+- `parallel-query`
 - `performance-report`
 - `public-advisory-feed`
 - `query-report`

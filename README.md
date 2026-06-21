@@ -354,6 +354,7 @@ edgp accelerator-status --backend auto --format text
 edgp parallel-query --snapshot graph.json --query dependencies:pkg==1.0.0 --query dependents:lib==2.0.0 --workers 4 --backend auto
 edgp parallel-query --snapshot graph.json --query dependencies:pkg==1.0.0 --query dependents:lib==2.0.0 --workers 4 --backend auto --format text
 edgp parallel-query --csr-artifact artifacts/csr --query dependencies:pkg==1.0.0 --workers 4 --backend auto --format text
+edgp parallel-query-bundle --csr-artifact artifacts/csr --query dependencies:pkg==1.0.0 --output-dir reports/parallel-query --triage-summary --format text
 edgp performance-report --scenario 1000:3 --scenario 10000:5
 edgp performance-report --scenario 1000:3 --scenario 10000:5 --backend auto --format text
 edgp performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir reports/performance --triage-summary --format text
@@ -1037,6 +1038,9 @@ runtime arrays were memory-mapped. Use `--format text` on
 `benchmark`, `performance-report`, `accelerator-status`, `parallel-query`, or
 `csr-artifact` when a CI log should show backend choice, CSR layout, CSR/CSC
 matrix views, memory-mapping status, and query counts without parsing full JSON.
+`edgp parallel-query-bundle` renders the same batch query result as static HTML
+with a verifiable manifest, so build-once/query-many CSR artifacts can produce
+portable CI/workbench evidence bundles.
 `edgp csr-artifact` persists an existing `edgp.graph.snapshot.v1` as a
 memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
 `manifest.json` containing layout version, package IDs, metadata, array shapes,

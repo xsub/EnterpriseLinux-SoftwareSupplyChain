@@ -859,6 +859,7 @@ def _assert_report_bundle_manifest_schema_document() -> None:
         "maven-dependency-tree",
         "npm-diagnostics",
         "npm-lockfile",
+        "parallel-query",
         "performance-report",
         "public-advisory-feed",
         "query-report",
@@ -7361,6 +7362,37 @@ def _assert_parallel_query() -> None:
         )
         assert "inputType=csr-artifact" in artifact_text
         assert "memoryMapped=true" in artifact_text
+        bundle_dir = Path(temp_dir) / "parallel-query-bundle"
+        bundle_text = _run_cli_text(
+            [
+                "parallel-query-bundle",
+                "--csr-artifact",
+                str(artifact_dir),
+                "--query",
+                "dependencies:app==1.0.0",
+                "--query",
+                "dependents:core==1.0.0",
+                "--workers",
+                "2",
+                "--backend",
+                "auto",
+                "--output-dir",
+                str(bundle_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+            ]
+        )
+        assert bundle_text.startswith("BUNDLE ")
+        assert "sourceKind=parallel-query" in bundle_text
+        manifest = json.loads((bundle_dir / "manifest.json").read_text(encoding="utf-8"))
+        _assert_report_bundle_manifest_contract(manifest, bundle_dir)
+        assert manifest["bundle"]["sourceKind"] == "parallel-query"
+        assert manifest["reports"][0]["schema"] == "edgp.parallel.query.report.v1"
+        html = (bundle_dir / "001-parallel-query-report.html").read_text(
+            encoding="utf-8"
+        )
+        assert 'data-testid="parallel-query-results-panel"' in html
 
 
 def _assert_rpm_installed() -> None:

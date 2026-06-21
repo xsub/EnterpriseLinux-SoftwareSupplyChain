@@ -68,6 +68,8 @@ def render_report(payload: dict[str, Any]) -> str:
         return render_real_data_coverage_diff_report(payload)
     if schema == "edgp.performance.report.v1":
         return render_performance_report(payload)
+    if schema == "edgp.parallel.query.report.v1":
+        return render_parallel_query_report(payload)
     if schema == "edgp.query.report.v1":
         return render_query_report(payload)
     if schema == "edgp.bundle.catalog.v1":
@@ -1542,6 +1544,62 @@ def render_performance_report(report: dict[str, Any]) -> str:
                     "storage",
                 ],
                 test_id="performance-results-panel",
+            ),
+        ],
+        scripts=[_table_sort_script()],
+    )
+
+
+def render_parallel_query_report(report: dict[str, Any]) -> str:
+    if report.get("schema") != "edgp.parallel.query.report.v1":
+        raise ValueError("HTML parallel query report input must be an EDGP report")
+
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    return _document(
+        "EDGP Parallel Query Report",
+        [
+            _generic_hero(
+                eyebrow=str(summary.get("inputType", "frozen csr")),
+                heading="Parallel reachability",
+                schema=str(report.get("schema")),
+                metrics=[
+                    ("Queries", summary.get("queries", 0)),
+                    ("Workers", summary.get("workers", 0)),
+                    ("Backend", summary.get("selectedBackend", "")),
+                    ("Memory Mapped", summary.get("memoryMapped", "")),
+                ],
+            ),
+            _rows_panel(
+                "Runtime",
+                [
+                    {
+                        "inputType": summary.get("inputType", ""),
+                        "inputPath": summary.get("inputPath", ""),
+                        "backend": summary.get("backend", ""),
+                        "selectedBackend": summary.get("selectedBackend", ""),
+                        "workers": summary.get("workers", ""),
+                        "durationMs": summary.get("durationMs", ""),
+                        "memoryMapped": summary.get("memoryMapped", ""),
+                    }
+                ],
+                [
+                    "inputType",
+                    "inputPath",
+                    "backend",
+                    "selectedBackend",
+                    "workers",
+                    "durationMs",
+                    "memoryMapped",
+                ],
+                test_id="parallel-query-runtime-panel",
+            ),
+            _rows_panel(
+                "Query Results",
+                report.get("results", []),
+                ["direction", "node", "resultKind", "count", "nodes"],
+                test_id="parallel-query-results-panel",
             ),
         ],
         scripts=[_table_sort_script()],

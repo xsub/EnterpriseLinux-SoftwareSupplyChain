@@ -42,6 +42,7 @@ SOURCE_KINDS = {
     "maven-dependency-tree",
     "npm-diagnostics",
     "npm-lockfile",
+    "parallel-query",
     "performance-report",
     "public-advisory-feed",
     "query-report",

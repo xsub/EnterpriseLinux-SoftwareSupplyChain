@@ -110,4 +110,5 @@ one relevant measurement:
   `edgp parallel-query` freezes a snapshot-derived graph once and executes
   independent dependency/dependent reachability queries concurrently with a
   selected traversal backend. It can also load a verified memory-mapped CSR
-  artifact directly for build-once/query-many workflows.
+  artifact directly for build-once/query-many workflows and render those
+  results as verifiable static report bundles.
