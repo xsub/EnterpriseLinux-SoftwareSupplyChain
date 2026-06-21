@@ -504,6 +504,10 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "withoutTriage": 0,
                 "graphDiffPolicyFailures": 0,
                 "diffTreePolicyFailures": 0,
+                "diffTreeNodeChurn": 0,
+                "diffTreeEdgeChurn": 0,
+                "diffTreeNetNodeDelta": 0,
+                "diffTreeNetEdgeDelta": 0,
                 "realDataCoveragePolicyFailures": 0,
                 "realDataCoverageDiffPolicyFailures": 0,
                 "realDataReplacementPlanPolicyFailures": 0,
@@ -532,6 +536,14 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         )
         row["diffTreePolicyFailures"] += int(
             entry.get("diffTreePolicyFailures", 0) or 0
+        )
+        row["diffTreeNodeChurn"] += int(entry.get("diffTreeNodeChurn", 0) or 0)
+        row["diffTreeEdgeChurn"] += int(entry.get("diffTreeEdgeChurn", 0) or 0)
+        row["diffTreeNetNodeDelta"] += int(
+            entry.get("diffTreeNetNodeDelta", 0) or 0
+        )
+        row["diffTreeNetEdgeDelta"] += int(
+            entry.get("diffTreeNetEdgeDelta", 0) or 0
         )
         row["realDataCoveragePolicyFailures"] += int(
             entry.get("realDataCoveragePolicyFailures", 0) or 0

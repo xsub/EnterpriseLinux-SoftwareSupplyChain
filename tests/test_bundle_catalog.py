@@ -63,6 +63,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "failures": 0,
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "diffTreeNodeChurn": 0,
+            "diffTreeEdgeChurn": 0,
+            "diffTreeNetNodeDelta": 0,
+            "diffTreeNetEdgeDelta": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -84,6 +88,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "failures": 0,
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 0,
+            "diffTreeNodeChurn": 0,
+            "diffTreeEdgeChurn": 0,
+            "diffTreeNetNodeDelta": 0,
+            "diffTreeNetEdgeDelta": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -280,6 +288,10 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
             "failures": 0,
             "graphDiffPolicyFailures": 0,
             "diffTreePolicyFailures": 1,
+            "diffTreeNodeChurn": 3,
+            "diffTreeEdgeChurn": 3,
+            "diffTreeNetNodeDelta": 1,
+            "diffTreeNetEdgeDelta": 1,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -345,6 +357,10 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
             "failures": 0,
             "graphDiffPolicyFailures": 1,
             "diffTreePolicyFailures": 0,
+            "diffTreeNodeChurn": 0,
+            "diffTreeEdgeChurn": 0,
+            "diffTreeNetNodeDelta": 0,
+            "diffTreeNetEdgeDelta": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -443,6 +459,10 @@ def test_build_bundle_catalog_counts_archive_diff_tree_policy_failures(
     assert report["bundles"][0]["diffTreeFailOnKinds"] == ["upgrade"]
     assert report["bundles"][0]["diffTreeMatchedKinds"] == ["upgrade"]
     assert report["sourceKinds"][0]["diffTreePolicyFailures"] == 1
+    assert report["sourceKinds"][0]["diffTreeNodeChurn"] == 3
+    assert report["sourceKinds"][0]["diffTreeEdgeChurn"] == 3
+    assert report["sourceKinds"][0]["diffTreeNetNodeDelta"] == 1
+    assert report["sourceKinds"][0]["diffTreeNetEdgeDelta"] == 1
 
 
 def test_build_bundle_catalog_groups_real_data_policy_failures_by_source_kind(

@@ -308,6 +308,10 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "fail" in html
     assert "Diff Tree Policies" in html
     assert "Diff Tree Policy Failures" in html
+    assert "Diff Tree Node Churn" in html
+    assert "Diff Tree Edge Churn" in html
+    assert "Diff Tree Net Node Delta" in html
+    assert "Diff Tree Net Edge Delta" in html
     assert "Real-Data Policies" in html
     assert "Real Data Coverage Policy Failures" in html
     assert "Real Data Coverage Diff Policy Failures" in html

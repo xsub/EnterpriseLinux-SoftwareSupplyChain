@@ -219,6 +219,20 @@
             "minimum": 0,
             "type": "integer"
           },
+          "diffTreeNodeChurn": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "diffTreeEdgeChurn": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "diffTreeNetNodeDelta": {
+            "type": "integer"
+          },
+          "diffTreeNetEdgeDelta": {
+            "type": "integer"
+          },
           "graphDiffPolicyFailures": {
             "minimum": 0,
             "type": "integer"
@@ -305,6 +319,10 @@
           "failures",
           "graphDiffPolicyFailures",
           "diffTreePolicyFailures",
+          "diffTreeNodeChurn",
+          "diffTreeEdgeChurn",
+          "diffTreeNetNodeDelta",
+          "diffTreeNetEdgeDelta",
           "realDataCoveragePolicyFailures",
           "realDataCoverageDiffPolicyFailures",
           "realDataReplacementPlanPolicyFailures",
