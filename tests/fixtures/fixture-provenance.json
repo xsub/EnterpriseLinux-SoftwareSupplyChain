@@ -330,7 +330,7 @@
       "group": "Generic graph and SBOM examples",
       "kind": "synthetic-edge-case",
       "reason": "Tiny graphs keep traversal, diff, and export assertions readable.",
-      "sha256": "81806a22d050a403369d29508d737f3d663436af4955d9223b80b4ab00b2d415"
+      "sha256": "64c726beb9ba584400508862c3e7cb5c47c21e9fdef06ed899f76c2cc945d2b7"
     },
     {
       "fileCount": 8,

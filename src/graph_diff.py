@@ -145,6 +145,10 @@ def diff_tree_snapshots(
         depth=depth,
     )
 
+    left_node_count = len(left_view.nodes)
+    right_node_count = len(right_view.nodes)
+    left_edge_count = len(left_view.edges)
+    right_edge_count = len(right_view.edges)
     added_nodes = sorted(right_view.nodes - left_view.nodes)
     removed_nodes = sorted(left_view.nodes - right_view.nodes)
     common_nodes = sorted(left_view.nodes & right_view.nodes)
@@ -199,14 +203,20 @@ def diff_tree_snapshots(
         "leftNode": left_node,
         "rightNode": right_node,
         "summary": {
-            "leftNodes": len(left_view.nodes),
-            "rightNodes": len(right_view.nodes),
+            "leftNodes": left_node_count,
+            "rightNodes": right_node_count,
+            "nodeDelta": right_node_count - left_node_count,
             "addedNodes": len(added_nodes),
             "removedNodes": len(removed_nodes),
             "metadataChangedNodes": len(metadata_changed),
+            "nodeChurn": len(added_nodes) + len(removed_nodes) + len(metadata_changed),
             "unchangedNodes": len(unchanged_nodes),
+            "leftEdges": left_edge_count,
+            "rightEdges": right_edge_count,
+            "edgeDelta": right_edge_count - left_edge_count,
             "addedEdges": len(added_edges),
             "removedEdges": len(removed_edges),
+            "edgeChurn": len(added_edges) + len(removed_edges),
             "unchangedEdges": len(unchanged_edges),
             "classifiedChanges": len(classifications),
             "upgradeChanges": classification_counts.get("upgrade", 0),

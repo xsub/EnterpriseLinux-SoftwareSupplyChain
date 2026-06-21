@@ -5524,9 +5524,14 @@ def _assert_snapshot_diff() -> None:
         )
         assert diff_tree["schema"] == "edgp.graph.diff_tree.v1"
         assert diff_tree["summary"]["classifiedChanges"] == 2
+        assert diff_tree["summary"]["nodeDelta"] == 1
+        assert diff_tree["summary"]["edgeDelta"] == 1
+        assert diff_tree["summary"]["nodeChurn"] == 3
+        assert diff_tree["summary"]["edgeChurn"] == 3
         diff_tree_html = (diff_tree_dir / "001-graph-diff-tree.html").read_text(
             encoding="utf-8"
         )
+        assert 'data-testid="graph-diff-tree-shape-panel"' in diff_tree_html
         assert 'data-testid="graph-diff-tree-filter-panel"' in diff_tree_html
         assert 'data-graph-diff-tree-search' in diff_tree_html
         assert "graphDiffTreeQuery" in diff_tree_html

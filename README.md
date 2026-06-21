@@ -276,6 +276,10 @@ static bundle on disk while returning status `2` when selected change classes ar
 present, which makes snapshot-to-snapshot graph drift usable in CI gates. Gated
 diff-tree reports include a `policy` block with the requested change kinds,
 matched kinds, pass/fail status, and expected exit code. They also include
+focused cone shape metrics (`leftNodes`, `rightNodes`, `nodeDelta`,
+`nodeChurn`, `leftEdges`, `rightEdges`, `edgeDelta`, and `edgeChurn`) so the
+report shows whether the selected dependency or dependent tree grew, shrank, or
+changed heavily between snapshots. They also include
 `topFindings.packageChanges`, a bounded risk/proximity-ranked list of the
 highest-signal focused package changes for CI, workbench, and RAG consumers.
 `--format text` gives both direct reports and static bundles a terminal-friendly

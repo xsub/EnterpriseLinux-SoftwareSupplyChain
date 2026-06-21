@@ -240,6 +240,8 @@ def test_render_report_supports_graph_diff_tree_json() -> None:
     assert 'data-testid="graph-diff-tree-policy-panel"' in html
     assert "Diff Tree Policy" in html
     assert 'data-testid="graph-diff-tree-visual-panel"' in html
+    assert 'data-testid="graph-diff-tree-shape-panel"' in html
+    assert "Focused Cone Shape" in html
     assert 'data-testid="graph-diff-tree-top-findings-panel"' in html
     assert 'data-testid="graph-diff-tree-filter-panel"' in html
     assert 'data-testid="graph-diff-tree-classification-panel"' in html

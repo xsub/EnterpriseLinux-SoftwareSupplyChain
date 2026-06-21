@@ -351,6 +351,7 @@ def render_graph_diff_tree_report(report: dict[str, Any]) -> str:
             ),
             _graph_diff_tree_policy_panel(policy),
             _graph_diff_tree_visual_panel(report),
+            _graph_diff_tree_shape_panel(summary),
             _graph_diff_tree_top_findings_panel(top_findings),
             _graph_diff_tree_classification_filter_panel(classifications),
             _graph_diff_tree_classification_panel(classifications),
@@ -3884,6 +3885,41 @@ def _graph_diff_tree_classification_panel(classifications: list[object]) -> str:
         ],
         test_id="graph-diff-tree-classification-panel",
         row_attrs=_graph_diff_tree_classification_row_attrs,
+    )
+
+
+def _graph_diff_tree_shape_panel(summary: object) -> str:
+    if not isinstance(summary, dict):
+        summary = {}
+    return _rows_panel(
+        "Focused Cone Shape",
+        [
+            {
+                "leftNodes": _dict_value(summary, "leftNodes"),
+                "rightNodes": _dict_value(summary, "rightNodes"),
+                "nodeDelta": _dict_value(summary, "nodeDelta"),
+                "nodeChurn": _dict_value(summary, "nodeChurn"),
+                "leftEdges": _dict_value(summary, "leftEdges"),
+                "rightEdges": _dict_value(summary, "rightEdges"),
+                "edgeDelta": _dict_value(summary, "edgeDelta"),
+                "edgeChurn": _dict_value(summary, "edgeChurn"),
+                "unchangedNodes": _dict_value(summary, "unchangedNodes"),
+                "unchangedEdges": _dict_value(summary, "unchangedEdges"),
+            }
+        ],
+        [
+            "leftNodes",
+            "rightNodes",
+            "nodeDelta",
+            "nodeChurn",
+            "leftEdges",
+            "rightEdges",
+            "edgeDelta",
+            "edgeChurn",
+            "unchangedNodes",
+            "unchangedEdges",
+        ],
+        test_id="graph-diff-tree-shape-panel",
     )
 
 

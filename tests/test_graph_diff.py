@@ -178,6 +178,14 @@ def test_diff_tree_snapshot_files_reports_focused_dependency_cone_changes() -> N
     assert payload["rightNode"] == "app==1.0.0"
     assert payload["summary"]["addedNodes"] == 2
     assert payload["summary"]["removedNodes"] == 1
+    assert payload["summary"]["leftNodes"] == 2
+    assert payload["summary"]["rightNodes"] == 3
+    assert payload["summary"]["nodeDelta"] == 1
+    assert payload["summary"]["nodeChurn"] == 3
+    assert payload["summary"]["leftEdges"] == 1
+    assert payload["summary"]["rightEdges"] == 2
+    assert payload["summary"]["edgeDelta"] == 1
+    assert payload["summary"]["edgeChurn"] == 3
     assert [node["id"] for node in payload["nodes"]["added"]] == [
         "core==1.0.0",
         "lib==2.0.0",
@@ -535,8 +543,10 @@ def test_cli_diff_tree_text_can_fail_on_classified_change_kind(capsys) -> None:
 
     assert capsys.readouterr().out.strip() == (
         "DIFF_TREE selector=app direction=dependencies depth=2 "
+        "leftNodes=2 rightNodes=3 nodeDelta=1 "
         "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
-        "addedEdges=2 removedEdges=1 classifiedChanges=2 "
+        "nodeChurn=3 leftEdges=1 rightEdges=2 edgeDelta=1 "
+        "addedEdges=2 removedEdges=1 edgeChurn=3 classifiedChanges=2 "
         "upgradeChanges=1 addedOnlyChanges=1 policyStatus=fail "
         "failOnKind=upgrade matchedKinds=upgrade"
     )
@@ -607,8 +617,13 @@ def test_cli_diff_tree_bundle_writes_report_bundle(tmp_path, capsys) -> None:
     assert manifest["reports"][0]["href"] == "001-graph-diff-tree.html"
     assert manifest["triageSummary"]["source"] == "triage-summary.json"
     assert report["summary"]["addedEdges"] == 2
+    assert report["summary"]["nodeDelta"] == 1
+    assert report["summary"]["edgeDelta"] == 1
+    assert report["summary"]["nodeChurn"] == 3
+    assert report["summary"]["edgeChurn"] == 3
     assert report["topFindings"]["packageChanges"][0]["kind"] == "upgrade"
     assert report["topFindings"]["packageChanges"][0]["leftNode"] == "lib==1.0.0"
+    assert 'data-testid="graph-diff-tree-shape-panel"' in html
     assert 'data-testid="graph-diff-tree-added-edges-panel"' in html
     assert 'data-testid="graph-diff-tree-top-findings-panel"' in html
     assert "Top Package Changes" in html
@@ -700,8 +715,10 @@ def test_cli_diff_tree_bundle_text_can_fail_after_writing_bundle(
         f"DIFF_TREE_BUNDLE index={output_dir / 'index.html'} "
         f"archive={archive_path} "
         "selector=app direction=dependencies depth=2 "
+        "leftNodes=2 rightNodes=3 nodeDelta=1 "
         "addedNodes=2 removedNodes=1 metadataChangedNodes=0 "
-        "addedEdges=2 removedEdges=1 classifiedChanges=2 "
+        "nodeChurn=3 leftEdges=1 rightEdges=2 edgeDelta=1 "
+        "addedEdges=2 removedEdges=1 edgeChurn=3 classifiedChanges=2 "
         "upgradeChanges=1 addedOnlyChanges=1 policyStatus=fail "
         "failOnKind=upgrade matchedKinds=upgrade"
     )
