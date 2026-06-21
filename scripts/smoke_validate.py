@@ -7385,10 +7385,19 @@ def _assert_parallel_query() -> None:
         )
         assert bundle_text.startswith("BUNDLE ")
         assert "sourceKind=parallel-query" in bundle_text
+        assert "parallelQueryReports=1" in bundle_text
+        assert "parallelQueryQueries=2" in bundle_text
+        assert "parallelQueryResultNodes=4" in bundle_text
+        assert "parallelQueryMemoryMappedReports=1" in bundle_text
         manifest = json.loads((bundle_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, bundle_dir)
         assert manifest["bundle"]["sourceKind"] == "parallel-query"
         assert manifest["reports"][0]["schema"] == "edgp.parallel.query.report.v1"
+        triage = json.loads(
+            (bundle_dir / "triage-summary.json").read_text(encoding="utf-8")
+        )
+        assert triage["summary"]["parallelQueryReports"] == 1
+        assert triage["summary"]["parallelQueryMemoryMappedReports"] == 1
         html = (bundle_dir / "001-parallel-query-report.html").read_text(
             encoding="utf-8"
         )

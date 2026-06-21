@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 
 from src.cli import main
-from src.triage_summary import build_triage_summary_from_paths
+from src.triage_summary import (
+    build_triage_summary_from_paths,
+    build_triage_summary_report,
+)
 
 
 def test_triage_summary_from_report_paths_matches_fixture() -> None:
@@ -246,6 +249,60 @@ def test_cli_triage_summary_text_reports_npm_signals(capsys) -> None:
     assert capsys.readouterr().out.strip() == (
         "TRIAGE status=warn reports=1 failedChecks=0 npmSignals=3"
     )
+
+
+def test_triage_summary_rolls_up_parallel_query_report() -> None:
+    report = build_triage_summary_from_paths(
+        [Path("tests/fixtures/parallel-query-report.json")]
+    )
+
+    assert report["status"] == "pass"
+    assert report["summary"]["reports"] == 1
+    assert report["summary"]["parallelQueryReports"] == 1
+    assert report["summary"]["parallelQueryQueries"] == 2
+    assert report["summary"]["parallelQueryResultNodes"] == 4
+    assert report["summary"]["parallelQueryMemoryMappedReports"] == 0
+
+
+def test_cli_triage_summary_text_reports_parallel_query_metrics(capsys) -> None:
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                "tests/fixtures/parallel-query-report.json",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        "TRIAGE status=pass reports=1 failedChecks=0 "
+        "parallelQueryReports=1 parallelQueryQueries=2 "
+        "parallelQueryResultNodes=4"
+    )
+
+
+def test_triage_summary_rolls_up_parallel_query_metrics_from_catalog() -> None:
+    catalog = json.loads(
+        Path("tests/fixtures/bundle-catalog.json").read_text(encoding="utf-8")
+    )
+    catalog["summary"]["parallelQueryReports"] = 1
+    catalog["summary"]["parallelQueryQueries"] = 2
+    catalog["summary"]["parallelQueryResultNodes"] = 4
+    catalog["summary"]["parallelQueryMemoryMappedReports"] = 1
+
+    report = build_triage_summary_report([catalog])
+
+    assert report["summary"]["bundleCatalogReports"] == 1
+    assert report["summary"]["parallelQueryReports"] == 1
+    assert report["summary"]["parallelQueryQueries"] == 2
+    assert report["summary"]["parallelQueryResultNodes"] == 4
+    assert report["summary"]["parallelQueryMemoryMappedReports"] == 1
+    assert report["checks"][0]["parallelQueryReports"] == 1
+    assert report["checks"][0]["parallelQueryMemoryMappedReports"] == 1
 
 
 def test_triage_summary_fails_on_graph_diff_policy_gate(tmp_path, capsys) -> None:

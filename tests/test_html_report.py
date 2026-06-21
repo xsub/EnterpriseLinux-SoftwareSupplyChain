@@ -384,6 +384,10 @@ def test_render_report_supports_triage_diff_policy_findings() -> None:
 
 def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     report = json.loads(Path("tests/fixtures/triage-summary.json").read_text())
+    report["summary"]["parallelQueryReports"] = 1
+    report["summary"]["parallelQueryQueries"] = 2
+    report["summary"]["parallelQueryResultNodes"] = 4
+    report["summary"]["parallelQueryMemoryMappedReports"] = 1
     report["topFindings"]["bundleCatalog"] = [
         {
             "path": "/tmp/reports/cataloged-diff",
@@ -394,6 +398,10 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
             "triageStatus": "fail",
             "graphDiffPolicyFailures": 1,
             "diffTreePolicyFailures": 1,
+            "parallelQueryReports": 1,
+            "parallelQueryQueries": 2,
+            "parallelQueryResultNodes": 4,
+            "parallelQueryMemoryMappedReports": 1,
             "realDataCoveragePolicyFailures": 1,
             "realDataCoverageDiffPolicyFailures": 1,
             "realDataReplacementPlanPolicyFailures": 1,
@@ -425,6 +433,10 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     assert "Real Data Coverage Diff Policy Failures" in html
     assert "Real Data Replacement Plan Policy Failures" in html
     assert "Real Data Replacement Plan Diff Policy Failures" in html
+    assert "Parallel Query Reports" in html
+    assert "Parallel Query Result Nodes" in html
+    assert "Memory-Mapped Query Reports" in html
+    assert "Parallel Query Memory Mapped Reports" in html
     assert "replacementPriorityMatched" in html
     assert "publicEvidenceCoverageDecreased" in html
     assert "replacementPlanPriorityMatched" in html

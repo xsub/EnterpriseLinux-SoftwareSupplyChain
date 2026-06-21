@@ -186,6 +186,10 @@ def test_cli_parallel_query_bundle_writes_verifiable_static_bundle(
     assert "sourceKind=parallel-query" in output
     assert "reports=1" in output
     assert "triageStatus=pass" in output
+    assert "parallelQueryReports=1" in output
+    assert "parallelQueryQueries=2" in output
+    assert "parallelQueryResultNodes=4" in output
+    assert "parallelQueryMemoryMappedReports=1" in output
 
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["bundle"]["sourceKind"] == "parallel-query"
@@ -200,6 +204,11 @@ def test_cli_parallel_query_bundle_writes_verifiable_static_bundle(
     assert report["summary"]["inputType"] == "csr-artifact"
     assert report["summary"]["memoryMapped"] is True
     assert report["results"][1]["nodes"] == ["lib==2.0.0", "app==1.0.0"]
+    triage = json.loads((output_dir / "triage-summary.json").read_text())
+    assert triage["summary"]["parallelQueryReports"] == 1
+    assert triage["summary"]["parallelQueryQueries"] == 2
+    assert triage["summary"]["parallelQueryResultNodes"] == 4
+    assert triage["summary"]["parallelQueryMemoryMappedReports"] == 1
 
     html = (output_dir / "001-parallel-query-report.html").read_text(
         encoding="utf-8"

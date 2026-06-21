@@ -462,6 +462,9 @@ surfaces are:
   build-once/query-many CI and workbench flows.
 - Render parallel-query results as static, verifiable report bundles with
   `edgp parallel-query-bundle`.
+- Roll parallel-query report/query/result-node and memory-mapped CSR counts up
+  through `bundle-catalog` and `triage-summary` so batch evidence shows query
+  workload without opening every bundle.
 - Export existing graph snapshots into local Cypher and CycloneDX egress
   artifacts with manifest-recorded SHA-256 fingerprints.
 - Verify local graph export batches before using them as automated egress input.

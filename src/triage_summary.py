@@ -90,6 +90,8 @@ def build_triage_summary_report(
                 real_data_replacement_plan_diff_findings.extend(
                     _real_data_replacement_plan_diff_policy_findings(report)
                 )
+        elif schema == "edgp.parallel.query.report.v1":
+            _accumulate_parallel_query_report(rollup, report, summary)
         elif schema == "edgp.bundle.catalog.v1":
             checks.append(_bundle_catalog_check(summary))
             bundle_catalog_findings.extend(_bundle_catalog_findings(report))
@@ -485,6 +487,20 @@ def _accumulate_summary(
         rollup["catalogBundles"] += int(summary.get("bundles", 0))
         rollup["catalogFailedBundles"] += int(summary.get("failedBundles", 0))
         rollup["catalogFailures"] += int(summary.get("failures", 0))
+        rollup["parallelQueryReports"] = rollup.get("parallelQueryReports", 0) + int(
+            summary.get("parallelQueryReports", 0) or 0
+        )
+        rollup["parallelQueryQueries"] = rollup.get("parallelQueryQueries", 0) + int(
+            summary.get("parallelQueryQueries", 0) or 0
+        )
+        rollup["parallelQueryResultNodes"] = (
+            rollup.get("parallelQueryResultNodes", 0)
+            + int(summary.get("parallelQueryResultNodes", 0) or 0)
+        )
+        rollup["parallelQueryMemoryMappedReports"] = (
+            rollup.get("parallelQueryMemoryMappedReports", 0)
+            + int(summary.get("parallelQueryMemoryMappedReports", 0) or 0)
+        )
         rollup["graphDiffPolicyFailures"] += int(
             summary.get("graphDiffPolicyFailures", 0)
         )
@@ -521,6 +537,36 @@ def _accumulate_summary(
         )
         rollup["catalogTriageWarn"] += int(summary.get("triageWarn", 0))
         rollup["catalogTriageFail"] += int(summary.get("triageFail", 0))
+
+
+def _accumulate_parallel_query_report(
+    rollup: dict[str, int],
+    report: dict[str, Any],
+    summary: dict[str, Any],
+) -> None:
+    rollup["parallelQueryReports"] = rollup.get("parallelQueryReports", 0) + 1
+    rollup["parallelQueryQueries"] = rollup.get("parallelQueryQueries", 0) + int(
+        summary.get("queries", 0) or 0
+    )
+    rollup["parallelQueryResultNodes"] = (
+        rollup.get("parallelQueryResultNodes", 0)
+        + _parallel_query_result_nodes(report)
+    )
+    rollup["parallelQueryMemoryMappedReports"] = (
+        rollup.get("parallelQueryMemoryMappedReports", 0)
+        + (1 if bool(summary.get("memoryMapped")) else 0)
+    )
+
+
+def _parallel_query_result_nodes(report: dict[str, Any]) -> int:
+    results = report.get("results", [])
+    if not isinstance(results, list):
+        return 0
+    return sum(
+        int(result.get("count", 0) or 0)
+        for result in results
+        if isinstance(result, dict)
+    )
 
 
 def _check(kind: str, count: int, count_key: str) -> dict[str, Any]:
@@ -561,7 +607,7 @@ def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
         status = "fail"
     elif triage_warn:
         status = "warn"
-    return {
+    check = {
         "kind": "bundle-catalog",
         "status": status,
         "failedBundles": failed_bundles,
@@ -583,6 +629,23 @@ def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
         "triageWarn": triage_warn,
         "triageFail": triage_fail,
     }
+    parallel_query_reports = int(summary.get("parallelQueryReports", 0) or 0)
+    if parallel_query_reports:
+        check.update(
+            {
+                "parallelQueryReports": parallel_query_reports,
+                "parallelQueryQueries": int(
+                    summary.get("parallelQueryQueries", 0) or 0
+                ),
+                "parallelQueryResultNodes": int(
+                    summary.get("parallelQueryResultNodes", 0) or 0
+                ),
+                "parallelQueryMemoryMappedReports": int(
+                    summary.get("parallelQueryMemoryMappedReports", 0) or 0
+                ),
+            }
+        )
+    return check
 
 
 def _diff_policy_check(report: dict[str, Any]) -> dict[str, Any] | None:
@@ -955,6 +1018,16 @@ def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "diffTreeEdgeChurn": bundle.get("diffTreeEdgeChurn", 0),
                 "diffTreeNetNodeDelta": bundle.get("diffTreeNetNodeDelta", 0),
                 "diffTreeNetEdgeDelta": bundle.get("diffTreeNetEdgeDelta", 0),
+                "parallelQueryReports": bundle.get("parallelQueryReports", 0),
+                "parallelQueryQueries": bundle.get("parallelQueryQueries", 0),
+                "parallelQueryResultNodes": bundle.get(
+                    "parallelQueryResultNodes",
+                    0,
+                ),
+                "parallelQueryMemoryMappedReports": bundle.get(
+                    "parallelQueryMemoryMappedReports",
+                    0,
+                ),
                 "realDataCoveragePolicyFailures": bundle.get(
                     "realDataCoveragePolicyFailures",
                     0,

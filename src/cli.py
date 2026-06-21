@@ -324,6 +324,7 @@ def _format_report_bundle_submission_plan(report: dict[str, Any]) -> str:
                 parts.append(f"failedChecks={failed_checks}")
             parts.extend(_policy_failure_text_parts(summary))
             parts.extend(_diff_tree_rollup_text_parts(summary))
+            parts.extend(_parallel_query_rollup_text_parts(summary))
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
@@ -403,6 +404,7 @@ def _format_validation_report(report: dict[str, Any]) -> str:
         if isinstance(summary, dict):
             parts.extend(_policy_failure_text_parts(summary))
             parts.extend(_diff_tree_rollup_text_parts(summary))
+            parts.extend(_parallel_query_rollup_text_parts(summary))
     failure_list = report.get("failures", [])
     if isinstance(failure_list, list) and failure_list:
         first_failure = failure_list[0]
@@ -1215,6 +1217,7 @@ def _format_report_bundle_result(
     if isinstance(triage_summary, dict):
         parts.extend(_policy_failure_text_parts(triage_summary))
         parts.extend(_diff_tree_rollup_text_parts(triage_summary))
+        parts.extend(_parallel_query_rollup_text_parts(triage_summary))
     return " ".join(parts)
 
 
@@ -1900,6 +1903,7 @@ def _format_triage_summary_report(report: dict[str, Any]) -> str:
         parts.append(f"npmSignals={npm_signals}")
     parts.extend(_policy_failure_text_parts(summary))
     parts.extend(_diff_tree_rollup_text_parts(summary))
+    parts.extend(_parallel_query_rollup_text_parts(summary))
     for key in (
         "catalogFailedBundles",
         "catalogFailures",
