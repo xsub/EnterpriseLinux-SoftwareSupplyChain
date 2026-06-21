@@ -969,6 +969,64 @@ def test_cli_bundle_catalog_text_summarizes_diff_tree_policy_failures(
     )
 
 
+def test_cli_report_bundle_text_summarizes_diff_tree_cone_rollups(
+    tmp_path,
+    capsys,
+) -> None:
+    diff_tree_path = tmp_path / "graph-diff-tree-policy.json"
+    output_dir = tmp_path / "generic-diff-tree-bundle"
+
+    assert (
+        main(
+            [
+                "diff-tree",
+                "--left",
+                "tests/fixtures/snapshot-left.json",
+                "--right",
+                "tests/fixtures/snapshot-right.json",
+                "--node",
+                "app",
+                "--depth",
+                "2",
+                "--fail-on-kind",
+                "upgrade",
+            ]
+        )
+        == 2
+    )
+    diff_tree_path.write_text(capsys.readouterr().out, encoding="utf-8")
+
+    assert (
+        main(
+            [
+                "report-bundle",
+                "--input",
+                str(diff_tree_path),
+                "--output-dir",
+                str(output_dir),
+                "--triage-summary",
+                "--format",
+                "text",
+                "--fail-on-status",
+                "fail",
+            ]
+        )
+        == 2
+    )
+
+    output = capsys.readouterr().out.strip()
+    assert output.startswith(
+        f"BUNDLE index={output_dir / 'index.html'} sourceKind=edgp-json reports=1 "
+    )
+    assert " bundleSha256=" in output
+    assert " triageStatus=fail " in output
+    assert "diffTreePolicyFailures=1" in output
+    assert "diffTreeNodeChurn=3" in output
+    assert "diffTreeEdgeChurn=3" in output
+    assert "diffTreeNetNodeDelta=1" in output
+    assert "diffTreeNetEdgeDelta=1" in output
+
+
 def test_cli_verify_bundle_reports_tampered_html(tmp_path, capsys) -> None:
     output_dir = tmp_path / "bundle"
     assert (

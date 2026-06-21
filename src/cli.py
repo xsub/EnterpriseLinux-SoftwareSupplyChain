@@ -1159,6 +1159,10 @@ def _format_report_bundle_result(
     triage_status = triage.get("status") if isinstance(triage, dict) else None
     if isinstance(triage_status, str) and triage_status:
         parts.append(f"triageStatus={triage_status}")
+    triage_summary = triage.get("summary", {}) if isinstance(triage, dict) else {}
+    if isinstance(triage_summary, dict):
+        parts.extend(_policy_failure_text_parts(triage_summary))
+        parts.extend(_diff_tree_rollup_text_parts(triage_summary))
     return " ".join(parts)
 
 
