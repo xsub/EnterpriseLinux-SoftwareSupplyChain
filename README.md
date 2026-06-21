@@ -1286,6 +1286,9 @@ rendered as a static, verifiable bundle, and `--archive-output` writes that
 generated catalog bundle as a deterministic `.tar.gz` in the same pass. This
 gives CI systems and future workbench/RAG ingestion one compact index, plus one
 portable handoff archive, over a batch of public-input evidence bundles.
+With `--format text`, non-zero source-kind policy and diff-tree cone rollups
+are emitted as a compact `sourceKinds=...` token, so CI logs can show which
+input family carried the drift without opening JSON or HTML.
 The rendered bundle-catalog HTML also includes local workbench filters for
 text/failure-code search, source kind, triage status, and problem-only rows, so
 batch evidence can be inspected directly from the static artifact. The filter

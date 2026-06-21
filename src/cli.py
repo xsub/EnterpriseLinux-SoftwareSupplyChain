@@ -467,6 +467,36 @@ def _diff_tree_rollup_text_parts(summary: dict[str, Any]) -> list[str]:
     return parts
 
 
+def _source_kind_rollup_text_parts(catalog: dict[str, Any]) -> list[str]:
+    rendered = []
+    for row in _dict_list(catalog.get("sourceKinds")):
+        metrics = []
+        for key in (
+            "failures",
+            "graphDiffPolicyFailures",
+            "diffTreePolicyFailures",
+            "diffTreeNodeChurn",
+            "diffTreeEdgeChurn",
+            "diffTreeNetNodeDelta",
+            "diffTreeNetEdgeDelta",
+            "realDataCoveragePolicyFailures",
+            "realDataCoverageDiffPolicyFailures",
+            "realDataReplacementPlanPolicyFailures",
+            "realDataReplacementPlanDiffPolicyFailures",
+            "triageWarn",
+            "triageFail",
+        ):
+            value = int(row.get(key, 0) or 0)
+            if value:
+                metrics.append(f"{key}={value}")
+        if metrics:
+            source_kind = str(row.get("sourceKind") or "unknown")
+            rendered.append(f"{source_kind}({','.join(metrics)})")
+    if not rendered:
+        return []
+    return [f"sourceKinds={';'.join(rendered)}"]
+
+
 def _format_failure_example_index(index: dict[str, Any]) -> str:
     examples = index.get("examples", [])
     if not isinstance(examples, list):
@@ -1123,6 +1153,9 @@ def _format_bundle_catalog_result(index_path: Path) -> str:
     ]
     parts.extend(_policy_failure_text_parts(summary))
     parts.extend(_diff_tree_rollup_text_parts(summary))
+    parts.extend(
+        _source_kind_rollup_text_parts(catalog if isinstance(catalog, dict) else {})
+    )
     triage = _load_optional_json(index_path.parent / "triage-summary.json")
     if isinstance(triage, dict):
         triage_status = triage.get("status")

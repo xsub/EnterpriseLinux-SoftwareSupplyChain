@@ -965,7 +965,10 @@ def test_cli_bundle_catalog_text_summarizes_diff_tree_policy_failures(
         "bundles=1 okBundles=1 failedBundles=0 reports=1 failures=0 "
         "triageWarn=0 triageFail=1 diffTreePolicyFailures=1 "
         "diffTreeNodeChurn=3 diffTreeEdgeChurn=3 diffTreeNetNodeDelta=1 "
-        "diffTreeNetEdgeDelta=1 triageStatus=fail"
+        "diffTreeNetEdgeDelta=1 "
+        "sourceKinds=graph-diff-tree(diffTreePolicyFailures=1,"
+        "diffTreeNodeChurn=3,diffTreeEdgeChurn=3,diffTreeNetNodeDelta=1,"
+        "diffTreeNetEdgeDelta=1,triageFail=1) triageStatus=fail"
     )
 
 
