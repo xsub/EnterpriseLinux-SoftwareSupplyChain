@@ -308,6 +308,11 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "fail" in html
     assert "Parallel Query Reports" in html
     assert "Parallel Query Result Nodes" in html
+    assert "Performance Reports" in html
+    assert "Performance Scenarios" in html
+    assert "Performance Max Nodes" in html
+    assert "Performance Max Edges" in html
+    assert "Performance Contiguous Reports" in html
     assert "Diff Tree Policies" in html
     assert "Diff Tree Policy Failures" in html
     assert "Diff Tree Node Churn" in html

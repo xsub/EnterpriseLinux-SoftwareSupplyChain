@@ -68,6 +68,26 @@
             "minimum": 0,
             "type": "integer"
           },
+          "performanceReports": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceScenarios": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceMaxNodes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceMaxEdges": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceContiguousReports": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "graphDiffPolicyFailures": {
             "minimum": 0,
             "type": "integer"
@@ -203,6 +223,11 @@
           "parallelQueryQueries",
           "parallelQueryResultNodes",
           "parallelQueryMemoryMappedReports",
+          "performanceReports",
+          "performanceScenarios",
+          "performanceMaxNodes",
+          "performanceMaxEdges",
+          "performanceContiguousReports",
           "realDataCoveragePolicyFailures",
           "realDataCoverageDiffPolicyFailures",
           "realDataReplacementPlanPolicyFailures",
@@ -266,6 +291,26 @@
             "type": "integer"
           },
           "parallelQueryMemoryMappedReports": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceReports": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceScenarios": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceMaxNodes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceMaxEdges": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "performanceContiguousReports": {
             "minimum": 0,
             "type": "integer"
           },
@@ -363,6 +408,11 @@
           "parallelQueryQueries",
           "parallelQueryResultNodes",
           "parallelQueryMemoryMappedReports",
+          "performanceReports",
+          "performanceScenarios",
+          "performanceMaxNodes",
+          "performanceMaxEdges",
+          "performanceContiguousReports",
           "realDataCoveragePolicyFailures",
           "realDataCoverageDiffPolicyFailures",
           "realDataReplacementPlanPolicyFailures",
@@ -435,6 +485,26 @@
           "minimum": 0,
           "type": "integer"
         },
+        "performanceReports": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "performanceScenarios": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "performanceMaxNodes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "performanceMaxEdges": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "performanceContiguousReports": {
+          "minimum": 0,
+          "type": "integer"
+        },
         "graphDiffPolicyFailures": {
           "minimum": 0,
           "type": "integer"
@@ -500,6 +570,11 @@
         "parallelQueryQueries",
         "parallelQueryResultNodes",
         "parallelQueryMemoryMappedReports",
+        "performanceReports",
+        "performanceScenarios",
+        "performanceMaxNodes",
+        "performanceMaxEdges",
+        "performanceContiguousReports",
         "realDataCoveragePolicyFailures",
         "realDataCoverageDiffPolicyFailures",
         "realDataReplacementPlanPolicyFailures",

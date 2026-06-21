@@ -516,6 +516,11 @@ def _source_kind_rollup_text_parts(catalog: dict[str, Any]) -> list[str]:
             "parallelQueryQueries",
             "parallelQueryResultNodes",
             "parallelQueryMemoryMappedReports",
+            "performanceReports",
+            "performanceScenarios",
+            "performanceMaxNodes",
+            "performanceMaxEdges",
+            "performanceContiguousReports",
             "realDataCoveragePolicyFailures",
             "realDataCoverageDiffPolicyFailures",
             "realDataReplacementPlanPolicyFailures",
@@ -1191,6 +1196,7 @@ def _format_bundle_catalog_result(index_path: Path) -> str:
     parts.extend(_policy_failure_text_parts(summary))
     parts.extend(_diff_tree_rollup_text_parts(summary))
     parts.extend(_parallel_query_rollup_text_parts(summary))
+    parts.extend(_performance_rollup_text_parts(summary))
     parts.extend(
         _source_kind_rollup_text_parts(catalog if isinstance(catalog, dict) else {})
     )

@@ -437,8 +437,8 @@ surfaces are:
 - Render deterministic performance reports as static, verifiable report
   bundles.
 - Roll performance-report scenario, max graph size, and contiguous-layout
-  counts into `triage-summary` so benchmark evidence is visible in CI logs and
-  batch HTML reports.
+  counts through `bundle-catalog` and `triage-summary` so benchmark evidence is
+  visible in CI logs, batch catalogs, and static HTML reports.
 - Track the post-MVP graph performance plan in
   [`MVP Plus Performance Roadmap.md`](MVP%20Plus%20Performance%20Roadmap.md).
 - Materialize a reverse CSR sidecar for dependent lookups and reverse

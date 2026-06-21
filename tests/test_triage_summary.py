@@ -341,6 +341,28 @@ def test_triage_summary_rolls_up_parallel_query_metrics_from_catalog() -> None:
     assert report["checks"][0]["parallelQueryMemoryMappedReports"] == 1
 
 
+def test_triage_summary_rolls_up_performance_metrics_from_catalog() -> None:
+    catalog = json.loads(
+        Path("tests/fixtures/bundle-catalog.json").read_text(encoding="utf-8")
+    )
+    catalog["summary"]["performanceReports"] = 1
+    catalog["summary"]["performanceScenarios"] = 2
+    catalog["summary"]["performanceMaxNodes"] = 16
+    catalog["summary"]["performanceMaxEdges"] = 45
+    catalog["summary"]["performanceContiguousReports"] = 1
+
+    report = build_triage_summary_report([catalog])
+
+    assert report["summary"]["bundleCatalogReports"] == 1
+    assert report["summary"]["performanceReports"] == 1
+    assert report["summary"]["performanceScenarios"] == 2
+    assert report["summary"]["performanceMaxNodes"] == 16
+    assert report["summary"]["performanceMaxEdges"] == 45
+    assert report["summary"]["performanceContiguousReports"] == 1
+    assert report["checks"][0]["performanceReports"] == 1
+    assert report["checks"][0]["performanceContiguousReports"] == 1
+
+
 def test_triage_summary_fails_on_graph_diff_policy_gate(tmp_path, capsys) -> None:
     diff_path = tmp_path / "graph-diff-policy.json"
 

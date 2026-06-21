@@ -134,6 +134,7 @@ def test_cli_performance_report_bundle_outputs_text_summary(
     tmp_path,
 ) -> None:
     output_dir = tmp_path / "performance-bundle-text"
+    catalog_dir = tmp_path / "performance-catalog"
 
     assert (
         main(
@@ -167,3 +168,32 @@ def test_cli_performance_report_bundle_outputs_text_summary(
     assert "performanceContiguousReports=1" in output
     assert (output_dir / "performance-report.json").exists()
     assert (output_dir / "manifest.json").exists()
+
+    assert (
+        main(
+            [
+                "bundle-catalog",
+                "--bundle",
+                str(output_dir),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    catalog_output = capsys.readouterr().out.strip()
+    assert catalog_output.startswith("OK ")
+    assert "performanceReports=1" in catalog_output
+    assert "performanceScenarios=2" in catalog_output
+    assert "performanceMaxNodes=16" in catalog_output
+    assert "performanceContiguousReports=1" in catalog_output
+    catalog = json.loads((catalog_dir / "bundle-catalog.json").read_text())
+    assert catalog["summary"]["performanceReports"] == 1
+    assert catalog["summary"]["performanceScenarios"] == 2
+    assert catalog["summary"]["performanceMaxNodes"] == 16
+    assert catalog["summary"]["performanceContiguousReports"] == 1
+    assert catalog["sourceKinds"][0]["sourceKind"] == "performance-report"
+    assert catalog["sourceKinds"][0]["performanceReports"] == 1

@@ -503,6 +503,24 @@ def _accumulate_summary(
             rollup.get("parallelQueryMemoryMappedReports", 0)
             + int(summary.get("parallelQueryMemoryMappedReports", 0) or 0)
         )
+        rollup["performanceReports"] = rollup.get("performanceReports", 0) + int(
+            summary.get("performanceReports", 0) or 0
+        )
+        rollup["performanceScenarios"] = rollup.get("performanceScenarios", 0) + int(
+            summary.get("performanceScenarios", 0) or 0
+        )
+        rollup["performanceMaxNodes"] = max(
+            rollup.get("performanceMaxNodes", 0),
+            int(summary.get("performanceMaxNodes", 0) or 0),
+        )
+        rollup["performanceMaxEdges"] = max(
+            rollup.get("performanceMaxEdges", 0),
+            int(summary.get("performanceMaxEdges", 0) or 0),
+        )
+        rollup["performanceContiguousReports"] = (
+            rollup.get("performanceContiguousReports", 0)
+            + int(summary.get("performanceContiguousReports", 0) or 0)
+        )
         rollup["graphDiffPolicyFailures"] += int(
             summary.get("graphDiffPolicyFailures", 0)
         )
@@ -666,6 +684,21 @@ def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
                 ),
                 "parallelQueryMemoryMappedReports": int(
                     summary.get("parallelQueryMemoryMappedReports", 0) or 0
+                ),
+            }
+        )
+    performance_reports = int(summary.get("performanceReports", 0) or 0)
+    if performance_reports:
+        check.update(
+            {
+                "performanceReports": performance_reports,
+                "performanceScenarios": int(
+                    summary.get("performanceScenarios", 0) or 0
+                ),
+                "performanceMaxNodes": int(summary.get("performanceMaxNodes", 0) or 0),
+                "performanceMaxEdges": int(summary.get("performanceMaxEdges", 0) or 0),
+                "performanceContiguousReports": int(
+                    summary.get("performanceContiguousReports", 0) or 0
                 ),
             }
         )

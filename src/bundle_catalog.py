@@ -12,6 +12,7 @@ from src.output.report_bundle import verify_report_bundle, verify_report_bundle_
 
 BUNDLE_CATALOG_SCHEMA = "edgp.bundle.catalog.v1"
 PARALLEL_QUERY_SCHEMA = "edgp.parallel.query.report.v1"
+PERFORMANCE_REPORT_SCHEMA = "edgp.performance.report.v1"
 
 
 def build_bundle_catalog_report(
@@ -117,6 +118,7 @@ def _catalog_entry(
     if not isinstance(verification_summary, dict):
         verification_summary = {}
     parallel_query_summary = _parallel_query_summary(load_member, reports)
+    performance_summary = _performance_summary(load_member, reports)
     return {
         "path": str(path),
         "inputType": input_type,
@@ -136,6 +138,13 @@ def _catalog_entry(
         ],
         "parallelQueryMemoryMappedReports": parallel_query_summary[
             "parallelQueryMemoryMappedReports"
+        ],
+        "performanceReports": performance_summary["performanceReports"],
+        "performanceScenarios": performance_summary["performanceScenarios"],
+        "performanceMaxNodes": performance_summary["performanceMaxNodes"],
+        "performanceMaxEdges": performance_summary["performanceMaxEdges"],
+        "performanceContiguousReports": performance_summary[
+            "performanceContiguousReports"
         ],
         "triageStatus": str(triage_summary.get("status") or "unknown"),
         "graphDiffPolicyFailures": int(
@@ -280,6 +289,49 @@ def _parallel_query_summary(
                 for result in results
                 if isinstance(result, dict)
             )
+    return summary
+
+
+def _performance_summary(
+    load_member: Callable[[str], dict[str, Any]],
+    reports: list[object],
+) -> dict[str, int]:
+    summary = {
+        "performanceReports": 0,
+        "performanceScenarios": 0,
+        "performanceMaxNodes": 0,
+        "performanceMaxEdges": 0,
+        "performanceContiguousReports": 0,
+    }
+    for report in reports:
+        if (
+            not isinstance(report, dict)
+            or report.get("schema") != PERFORMANCE_REPORT_SCHEMA
+        ):
+            continue
+        source = report.get("source")
+        if not isinstance(source, str) or not source:
+            continue
+        payload = load_member(source)
+        if payload.get("schema") != PERFORMANCE_REPORT_SCHEMA:
+            continue
+        report_summary = payload.get("summary")
+        if not isinstance(report_summary, dict):
+            report_summary = {}
+        summary["performanceReports"] += 1
+        summary["performanceScenarios"] += int(
+            report_summary.get("scenarios", 0) or 0
+        )
+        summary["performanceMaxNodes"] = max(
+            summary["performanceMaxNodes"],
+            int(report_summary.get("maxNodes", 0) or 0),
+        )
+        summary["performanceMaxEdges"] = max(
+            summary["performanceMaxEdges"],
+            int(report_summary.get("maxEdges", 0) or 0),
+        )
+        if bool(report_summary.get("allContiguous")):
+            summary["performanceContiguousReports"] += 1
     return summary
 
 
@@ -511,6 +563,24 @@ def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
             int(entry.get("parallelQueryMemoryMappedReports", 0) or 0)
             for entry in entries
         ),
+        "performanceReports": sum(
+            int(entry.get("performanceReports", 0) or 0) for entry in entries
+        ),
+        "performanceScenarios": sum(
+            int(entry.get("performanceScenarios", 0) or 0) for entry in entries
+        ),
+        "performanceMaxNodes": max(
+            (int(entry.get("performanceMaxNodes", 0) or 0) for entry in entries),
+            default=0,
+        ),
+        "performanceMaxEdges": max(
+            (int(entry.get("performanceMaxEdges", 0) or 0) for entry in entries),
+            default=0,
+        ),
+        "performanceContiguousReports": sum(
+            int(entry.get("performanceContiguousReports", 0) or 0)
+            for entry in entries
+        ),
         "realDataCoveragePolicyFailures": sum(
             int(entry.get("realDataCoveragePolicyFailures", 0) or 0)
             for entry in entries
@@ -573,6 +643,11 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "parallelQueryQueries": 0,
                 "parallelQueryResultNodes": 0,
                 "parallelQueryMemoryMappedReports": 0,
+                "performanceReports": 0,
+                "performanceScenarios": 0,
+                "performanceMaxNodes": 0,
+                "performanceMaxEdges": 0,
+                "performanceContiguousReports": 0,
                 "realDataCoveragePolicyFailures": 0,
                 "realDataCoverageDiffPolicyFailures": 0,
                 "realDataReplacementPlanPolicyFailures": 0,
@@ -621,6 +696,19 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         )
         row["parallelQueryMemoryMappedReports"] += int(
             entry.get("parallelQueryMemoryMappedReports", 0) or 0
+        )
+        row["performanceReports"] += int(entry.get("performanceReports", 0) or 0)
+        row["performanceScenarios"] += int(entry.get("performanceScenarios", 0) or 0)
+        row["performanceMaxNodes"] = max(
+            int(row.get("performanceMaxNodes", 0) or 0),
+            int(entry.get("performanceMaxNodes", 0) or 0),
+        )
+        row["performanceMaxEdges"] = max(
+            int(row.get("performanceMaxEdges", 0) or 0),
+            int(entry.get("performanceMaxEdges", 0) or 0),
+        )
+        row["performanceContiguousReports"] += int(
+            entry.get("performanceContiguousReports", 0) or 0
         )
         row["realDataCoveragePolicyFailures"] += int(
             entry.get("realDataCoveragePolicyFailures", 0) or 0

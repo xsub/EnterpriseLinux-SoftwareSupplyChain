@@ -7054,6 +7054,30 @@ def _assert_benchmark() -> None:
         assert "performanceScenarios=2" in text_completed.stdout
         assert "performanceMaxNodes=32" in text_completed.stdout
         assert "performanceContiguousReports=1" in text_completed.stdout
+        catalog_dir = Path(temp_dir) / "performance-report-catalog"
+        catalog_text = _run_cli_text(
+            [
+                "bundle-catalog",
+                "--bundle",
+                str(text_output_dir),
+                "--output-dir",
+                str(catalog_dir),
+                "--format",
+                "text",
+            ]
+        )
+        assert "performanceReports=1" in catalog_text
+        assert "performanceScenarios=2" in catalog_text
+        assert "performanceMaxNodes=32" in catalog_text
+        assert "performanceContiguousReports=1" in catalog_text
+        catalog = json.loads(
+            (catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8")
+        )
+        assert catalog["summary"]["performanceReports"] == 1
+        assert catalog["summary"]["performanceScenarios"] == 2
+        assert catalog["summary"]["performanceMaxNodes"] == 32
+        assert catalog["sourceKinds"][0]["sourceKind"] == "performance-report"
+        assert catalog["sourceKinds"][0]["performanceContiguousReports"] == 1
 
 
 def _assert_csr_artifact() -> None:

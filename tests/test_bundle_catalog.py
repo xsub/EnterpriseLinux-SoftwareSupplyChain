@@ -50,6 +50,11 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
         "parallelQueryQueries": 0,
         "parallelQueryResultNodes": 0,
         "parallelQueryMemoryMappedReports": 0,
+        "performanceReports": 0,
+        "performanceScenarios": 0,
+        "performanceMaxNodes": 0,
+        "performanceMaxEdges": 0,
+        "performanceContiguousReports": 0,
         "realDataCoveragePolicyFailures": 0,
         "realDataCoverageDiffPolicyFailures": 0,
         "realDataReplacementPlanPolicyFailures": 0,
@@ -75,6 +80,11 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "parallelQueryQueries": 0,
             "parallelQueryResultNodes": 0,
             "parallelQueryMemoryMappedReports": 0,
+            "performanceReports": 0,
+            "performanceScenarios": 0,
+            "performanceMaxNodes": 0,
+            "performanceMaxEdges": 0,
+            "performanceContiguousReports": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -104,6 +114,11 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "parallelQueryQueries": 0,
             "parallelQueryResultNodes": 0,
             "parallelQueryMemoryMappedReports": 0,
+            "performanceReports": 0,
+            "performanceScenarios": 0,
+            "performanceMaxNodes": 0,
+            "performanceMaxEdges": 0,
+            "performanceContiguousReports": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -202,6 +217,45 @@ def test_build_bundle_catalog_summarizes_parallel_query_bundles(tmp_path) -> Non
     assert report["sourceKinds"][0]["parallelQueryQueries"] == 2
     assert report["sourceKinds"][0]["parallelQueryResultNodes"] == 4
     assert report["sourceKinds"][0]["parallelQueryMemoryMappedReports"] == 1
+
+
+def test_build_bundle_catalog_summarizes_performance_bundles(tmp_path) -> None:
+    performance_bundle = tmp_path / "performance-bundle"
+    performance_bundle.mkdir()
+    performance_path = performance_bundle / "performance-report.json"
+    performance_path.write_text(
+        Path("tests/fixtures/performance-report.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    write_report_bundle(
+        [performance_path],
+        performance_bundle,
+        bundle_metadata={
+            "sourceKind": "performance-report",
+            "command": "edgp performance-report-bundle --scenario 10:2",
+        },
+        include_triage_summary=True,
+    )
+
+    report = build_bundle_catalog_report([performance_bundle])
+
+    assert report["status"] == "pass"
+    assert report["summary"]["performanceReports"] == 1
+    assert report["summary"]["performanceScenarios"] == 1
+    assert report["summary"]["performanceMaxNodes"] == 10
+    assert report["summary"]["performanceMaxEdges"] == 17
+    assert report["summary"]["performanceContiguousReports"] == 1
+    assert report["bundles"][0]["performanceReports"] == 1
+    assert report["bundles"][0]["performanceScenarios"] == 1
+    assert report["bundles"][0]["performanceMaxNodes"] == 10
+    assert report["bundles"][0]["performanceMaxEdges"] == 17
+    assert report["bundles"][0]["performanceContiguousReports"] == 1
+    assert report["sourceKinds"][0]["sourceKind"] == "performance-report"
+    assert report["sourceKinds"][0]["performanceReports"] == 1
+    assert report["sourceKinds"][0]["performanceScenarios"] == 1
+    assert report["sourceKinds"][0]["performanceMaxNodes"] == 10
+    assert report["sourceKinds"][0]["performanceMaxEdges"] == 17
+    assert report["sourceKinds"][0]["performanceContiguousReports"] == 1
 
 
 def test_build_bundle_catalog_report_accepts_bundle_archives(tmp_path) -> None:
@@ -349,6 +403,11 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
             "parallelQueryQueries": 0,
             "parallelQueryResultNodes": 0,
             "parallelQueryMemoryMappedReports": 0,
+            "performanceReports": 0,
+            "performanceScenarios": 0,
+            "performanceMaxNodes": 0,
+            "performanceMaxEdges": 0,
+            "performanceContiguousReports": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
@@ -422,6 +481,11 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
             "parallelQueryQueries": 0,
             "parallelQueryResultNodes": 0,
             "parallelQueryMemoryMappedReports": 0,
+            "performanceReports": 0,
+            "performanceScenarios": 0,
+            "performanceMaxNodes": 0,
+            "performanceMaxEdges": 0,
+            "performanceContiguousReports": 0,
             "realDataCoveragePolicyFailures": 0,
             "realDataCoverageDiffPolicyFailures": 0,
             "realDataReplacementPlanPolicyFailures": 0,
