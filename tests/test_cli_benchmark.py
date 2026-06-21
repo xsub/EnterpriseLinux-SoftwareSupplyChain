@@ -161,5 +161,9 @@ def test_cli_performance_report_bundle_outputs_text_summary(
     assert "sourceKind=performance-report" in output
     assert "reports=1" in output
     assert "triageStatus=pass" in output
+    assert "performanceReports=1" in output
+    assert "performanceScenarios=2" in output
+    assert "performanceMaxNodes=16" in output
+    assert "performanceContiguousReports=1" in output
     assert (output_dir / "performance-report.json").exists()
     assert (output_dir / "manifest.json").exists()

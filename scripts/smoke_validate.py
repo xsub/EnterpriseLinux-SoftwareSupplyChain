@@ -7050,6 +7050,10 @@ def _assert_benchmark() -> None:
         assert text_completed.stdout.startswith("BUNDLE index=")
         assert "performance-report-bundle-text/index.html" in text_completed.stdout
         assert "sourceKind=performance-report" in text_completed.stdout
+        assert "performanceReports=1" in text_completed.stdout
+        assert "performanceScenarios=2" in text_completed.stdout
+        assert "performanceMaxNodes=32" in text_completed.stdout
+        assert "performanceContiguousReports=1" in text_completed.stdout
 
 
 def _assert_csr_artifact() -> None:

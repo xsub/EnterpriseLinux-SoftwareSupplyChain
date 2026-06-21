@@ -251,6 +251,42 @@ def test_cli_triage_summary_text_reports_npm_signals(capsys) -> None:
     )
 
 
+def test_triage_summary_rolls_up_performance_report() -> None:
+    report = build_triage_summary_from_paths(
+        [Path("tests/fixtures/performance-report.json")]
+    )
+
+    assert report["status"] == "pass"
+    assert report["summary"]["reports"] == 1
+    assert report["summary"]["performanceReports"] == 1
+    assert report["summary"]["performanceScenarios"] == 1
+    assert report["summary"]["performanceMaxNodes"] == 10
+    assert report["summary"]["performanceMaxEdges"] == 17
+    assert report["summary"]["performanceContiguousReports"] == 1
+
+
+def test_cli_triage_summary_text_reports_performance_metrics(capsys) -> None:
+    assert (
+        main(
+            [
+                "triage-summary",
+                "--input",
+                "tests/fixtures/performance-report.json",
+                "--format",
+                "text",
+            ]
+        )
+        == 0
+    )
+
+    assert capsys.readouterr().out.strip() == (
+        "TRIAGE status=pass reports=1 failedChecks=0 "
+        "performanceReports=1 performanceScenarios=1 "
+        "performanceMaxNodes=10 performanceMaxEdges=17 "
+        "performanceContiguousReports=1"
+    )
+
+
 def test_triage_summary_rolls_up_parallel_query_report() -> None:
     report = build_triage_summary_from_paths(
         [Path("tests/fixtures/parallel-query-report.json")]

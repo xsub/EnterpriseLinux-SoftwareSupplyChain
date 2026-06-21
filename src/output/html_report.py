@@ -1988,6 +1988,26 @@ def render_triage_summary_report(report: dict[str, Any]) -> str:
                         summary.get("parallelQueryMemoryMappedReports", 0),
                     ),
                     (
+                        "Performance Reports",
+                        summary.get("performanceReports", 0),
+                    ),
+                    (
+                        "Performance Scenarios",
+                        summary.get("performanceScenarios", 0),
+                    ),
+                    (
+                        "Performance Max Nodes",
+                        summary.get("performanceMaxNodes", 0),
+                    ),
+                    (
+                        "Performance Max Edges",
+                        summary.get("performanceMaxEdges", 0),
+                    ),
+                    (
+                        "Contiguous Performance Reports",
+                        summary.get("performanceContiguousReports", 0),
+                    ),
+                    (
                         "Real-Data Policies",
                         summary.get("realDataCoveragePolicyFailures", 0),
                     ),

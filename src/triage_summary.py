@@ -90,6 +90,8 @@ def build_triage_summary_report(
                 real_data_replacement_plan_diff_findings.extend(
                     _real_data_replacement_plan_diff_policy_findings(report)
                 )
+        elif schema == "edgp.performance.report.v1":
+            _accumulate_performance_report(rollup, summary)
         elif schema == "edgp.parallel.query.report.v1":
             _accumulate_parallel_query_report(rollup, report, summary)
         elif schema == "edgp.bundle.catalog.v1":
@@ -537,6 +539,28 @@ def _accumulate_summary(
         )
         rollup["catalogTriageWarn"] += int(summary.get("triageWarn", 0))
         rollup["catalogTriageFail"] += int(summary.get("triageFail", 0))
+
+
+def _accumulate_performance_report(
+    rollup: dict[str, int],
+    summary: dict[str, Any],
+) -> None:
+    rollup["performanceReports"] = rollup.get("performanceReports", 0) + 1
+    rollup["performanceScenarios"] = rollup.get("performanceScenarios", 0) + int(
+        summary.get("scenarios", 0) or 0
+    )
+    rollup["performanceMaxNodes"] = max(
+        rollup.get("performanceMaxNodes", 0),
+        int(summary.get("maxNodes", 0) or 0),
+    )
+    rollup["performanceMaxEdges"] = max(
+        rollup.get("performanceMaxEdges", 0),
+        int(summary.get("maxEdges", 0) or 0),
+    )
+    rollup["performanceContiguousReports"] = (
+        rollup.get("performanceContiguousReports", 0)
+        + (1 if bool(summary.get("allContiguous")) else 0)
+    )
 
 
 def _accumulate_parallel_query_report(

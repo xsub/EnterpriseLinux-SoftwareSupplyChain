@@ -388,6 +388,11 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     report["summary"]["parallelQueryQueries"] = 2
     report["summary"]["parallelQueryResultNodes"] = 4
     report["summary"]["parallelQueryMemoryMappedReports"] = 1
+    report["summary"]["performanceReports"] = 1
+    report["summary"]["performanceScenarios"] = 2
+    report["summary"]["performanceMaxNodes"] = 16
+    report["summary"]["performanceMaxEdges"] = 45
+    report["summary"]["performanceContiguousReports"] = 1
     report["topFindings"]["bundleCatalog"] = [
         {
             "path": "/tmp/reports/cataloged-diff",
@@ -437,6 +442,10 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     assert "Parallel Query Result Nodes" in html
     assert "Memory-Mapped Query Reports" in html
     assert "Parallel Query Memory Mapped Reports" in html
+    assert "Performance Reports" in html
+    assert "Performance Scenarios" in html
+    assert "Performance Max Nodes" in html
+    assert "Contiguous Performance Reports" in html
     assert "replacementPriorityMatched" in html
     assert "publicEvidenceCoverageDecreased" in html
     assert "replacementPlanPriorityMatched" in html

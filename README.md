@@ -1320,6 +1320,8 @@ bundle archive, or a list of EDGP JSON reports into one
 size, advisory findings, denied license findings, npm diagnostic signals,
 graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
 gate failures, replacement-plan and replacement-plan-diff policy gate failures,
+performance-report counts, benchmark scenario counts, max benchmark graph
+size, contiguous-layout performance evidence,
 parallel-query report/query/result-node counts, memory-mapped parallel-query
 report counts, bundle-catalog integrity and underlying triage status, and the
 source report list so CI systems and
@@ -1329,8 +1331,9 @@ graph-diff and diff-tree policy findings panels when graph-drift gates fail;
 graph-diff findings preserve both coarse `failOnChange`/`matchedChanges` and
 semantic package `failOnKind`/`matchedKinds` gates.
 Use `--format text` for a compact CI log line that keeps status, failed checks,
-graph-diff and diff-tree policy failures, parallel-query workload metrics, npm
-signals, and catalog failures visible without parsing the full JSON rollup.
+graph-diff and diff-tree policy failures, performance evidence, parallel-query
+workload metrics, npm signals, and catalog failures visible without parsing
+the full JSON rollup.
 `--fail-on-status warn|fail` still
 prints the selected format and returns status `2` when the computed status
 reaches the selected threshold. When a bundle catalog is one of the inputs,
