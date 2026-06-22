@@ -133,8 +133,17 @@ def _catalog_entry(
         "reportSchemas": _report_schemas(reports),
         "parallelQueryReports": parallel_query_summary["parallelQueryReports"],
         "parallelQueryQueries": parallel_query_summary["parallelQueryQueries"],
+        "parallelQueryNodeQueries": parallel_query_summary[
+            "parallelQueryNodeQueries"
+        ],
+        "parallelQueryPathQueries": parallel_query_summary[
+            "parallelQueryPathQueries"
+        ],
         "parallelQueryResultNodes": parallel_query_summary[
             "parallelQueryResultNodes"
+        ],
+        "parallelQueryPathResultNodes": parallel_query_summary[
+            "parallelQueryPathResultNodes"
         ],
         "parallelQueryMemoryMappedReports": parallel_query_summary[
             "parallelQueryMemoryMappedReports"
@@ -260,7 +269,10 @@ def _parallel_query_summary(
     summary = {
         "parallelQueryReports": 0,
         "parallelQueryQueries": 0,
+        "parallelQueryNodeQueries": 0,
+        "parallelQueryPathQueries": 0,
         "parallelQueryResultNodes": 0,
+        "parallelQueryPathResultNodes": 0,
         "parallelQueryMemoryMappedReports": 0,
     }
     for report in reports:
@@ -280,6 +292,12 @@ def _parallel_query_summary(
             report_summary = {}
         summary["parallelQueryReports"] += 1
         summary["parallelQueryQueries"] += int(report_summary.get("queries", 0) or 0)
+        summary["parallelQueryNodeQueries"] += int(
+            report_summary.get("nodeQueries", 0) or 0
+        )
+        summary["parallelQueryPathQueries"] += int(
+            report_summary.get("pathQueries", 0) or 0
+        )
         if bool(report_summary.get("memoryMapped")):
             summary["parallelQueryMemoryMappedReports"] += 1
         results = payload.get("results")
@@ -288,6 +306,11 @@ def _parallel_query_summary(
                 int(result.get("count", 0) or 0)
                 for result in results
                 if isinstance(result, dict)
+            )
+            summary["parallelQueryPathResultNodes"] += sum(
+                int(result.get("count", 0) or 0)
+                for result in results
+                if isinstance(result, dict) and result.get("resultKind") == "path"
             )
     return summary
 
@@ -556,8 +579,20 @@ def _summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "parallelQueryQueries": sum(
             int(entry.get("parallelQueryQueries", 0) or 0) for entry in entries
         ),
+        "parallelQueryNodeQueries": sum(
+            int(entry.get("parallelQueryNodeQueries", 0) or 0)
+            for entry in entries
+        ),
+        "parallelQueryPathQueries": sum(
+            int(entry.get("parallelQueryPathQueries", 0) or 0)
+            for entry in entries
+        ),
         "parallelQueryResultNodes": sum(
             int(entry.get("parallelQueryResultNodes", 0) or 0) for entry in entries
+        ),
+        "parallelQueryPathResultNodes": sum(
+            int(entry.get("parallelQueryPathResultNodes", 0) or 0)
+            for entry in entries
         ),
         "parallelQueryMemoryMappedReports": sum(
             int(entry.get("parallelQueryMemoryMappedReports", 0) or 0)
@@ -641,7 +676,10 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "diffTreeNetEdgeDelta": 0,
                 "parallelQueryReports": 0,
                 "parallelQueryQueries": 0,
+                "parallelQueryNodeQueries": 0,
+                "parallelQueryPathQueries": 0,
                 "parallelQueryResultNodes": 0,
+                "parallelQueryPathResultNodes": 0,
                 "parallelQueryMemoryMappedReports": 0,
                 "performanceReports": 0,
                 "performanceScenarios": 0,
@@ -691,8 +729,17 @@ def _source_kind_summary(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         row["parallelQueryQueries"] += int(
             entry.get("parallelQueryQueries", 0) or 0
         )
+        row["parallelQueryNodeQueries"] += int(
+            entry.get("parallelQueryNodeQueries", 0) or 0
+        )
+        row["parallelQueryPathQueries"] += int(
+            entry.get("parallelQueryPathQueries", 0) or 0
+        )
         row["parallelQueryResultNodes"] += int(
             entry.get("parallelQueryResultNodes", 0) or 0
+        )
+        row["parallelQueryPathResultNodes"] += int(
+            entry.get("parallelQueryPathResultNodes", 0) or 0
         )
         row["parallelQueryMemoryMappedReports"] += int(
             entry.get("parallelQueryMemoryMappedReports", 0) or 0

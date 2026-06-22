@@ -20,14 +20,22 @@ def test_parallel_reachability_queries_preserve_input_order() -> None:
         [
             ParallelReachabilityQuery("dependencies", "app==1.0.0"),
             ParallelReachabilityQuery("dependents", "base==1.0.0"),
+            ParallelReachabilityQuery(
+                "dependencies",
+                "app==1.0.0",
+                target="base==1.0.0",
+                result_kind="path",
+            ),
         ],
-        max_workers=2,
+        max_workers=3,
         backend="auto",
     )
 
     assert report["schema"] == "edgp.parallel.query.report.v1"
-    assert report["summary"]["queries"] == 2
-    assert report["summary"]["workers"] == 2
+    assert report["summary"]["queries"] == 3
+    assert report["summary"]["nodeQueries"] == 2
+    assert report["summary"]["pathQueries"] == 1
+    assert report["summary"]["workers"] == 3
     assert report["summary"]["backend"] == "auto"
     assert report["results"] == [
         {
@@ -44,6 +52,14 @@ def test_parallel_reachability_queries_preserve_input_order() -> None:
             "count": 2,
             "nodes": ["lib==1.0.0", "app==1.0.0"],
         },
+        {
+            "direction": "dependencies",
+            "node": "app==1.0.0",
+            "target": "base==1.0.0",
+            "resultKind": "path",
+            "count": 3,
+            "nodes": ["app==1.0.0", "lib==1.0.0", "base==1.0.0"],
+        },
     ]
 
 
@@ -55,4 +71,21 @@ def test_parallel_reachability_rejects_unknown_direction() -> None:
         run_parallel_reachability_queries(
             graph.freeze(),
             [{"direction": "sideways", "node": "app==1.0.0"}],
+        )
+
+
+def test_parallel_path_query_requires_target() -> None:
+    graph = CSRDependencyGraph()
+    graph.add_dependency_edge("app==1.0.0", "lib==1.0.0")
+
+    with pytest.raises(ValueError, match="target"):
+        run_parallel_reachability_queries(
+            graph.freeze(),
+            [
+                {
+                    "direction": "dependencies",
+                    "node": "app==1.0.0",
+                    "resultKind": "path",
+                }
+            ],
         )

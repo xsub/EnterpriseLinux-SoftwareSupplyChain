@@ -476,7 +476,10 @@ def _parallel_query_rollup_text_parts(summary: dict[str, Any]) -> list[str]:
     for key in (
         "parallelQueryReports",
         "parallelQueryQueries",
+        "parallelQueryNodeQueries",
+        "parallelQueryPathQueries",
         "parallelQueryResultNodes",
+        "parallelQueryPathResultNodes",
         "parallelQueryMemoryMappedReports",
     ):
         value = int(summary.get(key, 0) or 0)
@@ -514,7 +517,10 @@ def _source_kind_rollup_text_parts(catalog: dict[str, Any]) -> list[str]:
             "diffTreeNetEdgeDelta",
             "parallelQueryReports",
             "parallelQueryQueries",
+            "parallelQueryNodeQueries",
+            "parallelQueryPathQueries",
             "parallelQueryResultNodes",
+            "parallelQueryPathResultNodes",
             "parallelQueryMemoryMappedReports",
             "performanceReports",
             "performanceScenarios",
@@ -2320,6 +2326,8 @@ def _format_parallel_query_result(report: dict[str, Any]) -> str:
         f"backend={_text_value(summary.get('backend', ''))}",
         f"selectedBackend={_text_value(summary.get('selectedBackend', ''))}",
         f"durationMs={float(summary.get('durationMs', 0.0) or 0.0):.3f}",
+        f"nodeQueries={int(summary.get('nodeQueries', 0) or 0)}",
+        f"pathQueries={int(summary.get('pathQueries', 0) or 0)}",
         f"totalResultNodes={total_nodes}",
         f"maxResultNodes={max_nodes}",
     ]
@@ -2327,6 +2335,10 @@ def _format_parallel_query_result(report: dict[str, Any]) -> str:
         first = results[0]
         parts.append(f"firstQuery={_text_value(first.get('direction', ''))}")
         parts.append(f"firstNode={_text_value(first.get('node', ''))}")
+        target = first.get("target")
+        if isinstance(target, str) and target:
+            parts.append(f"firstTarget={_text_value(target)}")
+        parts.append(f"firstResultKind={_text_value(first.get('resultKind', ''))}")
         parts.append(f"firstCount={int(first.get('count', 0) or 0)}")
     return " ".join(parts)
 
@@ -4086,10 +4098,46 @@ def _parallel_query_specs(values: Sequence[str]) -> list[dict[str, str]]:
         raise ValueError("parallel-query requires at least one --query")
     queries = []
     for value in values:
-        direction, separator, node = value.partition(":")
-        if not separator or not node:
-            raise ValueError("--query must use dependencies:NODE or dependents:NODE")
-        queries.append({"direction": direction, "node": node})
+        direction, separator, payload = value.partition(":")
+        if not separator or not payload:
+            raise ValueError(
+                "--query must use dependencies:NODE, dependents:NODE, "
+                "dependency-path:SOURCE->TARGET, or dependent-path:SOURCE->TARGET"
+            )
+        if direction in {"dependencies", "dependents"}:
+            queries.append(
+                {
+                    "direction": direction,
+                    "node": payload,
+                    "resultKind": "nodes",
+                }
+            )
+            continue
+        if direction in {"dependency-path", "dependent-path"}:
+            source, path_separator, target = payload.partition("->")
+            if not path_separator or not source or not target:
+                raise ValueError(
+                    "--query path form must be "
+                    "dependency-path:SOURCE->TARGET or "
+                    "dependent-path:SOURCE->TARGET"
+                )
+            queries.append(
+                {
+                    "direction": (
+                        "dependencies"
+                        if direction == "dependency-path"
+                        else "dependents"
+                    ),
+                    "node": source,
+                    "target": target,
+                    "resultKind": "path",
+                }
+            )
+            continue
+        raise ValueError(
+            "--query must use dependencies:NODE, dependents:NODE, "
+            "dependency-path:SOURCE->TARGET, or dependent-path:SOURCE->TARGET"
+        )
     return queries
 
 
@@ -5964,7 +6012,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--query",
         action="append",
         default=[],
-        help="query as dependencies:NODE or dependents:NODE; may be repeated",
+        help=(
+            "query as dependencies:NODE, dependents:NODE, "
+            "dependency-path:SOURCE->TARGET, or dependent-path:SOURCE->TARGET; "
+            "may be repeated"
+        ),
     )
     parallel_query.add_argument("--workers", type=int)
     parallel_query.add_argument(
@@ -5996,7 +6048,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--query",
         action="append",
         default=[],
-        help="query as dependencies:NODE or dependents:NODE; may be repeated",
+        help=(
+            "query as dependencies:NODE, dependents:NODE, "
+            "dependency-path:SOURCE->TARGET, or dependent-path:SOURCE->TARGET; "
+            "may be repeated"
+        ),
     )
     parallel_query_bundle.add_argument("--workers", type=int)
     parallel_query_bundle.add_argument(

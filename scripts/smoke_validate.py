@@ -7365,15 +7365,24 @@ def _assert_parallel_query() -> None:
                 "dependencies:app==1.0.0",
                 "--query",
                 "dependents:core==1.0.0",
+                "--query",
+                "dependency-path:app==1.0.0->core==1.0.0",
                 "--workers",
-                "2",
+                "3",
                 "--backend",
                 "auto",
             ]
         )
         assert artifact_payload["summary"]["inputType"] == "csr-artifact"
         assert artifact_payload["summary"]["memoryMapped"] is True
+        assert artifact_payload["summary"]["nodeQueries"] == 2
+        assert artifact_payload["summary"]["pathQueries"] == 1
         assert artifact_payload["results"][0]["nodes"] == [
+            "lib==2.0.0",
+            "core==1.0.0",
+        ]
+        assert artifact_payload["results"][2]["nodes"] == [
+            "app==1.0.0",
             "lib==2.0.0",
             "core==1.0.0",
         ]
@@ -7400,8 +7409,10 @@ def _assert_parallel_query() -> None:
                 "dependencies:app==1.0.0",
                 "--query",
                 "dependents:core==1.0.0",
+                "--query",
+                "dependency-path:app==1.0.0->core==1.0.0",
                 "--workers",
-                "2",
+                "3",
                 "--backend",
                 "auto",
                 "--output-dir",
@@ -7414,8 +7425,11 @@ def _assert_parallel_query() -> None:
         assert bundle_text.startswith("BUNDLE ")
         assert "sourceKind=parallel-query" in bundle_text
         assert "parallelQueryReports=1" in bundle_text
-        assert "parallelQueryQueries=2" in bundle_text
-        assert "parallelQueryResultNodes=4" in bundle_text
+        assert "parallelQueryQueries=3" in bundle_text
+        assert "parallelQueryNodeQueries=2" in bundle_text
+        assert "parallelQueryPathQueries=1" in bundle_text
+        assert "parallelQueryResultNodes=7" in bundle_text
+        assert "parallelQueryPathResultNodes=3" in bundle_text
         assert "parallelQueryMemoryMappedReports=1" in bundle_text
         manifest = json.loads((bundle_dir / "manifest.json").read_text(encoding="utf-8"))
         _assert_report_bundle_manifest_contract(manifest, bundle_dir)
@@ -7425,11 +7439,14 @@ def _assert_parallel_query() -> None:
             (bundle_dir / "triage-summary.json").read_text(encoding="utf-8")
         )
         assert triage["summary"]["parallelQueryReports"] == 1
+        assert triage["summary"]["parallelQueryPathQueries"] == 1
+        assert triage["summary"]["parallelQueryPathResultNodes"] == 3
         assert triage["summary"]["parallelQueryMemoryMappedReports"] == 1
         html = (bundle_dir / "001-parallel-query-report.html").read_text(
             encoding="utf-8"
         )
         assert 'data-testid="parallel-query-results-panel"' in html
+        assert "Path Queries" in html
         catalog_dir = Path(temp_dir) / "parallel-query-catalog"
         catalog_text = _run_cli_text(
             [
@@ -7443,13 +7460,17 @@ def _assert_parallel_query() -> None:
             ]
         )
         assert "parallelQueryReports=1" in catalog_text
-        assert "parallelQueryQueries=2" in catalog_text
-        assert "parallelQueryResultNodes=4" in catalog_text
+        assert "parallelQueryQueries=3" in catalog_text
+        assert "parallelQueryPathQueries=1" in catalog_text
+        assert "parallelQueryResultNodes=7" in catalog_text
+        assert "parallelQueryPathResultNodes=3" in catalog_text
         assert "parallelQueryMemoryMappedReports=1" in catalog_text
         catalog = json.loads(
             (catalog_dir / "bundle-catalog.json").read_text(encoding="utf-8")
         )
         assert catalog["summary"]["parallelQueryReports"] == 1
+        assert catalog["summary"]["parallelQueryPathQueries"] == 1
+        assert catalog["summary"]["parallelQueryPathResultNodes"] == 3
         assert catalog["sourceKinds"][0]["sourceKind"] == "parallel-query"
         assert catalog["sourceKinds"][0]["parallelQueryMemoryMappedReports"] == 1
 

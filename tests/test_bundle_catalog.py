@@ -48,7 +48,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
         "diffTreeNetEdgeDelta": 0,
         "parallelQueryReports": 0,
         "parallelQueryQueries": 0,
+        "parallelQueryNodeQueries": 0,
+        "parallelQueryPathQueries": 0,
         "parallelQueryResultNodes": 0,
+        "parallelQueryPathResultNodes": 0,
         "parallelQueryMemoryMappedReports": 0,
         "performanceReports": 0,
         "performanceScenarios": 0,
@@ -78,7 +81,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "diffTreeNetEdgeDelta": 0,
             "parallelQueryReports": 0,
             "parallelQueryQueries": 0,
+            "parallelQueryNodeQueries": 0,
+            "parallelQueryPathQueries": 0,
             "parallelQueryResultNodes": 0,
+            "parallelQueryPathResultNodes": 0,
             "parallelQueryMemoryMappedReports": 0,
             "performanceReports": 0,
             "performanceScenarios": 0,
@@ -112,7 +118,10 @@ def test_build_bundle_catalog_report_summarizes_verified_bundles(tmp_path) -> No
             "diffTreeNetEdgeDelta": 0,
             "parallelQueryReports": 0,
             "parallelQueryQueries": 0,
+            "parallelQueryNodeQueries": 0,
+            "parallelQueryPathQueries": 0,
             "parallelQueryResultNodes": 0,
+            "parallelQueryPathResultNodes": 0,
             "parallelQueryMemoryMappedReports": 0,
             "performanceReports": 0,
             "performanceScenarios": 0,
@@ -206,16 +215,25 @@ def test_build_bundle_catalog_summarizes_parallel_query_bundles(tmp_path) -> Non
     assert report["status"] == "pass"
     assert report["summary"]["parallelQueryReports"] == 1
     assert report["summary"]["parallelQueryQueries"] == 2
+    assert report["summary"]["parallelQueryNodeQueries"] == 2
+    assert report["summary"]["parallelQueryPathQueries"] == 0
     assert report["summary"]["parallelQueryResultNodes"] == 4
+    assert report["summary"]["parallelQueryPathResultNodes"] == 0
     assert report["summary"]["parallelQueryMemoryMappedReports"] == 1
     assert report["bundles"][0]["parallelQueryReports"] == 1
     assert report["bundles"][0]["parallelQueryQueries"] == 2
+    assert report["bundles"][0]["parallelQueryNodeQueries"] == 2
+    assert report["bundles"][0]["parallelQueryPathQueries"] == 0
     assert report["bundles"][0]["parallelQueryResultNodes"] == 4
+    assert report["bundles"][0]["parallelQueryPathResultNodes"] == 0
     assert report["bundles"][0]["parallelQueryMemoryMappedReports"] == 1
     assert report["sourceKinds"][0]["sourceKind"] == "parallel-query"
     assert report["sourceKinds"][0]["parallelQueryReports"] == 1
     assert report["sourceKinds"][0]["parallelQueryQueries"] == 2
+    assert report["sourceKinds"][0]["parallelQueryNodeQueries"] == 2
+    assert report["sourceKinds"][0]["parallelQueryPathQueries"] == 0
     assert report["sourceKinds"][0]["parallelQueryResultNodes"] == 4
+    assert report["sourceKinds"][0]["parallelQueryPathResultNodes"] == 0
     assert report["sourceKinds"][0]["parallelQueryMemoryMappedReports"] == 1
 
 
@@ -401,7 +419,10 @@ def test_build_bundle_catalog_groups_triage_failures_by_source_kind(tmp_path) ->
             "diffTreeNetEdgeDelta": 1,
             "parallelQueryReports": 0,
             "parallelQueryQueries": 0,
+            "parallelQueryNodeQueries": 0,
+            "parallelQueryPathQueries": 0,
             "parallelQueryResultNodes": 0,
+            "parallelQueryPathResultNodes": 0,
             "parallelQueryMemoryMappedReports": 0,
             "performanceReports": 0,
             "performanceScenarios": 0,
@@ -479,7 +500,10 @@ def test_build_bundle_catalog_groups_graph_diff_policy_failures_by_source_kind(
             "diffTreeNetEdgeDelta": 0,
             "parallelQueryReports": 0,
             "parallelQueryQueries": 0,
+            "parallelQueryNodeQueries": 0,
+            "parallelQueryPathQueries": 0,
             "parallelQueryResultNodes": 0,
+            "parallelQueryPathResultNodes": 0,
             "parallelQueryMemoryMappedReports": 0,
             "performanceReports": 0,
             "performanceScenarios": 0,

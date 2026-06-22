@@ -60,7 +60,19 @@
             "minimum": 0,
             "type": "integer"
           },
+          "parallelQueryNodeQueries": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryPathQueries": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "parallelQueryResultNodes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryPathResultNodes": {
             "minimum": 0,
             "type": "integer"
           },
@@ -221,7 +233,10 @@
           "diffTreeNetEdgeDelta",
           "parallelQueryReports",
           "parallelQueryQueries",
+          "parallelQueryNodeQueries",
+          "parallelQueryPathQueries",
           "parallelQueryResultNodes",
+          "parallelQueryPathResultNodes",
           "parallelQueryMemoryMappedReports",
           "performanceReports",
           "performanceScenarios",
@@ -286,7 +301,19 @@
             "minimum": 0,
             "type": "integer"
           },
+          "parallelQueryNodeQueries": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryPathQueries": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "parallelQueryResultNodes": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "parallelQueryPathResultNodes": {
             "minimum": 0,
             "type": "integer"
           },
@@ -406,7 +433,10 @@
           "diffTreeNetEdgeDelta",
           "parallelQueryReports",
           "parallelQueryQueries",
+          "parallelQueryNodeQueries",
+          "parallelQueryPathQueries",
           "parallelQueryResultNodes",
+          "parallelQueryPathResultNodes",
           "parallelQueryMemoryMappedReports",
           "performanceReports",
           "performanceScenarios",
@@ -477,7 +507,19 @@
           "minimum": 0,
           "type": "integer"
         },
+        "parallelQueryNodeQueries": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parallelQueryPathQueries": {
+          "minimum": 0,
+          "type": "integer"
+        },
         "parallelQueryResultNodes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parallelQueryPathResultNodes": {
           "minimum": 0,
           "type": "integer"
         },
@@ -568,7 +610,10 @@
         "diffTreeNetEdgeDelta",
         "parallelQueryReports",
         "parallelQueryQueries",
+        "parallelQueryNodeQueries",
+        "parallelQueryPathQueries",
         "parallelQueryResultNodes",
+        "parallelQueryPathResultNodes",
         "parallelQueryMemoryMappedReports",
         "performanceReports",
         "performanceScenarios",

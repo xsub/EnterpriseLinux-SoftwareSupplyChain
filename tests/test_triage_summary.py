@@ -296,7 +296,10 @@ def test_triage_summary_rolls_up_parallel_query_report() -> None:
     assert report["summary"]["reports"] == 1
     assert report["summary"]["parallelQueryReports"] == 1
     assert report["summary"]["parallelQueryQueries"] == 2
+    assert report["summary"]["parallelQueryNodeQueries"] == 2
+    assert report["summary"]["parallelQueryPathQueries"] == 0
     assert report["summary"]["parallelQueryResultNodes"] == 4
+    assert report["summary"]["parallelQueryPathResultNodes"] == 0
     assert report["summary"]["parallelQueryMemoryMappedReports"] == 0
 
 
@@ -317,6 +320,7 @@ def test_cli_triage_summary_text_reports_parallel_query_metrics(capsys) -> None:
     assert capsys.readouterr().out.strip() == (
         "TRIAGE status=pass reports=1 failedChecks=0 "
         "parallelQueryReports=1 parallelQueryQueries=2 "
+        "parallelQueryNodeQueries=2 "
         "parallelQueryResultNodes=4"
     )
 
@@ -327,7 +331,10 @@ def test_triage_summary_rolls_up_parallel_query_metrics_from_catalog() -> None:
     )
     catalog["summary"]["parallelQueryReports"] = 1
     catalog["summary"]["parallelQueryQueries"] = 2
+    catalog["summary"]["parallelQueryNodeQueries"] = 1
+    catalog["summary"]["parallelQueryPathQueries"] = 1
     catalog["summary"]["parallelQueryResultNodes"] = 4
+    catalog["summary"]["parallelQueryPathResultNodes"] = 3
     catalog["summary"]["parallelQueryMemoryMappedReports"] = 1
 
     report = build_triage_summary_report([catalog])
@@ -335,9 +342,14 @@ def test_triage_summary_rolls_up_parallel_query_metrics_from_catalog() -> None:
     assert report["summary"]["bundleCatalogReports"] == 1
     assert report["summary"]["parallelQueryReports"] == 1
     assert report["summary"]["parallelQueryQueries"] == 2
+    assert report["summary"]["parallelQueryNodeQueries"] == 1
+    assert report["summary"]["parallelQueryPathQueries"] == 1
     assert report["summary"]["parallelQueryResultNodes"] == 4
+    assert report["summary"]["parallelQueryPathResultNodes"] == 3
     assert report["summary"]["parallelQueryMemoryMappedReports"] == 1
     assert report["checks"][0]["parallelQueryReports"] == 1
+    assert report["checks"][0]["parallelQueryPathQueries"] == 1
+    assert report["checks"][0]["parallelQueryPathResultNodes"] == 3
     assert report["checks"][0]["parallelQueryMemoryMappedReports"] == 1
 
 

@@ -307,7 +307,9 @@ def test_render_report_supports_bundle_catalog_json() -> None:
     assert "Status" in html
     assert "fail" in html
     assert "Parallel Query Reports" in html
+    assert "Parallel Path Queries" in html
     assert "Parallel Query Result Nodes" in html
+    assert "Parallel Path Result Nodes" in html
     assert "Performance Reports" in html
     assert "Performance Scenarios" in html
     assert "Performance Max Nodes" in html
@@ -391,7 +393,10 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     report = json.loads(Path("tests/fixtures/triage-summary.json").read_text())
     report["summary"]["parallelQueryReports"] = 1
     report["summary"]["parallelQueryQueries"] = 2
+    report["summary"]["parallelQueryNodeQueries"] = 1
+    report["summary"]["parallelQueryPathQueries"] = 1
     report["summary"]["parallelQueryResultNodes"] = 4
+    report["summary"]["parallelQueryPathResultNodes"] = 3
     report["summary"]["parallelQueryMemoryMappedReports"] = 1
     report["summary"]["performanceReports"] = 1
     report["summary"]["performanceScenarios"] = 2
@@ -410,7 +415,10 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
             "diffTreePolicyFailures": 1,
             "parallelQueryReports": 1,
             "parallelQueryQueries": 2,
+            "parallelQueryNodeQueries": 1,
+            "parallelQueryPathQueries": 1,
             "parallelQueryResultNodes": 4,
+            "parallelQueryPathResultNodes": 3,
             "parallelQueryMemoryMappedReports": 1,
             "realDataCoveragePolicyFailures": 1,
             "realDataCoverageDiffPolicyFailures": 1,
@@ -444,7 +452,9 @@ def test_render_report_supports_triage_bundle_catalog_policy_details() -> None:
     assert "Real Data Replacement Plan Policy Failures" in html
     assert "Real Data Replacement Plan Diff Policy Failures" in html
     assert "Parallel Query Reports" in html
+    assert "Parallel Path Queries" in html
     assert "Parallel Query Result Nodes" in html
+    assert "Parallel Path Result Nodes" in html
     assert "Memory-Mapped Query Reports" in html
     assert "Parallel Query Memory Mapped Reports" in html
     assert "Performance Reports" in html

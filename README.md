@@ -353,8 +353,9 @@ edgp accelerator-status --backend auto
 edgp accelerator-status --backend auto --format text
 edgp parallel-query --snapshot graph.json --query dependencies:pkg==1.0.0 --query dependents:lib==2.0.0 --workers 4 --backend auto
 edgp parallel-query --snapshot graph.json --query dependencies:pkg==1.0.0 --query dependents:lib==2.0.0 --workers 4 --backend auto --format text
+edgp parallel-query --csr-artifact artifacts/csr --query 'dependency-path:app==1.0.0->core==1.0.0' --format text
 edgp parallel-query --csr-artifact artifacts/csr --query dependencies:pkg==1.0.0 --workers 4 --backend auto --format text
-edgp parallel-query-bundle --csr-artifact artifacts/csr --query dependencies:pkg==1.0.0 --output-dir reports/parallel-query --triage-summary --format text
+edgp parallel-query-bundle --csr-artifact artifacts/csr --query dependencies:pkg==1.0.0 --query 'dependency-path:pkg==1.0.0->lib==2.0.0' --output-dir reports/parallel-query --triage-summary --format text
 edgp performance-report --scenario 1000:3 --scenario 10000:5
 edgp performance-report --scenario 1000:3 --scenario 10000:5 --backend auto --format text
 edgp performance-report-bundle --scenario 1000:3 --scenario 10000:5 --output-dir reports/performance --triage-summary --format text
@@ -1028,19 +1029,21 @@ smoke benchmark for comparing host environments.
 building a graph. It includes the selected traversal backend, the Numba
 `.[fast]` extra, and the experimental GraphBLAS `.[graphblas]` extra while
 keeping frozen CSR as the canonical storage contract.
-`edgp parallel-query` runs independent reachability queries concurrently
-against one frozen CSR runtime. It accepts either `--snapshot` for one-shot JSON
-snapshot freezing or `--csr-artifact` for direct querying of a previously
-persisted, memory-mapped CSR artifact. Repeated `--query` values use
-`dependencies:NODE` or `dependents:NODE` form, preserve result ordering, and
-report worker count, selected traversal backend, input type, and whether the
-runtime arrays were memory-mapped. Use `--format text` on
+`edgp parallel-query` runs independent reachability and shortest-path queries
+concurrently against one frozen CSR runtime. It accepts either `--snapshot` for
+one-shot JSON snapshot freezing or `--csr-artifact` for direct querying of a
+previously persisted, memory-mapped CSR artifact. Repeated `--query` values use
+`dependencies:NODE`, `dependents:NODE`,
+`dependency-path:SOURCE->TARGET`, or `dependent-path:SOURCE->TARGET` form,
+preserve result ordering, and report worker count, node-query count, path-query
+count, selected traversal backend, input type, and whether the runtime arrays
+were memory-mapped. Use `--format text` on
 `benchmark`, `performance-report`, `accelerator-status`, `parallel-query`, or
 `csr-artifact` when a CI log should show backend choice, CSR layout, CSR/CSC
 matrix views, memory-mapping status, and query counts without parsing full JSON.
-`edgp parallel-query-bundle` renders the same batch query result as static HTML
-with a verifiable manifest, so build-once/query-many CSR artifacts can produce
-portable CI/workbench evidence bundles.
+`edgp parallel-query-bundle` renders the same mixed reachability/path batch as
+static HTML with a verifiable manifest, so build-once/query-many CSR artifacts
+can produce portable CI/workbench evidence bundles.
 `edgp csr-artifact` persists an existing `edgp.graph.snapshot.v1` as a
 memory-mappable frozen CSR runtime directory: six `.npy` arrays plus a
 `manifest.json` containing layout version, package IDs, metadata, array shapes,
@@ -1272,14 +1275,16 @@ deterministic bundle archives and writes one `edgp.bundle.catalog.v1` rollup
 with bundle paths, input type, source kinds, report schemas, triage status,
 graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
 failure counts, replacement-plan and replacement-plan-diff policy failure
-counts, parallel-query report/query/result-node counts, memory-mapped
+counts, parallel-query report/query/path-query/result-node/path-node counts, memory-mapped
 parallel-query report counts, performance-report counts, scenario counts, max
 benchmark graph size, contiguous-layout performance evidence, real-data failure
 codes, verifier failure codes, and bundle fingerprints.
 Source-kind rows include triage pass/warn/fail counts plus
 `graphDiffPolicyFailures`, `diffTreePolicyFailures`,
 `parallelQueryReports`, `parallelQueryQueries`,
-`parallelQueryResultNodes`, `parallelQueryMemoryMappedReports`,
+`parallelQueryNodeQueries`, `parallelQueryPathQueries`,
+`parallelQueryResultNodes`, `parallelQueryPathResultNodes`,
+`parallelQueryMemoryMappedReports`,
 `performanceReports`, `performanceScenarios`, `performanceMaxNodes`,
 `performanceMaxEdges`, `performanceContiguousReports`,
 `realDataCoveragePolicyFailures`, and
@@ -1326,9 +1331,9 @@ graph-diff, diff-tree, real-data coverage, and real-data coverage diff policy
 gate failures, replacement-plan and replacement-plan-diff policy gate failures,
 performance-report counts, benchmark scenario counts, max benchmark graph
 size, contiguous-layout performance evidence,
-parallel-query report/query/result-node counts, memory-mapped parallel-query
-report counts, bundle-catalog integrity and underlying triage status, and the
-source report list so CI systems and
+parallel-query report/query/path-query/result-node/path-node counts,
+memory-mapped parallel-query report counts, bundle-catalog integrity and
+underlying triage status, and the source report list so CI systems and
 workbench/RAG contexts can read one compact artifact instead of stitching
 together every report manually. Rendered triage-summary HTML includes dedicated
 graph-diff and diff-tree policy findings panels when graph-drift gates fail;

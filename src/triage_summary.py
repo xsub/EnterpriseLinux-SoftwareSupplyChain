@@ -495,9 +495,19 @@ def _accumulate_summary(
         rollup["parallelQueryQueries"] = rollup.get("parallelQueryQueries", 0) + int(
             summary.get("parallelQueryQueries", 0) or 0
         )
+        rollup["parallelQueryNodeQueries"] = rollup.get(
+            "parallelQueryNodeQueries", 0
+        ) + int(summary.get("parallelQueryNodeQueries", 0) or 0)
+        rollup["parallelQueryPathQueries"] = rollup.get(
+            "parallelQueryPathQueries", 0
+        ) + int(summary.get("parallelQueryPathQueries", 0) or 0)
         rollup["parallelQueryResultNodes"] = (
             rollup.get("parallelQueryResultNodes", 0)
             + int(summary.get("parallelQueryResultNodes", 0) or 0)
+        )
+        rollup["parallelQueryPathResultNodes"] = (
+            rollup.get("parallelQueryPathResultNodes", 0)
+            + int(summary.get("parallelQueryPathResultNodes", 0) or 0)
         )
         rollup["parallelQueryMemoryMappedReports"] = (
             rollup.get("parallelQueryMemoryMappedReports", 0)
@@ -590,9 +600,19 @@ def _accumulate_parallel_query_report(
     rollup["parallelQueryQueries"] = rollup.get("parallelQueryQueries", 0) + int(
         summary.get("queries", 0) or 0
     )
+    rollup["parallelQueryNodeQueries"] = rollup.get(
+        "parallelQueryNodeQueries", 0
+    ) + int(summary.get("nodeQueries", 0) or 0)
+    rollup["parallelQueryPathQueries"] = rollup.get(
+        "parallelQueryPathQueries", 0
+    ) + int(summary.get("pathQueries", 0) or 0)
     rollup["parallelQueryResultNodes"] = (
         rollup.get("parallelQueryResultNodes", 0)
         + _parallel_query_result_nodes(report)
+    )
+    rollup["parallelQueryPathResultNodes"] = (
+        rollup.get("parallelQueryPathResultNodes", 0)
+        + _parallel_query_result_nodes(report, result_kind="path")
     )
     rollup["parallelQueryMemoryMappedReports"] = (
         rollup.get("parallelQueryMemoryMappedReports", 0)
@@ -600,7 +620,9 @@ def _accumulate_parallel_query_report(
     )
 
 
-def _parallel_query_result_nodes(report: dict[str, Any]) -> int:
+def _parallel_query_result_nodes(
+    report: dict[str, Any], *, result_kind: str | None = None
+) -> int:
     results = report.get("results", [])
     if not isinstance(results, list):
         return 0
@@ -608,6 +630,7 @@ def _parallel_query_result_nodes(report: dict[str, Any]) -> int:
         int(result.get("count", 0) or 0)
         for result in results
         if isinstance(result, dict)
+        and (result_kind is None or result.get("resultKind") == result_kind)
     )
 
 
@@ -679,8 +702,17 @@ def _bundle_catalog_check(summary: dict[str, Any]) -> dict[str, Any]:
                 "parallelQueryQueries": int(
                     summary.get("parallelQueryQueries", 0) or 0
                 ),
+                "parallelQueryNodeQueries": int(
+                    summary.get("parallelQueryNodeQueries", 0) or 0
+                ),
+                "parallelQueryPathQueries": int(
+                    summary.get("parallelQueryPathQueries", 0) or 0
+                ),
                 "parallelQueryResultNodes": int(
                     summary.get("parallelQueryResultNodes", 0) or 0
+                ),
+                "parallelQueryPathResultNodes": int(
+                    summary.get("parallelQueryPathResultNodes", 0) or 0
                 ),
                 "parallelQueryMemoryMappedReports": int(
                     summary.get("parallelQueryMemoryMappedReports", 0) or 0
@@ -1077,8 +1109,18 @@ def _bundle_catalog_findings(report: dict[str, Any]) -> list[dict[str, Any]]:
                 "diffTreeNetEdgeDelta": bundle.get("diffTreeNetEdgeDelta", 0),
                 "parallelQueryReports": bundle.get("parallelQueryReports", 0),
                 "parallelQueryQueries": bundle.get("parallelQueryQueries", 0),
+                "parallelQueryNodeQueries": bundle.get(
+                    "parallelQueryNodeQueries", 0
+                ),
+                "parallelQueryPathQueries": bundle.get(
+                    "parallelQueryPathQueries", 0
+                ),
                 "parallelQueryResultNodes": bundle.get(
                     "parallelQueryResultNodes",
+                    0,
+                ),
+                "parallelQueryPathResultNodes": bundle.get(
+                    "parallelQueryPathResultNodes",
                     0,
                 ),
                 "parallelQueryMemoryMappedReports": bundle.get(

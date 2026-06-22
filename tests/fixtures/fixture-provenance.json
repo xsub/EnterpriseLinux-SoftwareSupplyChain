@@ -366,7 +366,7 @@
       "group": "Report and export bundle fixtures",
       "kind": "synthetic-validation-case",
       "reason": "Committed outputs document portable bundle, archive, and submission-plan contracts.",
-      "sha256": "ac8a4bd418b623484825a8325bbae0536f39a98aaf56cf4149ce60846d4f8155"
+      "sha256": "96f2945f6e2c0a13a037978159c769acfe9780f7000797b1c50ccca962f03862"
     },
     {
       "fileCount": 28,
@@ -417,7 +417,7 @@
       "group": "Performance, CSR, and license reports",
       "kind": "synthetic-report",
       "reason": "Stable report samples cover static rendering and schema contracts.",
-      "sha256": "a36f642155d90d81dff535ae6d1a508ca646baeed2374352e868ffc2aa1deaac"
+      "sha256": "365402024d76ff93e91abb84513ba5f1bce3642d7a244042784be509d69159d2"
     }
   ]
 }

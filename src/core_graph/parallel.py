@@ -15,10 +15,12 @@ PARALLEL_QUERY_REPORT_SCHEMA = "edgp.parallel.query.report.v1"
 
 @dataclass(frozen=True)
 class ParallelReachabilityQuery:
-    """One independent reachability query against a frozen CSR graph."""
+    """One independent query against a frozen CSR graph."""
 
     direction: str
     node: str
+    target: str | None = None
+    result_kind: str = "nodes"
 
 
 def run_parallel_reachability_queries(
@@ -51,6 +53,12 @@ def run_parallel_reachability_queries(
         "schema": PARALLEL_QUERY_REPORT_SCHEMA,
         "summary": {
             "queries": len(normalized),
+            "nodeQueries": sum(
+                1 for query in normalized if query.result_kind == "nodes"
+            ),
+            "pathQueries": sum(
+                1 for query in normalized if query.result_kind == "path"
+            ),
             "workers": workers,
             "backend": backend,
             "selectedBackend": selected_backend,
@@ -69,11 +77,21 @@ def _normalize_query(
         normalized = ParallelReachabilityQuery(
             direction=str(query.get("direction", "")),
             node=str(query.get("node", "")),
+            target=(
+                str(query.get("target"))
+                if query.get("target") is not None
+                else None
+            ),
+            result_kind=str(query.get("resultKind", "nodes")),
         )
+    if normalized.result_kind not in {"nodes", "path"}:
+        raise ValueError("parallel query resultKind must be nodes or path")
     if normalized.direction not in {"dependencies", "dependents"}:
         raise ValueError("parallel query direction must be dependencies or dependents")
     if not normalized.node:
         raise ValueError("parallel query node must be non-empty")
+    if normalized.result_kind == "path" and not normalized.target:
+        raise ValueError("parallel path query target must be non-empty")
     return normalized
 
 
@@ -83,6 +101,20 @@ def _execute_query(
     *,
     backend: str,
 ) -> dict[str, object]:
+    if query.result_kind == "path":
+        path = graph.shortest_dependency_path(
+            query.node,
+            query.target or "",
+            reverse=query.direction == "dependents",
+        )
+        return {
+            "direction": query.direction,
+            "node": query.node,
+            "target": query.target or "",
+            "resultKind": "path",
+            "count": len(path),
+            "nodes": path,
+        }
     if query.direction == "dependencies":
         nodes = graph.reachable_dependencies(query.node, backend=backend)
     else:

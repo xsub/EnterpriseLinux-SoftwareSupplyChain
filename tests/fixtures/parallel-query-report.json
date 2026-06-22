@@ -21,6 +21,8 @@
     "durationMs": 1.23,
     "inputType": "snapshot",
     "memoryMapped": false,
+    "nodeQueries": 2,
+    "pathQueries": 0,
     "queries": 2,
     "selectedBackend": "python",
     "workers": 2

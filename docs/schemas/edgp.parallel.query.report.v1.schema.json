@@ -2,7 +2,7 @@
   "$id": "urn:edgp:schema:parallel-query-report:v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": true,
-  "description": "Parallel frozen-CSR reachability query report.",
+  "description": "Parallel frozen-CSR reachability and path query report.",
   "properties": {
     "results": {
       "items": {
@@ -12,7 +12,8 @@
           "direction": {"enum": ["dependencies", "dependents"]},
           "node": {"type": "string"},
           "nodes": {"items": {"type": "string"}, "type": "array"},
-          "resultKind": {"const": "nodes"}
+          "resultKind": {"enum": ["nodes", "path"]},
+          "target": {"type": "string"}
         },
         "required": ["direction", "node", "resultKind", "count", "nodes"],
         "type": "object"
