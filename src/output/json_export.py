@@ -17,11 +17,7 @@ class GraphJsonExporter:
         ecosystem: str = "generic",
     ) -> str:
         edges = [
-            {
-                "source": edge.source,
-                "target": edge.target,
-                "relationshipType": edge.relationship_type,
-            }
+            GraphJsonExporter._edge(edge)
             for edge in csr_graph.edges()
         ]
         nodes = [
@@ -51,13 +47,75 @@ class GraphJsonExporter:
     @staticmethod
     def _node(csr_graph: CSRDependencyGraph, package_id: str) -> dict[str, object]:
         name, separator, version = package_id.partition("==")
+        metadata = csr_graph.get_vertex_metadata(package_id)
         node: dict[str, object] = {
             "id": package_id,
             "name": name,
             "dependencies": csr_graph.get_dependencies(package_id),
             "dependents": csr_graph.get_dependents(package_id),
-            "metadata": csr_graph.get_vertex_metadata(package_id),
+            "metadata": metadata,
         }
         if separator:
             node["version"] = version
+        if metadata.get("purl"):
+            node["purl"] = metadata["purl"]
+            node["package"] = GraphJsonExporter._normalized_package(
+                name,
+                version if separator else "",
+                metadata,
+            )
         return node
+
+    @staticmethod
+    def _edge(edge) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "source": edge.source,
+            "target": edge.target,
+            "relationshipType": edge.relationship_type,
+        }
+        metadata = dict(getattr(edge, "metadata", {}) or {})
+        if metadata:
+            payload["metadata"] = metadata
+        for metadata_key, output_key in (
+            ("scope", "scope"),
+            ("constraint", "constraint"),
+            ("resolved_version", "resolvedVersion"),
+            ("source_file", "sourceFile"),
+            ("source_line", "sourceLine"),
+            ("direct", "direct"),
+        ):
+            if metadata_key not in metadata:
+                continue
+            value: object = metadata[metadata_key]
+            if output_key == "sourceLine":
+                try:
+                    value = int(str(value))
+                except ValueError:
+                    pass
+            if output_key == "direct":
+                value = str(value).lower() == "true"
+            payload[output_key] = value
+        return payload
+
+    @staticmethod
+    def _normalized_package(
+        name: str,
+        version: str,
+        metadata: dict[str, str],
+    ) -> dict[str, object]:
+        package: dict[str, object] = {
+            "ecosystem": metadata.get("ecosystem", "generic"),
+            "name": metadata.get("name", name),
+            "version": metadata.get("version", version),
+            "purl": metadata["purl"],
+        }
+        for metadata_key, output_key in (
+            ("source_url", "sourceUrl"),
+            ("license", "license"),
+            ("checksum", "checksum"),
+            ("signature", "signature"),
+            ("provenance", "provenance"),
+        ):
+            if metadata.get(metadata_key):
+                package[output_key] = metadata[metadata_key]
+        return package

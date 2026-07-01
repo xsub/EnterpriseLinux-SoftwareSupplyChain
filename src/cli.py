@@ -65,6 +65,11 @@ from src.real_data_replacement_plan import build_real_data_replacement_plan_repo
 from src.real_data_replacement_plan_diff import (
     build_real_data_replacement_plan_diff_report,
 )
+from src.reports.npm_summary import (
+    build_dependency_path_report,
+    build_npm_summary_report,
+    build_vulnerable_surface_report,
+)
 from src.resolver.cdcl_engine import CDCLResolver
 from src.resolver.registry_mock import RegistryMock
 from src.rpm_albs_provenance import build_rpm_albs_provenance_report
@@ -1811,6 +1816,72 @@ def _format_impact_report_result(report: dict[str, Any]) -> str:
         path = _string_list(first.get("path"))
         if path:
             parts.append(f"firstChain={_text_value('>'.join(path))}")
+    return " ".join(parts)
+
+
+def _format_npm_summary_report(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    parts = [
+        "NPM_SUMMARY",
+        "schema=edgp.npm.summary.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"packages={int(summary.get('packages', 0) or 0)}",
+        f"dependencies={int(summary.get('dependencies', 0) or 0)}",
+        f"direct={int(summary.get('directDependencies', 0) or 0)}",
+        f"transitive={int(summary.get('transitiveDependencies', 0) or 0)}",
+        f"missingIntegrity={int(summary.get('packagesWithoutIntegrity', 0) or 0)}",
+        f"remoteTarballs={int(summary.get('packagesWithRemoteTarballUrls', 0) or 0)}",
+        f"devOnly={int(summary.get('devOnlyPackages', 0) or 0)}",
+        f"optional={int(summary.get('optionalPackages', 0) or 0)}",
+        f"peerWarnings={int(summary.get('peerDependencyWarnings', 0) or 0)}",
+    ]
+    direct = _dict_list(report.get("directDependencies"))
+    if direct:
+        parts.append(f"firstDirect={_text_value(direct[0].get('id', ''))}")
+    return " ".join(parts)
+
+
+def _format_dependency_path_report(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    path = _string_list(report.get("path"))
+    parts = [
+        "DEPENDENCY_PATH",
+        "schema=edgp.dependency_path.v1",
+        f"root={_text_value(report.get('root', ''))}",
+        f"package={_text_value(report.get('package', ''))}",
+        f"pathFound={str(bool(report.get('pathFound'))).lower()}",
+        f"pathLength={int(summary.get('pathLength', 0) or 0)}",
+        f"directDependents={int(summary.get('directDependents', 0) or 0)}",
+        f"reachableDependents={int(summary.get('reachableDependents', 0) or 0)}",
+    ]
+    if path:
+        parts.append(f"path={_text_value('>'.join(path))}")
+    return " ".join(parts)
+
+
+def _format_vulnerable_surface_report(report: dict[str, Any]) -> str:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    findings = _dict_list(report.get("findings"))
+    parts = [
+        "VULNERABLE_SURFACE",
+        "schema=edgp.vulnerable_surface.v1",
+        f"ecosystem={_text_value(report.get('ecosystem', ''))}",
+        f"root={_text_value(report.get('root', ''))}",
+        f"packages={int(summary.get('packages', 0) or 0)}",
+        f"findings={len(findings)}",
+        f"missingIntegrity={int(summary.get('packagesWithoutIntegrity', 0) or 0)}",
+        f"gitDependencies={int(summary.get('gitBasedDependencies', 0) or 0)}",
+        f"localFileDependencies={int(summary.get('localFileDependencies', 0) or 0)}",
+        f"installScripts={int(summary.get('installScriptPackages', 0) or 0)}",
+    ]
+    if findings:
+        parts.append(f"firstFinding={_text_value(findings[0].get('type', ''))}")
     return " ".join(parts)
 
 
@@ -4212,6 +4283,14 @@ def _load_lockfile_project_graph(
     return resolved.root_identifier, resolved.graph, resolved.ecosystem
 
 
+def _load_ingest_project_graph(source: str, path: Path) -> ResolvedProjectGraph:
+    if source == "npm-lock":
+        return NpmAdapter().parse_lockfile_graph(path)
+    if source == "package-json":
+        return NpmAdapter().parse_package_json_graph(path)
+    raise ValueError(f"Unsupported ingest source: {source}")
+
+
 def _load_source_graph(
     source: str,
     path: Path | None,
@@ -4385,6 +4464,16 @@ def _query_graph(
 def _resolve_node_selector(graph: CSRDependencyGraph, selector: str, *, role: str) -> str:
     if selector in graph.vertex_map:
         return selector
+    purl_matches = [
+        package_id
+        for package_id in sorted(graph.vertex_map)
+        if graph.get_vertex_metadata(package_id).get("purl") == selector
+    ]
+    if len(purl_matches) == 1:
+        return purl_matches[0]
+    if len(purl_matches) > 1:
+        rendered = ", ".join(purl_matches)
+        raise ValueError(f"Ambiguous {role} selector {selector!r}; candidates: {rendered}")
 
     matches = [
         package_id
@@ -4509,6 +4598,58 @@ def build_parser() -> argparse.ArgumentParser:
     npm_bundle.add_argument("--format", choices=["path", "text"], default="path")
     _add_license_bundle_options(npm_bundle)
     _add_triage_bundle_option(npm_bundle)
+
+    ingest = subparsers.add_parser(
+        "ingest",
+        help="Ingest ecosystem metadata into a normalized dependency graph",
+    )
+    ingest_subparsers = ingest.add_subparsers(dest="ingest_command", required=True)
+    ingest_npm_lock = ingest_subparsers.add_parser(
+        "npm-lock",
+        help="Ingest package-lock.json or npm-shrinkwrap.json",
+    )
+    ingest_npm_lock.add_argument("path", type=Path)
+    ingest_npm_lock.add_argument(
+        "--format",
+        choices=["graph-json", "json", "cyclonedx", "text"],
+        default="graph-json",
+    )
+    ingest_package_json = ingest_subparsers.add_parser(
+        "package-json",
+        help="Ingest package.json direct dependency requirements",
+    )
+    ingest_package_json.add_argument("path", type=Path)
+    ingest_package_json.add_argument(
+        "--format",
+        choices=["graph-json", "json", "cyclonedx", "text"],
+        default="graph-json",
+    )
+
+    export = subparsers.add_parser(
+        "export",
+        help="Export normalized dependency graphs",
+    )
+    export_subparsers = export.add_subparsers(dest="export_command", required=True)
+    export_cyclonedx = export_subparsers.add_parser(
+        "cyclonedx",
+        help="Export a graph as CycloneDX JSON",
+    )
+    export_cyclonedx.add_argument("--path", type=Path, required=True)
+    export_cyclonedx.add_argument(
+        "--source",
+        choices=["npm-lock", "package-json"],
+        default="npm-lock",
+    )
+    export_graph_json = export_subparsers.add_parser(
+        "graph-json",
+        help="Export a normalized graph JSON snapshot",
+    )
+    export_graph_json.add_argument("--path", type=Path, required=True)
+    export_graph_json.add_argument(
+        "--source",
+        choices=["npm-lock", "package-json"],
+        default="npm-lock",
+    )
 
     dot = subparsers.add_parser("dot", help="Export a directed DOT dependency graph")
     dot.add_argument("--path", type=Path, required=True)
@@ -5713,11 +5854,43 @@ def build_parser() -> argparse.ArgumentParser:
     )
     triage_summary.add_argument("--format", choices=["json", "text"], default="json")
 
-    report = subparsers.add_parser("report", help="Render a local HTML JSON report")
-    report_input = report.add_mutually_exclusive_group(required=True)
+    report = subparsers.add_parser(
+        "report",
+        help="Render a local HTML JSON report or build graph intelligence reports",
+    )
+    report_input = report.add_mutually_exclusive_group(required=False)
     report_input.add_argument("--snapshot", type=Path)
     report_input.add_argument("--input", type=Path)
-    report.add_argument("--output", type=Path, required=True)
+    report.add_argument("--output", type=Path)
+    report_subparsers = report.add_subparsers(dest="report_command")
+    report_npm_summary = report_subparsers.add_parser(
+        "npm-summary",
+        help="Summarize npm supply-chain metadata from a lockfile graph",
+    )
+    report_npm_summary.add_argument("--path", type=Path, required=True)
+    report_npm_summary.add_argument("--format", choices=["json", "text"], default="json")
+    report_dependency_path = report_subparsers.add_parser(
+        "dependency-path",
+        help="Find the root dependency path for a package name, id, or purl",
+    )
+    report_dependency_path.add_argument("--path", type=Path, required=True)
+    report_dependency_path.add_argument("--package", required=True)
+    report_dependency_path.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
+    report_vulnerable_surface = report_subparsers.add_parser(
+        "vulnerable-surface",
+        help="Report packages and artifacts with weak supply-chain evidence",
+    )
+    report_vulnerable_surface.add_argument("--path", type=Path, required=True)
+    report_vulnerable_surface.add_argument("--ecosystem", default="npm")
+    report_vulnerable_surface.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+    )
 
     export_batch = subparsers.add_parser(
         "export-batch",
@@ -6212,6 +6385,73 @@ def main(argv: list[str] | None = None) -> int:
     actual_argv = sys.argv[1:] if argv is None else argv
     command = _command_string(actual_argv)
     args = build_parser().parse_args(actual_argv)
+
+    if args.command == "ingest":
+        resolved = _load_ingest_project_graph(args.ingest_command, args.path)
+        format_name = "json" if args.format == "graph-json" else args.format
+        print(
+            _export(
+                format_name,
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
+
+    if args.command == "report" and getattr(args, "report_command", None):
+        resolved = _load_ingest_project_graph("npm-lock", args.path)
+        if args.report_command == "npm-summary":
+            report = build_npm_summary_report(
+                resolved.graph,
+                root=resolved.root_identifier,
+                source_file=str(args.path),
+            )
+            print(
+                _format_npm_summary_report(report)
+                if args.format == "text"
+                else _json(report)
+            )
+            return 0
+        if args.report_command == "dependency-path":
+            report = build_dependency_path_report(
+                resolved.graph,
+                root=resolved.root_identifier,
+                package=args.package,
+            )
+            print(
+                _format_dependency_path_report(report)
+                if args.format == "text"
+                else _json(report)
+            )
+            return 0
+        if args.report_command == "vulnerable-surface":
+            report = build_vulnerable_surface_report(
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=args.ecosystem,
+                source_file=str(args.path),
+            )
+            print(
+                _format_vulnerable_surface_report(report)
+                if args.format == "text"
+                else _json(report)
+            )
+            return 0
+        raise ValueError(f"Unsupported report command: {args.report_command}")
+
+    if args.command == "export":
+        resolved = _load_ingest_project_graph(args.source, args.path)
+        format_name = "cyclonedx" if args.export_command == "cyclonedx" else "json"
+        print(
+            _export(
+                format_name,
+                resolved.graph,
+                root=resolved.root_identifier,
+                ecosystem=resolved.ecosystem,
+            )
+        )
+        return 0
 
     if args.command == "lockfile":
         root_identifier, graph, resolved_ecosystem = _load_lockfile_project_graph(
@@ -7262,6 +7502,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "report":
+        if args.snapshot is None and args.input is None:
+            raise ValueError("report requires --snapshot or --input")
+        if args.output is None:
+            raise ValueError("report requires --output")
         output_path = write_report_file(args.snapshot or args.input, args.output)
         print(output_path)
         return 0

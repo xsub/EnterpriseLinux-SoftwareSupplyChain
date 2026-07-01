@@ -24,6 +24,7 @@ class DependencyEdge:
     source: str
     target: str
     relationship_type: int = 1
+    metadata: Mapping[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, eq=False)
@@ -39,6 +40,9 @@ class FrozenCSRGraph:
     reverse_column_indices: np.ndarray
     reverse_row_pointers: np.ndarray
     vertex_metadata: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
+    edge_metadata: Mapping[str, Mapping[str, Mapping[str, str]]] = field(
+        default_factory=dict
+    )
     copy_arrays: bool = field(default=True, repr=False)
 
     def __post_init__(self) -> None:
@@ -50,6 +54,21 @@ class FrozenCSRGraph:
                 {
                     package_id: MappingProxyType(dict(metadata))
                     for package_id, metadata in self.vertex_metadata.items()
+                }
+            ),
+        )
+        object.__setattr__(
+            self,
+            "edge_metadata",
+            MappingProxyType(
+                {
+                    source: MappingProxyType(
+                        {
+                            target: MappingProxyType(dict(metadata))
+                            for target, metadata in targets.items()
+                        }
+                    )
+                    for source, targets in self.edge_metadata.items()
                 }
             ),
         )
@@ -77,6 +96,9 @@ class FrozenCSRGraph:
 
     def get_vertex_metadata(self, package_id: str) -> dict[str, str]:
         return dict(self.vertex_metadata.get(package_id, {}))
+
+    def get_edge_metadata(self, source_id: str, target_id: str) -> dict[str, str]:
+        return dict(self.edge_metadata.get(source_id, {}).get(target_id, {}))
 
     def get_dependencies(self, package_id: str) -> list[str]:
         vertex_id = self.vertex_map.get(package_id)
@@ -199,6 +221,10 @@ class FrozenCSRGraph:
                     source=self.package_ids[source],
                     target=self.package_ids[int(self.column_indices[index])],
                     relationship_type=int(self.values[index]),
+                    metadata=self.get_edge_metadata(
+                        self.package_ids[source],
+                        self.package_ids[int(self.column_indices[index])],
+                    ),
                 )
 
     def to_adjacency_dict(self) -> dict[str, list[str]]:
@@ -311,6 +337,7 @@ class CSRDependencyGraph:
         self.reverse_column_indices = np.array([], dtype=_CSR_DTYPE)
         self.reverse_row_pointers = np.array([0], dtype=_CSR_DTYPE)
         self.vertex_metadata: dict[str, dict[str, str]] = {}
+        self.edge_metadata: dict[str, dict[str, dict[str, str]]] = {}
 
         self._adjacency: dict[int, dict[int, int]] = {}
         self._dirty = False
@@ -348,12 +375,32 @@ class CSRDependencyGraph:
     def get_vertex_metadata(self, package_id: str) -> dict[str, str]:
         return dict(self.vertex_metadata.get(package_id, {}))
 
+    def set_edge_metadata(
+        self, source_id: str, target_id: str, metadata: Mapping[str, object]
+    ) -> None:
+        self.add_vertex(source_id)
+        self.add_vertex(target_id)
+        current = self.edge_metadata.setdefault(source_id, {}).setdefault(target_id, {})
+        for key, value in metadata.items():
+            if value is None:
+                continue
+            current[str(key)] = str(value)
+
+    def get_edge_metadata(self, source_id: str, target_id: str) -> dict[str, str]:
+        return dict(self.edge_metadata.get(source_id, {}).get(target_id, {}))
+
     def add_dependency_edge(
-        self, source_id: str, target_id: str, relationship_type: int = 1
+        self,
+        source_id: str,
+        target_id: str,
+        relationship_type: int = 1,
+        metadata: Mapping[str, object] | None = None,
     ) -> None:
         source = self.add_vertex(source_id)
         target = self.add_vertex(target_id)
         self._adjacency[source][target] = relationship_type
+        if metadata:
+            self.set_edge_metadata(source_id, target_id, metadata)
         self._dirty = True
 
     def get_dependencies(self, package_id: str) -> list[str]:
@@ -487,6 +534,10 @@ class CSRDependencyGraph:
                     source=self.reverse_vertex_map[source],
                     target=self.reverse_vertex_map[int(self.column_indices[index])],
                     relationship_type=int(self.values[index]),
+                    metadata=self.get_edge_metadata(
+                        self.reverse_vertex_map[source],
+                        self.reverse_vertex_map[int(self.column_indices[index])],
+                    ),
                 )
 
     def to_adjacency_dict(self) -> dict[str, list[str]]:
@@ -526,6 +577,7 @@ class CSRDependencyGraph:
             reverse_column_indices=self.reverse_column_indices,
             reverse_row_pointers=self.reverse_row_pointers,
             vertex_metadata=self.vertex_metadata,
+            edge_metadata=self.edge_metadata,
         )
 
     def _reachable_ids(

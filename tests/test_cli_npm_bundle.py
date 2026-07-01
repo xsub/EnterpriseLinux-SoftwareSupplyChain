@@ -163,3 +163,137 @@ def test_cli_npm_bundle_can_include_license_inventory(tmp_path, capsys) -> None:
         "edgp.license.report.v1",
     ]
     assert (output_dir / "003-license-report.html").exists()
+
+
+def test_cli_ingest_npm_lock_outputs_normalized_graph_json(capsys) -> None:
+    assert (
+        main(
+            [
+                "ingest",
+                "npm-lock",
+                "tests/fixtures/npm/simple-package-lock.json",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["schema"] == "edgp.graph.snapshot.v1"
+    assert payload["root"] == "simple-app==1.0.0"
+    assert payload["nodes"][0]["metadata"]["ecosystem"] == "npm"
+    assert any(node.get("purl") == "pkg:npm/left-pad@1.3.0" for node in payload["nodes"])
+
+
+def test_cli_ingest_package_json_flags_lifecycle_scripts(capsys) -> None:
+    assert (
+        main(
+            [
+                "ingest",
+                "package-json",
+                "tests/fixtures/npm/package.json",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    root = next(node for node in payload["nodes"] if node["id"] == "scripted-app==1.0.0")
+    assert root["metadata"]["has_install_script"] == "True"
+    assert root["metadata"]["install_scripts"] == "postinstall,preinstall"
+
+
+def test_cli_report_npm_summary_outputs_security_sections(capsys) -> None:
+    assert (
+        main(
+            [
+                "report",
+                "npm-summary",
+                "--path",
+                "tests/fixtures/npm/missing-integrity-package-lock.json",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["schema"] == "edgp.npm.summary.v1"
+    assert payload["summary"]["packagesWithoutIntegrity"] == 1
+    assert payload["packagesWithoutIntegrity"][0]["id"] == "no-integrity==1.0.0"
+
+
+def test_cli_report_dependency_path_accepts_purl_selector(capsys) -> None:
+    assert (
+        main(
+            [
+                "report",
+                "dependency-path",
+                "--path",
+                "tests/fixtures/npm/small-real-world-style-package-lock.json",
+                "--package",
+                "pkg:npm/is-number@6.0.0",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["package"] == "is-number==6.0.0"
+    assert payload["path"] == [
+        "real-world-style-app==1.0.0",
+        "is-odd==3.0.1",
+        "is-number==6.0.0",
+    ]
+
+
+def test_cli_report_vulnerable_surface_for_npm(capsys) -> None:
+    assert (
+        main(
+            [
+                "report",
+                "vulnerable-surface",
+                "--ecosystem",
+                "npm",
+                "--path",
+                "tests/fixtures/npm/missing-integrity-package-lock.json",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["schema"] == "edgp.vulnerable_surface.v1"
+    assert any(finding["type"] == "packagesWithoutIntegrity" for finding in payload["findings"])
+
+
+def test_cli_export_cyclonedx_and_graph_json(capsys) -> None:
+    assert (
+        main(
+            [
+                "export",
+                "cyclonedx",
+                "--path",
+                "tests/fixtures/npm/simple-package-lock.json",
+            ]
+        )
+        == 0
+    )
+    cyclonedx = json.loads(capsys.readouterr().out)
+    assert cyclonedx["bomFormat"] == "CycloneDX"
+    assert any(
+        component.get("purl") == "pkg:npm/left-pad@1.3.0"
+        for component in cyclonedx["components"]
+    )
+
+    assert (
+        main(
+            [
+                "export",
+                "graph-json",
+                "--path",
+                "tests/fixtures/npm/simple-package-lock.json",
+            ]
+        )
+        == 0
+    )
+    graph = json.loads(capsys.readouterr().out)
+    assert graph["schema"] == "edgp.graph.snapshot.v1"

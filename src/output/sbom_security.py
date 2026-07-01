@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
-from urllib.parse import quote, urlencode
 
 from src.core_graph.sparse_matrix import CSRDependencyGraph
+from src.core.model import package_purl
 
 
 class CycloneDXExporter:
@@ -100,40 +100,4 @@ class CycloneDXExporter:
         *,
         metadata: dict[str, str] | None = None,
     ) -> str:
-        metadata = metadata or {}
-        if ecosystem == "npm":
-            if name.startswith("@") and "/" in name:
-                namespace, package_name = name.split("/", 1)
-                return (
-                    "pkg:npm/"
-                    f"{quote(namespace, safe='')}/"
-                    f"{quote(package_name, safe='')}@{quote(version, safe='')}"
-                )
-            return f"pkg:npm/{quote(name, safe='')}@{quote(version, safe='')}"
-        if ecosystem == "pypi":
-            return f"pkg:pypi/{quote(name.lower(), safe='')}@{quote(version, safe='')}"
-        if ecosystem == "cargo":
-            return f"pkg:cargo/{quote(name.lower(), safe='')}@{quote(version, safe='')}"
-        if ecosystem == "maven":
-            group = metadata.get("group")
-            artifact = metadata.get("artifact") or name.rsplit(":", 1)[-1]
-            if group:
-                return (
-                    f"pkg:maven/{quote(group, safe='')}/"
-                    f"{quote(artifact, safe='')}@{quote(version, safe='')}"
-                )
-            return f"pkg:maven/{quote(name, safe='')}@{quote(version, safe='')}"
-        if ecosystem == "rpm":
-            vendor = metadata.get("vendor")
-            if vendor:
-                path = f"{quote(vendor.lower(), safe='')}/{quote(name, safe='')}"
-            else:
-                path = quote(name, safe='')
-            qualifiers = {
-                key: metadata[key]
-                for key in ("arch", "distro", "epoch")
-                if key in metadata
-            }
-            suffix = f"?{urlencode(sorted(qualifiers.items()))}" if qualifiers else ""
-            return f"pkg:rpm/{path}@{quote(version, safe='')}{suffix}"
-        return f"pkg:generic/{quote(name, safe='')}@{quote(version, safe='')}"
+        return package_purl(ecosystem, name, version, metadata=metadata or {})

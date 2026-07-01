@@ -77,6 +77,13 @@ def write_frozen_csr_artifact(
             package_id: dict(metadata)
             for package_id, metadata in graph.vertex_metadata.items()
         },
+        "edgeMetadata": {
+            source: {
+                target: dict(metadata)
+                for target, metadata in targets.items()
+            }
+            for source, targets in graph.edge_metadata.items()
+        },
     }
     (destination / "manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n",
@@ -115,10 +122,21 @@ def load_frozen_csr_artifact(
         }
         for package_id, metadata in manifest.get("vertexMetadata", {}).items()
     }
+    edge_metadata = {
+        str(source): {
+            str(target): {
+                str(key): str(value)
+                for key, value in dict(metadata).items()
+            }
+            for target, metadata in dict(targets).items()
+        }
+        for source, targets in manifest.get("edgeMetadata", {}).items()
+    }
     return FrozenCSRGraph(
         vertex_map=vertex_map,
         package_ids=package_ids,
         vertex_metadata=vertex_metadata,
+        edge_metadata=edge_metadata,
         copy_arrays=False,
         **arrays,
     )
