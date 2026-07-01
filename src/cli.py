@@ -4271,7 +4271,7 @@ def _load_lockfile_project_graph(
     path: Path, ecosystem: str
 ) -> tuple[str, CSRDependencyGraph, str]:
     if ecosystem != "npm":
-        if ecosystem == "poetry":
+        if ecosystem in {"poetry", "pypi"}:
             resolved = PoetryAdapter().parse_lockfile_graph(path)
             return resolved.root_identifier, resolved.graph, resolved.ecosystem
         if ecosystem == "cargo":
@@ -4288,6 +4288,8 @@ def _load_ingest_project_graph(source: str, path: Path) -> ResolvedProjectGraph:
         return NpmAdapter().parse_lockfile_graph(path)
     if source == "package-json":
         return NpmAdapter().parse_package_json_graph(path)
+    if source in {"requirements", "pyproject", "poetry-lock"}:
+        return PoetryAdapter().parse_lockfile_graph(path)
     raise ValueError(f"Unsupported ingest source: {source}")
 
 
@@ -4565,7 +4567,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     lockfile = subparsers.add_parser("lockfile", help="Export a resolved lockfile graph")
     lockfile.add_argument("--path", type=Path, required=True)
-    lockfile.add_argument("--ecosystem", choices=["npm", "poetry", "cargo"], default="npm")
+    lockfile.add_argument(
+        "--ecosystem",
+        choices=["npm", "poetry", "pypi", "cargo"],
+        default="npm",
+    )
     lockfile.add_argument("--format", choices=GRAPH_EXPORT_FORMATS, default="cypher")
 
     npm_diagnostics = subparsers.add_parser(
@@ -4624,6 +4630,36 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["graph-json", "json", "cyclonedx", "text"],
         default="graph-json",
     )
+    ingest_requirements = ingest_subparsers.add_parser(
+        "requirements",
+        help="Ingest Python requirements.txt into a normalized PyPI graph",
+    )
+    ingest_requirements.add_argument("path", type=Path)
+    ingest_requirements.add_argument(
+        "--format",
+        choices=["graph-json", "json", "cyclonedx", "text"],
+        default="graph-json",
+    )
+    ingest_pyproject = ingest_subparsers.add_parser(
+        "pyproject",
+        help="Ingest pyproject.toml dependencies into a normalized PyPI graph",
+    )
+    ingest_pyproject.add_argument("path", type=Path)
+    ingest_pyproject.add_argument(
+        "--format",
+        choices=["graph-json", "json", "cyclonedx", "text"],
+        default="graph-json",
+    )
+    ingest_poetry_lock = ingest_subparsers.add_parser(
+        "poetry-lock",
+        help="Ingest poetry.lock into a normalized PyPI graph",
+    )
+    ingest_poetry_lock.add_argument("path", type=Path)
+    ingest_poetry_lock.add_argument(
+        "--format",
+        choices=["graph-json", "json", "cyclonedx", "text"],
+        default="graph-json",
+    )
 
     export = subparsers.add_parser(
         "export",
@@ -4637,7 +4673,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_cyclonedx.add_argument("--path", type=Path, required=True)
     export_cyclonedx.add_argument(
         "--source",
-        choices=["npm-lock", "package-json"],
+        choices=["npm-lock", "package-json", "requirements", "pyproject", "poetry-lock"],
         default="npm-lock",
     )
     export_graph_json = export_subparsers.add_parser(
@@ -4647,7 +4683,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_graph_json.add_argument("--path", type=Path, required=True)
     export_graph_json.add_argument(
         "--source",
-        choices=["npm-lock", "package-json"],
+        choices=["npm-lock", "package-json", "requirements", "pyproject", "poetry-lock"],
         default="npm-lock",
     )
 

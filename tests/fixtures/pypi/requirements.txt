@@ -1,0 +1,4 @@
+# Runtime requirements fixture.
+requests==2.31.0 --hash=sha256:requirements-requests
+urllib3>=2.2; python_version >= "3.11"
+demo-wheel @ https://example.com/packages/demo_wheel-1.0.0-py3-none-any.whl
