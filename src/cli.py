@@ -4290,6 +4290,8 @@ def _load_ingest_project_graph(source: str, path: Path) -> ResolvedProjectGraph:
         return NpmAdapter().parse_package_json_graph(path)
     if source in {"requirements", "pyproject", "poetry-lock"}:
         return PoetryAdapter().parse_lockfile_graph(path)
+    if source == "cargo-lock":
+        return CargoAdapter().parse_lockfile_graph(path)
     raise ValueError(f"Unsupported ingest source: {source}")
 
 
@@ -4660,6 +4662,16 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["graph-json", "json", "cyclonedx", "text"],
         default="graph-json",
     )
+    ingest_cargo_lock = ingest_subparsers.add_parser(
+        "cargo-lock",
+        help="Ingest Cargo.lock into a normalized Cargo graph",
+    )
+    ingest_cargo_lock.add_argument("path", type=Path)
+    ingest_cargo_lock.add_argument(
+        "--format",
+        choices=["graph-json", "json", "cyclonedx", "text"],
+        default="graph-json",
+    )
 
     export = subparsers.add_parser(
         "export",
@@ -4673,7 +4685,14 @@ def build_parser() -> argparse.ArgumentParser:
     export_cyclonedx.add_argument("--path", type=Path, required=True)
     export_cyclonedx.add_argument(
         "--source",
-        choices=["npm-lock", "package-json", "requirements", "pyproject", "poetry-lock"],
+        choices=[
+            "npm-lock",
+            "package-json",
+            "requirements",
+            "pyproject",
+            "poetry-lock",
+            "cargo-lock",
+        ],
         default="npm-lock",
     )
     export_graph_json = export_subparsers.add_parser(
@@ -4683,7 +4702,14 @@ def build_parser() -> argparse.ArgumentParser:
     export_graph_json.add_argument("--path", type=Path, required=True)
     export_graph_json.add_argument(
         "--source",
-        choices=["npm-lock", "package-json", "requirements", "pyproject", "poetry-lock"],
+        choices=[
+            "npm-lock",
+            "package-json",
+            "requirements",
+            "pyproject",
+            "poetry-lock",
+            "cargo-lock",
+        ],
         default="npm-lock",
     )
 
