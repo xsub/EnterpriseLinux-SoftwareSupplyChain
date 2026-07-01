@@ -7,6 +7,7 @@ from pathlib import Path
 
 from src.adapters.base import ResolvedProjectGraph
 from src.core_graph.sparse_matrix import CSRDependencyGraph
+from src.core.model import DependencyEdge, Package
 
 MAVEN_RELATIONSHIP_DEPENDS_ON = 1
 MAVEN_RELATIONSHIP_OPTIONAL = 2
@@ -24,19 +25,49 @@ class MavenTreeAdapter:
         stack: list[str] = []
         root_identifier: str | None = None
 
-        for raw_line in path.read_text(encoding="utf-8").splitlines():
+        for line_number, raw_line in enumerate(
+            path.read_text(encoding="utf-8").splitlines(),
+            start=1,
+        ):
             parsed = self._parse_line(raw_line)
             if parsed is None:
                 continue
-            graph.add_vertex(parsed.identifier, metadata=parsed.metadata)
+            graph.add_vertex(
+                parsed.identifier,
+                metadata=parsed.metadata(source_file=path),
+            )
             if root_identifier is None:
                 root_identifier = parsed.identifier
+                graph.set_vertex_metadata(
+                    parsed.identifier,
+                    {
+                        "node_type": "root",
+                        "classification": "root",
+                        "direct_dependency": False,
+                        "transitive_dependency": False,
+                    },
+                )
 
             if parsed.depth > 0 and parsed.depth - 1 < len(stack):
+                is_direct_dependency = parsed.depth == 1
+                if is_direct_dependency:
+                    graph.set_vertex_metadata(
+                        parsed.identifier,
+                        {
+                            "classification": "direct",
+                            "direct_dependency": True,
+                            "transitive_dependency": False,
+                        },
+                    )
                 graph.add_dependency_edge(
                     stack[parsed.depth - 1],
                     parsed.identifier,
                     relationship_type=parsed.relationship_type,
+                    metadata=parsed.edge_metadata(
+                        source_file=path,
+                        source_line=line_number,
+                        direct=is_direct_dependency,
+                    ),
                 )
 
             if len(stack) <= parsed.depth:
@@ -192,16 +223,25 @@ class _MavenCoordinate:
             coordinate_parts.append(self.scope)
         return ":".join(coordinate_parts)
 
-    @property
-    def metadata(self) -> dict[str, str]:
-        metadata = {
-            "ecosystem": "maven",
-            "source": "maven-dependency-tree",
-            "group": self.group,
-            "artifact": self.artifact,
-            "packaging": self.packaging,
-            "coordinate": self.coordinate,
-        }
+    def metadata(self, *, source_file: Path) -> dict[str, object]:
+        metadata = Package(
+            ecosystem="maven",
+            name=f"{self.group}:{self.artifact}",
+            version=self.version,
+            metadata={
+                "source": source_file.name,
+                "node_type": "package",
+                "package_manager": "maven",
+                "classification": "transitive",
+                "direct_dependency": False,
+                "transitive_dependency": True,
+                "dependency_scope": self.scope or "runtime",
+                "group": self.group,
+                "artifact": self.artifact,
+                "packaging": self.packaging,
+                "coordinate": self.coordinate,
+            },
+        ).graph_metadata()
         if self.scope:
             metadata["scope"] = self.scope
         if self.classifier:
@@ -217,3 +257,31 @@ class _MavenCoordinate:
         if self.excluded_reason:
             metadata["excludedReason"] = self.excluded_reason
         return metadata
+
+    def edge_metadata(
+        self,
+        *,
+        source_file: Path,
+        source_line: int,
+        direct: bool,
+    ) -> dict[str, object]:
+        return DependencyEdge(
+            from_package="",
+            to_package=self.identifier,
+            constraint=self.version,
+            resolved_version=self.version,
+            scope=self.scope or "runtime",
+            source_file=str(source_file),
+            source_line=source_line,
+            metadata={
+                "ecosystem": "maven",
+                "package_manager": "maven",
+                "coordinate": self.coordinate,
+                "optional": bool(self.optional),
+                "omitted": bool(self.omitted),
+                "omittedReason": self.omitted_reason,
+                "excluded": bool(self.excluded),
+                "excludedReason": self.excluded_reason,
+                "direct": direct,
+            },
+        ).graph_metadata()

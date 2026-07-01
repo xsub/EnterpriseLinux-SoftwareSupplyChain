@@ -132,6 +132,50 @@ def test_cli_maven_tree_preserves_optional_and_omitted_markers(capsys) -> None:
     assert edge_types["org.example:conflict-lib==1.0.0"] == 3
 
 
+def test_cli_ingest_maven_tree_outputs_normalized_graph(capsys) -> None:
+    assert main(["ingest", "maven-tree", "tests/fixtures/maven-tree.txt"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ecosystem"] == "maven"
+    assert payload["root"] == "com.example:demo-app==1.0.0"
+    assert any(
+        node.get("purl") == "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.17.0"
+        for node in payload["nodes"]
+    )
+    junit_edge = next(
+        edge
+        for edge in payload["edges"]
+        if edge["source"] == "com.example:demo-app==1.0.0"
+        and edge["target"] == "junit:junit==4.13.2"
+    )
+    assert junit_edge["scope"] == "test"
+
+
+def test_cli_export_cyclonedx_from_maven_tree(capsys) -> None:
+    assert (
+        main(
+            [
+                "export",
+                "cyclonedx",
+                "--source",
+                "maven-tree",
+                "--path",
+                "tests/fixtures/maven-tree.txt",
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["bomFormat"] == "CycloneDX"
+    assert any(
+        component.get("purl") == (
+            "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.17.0"
+        )
+        for component in payload["components"]
+    )
+
+
 def test_cli_maven_bundle_writes_graph_and_impact_reports(tmp_path, capsys) -> None:
     output_dir = tmp_path / "maven-bundle"
 

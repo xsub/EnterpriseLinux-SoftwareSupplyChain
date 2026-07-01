@@ -4292,6 +4292,8 @@ def _load_ingest_project_graph(source: str, path: Path) -> ResolvedProjectGraph:
         return PoetryAdapter().parse_lockfile_graph(path)
     if source == "cargo-lock":
         return CargoAdapter().parse_lockfile_graph(path)
+    if source == "maven-tree":
+        return MavenTreeAdapter().parse_tree(path)
     raise ValueError(f"Unsupported ingest source: {source}")
 
 
@@ -4672,6 +4674,16 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["graph-json", "json", "cyclonedx", "text"],
         default="graph-json",
     )
+    ingest_maven_tree = ingest_subparsers.add_parser(
+        "maven-tree",
+        help="Ingest mvn dependency:tree text into a normalized Maven graph",
+    )
+    ingest_maven_tree.add_argument("path", type=Path)
+    ingest_maven_tree.add_argument(
+        "--format",
+        choices=["graph-json", "json", "cyclonedx", "text"],
+        default="graph-json",
+    )
 
     export = subparsers.add_parser(
         "export",
@@ -4692,6 +4704,7 @@ def build_parser() -> argparse.ArgumentParser:
             "pyproject",
             "poetry-lock",
             "cargo-lock",
+            "maven-tree",
         ],
         default="npm-lock",
     )
@@ -4709,6 +4722,7 @@ def build_parser() -> argparse.ArgumentParser:
             "pyproject",
             "poetry-lock",
             "cargo-lock",
+            "maven-tree",
         ],
         default="npm-lock",
     )
