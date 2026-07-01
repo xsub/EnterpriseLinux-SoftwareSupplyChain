@@ -12,7 +12,13 @@ from src.core_graph.sparse_matrix import CSRDependencyGraph
 from src.core.model import DependencyEdge, Package
 from src.models.package import DependencyRequirement
 
-NPM_LOCKFILE_NAMES = {"package-lock.json", "npm-shrinkwrap.json"}
+NPM_LOCKFILE_NAMES = {
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "pnpm-lock.yml",
+}
 NPM_MANIFEST_NAMES = {"package.json"}
 NPM_SUPPORTED_NAMES = NPM_LOCKFILE_NAMES | NPM_MANIFEST_NAMES
 NPM_DEPENDENCY_FIELDS = (
@@ -55,6 +61,11 @@ class NpmAdapter(LockfileAdapter):
 
     def parse_lockfile_graph(self, path: Path) -> ResolvedProjectGraph:
         text = path.read_text(encoding="utf-8")
+        if path.name == "yarn.lock":
+            return self._parse_yarn_lockfile(text, source_file=path)
+        if path.name in {"pnpm-lock.yaml", "pnpm-lock.yml"}:
+            return self._parse_pnpm_lockfile(text, source_file=path)
+
         payload = json.loads(text)
 
         packages = payload.get("packages")
@@ -224,6 +235,7 @@ class NpmAdapter(LockfileAdapter):
                     source_file=source_file,
                     source_line=line_numbers.get(str(package_path)),
                     direct_paths=direct_paths,
+                    package_manager="npm",
                 ),
             )
 
@@ -237,6 +249,7 @@ class NpmAdapter(LockfileAdapter):
                 *self._package_name_version_from_identifier(root_identifier),
                 payload,
                 source_file=source_file,
+                package_manager="npm",
             ),
         )
 
@@ -281,6 +294,226 @@ class NpmAdapter(LockfileAdapter):
                         target_id,
                         metadata=edge.graph_metadata(),
                     )
+
+        return ResolvedProjectGraph(
+            root_identifier=root_identifier,
+            graph=graph,
+            ecosystem=self.ecosystem,
+        )
+
+    def _parse_yarn_lockfile(
+        self,
+        text: str,
+        *,
+        source_file: Path,
+    ) -> ResolvedProjectGraph:
+        entries = self._parse_yarn_entries(text)
+        graph = CSRDependencyGraph()
+        root_identifier = "yarn-lock==resolved"
+        graph.add_vertex(
+            root_identifier,
+            metadata=self._root_metadata(
+                "yarn-lock",
+                "resolved",
+                {},
+                source_file=source_file,
+                package_manager="yarn",
+            ),
+        )
+
+        package_ids: dict[str, str] = {}
+        descriptors: dict[str, str] = {}
+        package_by_name: dict[str, list[str]] = {}
+        for entry in entries:
+            package_id = f"{entry['name']}=={entry['version']}"
+            package_ids[entry["descriptor"]] = package_id
+            for descriptor in entry["descriptors"]:
+                descriptors[descriptor] = package_id
+            package_by_name.setdefault(entry["name"], []).append(package_id)
+            graph.add_vertex(
+                package_id,
+                metadata=self._component_metadata(
+                    f"yarn:{entry['descriptor']}",
+                    {
+                        "name": entry["name"],
+                        "version": entry["version"],
+                        "resolved": entry.get("resolved", ""),
+                        "integrity": entry.get("integrity", ""),
+                        "dependencies": entry.get("dependencies", {}),
+                    },
+                    {},
+                    source_file=source_file,
+                    source_line=entry.get("line"),
+                    package_manager="yarn",
+                ),
+            )
+
+        for entry in entries:
+            source_id = package_ids.get(entry["descriptor"])
+            if source_id is None:
+                continue
+            dependencies = entry.get("dependencies", {})
+            if not isinstance(dependencies, Mapping):
+                continue
+            for dependency_name, constraint in sorted(dependencies.items()):
+                target_id = self._resolve_yarn_dependency(
+                    str(dependency_name),
+                    str(constraint),
+                    descriptors=descriptors,
+                    package_by_name=package_by_name,
+                )
+                if target_id is None:
+                    continue
+                graph.add_dependency_edge(
+                    source_id,
+                    target_id,
+                    metadata=DependencyEdge(
+                        from_package=source_id,
+                        to_package=target_id,
+                        constraint=str(constraint),
+                        resolved_version=graph.get_vertex_metadata(target_id).get(
+                            "version",
+                            "",
+                        ),
+                        scope="runtime",
+                        source_file=str(source_file),
+                        source_line=entry.get("line"),
+                        metadata={
+                            "ecosystem": self.ecosystem,
+                            "package_manager": "yarn",
+                            "lockfile": source_file.name,
+                            "source_path": f"yarn:{entry['descriptor']}",
+                            "target_path": target_id,
+                            "direct": False,
+                        },
+                    ).graph_metadata(),
+                )
+
+        self._connect_orphan_packages_to_root(
+            graph,
+            root_identifier,
+            package_ids.values(),
+            source_file=source_file,
+            package_manager="yarn",
+        )
+
+        return ResolvedProjectGraph(
+            root_identifier=root_identifier,
+            graph=graph,
+            ecosystem=self.ecosystem,
+        )
+
+    def _parse_pnpm_lockfile(
+        self,
+        text: str,
+        *,
+        source_file: Path,
+    ) -> ResolvedProjectGraph:
+        payload = self._parse_simple_yaml_mapping(text)
+        graph = CSRDependencyGraph()
+        root_identifier = "pnpm-lock==resolved"
+        graph.add_vertex(
+            root_identifier,
+            metadata=self._root_metadata(
+                "pnpm-lock",
+                "resolved",
+                payload,
+                source_file=source_file,
+                package_manager="pnpm",
+            ),
+        )
+
+        package_records = self._pnpm_package_records(payload)
+        package_ids: dict[str, str] = {}
+        package_by_name_version: dict[tuple[str, str], str] = {}
+        package_by_name: dict[str, list[str]] = {}
+        for package_key, record in package_records.items():
+            parsed = self._pnpm_package_key(package_key)
+            if parsed is None:
+                continue
+            name, version = parsed
+            package_id = f"{name}=={version}"
+            package_ids[package_key] = package_id
+            package_by_name_version[(name, version)] = package_id
+            package_by_name.setdefault(name, []).append(package_id)
+            resolution = record.get("resolution", {})
+            if not isinstance(resolution, Mapping):
+                resolution = {}
+            graph.add_vertex(
+                package_id,
+                metadata=self._component_metadata(
+                    f"pnpm:{package_key}",
+                    {
+                        "name": name,
+                        "version": version,
+                        "resolved": resolution.get("tarball", ""),
+                        "integrity": resolution.get("integrity", ""),
+                        "license": record.get("license", ""),
+                        "dependencies": self._mapping(record.get("dependencies")),
+                        "optionalDependencies": self._mapping(
+                            record.get("optionalDependencies")
+                        ),
+                        "peerDependencies": self._mapping(record.get("peerDependencies")),
+                    },
+                    {},
+                    source_file=source_file,
+                    source_line=self._line_for_token(text, package_key),
+                    package_manager="pnpm",
+                ),
+            )
+
+        for package_key, record in package_records.items():
+            source_id = package_ids.get(package_key)
+            if source_id is None:
+                continue
+            for field, scope in (
+                ("dependencies", "runtime"),
+                ("optionalDependencies", "optional"),
+                ("peerDependencies", "peer"),
+            ):
+                dependencies = self._mapping(record.get(field))
+                for dependency_name, dependency_version in sorted(dependencies.items()):
+                    target_id = self._resolve_pnpm_dependency(
+                        str(dependency_name),
+                        dependency_version,
+                        package_by_name=package_by_name,
+                        package_by_name_version=package_by_name_version,
+                    )
+                    if target_id is None:
+                        continue
+                    graph.add_dependency_edge(
+                        source_id,
+                        target_id,
+                        metadata=DependencyEdge(
+                            from_package=source_id,
+                            to_package=target_id,
+                            constraint=self._specifier_text(dependency_version),
+                            resolved_version=graph.get_vertex_metadata(target_id).get(
+                                "version",
+                                "",
+                            ),
+                            scope=scope,
+                            source_file=str(source_file),
+                            source_line=self._line_for_token(text, package_key),
+                            metadata={
+                                "ecosystem": self.ecosystem,
+                                "package_manager": "pnpm",
+                                "lockfile": source_file.name,
+                                "source_path": f"pnpm:{package_key}",
+                                "target_path": target_id,
+                                "direct": False,
+                            },
+                        ).graph_metadata(),
+                    )
+
+        self._connect_pnpm_importers_to_root(
+            graph,
+            root_identifier,
+            payload,
+            package_by_name=package_by_name,
+            package_by_name_version=package_by_name_version,
+            source_file=source_file,
+        )
 
         return ResolvedProjectGraph(
             root_identifier=root_identifier,
@@ -362,6 +595,381 @@ class NpmAdapter(LockfileAdapter):
             )
         return conflicts
 
+    def _connect_orphan_packages_to_root(
+        self,
+        graph: CSRDependencyGraph,
+        root_identifier: str,
+        package_ids: object,
+        *,
+        source_file: Path,
+        package_manager: str,
+    ) -> None:
+        for package_id in sorted(set(str(package_id) for package_id in package_ids)):
+            if graph.get_dependents(package_id):
+                continue
+            graph.set_vertex_metadata(
+                package_id,
+                {
+                    "classification": "direct",
+                    "direct_dependency": True,
+                    "transitive_dependency": False,
+                },
+            )
+            graph.add_dependency_edge(
+                root_identifier,
+                package_id,
+                metadata=DependencyEdge(
+                    from_package=root_identifier,
+                    to_package=package_id,
+                    resolved_version=graph.get_vertex_metadata(package_id).get(
+                        "version",
+                        "",
+                    ),
+                    scope="runtime",
+                    source_file=str(source_file),
+                    metadata={
+                        "ecosystem": self.ecosystem,
+                        "package_manager": package_manager,
+                        "lockfile": source_file.name,
+                        "source_path": "",
+                        "target_path": package_id,
+                        "direct": True,
+                    },
+                ).graph_metadata(),
+            )
+
+    def _connect_pnpm_importers_to_root(
+        self,
+        graph: CSRDependencyGraph,
+        root_identifier: str,
+        payload: Mapping[str, object],
+        *,
+        package_by_name: Mapping[str, list[str]],
+        package_by_name_version: Mapping[tuple[str, str], str],
+        source_file: Path,
+    ) -> None:
+        importers = payload.get("importers", {})
+        if not isinstance(importers, Mapping):
+            importers = {}
+
+        connected: set[str] = set()
+        for importer_name, importer_record in importers.items():
+            if not isinstance(importer_record, Mapping):
+                continue
+            for field, scope in (
+                ("dependencies", "runtime"),
+                ("optionalDependencies", "optional"),
+                ("devDependencies", "dev"),
+            ):
+                dependencies = self._mapping(importer_record.get(field))
+                for dependency_name, dependency_record in sorted(dependencies.items()):
+                    target_id = self._resolve_pnpm_dependency(
+                        str(dependency_name),
+                        dependency_record,
+                        package_by_name=package_by_name,
+                        package_by_name_version=package_by_name_version,
+                    )
+                    if target_id is None:
+                        continue
+                    connected.add(target_id)
+                    graph.set_vertex_metadata(
+                        target_id,
+                        {
+                            "classification": "direct",
+                            "direct_dependency": True,
+                            "transitive_dependency": False,
+                            "dependency_scope": scope,
+                        },
+                    )
+                    graph.add_dependency_edge(
+                        root_identifier,
+                        target_id,
+                        metadata=DependencyEdge(
+                            from_package=root_identifier,
+                            to_package=target_id,
+                            constraint=self._pnpm_specifier(dependency_record),
+                            resolved_version=graph.get_vertex_metadata(target_id).get(
+                                "version",
+                                "",
+                            ),
+                            scope=scope,
+                            source_file=str(source_file),
+                            metadata={
+                                "ecosystem": self.ecosystem,
+                                "package_manager": "pnpm",
+                                "lockfile": source_file.name,
+                                "source_path": str(importer_name),
+                                "target_path": target_id,
+                                "direct": True,
+                            },
+                        ).graph_metadata(),
+                    )
+
+        if connected:
+            return
+        self._connect_orphan_packages_to_root(
+            graph,
+            root_identifier,
+            package_by_name_version.values(),
+            source_file=source_file,
+            package_manager="pnpm",
+        )
+
+    def _parse_yarn_entries(self, text: str) -> list[dict[str, object]]:
+        entries: list[dict[str, object]] = []
+        current: dict[str, object] | None = None
+        in_dependencies = False
+
+        for line_number, raw_line in enumerate(text.splitlines(), start=1):
+            if not raw_line.strip() or raw_line.lstrip().startswith("#"):
+                continue
+            if not raw_line.startswith((" ", "\t")) and raw_line.rstrip().endswith(":"):
+                descriptors = self._split_yarn_descriptors(raw_line.rstrip()[:-1])
+                if not descriptors:
+                    current = None
+                    continue
+                name, constraint = self._yarn_descriptor_name_constraint(descriptors[0])
+                current = {
+                    "descriptor": descriptors[0],
+                    "descriptors": descriptors,
+                    "name": name,
+                    "constraint": constraint,
+                    "version": "0.0.0",
+                    "dependencies": {},
+                    "line": line_number,
+                }
+                entries.append(current)
+                in_dependencies = False
+                continue
+
+            if current is None:
+                continue
+            if raw_line.startswith("  ") and not raw_line.startswith("    "):
+                key, value = self._split_yarn_field(raw_line.strip())
+                in_dependencies = key == "dependencies"
+                if key and not in_dependencies:
+                    current[key] = value
+                continue
+            if in_dependencies and raw_line.startswith("    "):
+                name, value = self._split_yarn_field(raw_line.strip())
+                if name:
+                    dependencies = current.setdefault("dependencies", {})
+                    if isinstance(dependencies, dict):
+                        dependencies[name] = value
+
+        return entries
+
+    def _split_yarn_descriptors(self, raw: str) -> list[str]:
+        descriptors: list[str] = []
+        token: list[str] = []
+        quote = ""
+        for char in raw:
+            if char in {"'", '"'}:
+                if quote == char:
+                    quote = ""
+                elif not quote:
+                    quote = char
+                token.append(char)
+                continue
+            if char == "," and not quote:
+                descriptor = self._strip_quotes("".join(token).strip())
+                if descriptor:
+                    descriptors.append(descriptor)
+                token = []
+                continue
+            token.append(char)
+        descriptor = self._strip_quotes("".join(token).strip())
+        if descriptor:
+            descriptors.append(descriptor)
+        return descriptors
+
+    def _split_yarn_field(self, raw: str) -> tuple[str, str]:
+        if raw.endswith(":"):
+            return self._strip_quotes(raw[:-1].strip()), ""
+        if " " not in raw:
+            return self._strip_quotes(raw), ""
+        key, value = raw.split(None, 1)
+        return self._strip_quotes(key), self._strip_quotes(value.strip())
+
+    def _yarn_descriptor_name_constraint(self, descriptor: str) -> tuple[str, str]:
+        descriptor = self._strip_quotes(descriptor)
+        if descriptor.startswith("@") and "/" in descriptor:
+            slash = descriptor.find("/")
+            delimiter = descriptor.find("@", slash)
+            if delimiter > 0:
+                return descriptor[:delimiter], descriptor[delimiter + 1 :]
+            return descriptor, ""
+        if "@" in descriptor:
+            name, constraint = descriptor.rsplit("@", 1)
+            return name, constraint
+        return descriptor, ""
+
+    def _resolve_yarn_dependency(
+        self,
+        dependency_name: str,
+        constraint: str,
+        *,
+        descriptors: Mapping[str, str],
+        package_by_name: Mapping[str, list[str]],
+    ) -> str | None:
+        exact = descriptors.get(f"{dependency_name}@{constraint}")
+        if exact is not None:
+            return exact
+        candidates = sorted(set(package_by_name.get(dependency_name, [])))
+        if len(candidates) == 1:
+            return candidates[0]
+        return None
+
+    def _parse_simple_yaml_mapping(self, text: str) -> dict[str, object]:
+        root: dict[str, object] = {}
+        stack: list[tuple[int, dict[str, object]]] = [(-1, root)]
+        for raw_line in text.splitlines():
+            if not raw_line.strip() or raw_line.lstrip().startswith("#"):
+                continue
+            line = raw_line.split(" #", 1)[0].rstrip()
+            if not line.strip():
+                continue
+            indent = len(line) - len(line.lstrip(" "))
+            key, value = self._split_yaml_key_value(line.strip())
+            if not key:
+                continue
+            while stack and indent <= stack[-1][0]:
+                stack.pop()
+            parent = stack[-1][1] if stack else root
+            if value == "":
+                child: dict[str, object] = {}
+                parent[key] = child
+                stack.append((indent, child))
+                continue
+            parent[key] = self._parse_yaml_scalar(value)
+        return root
+
+    def _split_yaml_key_value(self, raw: str) -> tuple[str, str]:
+        quote = ""
+        for index, char in enumerate(raw):
+            if char in {"'", '"'}:
+                if quote == char:
+                    quote = ""
+                elif not quote:
+                    quote = char
+            if char == ":" and not quote:
+                return self._strip_quotes(raw[:index].strip()), raw[index + 1 :].strip()
+        return self._strip_quotes(raw), ""
+
+    def _parse_yaml_scalar(self, raw: str) -> object:
+        value = self._strip_quotes(raw.strip())
+        if value.startswith("{") and value.endswith("}"):
+            mapping: dict[str, object] = {}
+            inner = value[1:-1].strip()
+            for item in inner.split(","):
+                key, item_value = self._split_yaml_key_value(item.strip())
+                if key:
+                    mapping[key] = self._parse_yaml_scalar(item_value)
+            return mapping
+        if value in {"true", "True"}:
+            return True
+        if value in {"false", "False"}:
+            return False
+        return value
+
+    def _pnpm_package_records(
+        self, payload: Mapping[str, object]
+    ) -> dict[str, dict[str, object]]:
+        packages = self._mapping(payload.get("packages"))
+        snapshots = self._mapping(payload.get("snapshots"))
+        records: dict[str, dict[str, object]] = {}
+        for key in sorted(set(packages) | set(snapshots)):
+            record: dict[str, object] = {}
+            package_record = packages.get(key)
+            if isinstance(package_record, Mapping):
+                record.update(package_record)
+            snapshot_record = snapshots.get(key)
+            if isinstance(snapshot_record, Mapping):
+                for dependency_key in (
+                    "dependencies",
+                    "optionalDependencies",
+                    "peerDependencies",
+                ):
+                    if dependency_key in snapshot_record:
+                        record[dependency_key] = snapshot_record[dependency_key]
+            records[str(key)] = record
+        return records
+
+    def _pnpm_package_key(self, package_key: str) -> tuple[str, str] | None:
+        value = self._strip_quotes(str(package_key)).lstrip("/")
+        if "(" in value:
+            value = value.split("(", 1)[0]
+        if value.startswith("@") and "/" in value:
+            name, separator, version = value.rpartition("@")
+            if separator and name:
+                return name, version
+            return None
+        if "@" not in value:
+            return None
+        name, version = value.rsplit("@", 1)
+        return name, version
+
+    def _resolve_pnpm_dependency(
+        self,
+        dependency_name: str,
+        dependency_record: object,
+        *,
+        package_by_name: Mapping[str, list[str]],
+        package_by_name_version: Mapping[tuple[str, str], str],
+    ) -> str | None:
+        version = self._pnpm_resolved_version(dependency_record)
+        if version:
+            match = package_by_name_version.get((dependency_name, version))
+            if match is not None:
+                return match
+        candidates = sorted(set(package_by_name.get(dependency_name, [])))
+        if len(candidates) == 1:
+            return candidates[0]
+        return None
+
+    def _pnpm_resolved_version(self, value: object) -> str:
+        if isinstance(value, Mapping):
+            version = value.get("version") or value.get("specifier")
+            return self._clean_pnpm_version(str(version or ""))
+        return self._clean_pnpm_version(str(value or ""))
+
+    def _clean_pnpm_version(self, value: str) -> str:
+        value = self._strip_quotes(value)
+        if "(" in value:
+            value = value.split("(", 1)[0]
+        if value.startswith("link:") or value.startswith("file:"):
+            return value
+        return value
+
+    def _pnpm_specifier(self, value: object) -> str:
+        if isinstance(value, Mapping):
+            return str(value.get("specifier") or value.get("version") or "")
+        return str(value or "")
+
+    def _specifier_text(self, value: object) -> str:
+        if isinstance(value, Mapping):
+            return str(value.get("specifier") or value.get("version") or "")
+        return str(value or "")
+
+    def _mapping(self, value: object) -> dict[str, object]:
+        if not isinstance(value, Mapping):
+            return {}
+        return {str(key): item for key, item in value.items()}
+
+    def _strip_quotes(self, value: str) -> str:
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            return value[1:-1]
+        return value
+
+    def _line_for_token(self, text: str, token: str) -> int | None:
+        quoted = {token, f"'{token}'", json.dumps(token)}
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            stripped = line.strip()
+            if any(stripped.startswith(f"{candidate}:") for candidate in quoted):
+                return line_number
+        return None
+
     def _parse_legacy_lockfile(
         self,
         payload: Mapping[str, object],
@@ -418,6 +1026,7 @@ class NpmAdapter(LockfileAdapter):
                 {},
                 source_file=source_file,
                 direct_paths={f"legacy:{name}"} if direct else set(),
+                package_manager="npm",
             ),
         )
         graph.add_dependency_edge(
@@ -555,6 +1164,7 @@ class NpmAdapter(LockfileAdapter):
         source_file: Path,
         source_line: int | None = None,
         direct_paths: set[str] | None = None,
+        package_manager: str = "npm",
     ) -> dict[str, object]:
         package_id = self._package_identifier(package_path, record, root_payload)
         name, version = self._package_name_version_from_identifier(package_id or "")
@@ -581,7 +1191,7 @@ class NpmAdapter(LockfileAdapter):
             metadata={
                 "source": source_file.name,
                 "node_type": node_type,
-                "package_manager": "npm",
+                "package_manager": package_manager,
                 "lockfile_format": self._lockfile_format(source_file),
                 "package_path": package_path,
                 "classification": classification,
@@ -636,6 +1246,7 @@ class NpmAdapter(LockfileAdapter):
         payload: Mapping[str, object],
         *,
         source_file: Path,
+        package_manager: str = "npm",
     ) -> dict[str, object]:
         metadata = Package(
             ecosystem=self.ecosystem,
@@ -645,7 +1256,7 @@ class NpmAdapter(LockfileAdapter):
             metadata={
                 "source": source_file.name,
                 "node_type": "root",
-                "package_manager": "npm",
+                "package_manager": package_manager,
                 "lockfile_format": self._lockfile_format(source_file),
                 "package_path": "",
                 "classification": "root",
@@ -712,6 +1323,10 @@ class NpmAdapter(LockfileAdapter):
     def _lockfile_format(self, source_file: Path) -> str:
         if source_file.name == "npm-shrinkwrap.json":
             return "npm-shrinkwrap"
+        if source_file.name == "yarn.lock":
+            return "yarn-lock"
+        if source_file.name in {"pnpm-lock.yaml", "pnpm-lock.yml"}:
+            return "pnpm-lock"
         if source_file.name == "package.json":
             return "package-json"
         return "package-lock"

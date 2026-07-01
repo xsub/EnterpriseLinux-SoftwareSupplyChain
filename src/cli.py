@@ -4606,7 +4606,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_subparsers = ingest.add_subparsers(dest="ingest_command", required=True)
     ingest_npm_lock = ingest_subparsers.add_parser(
         "npm-lock",
-        help="Ingest package-lock.json or npm-shrinkwrap.json",
+        help="Ingest package-lock, npm-shrinkwrap, yarn.lock, or pnpm-lock.yaml",
     )
     ingest_npm_lock.add_argument("path", type=Path)
     ingest_npm_lock.add_argument(

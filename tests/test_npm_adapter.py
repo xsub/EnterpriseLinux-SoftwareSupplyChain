@@ -80,6 +80,58 @@ def test_npm_scope_classification_for_dev_optional_and_peer_dependencies() -> No
     assert peer.graph.get_vertex_metadata("plugin==1.0.0")["peer_dependencies"] == "react"
 
 
+def test_yarn_lock_ingests_normalized_npm_graph() -> None:
+    resolved = NpmAdapter().parse_lockfile_graph(Path("tests/fixtures/npm/yarn.lock"))
+
+    assert resolved.root_identifier == "yarn-lock==resolved"
+    assert resolved.graph.get_dependencies("yarn-lock==resolved") == [
+        "@acme/tool==2.1.0"
+    ]
+    assert resolved.graph.get_dependencies("@acme/tool==2.1.0") == [
+        "left-pad==1.3.0",
+        "nested==1.0.1",
+    ]
+    metadata = resolved.graph.get_vertex_metadata("@acme/tool==2.1.0")
+    assert metadata["ecosystem"] == "npm"
+    assert metadata["package_manager"] == "yarn"
+    assert metadata["lockfile_format"] == "yarn-lock"
+    assert metadata["purl"] == "pkg:npm/%40acme/tool@2.1.0"
+    assert metadata["classification"] == "direct"
+    assert metadata["remote_tarball_domain"] == "registry.yarnpkg.com"
+    assert resolved.graph.get_edge_metadata("@acme/tool==2.1.0", "left-pad==1.3.0")[
+        "constraint"
+    ] == "^1.3.0"
+
+
+def test_pnpm_lock_ingests_importers_snapshots_and_scopes() -> None:
+    resolved = NpmAdapter().parse_lockfile_graph(
+        Path("tests/fixtures/npm/pnpm-lock.yaml")
+    )
+
+    assert resolved.root_identifier == "pnpm-lock==resolved"
+    assert resolved.graph.get_dependencies("pnpm-lock==resolved") == [
+        "@acme/tool==2.1.0",
+        "test-runner==3.0.0",
+    ]
+    assert resolved.graph.get_dependencies("@acme/tool==2.1.0") == [
+        "left-pad==1.3.0",
+        "nested==1.0.1",
+    ]
+    tool_metadata = resolved.graph.get_vertex_metadata("@acme/tool==2.1.0")
+    assert tool_metadata["package_manager"] == "pnpm"
+    assert tool_metadata["lockfile_format"] == "pnpm-lock"
+    assert tool_metadata["checksum"] == "sha512-pnpm-tool"
+    assert tool_metadata["source_url"] == (
+        "https://registry.npmjs.org/@acme/tool/-/tool-2.1.0.tgz"
+    )
+    test_runner_metadata = resolved.graph.get_vertex_metadata("test-runner==3.0.0")
+    assert test_runner_metadata["classification"] == "direct"
+    assert test_runner_metadata["dependency_scope"] == "dev"
+    assert resolved.graph.get_edge_metadata("pnpm-lock==resolved", "test-runner==3.0.0")[
+        "scope"
+    ] == "dev"
+
+
 def test_npm_summary_report_lists_required_lockfile_outputs() -> None:
     resolved = NpmAdapter().parse_lockfile_graph(
         Path("tests/fixtures/npm/missing-integrity-package-lock.json")

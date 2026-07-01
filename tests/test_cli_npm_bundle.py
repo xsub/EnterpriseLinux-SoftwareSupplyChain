@@ -184,6 +184,24 @@ def test_cli_ingest_npm_lock_outputs_normalized_graph_json(capsys) -> None:
     assert any(node.get("purl") == "pkg:npm/left-pad@1.3.0" for node in payload["nodes"])
 
 
+def test_cli_ingest_npm_lock_accepts_yarn_and_pnpm(capsys) -> None:
+    assert main(["ingest", "npm-lock", "tests/fixtures/npm/yarn.lock"]) == 0
+    yarn = json.loads(capsys.readouterr().out)
+    assert yarn["root"] == "yarn-lock==resolved"
+    assert any(node.get("purl") == "pkg:npm/%40acme/tool@2.1.0" for node in yarn["nodes"])
+
+    assert main(["ingest", "npm-lock", "tests/fixtures/npm/pnpm-lock.yaml"]) == 0
+    pnpm = json.loads(capsys.readouterr().out)
+    assert pnpm["root"] == "pnpm-lock==resolved"
+    edge = next(
+        edge
+        for edge in pnpm["edges"]
+        if edge["source"] == "pnpm-lock==resolved"
+        and edge["target"] == "test-runner==3.0.0"
+    )
+    assert edge["scope"] == "dev"
+
+
 def test_cli_ingest_package_json_flags_lifecycle_scripts(capsys) -> None:
     assert (
         main(
